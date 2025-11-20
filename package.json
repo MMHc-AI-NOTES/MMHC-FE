@@ -1,7 +1,7 @@
 {
-  "name": "react-theme-4",
+  "name": "mmh-fe",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -9,7 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write .",
-    "build:dev": "env-cmd -f .env.dev vite build",
     "prepare": "husky"
   },
   "dependencies": {

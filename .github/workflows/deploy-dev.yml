@@ -15,7 +15,8 @@ jobs:
       contents: read
 
     env:
-      NEXT_PUBLIC_BASE_URL: https://mmh-dev.theexpertscloud.com
+      VITE_FRONTEND_URL: https://mmh-dev.theexpertscloud.com
+      VITE_BACKEND_URL: https://mmh-dev-backend.theexpertscloud.com
 
     steps:
       - name: Checkout repository
@@ -36,8 +37,8 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ secrets.DEV_AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_GITHUB }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Sync static assets with long cache
         run: |
