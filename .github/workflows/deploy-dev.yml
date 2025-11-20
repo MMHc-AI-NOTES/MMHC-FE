@@ -44,7 +44,8 @@ jobs:
         run: |
           aws s3 sync ./build s3://${{ secrets.DEV_S3_BUCKET }} \
             --delete \
-            --cache-control "public,max-age=31536000,immutable"
+            --cache-control "public,max-age=31536000,immutable" \
+            --acl public-read
 
       - name: Invalidate CloudFront
         run: |
