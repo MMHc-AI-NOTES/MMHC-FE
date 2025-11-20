@@ -1,4 +1,4 @@
-const SharedLogo = ({ textPrimary = 'Hey', textSecondary = 'Ed', className = 'text-2xl' }) => {
+const SharedLogo = ({ textPrimary = 'Hey', textSecondary = '', className = 'text-2xl' }) => {
   return (
     <h2 className={`font-bitter ${className} `}>
       <span className="text-gray-700">{textPrimary}</span>

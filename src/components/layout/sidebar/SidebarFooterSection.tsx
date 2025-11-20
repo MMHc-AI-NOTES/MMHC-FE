@@ -11,7 +11,7 @@ const SidebarFooterSection = ({ items, isActive, onItemClick }: SidebarFooterSec
   const { state } = useSidebar();
 
   return (
-    <SidebarFooter className="border-t">
+    <SidebarFooter className="">
       <SidebarMenu>
         {items.map(item => {
           const active = isActive(item);

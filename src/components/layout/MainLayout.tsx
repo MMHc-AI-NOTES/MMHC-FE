@@ -10,9 +10,9 @@ const MainLayout = () => {
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-x-hidden px-4">
           <Header />
-          <main className="flex-1 overflow-y-auto p-2">
+          <main className="b flex-1 overflow-x-hidden overflow-y-auto p-2">
             <Suspense fallback={<FallBackLoader type="page" />}>
               <Outlet />
             </Suspense>

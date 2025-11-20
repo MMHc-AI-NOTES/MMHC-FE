@@ -1,10 +1,10 @@
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { NavItem, bottomNavItems, navItems } from './navItems';
+import { NavItem, navItems } from './navItems';
 import { handleLogout } from '@/utils/helper';
 import SidebarHeaderSection from './SidebarHeaderSection';
 import SidebarMenuSection from './SidebarMenuSection';
-import SidebarFooterSection from './SidebarFooterSection';
+// import SidebarFooterSection from './SidebarFooterSection';
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -29,20 +29,13 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
+    <Sidebar collapsible="icon" className="px-2 pb-2">
       <SidebarHeaderSection />
 
-      <SidebarContent>
-        <SidebarMenuSection
-          items={navItems}
-          label="Main Menu"
-          isActive={isActive}
-          hasActiveChild={hasActiveChild}
-          onItemClick={handleItemClick}
-        />
+      <SidebarContent className="mx-2 pt-3">
+        <SidebarMenuSection items={navItems} label="" isActive={isActive} hasActiveChild={hasActiveChild} onItemClick={handleItemClick} />
+        {/* <SidebarFooterSection items={bottomNavItems} isActive={isActive} onItemClick={handleItemClick} /> */}
       </SidebarContent>
-
-      <SidebarFooterSection items={bottomNavItems} isActive={isActive} onItemClick={handleItemClick} />
     </Sidebar>
   );
 };
