@@ -75,12 +75,12 @@
   "author": "",
   "license": "ISC",
   "lint-staged": {
-    "*.{css,json,md}": [
-      "prettier --write"
-    ],
     "*.{ts,tsx}": [
       "prettier --write",
       "eslint --fix --max-warnings 0"
+    ],
+    "*.{css,json,md}": [
+      "prettier --write"
     ]
   }
 }
