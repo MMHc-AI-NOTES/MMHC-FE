@@ -37,6 +37,7 @@ export const handleCatchMessages = (error: unknown): void => {
   const axiosError = error as AxiosError<{ message?: string }>;
 
   const message = axiosError.response?.data?.message || axiosError.message || 'Oops! Something went wrong.';
+  showToast.error(message);
 
   console.error('API Error:', message);
 };

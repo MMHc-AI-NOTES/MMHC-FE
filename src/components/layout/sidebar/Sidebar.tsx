@@ -32,7 +32,7 @@ const AppSidebar = () => {
     <Sidebar collapsible="icon" className="px-2 pb-2">
       <SidebarHeaderSection />
 
-      <SidebarContent className="mx-2 pt-3">
+      <SidebarContent className="mx-2 overflow-x-hidden pt-3">
         <SidebarMenuSection items={navItems} label="" isActive={isActive} hasActiveChild={hasActiveChild} onItemClick={handleItemClick} />
         {/* <SidebarFooterSection items={bottomNavItems} isActive={isActive} onItemClick={handleItemClick} /> */}
       </SidebarContent>
