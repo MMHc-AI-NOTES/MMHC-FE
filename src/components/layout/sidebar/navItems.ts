@@ -1,19 +1,13 @@
-import { Briefcase, Building2, CheckSquare, FileText, HelpCircle, LayoutGrid, LogOut, User, UserCog, Users } from 'lucide-react';
+import { LayoutDashboard, FileText, Ban, ShieldCheck, ScrollText, Settings, HelpCircle, LogOut } from 'lucide-react';
 
 export const navItems: NavItem[] = [
-  { path: '/dashboard', name: 'Dashboard', icon: LayoutGrid },
-  {
-    name: 'Configuration',
-    icon: Briefcase,
-    children: [
-      { path: '/configuration/staff-types', name: 'Staff Types', icon: UserCog },
-      { path: '/configuration/documents', name: 'Documents', icon: FileText },
-    ],
-  },
-  { path: '/tasks', name: 'Tasks', icon: CheckSquare },
-  { path: '/central-record', name: 'Central Record', icon: User },
-  { path: '/users', name: 'Users', icon: Users },
-  { path: '/venues', name: 'Venues', icon: Building2 },
+  { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
+  { path: '/notes-queue', name: 'Notes Queue', icon: FileText },
+  // { path: '/single-note-audit', name: 'Single Note Audit', icon: FileSearch },
+  { path: '/blacklisted-notes', name: 'Blacklisted Notes', icon: Ban },
+  { path: '/manager-review', name: 'Manager Review', icon: ShieldCheck },
+  { path: '/ai-logs', name: 'AI Logs', icon: ScrollText },
+  { path: '/settings', name: 'Settings', icon: Settings },
 ];
 
 export const bottomNavItems: NavItem[] = [

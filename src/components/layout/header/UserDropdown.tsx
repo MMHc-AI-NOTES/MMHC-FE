@@ -23,9 +23,9 @@ const UserDropdown = () => {
         <DropdownMenuTrigger asChild>
           <button className="hover:bg-accent inline-flex items-center gap-2 rounded-md px-2 py-1.5">
             <Avatar className="h-8 w-8">
-              <AvatarFallback>AA</AvatarFallback>
+              <AvatarFallback className="bg-primary-light text-primary">AA</AvatarFallback>
             </Avatar>
-            <span className="hidden sm:inline-block">Admin User</span>
+            {/* <span className="hidden sm:inline-block">Admin User</span> */}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

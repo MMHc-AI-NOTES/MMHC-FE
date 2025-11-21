@@ -32,8 +32,54 @@ export default defineConfig({
     },
   },
   server: { open: true, port: 3000 },
-  build: {
-    outDir: 'build',
-    emptyOutDir: true,
-  },
+  // build: {
+  //   outDir: 'build',
+  //   emptyOutDir: true,
+  //   chunkSizeWarningLimit: 1000,
+  //   rollupOptions: {
+  //     output: {
+  //       manualChunks: id => {
+  //         if (id.includes('node_modules')) {
+  //           if (id.includes('@emotion')) return 'emotion';
+
+  //           if (id.includes('@mui')) {
+  //             if (id.includes('@mui/icons-material')) return 'mui-icons';
+  //             return 'mui-core';
+  //           }
+
+  //           if (id.includes('redux-toolkit')) return 'redux-toolkit';
+
+  //           if (id.includes('ag-grid')) {
+  //             if (id.includes('ag-grid-community')) return 'ag-grid-community';
+  //             if (id.includes('ag-grid-react')) return 'ag-grid-react';
+  //             return 'ag-grid';
+  //           }
+
+  //           if (id.includes('ag-charts-community')) return 'ag-charts-community';
+
+  //           if (id.includes('axios')) return 'axios';
+  //           if (id.includes('formik')) return 'formik';
+  //           if (id.includes('lodash')) return 'lodash';
+  //           if (id.includes('moment')) return 'moment';
+  //           if (id.includes('react-dnd-html5-backend')) return 'react-dnd-html5-backend';
+
+  //           if (id.includes('react-error-boundary')) return 'react-error-boundary';
+  //           if (id.includes('react-otp-input')) return 'react-otp-input';
+  //           if (id.includes('react-spinners')) return 'react-spinners';
+  //           if (id.includes('simplebar-react')) return 'simplebar-react';
+
+  //           // if (id.includes('react-dom')) return 'react-dom';
+  //           // if (id.includes('react-router-dom')) return 'react-router-dom';
+  //           // if (id.includes('react-scripts')) return 'react-scripts';
+  //           // if (id.includes('react')) return 'react';
+
+  //           if (id.includes('web-vitals')) return 'web-vitals';
+  //           if (id.includes('yup')) return 'yup';
+
+  //           return 'others-packages';
+  //         }
+  //       },
+  //     },
+  //   },
+  // },
 });

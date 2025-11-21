@@ -2,4 +2,4 @@
 
 cd "$(dirname "$0")/.."
 
-npx lint-staged
+npm run build && npx lint-staged
