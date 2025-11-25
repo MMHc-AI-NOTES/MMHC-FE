@@ -61,7 +61,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
   const formik = useFormik<AgentFormValues>({
     initialValues: {
       name: agent?.name || '',
-      model: agent?.model || AGENT_MODEL_KEYS.CLAUDE_3_5_SONNET_V2,
+      model: agent?.model || AGENT_MODEL_KEYS.CLAUDE_3_5_HAIKU_V1,
       use_context: agent?.use_context || true,
       temperature: agent?.temperature || 0.5,
       frequency_penalty: agent?.frequency_penalty || 0,
