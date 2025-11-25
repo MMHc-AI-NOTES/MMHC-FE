@@ -69,7 +69,7 @@ const Login = () => {
             </SharedButton>
           </div>
 
-          <div className="text-center text-sm">
+          <div className="hidden text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
             <Link to="/signup" className="text-primary font-medium hover:underline">
               Sign up
