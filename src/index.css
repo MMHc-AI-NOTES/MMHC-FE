@@ -142,36 +142,57 @@
   --ag-row-hover-color: var(--accent);
 }
 
-/* Add to your global CSS */
-.menu-item-wrapper {
+/* Apply smooth rounded curves on hover AND active state */
+.menu-item-wrapper:hover,
+.menu-item-wrapper.active {
   position: relative;
   z-index: 1;
 }
 
-.menu-item-wrapper::before,
-.menu-item-wrapper::after {
+.menu-item-wrapper:hover::before,
+.menu-item-wrapper:hover::after,
+.menu-item-wrapper.active::before,
+.menu-item-wrapper.active::after {
   content: '';
   position: absolute;
-  right: -12px;
-  width: 48px;
-  height: 48px;
+  right: 0;
+  width: 36px;
+  height: 36px;
   background: transparent;
   z-index: 2;
+  pointer-events: none;
 }
 
-.menu-item-wrapper::before {
-  top: -48px;
-  border-bottom-right-radius: 48px;
-  box-shadow: 0 24px 0 0 white;
+.menu-item-wrapper:hover::before,
+.menu-item-wrapper.active::before {
+  top: -35px;
+  border-bottom-right-radius: 36px;
+  box-shadow: 12px 4px 0 4px white;
 }
 
-.menu-item-wrapper::after {
-  bottom: -48px;
-  border-top-right-radius: 48px;
-  box-shadow: 0 -24px 0 0 white;
+.menu-item-wrapper:hover::after,
+.menu-item-wrapper.active::after {
+  bottom: -35px;
+  border-top-right-radius: 36px;
+  box-shadow: 12px -4px 0 4px white;
 }
-/* Hide convex curves when sidebar is collapsed */
-[data-collapsible='icon'] .menu-item-wrapper::before,
-[data-collapsible='icon'] .menu-item-wrapper::after {
+
+/* Hide curves when sidebar is collapsed */
+[data-collapsible='icon'] .menu-item-wrapper:hover::before,
+[data-collapsible='icon'] .menu-item-wrapper:hover::after,
+[data-collapsible='icon'] .menu-item-wrapper.active::before,
+[data-collapsible='icon'] .menu-item-wrapper.active::after {
   display: none;
+}
+
+/* Ensure the button itself has proper rounded corners */
+.sidebar-menu-button {
+  border-radius: 8px; /* Adjust as needed */
+  transition: all 0.2s ease;
+}
+
+/* Optional: Add smooth transition for the curves */
+.menu-item-wrapper::before,
+.menu-item-wrapper::after {
+  transition: all 0.2s ease;
 }

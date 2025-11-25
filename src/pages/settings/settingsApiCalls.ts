@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import { Agent, ApiAgent, CreateAgentRequest, UpdateAgentRequest, SingleAgentApiResponse, AgentListingApiResponse } from '@/types/agent';
+import { showToast } from '@/lib/toast';
 
 const transformApiAgentToAgent = (apiAgent: ApiAgent): Agent => {
   return {
@@ -30,6 +31,7 @@ export const createAgent = async (agentData: CreateAgentRequest): Promise<Agent 
     const response = await axios.post<SingleAgentApiResponse>('/agents', agentData);
 
     if (response.status) {
+      showToast.success('Agent Created Successfully!');
       return transformApiAgentToAgent(response.data);
     } else {
       const respAny = response as unknown as { errors?: any };
@@ -72,6 +74,7 @@ export const updateAgent = async (agentId: number, agentData: UpdateAgentRequest
     const response = await axios.patch<SingleAgentApiResponse>(`/agents/${agentId}`, agentData);
 
     if (response.status) {
+      showToast.success('Agent Updated Successfully!');
       return transformApiAgentToAgent(response.data);
     } else {
       const respAny = response as unknown as { errors?: any };
@@ -90,6 +93,7 @@ export const deleteAgent = async (agentId: number): Promise<boolean> => {
     const response = await axios.delete<{ status: boolean; message?: string; errors?: any }>(`/agents/${agentId}`);
 
     if (response.status) {
+      showToast.success('Agent Deleted Successfully!');
       return true;
     } else {
       const respAny = response as unknown as { errors?: any };

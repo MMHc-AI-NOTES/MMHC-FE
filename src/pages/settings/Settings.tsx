@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Agent, CreateAgentRequest } from '@/types/agent';
@@ -32,8 +32,9 @@ const Settings: React.FC = () => {
     const newAgent = await createAgent(agentData);
 
     if (newAgent) {
+      // Add new agent to local state instead of reloading
+      setAgents(prev => [...prev, newAgent]);
       setIsDialogOpen(false);
-      loadAgents();
     }
     setIsSubmitting(false);
   };
@@ -42,25 +43,25 @@ const Settings: React.FC = () => {
     if (!editingAgent) return;
 
     setIsSubmitting(true);
-    const updatedAgent = await updateAgent(editingAgent.id, agentData); // Now using number ID
+    const updatedAgent = await updateAgent(editingAgent.id, agentData);
 
     if (updatedAgent) {
+      // Update agent in local state instead of reloading
+      setAgents(prev => prev.map(agent => (agent.id === editingAgent.id ? updatedAgent : agent)));
       setIsDialogOpen(false);
       setEditingAgent(undefined);
-      loadAgents();
     }
     setIsSubmitting(false);
   };
 
   const handleDeleteAgent = async (agentId: number) => {
-    // Change parameter to number
-    if (!confirm('Are you sure you want to delete this agent?')) return;
-
-    const success = await deleteAgent(agentId); // Now using number ID
+    const success = await deleteAgent(agentId);
 
     if (success) {
-      loadAgents();
+      // Remove agent from local state instead of reloading
+      setAgents(prev => prev.filter(agent => agent.id !== agentId));
     }
+    return success;
   };
 
   const handleEditAgent = (agent: Agent) => {
@@ -75,17 +76,14 @@ const Settings: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-2 flex justify-end">
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus />
-          Add Agent
-        </Button>
-      </div>
-
       <Card>
-        <CardHeader>
-          <CardTitle>Manage Agents</CardTitle>
-        </CardHeader>
+        <div className="flex items-center justify-between px-6">
+          <p className="text-lg font-semibold">Manage Agents</p>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus />
+            Add Agent
+          </Button>
+        </div>
         <CardContent>
           {loading ? (
             <div className="space-y-4">
@@ -102,7 +100,7 @@ const Settings: React.FC = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto">
+        <DialogContent aria-describedby="" className="max-h-[90vh] overflow-y-auto md:min-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingAgent ? 'Edit Agent' : 'Create New Agent'}</DialogTitle>
           </DialogHeader>

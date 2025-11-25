@@ -81,12 +81,10 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
         <Textarea
           id="prompt"
           name="prompt"
-          rows={4}
           placeholder="Enter agent prompt..."
           value={formik.values.prompt}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          className="resize-none"
         />
         {formik.touched.prompt && formik.errors.prompt && <div className="mt-1 text-sm text-red-500">{formik.errors.prompt}</div>}
       </div>
