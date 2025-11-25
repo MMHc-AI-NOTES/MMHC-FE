@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Agent } from '@/types/agent';
 import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, FileText } from 'lucide-react';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
+import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS, AGENT_TYPE_LABELS, AGENT_TYPES } from '@/constants';
 
 interface AgentAccordionProps {
   agents: Agent[];
@@ -18,26 +19,19 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
-  const getTypeLabel = (type: number) => {
-    switch (type) {
-      case 1:
-        return 'System';
-      case 2:
-        return 'SOAP';
-      case 3:
-        return 'Custom';
-      default:
-        return 'Unknown';
-    }
+  // Function to get display name from model value
+  const getModelDisplayName = (modelValue: string): string => {
+    const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelValue);
+    return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelValue;
   };
 
   const getTypeColor = (type: number) => {
     switch (type) {
-      case 1:
+      case AGENT_TYPES.SYSTEM:
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 2:
+      case AGENT_TYPES.SOAP:
         return 'bg-green-100 text-green-800 border-green-200';
-      case 3:
+      case AGENT_TYPES.CUSTOM:
         return 'bg-purple-100 text-purple-800 border-purple-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -46,11 +40,11 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
 
   const getTypeIcon = (type: number) => {
     switch (type) {
-      case 1:
+      case AGENT_TYPES.SYSTEM:
         return <Settings className="h-4 w-4" />;
-      case 2:
+      case AGENT_TYPES.SOAP:
         return <FileText className="h-4 w-4" />;
-      case 3:
+      case AGENT_TYPES.CUSTOM:
         return <Bot className="h-4 w-4" />;
       default:
         return <Cpu className="h-4 w-4" />;
@@ -97,14 +91,14 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                           <h3 className="text-xl font-semibold text-gray-900">{agent.name}</h3>
                           <Badge className={`border ${getTypeColor(agent.type)} flex items-center space-x-1 px-3 py-1`}>
                             {getTypeIcon(agent.type)}
-                            <span>{getTypeLabel(agent.type)}</span>
+                            <span>{AGENT_TYPE_LABELS[agent.type] || 'Unknown'}</span>
                           </Badge>
                         </div>
                         <p className="mt-1 text-sm text-gray-600">{agent.description}</p>
                         <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
                           <span className="flex items-center space-x-1">
                             <Cpu className="h-3 w-3" />
-                            <span>{agent.model}</span>
+                            <span>{getModelDisplayName(agent.model)}</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <Zap className="h-3 w-3" />
@@ -165,7 +159,7 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                           <div className="space-y-3 text-sm">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Model</span>
-                              <span className="font-medium">{agent.model}</span>
+                              <span className="font-medium">{getModelDisplayName(agent.model)}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Use Context</span>
