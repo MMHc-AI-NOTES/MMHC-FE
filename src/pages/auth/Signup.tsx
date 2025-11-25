@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { Eye, EyeOff } from 'lucide-react';
 import SharedButton from '@/shared/GenericButton';
 import InputField from '@/shared/InputField';
+import Logo from '@/images/logo.svg';
 
 interface SignupFormValues {
   name: string;
@@ -45,8 +46,8 @@ const Signup = () => {
     <div className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="bg-primary text-primary-foreground mx-auto flex h-16 w-16 items-center justify-center rounded-2xl">
-            <span className="text-2xl font-bold">R</span>
+          <div className="flex items-center justify-center">
+            <img src={Logo} alt="logo" />
           </div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight">Create an account</h2>
           <p className="text-muted-foreground mt-2 text-sm">Get started with your free account</p>
