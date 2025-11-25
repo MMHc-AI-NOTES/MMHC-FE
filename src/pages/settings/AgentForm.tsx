@@ -9,6 +9,8 @@ import { Agent, CreateAgentRequest } from '@/types/agent';
 import * as yup from 'yup';
 import InputField from '@/shared/InputField';
 import SliderField from '@/shared/SliderField';
+import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
+import { SLIDER_CONFIGS } from '@/constants/common';
 
 interface AgentFormProps {
   agent?: Agent;
@@ -48,11 +50,18 @@ interface AgentFormValues {
   type: 1 | 2 | 3;
 }
 
+// Convert agentModelKeys to an array for easier iteration
+const modelOptions = Object.entries(AGENT_MODEL_KEYS).map(([key, value]) => ({
+  key: key as keyof typeof AGENT_MODEL_KEYS,
+  value,
+  displayName: AGENT_MODEL_DISPLAY_NAMES[key as keyof typeof AGENT_MODEL_KEYS],
+}));
+
 const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubmitting }) => {
   const formik = useFormik<AgentFormValues>({
     initialValues: {
       name: agent?.name || '',
-      model: agent?.model || 'gpt-5-mini',
+      model: agent?.model || AGENT_MODEL_KEYS.CLAUDE_3_5_SONNET_V2,
       use_context: agent?.use_context || true,
       temperature: agent?.temperature || 0.5,
       frequency_penalty: agent?.frequency_penalty || 0,
@@ -68,8 +77,6 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
       await onSubmit(values);
     },
   });
-
-  const models = ['gpt-5-mini', 'gpt-4.1', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
   return (
     <form onSubmit={formik.handleSubmit} className="space-y-3">
@@ -88,6 +95,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
         />
         {formik.touched.prompt && formik.errors.prompt && <div className="mt-1 text-sm text-red-500">{formik.errors.prompt}</div>}
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="model">Model</Label>
@@ -96,13 +104,14 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {models.map(model => (
-                <SelectItem key={model} value={model}>
-                  {model}
+              {modelOptions.map(model => (
+                <SelectItem key={model.key} value={model.value}>
+                  {model.displayName}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {formik.touched.model && formik.errors.model && <div className="mt-1 text-sm text-red-500">{formik.errors.model}</div>}
         </div>
 
         <div className="w-full space-y-2">
@@ -145,9 +154,9 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
           id="temperature"
           formik={formik}
           label="Temperature"
-          min={0}
-          max={2}
-          step={0.2}
+          min={SLIDER_CONFIGS.TEMPERATURE.min}
+          max={SLIDER_CONFIGS.TEMPERATURE.max}
+          step={SLIDER_CONFIGS.TEMPERATURE.step}
           className="rounded-lg border bg-white p-4 shadow"
         />
 
@@ -155,9 +164,9 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
           id="frequency_penalty"
           formik={formik}
           label="Frequency Penalty"
-          min={-2}
-          max={2}
-          step={0.4}
+          min={SLIDER_CONFIGS.FREQUENCY_PENALTY.min}
+          max={SLIDER_CONFIGS.FREQUENCY_PENALTY.max}
+          step={SLIDER_CONFIGS.FREQUENCY_PENALTY.step}
           className="rounded-lg border bg-white p-4 shadow"
         />
 
@@ -165,9 +174,9 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
           id="presence_penalty"
           formik={formik}
           label="Presence Penalty"
-          min={-2}
-          max={2}
-          step={0.4}
+          min={SLIDER_CONFIGS.PRESENCE_PENALTY.min}
+          max={SLIDER_CONFIGS.PRESENCE_PENALTY.max}
+          step={SLIDER_CONFIGS.PRESENCE_PENALTY.step}
           className="rounded-lg border bg-white p-4 shadow"
         />
       </div>
