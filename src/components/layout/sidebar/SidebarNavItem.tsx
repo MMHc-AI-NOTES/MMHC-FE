@@ -58,7 +58,7 @@ const SidebarNavItem = ({ item, isActive, hasActiveChild, onItemClick, isOpen, o
   return (
     <SidebarMenuItem key={item.name}>
       <SidebarMenuButton
-        className={`${state === 'collapsed' && '!rounded-4xl'} px-4 py-6`}
+        className={`${state === 'collapsed' && '!rounded-4xl'} px-4 py-7`}
         onClick={() => onItemClick(item)}
         isActive={active}
         tooltip={state === 'collapsed' ? item.name : undefined}
