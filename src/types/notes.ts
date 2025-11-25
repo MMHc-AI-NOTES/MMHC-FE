@@ -28,3 +28,31 @@ export interface FormattedNote {
 export interface DataFormatterProps {
   data: RawApiNote[];
 }
+
+export interface NoteDetail {
+  id: string;
+  date: string;
+  practitioner: string;
+  cptCode: string;
+  noteType: string;
+  aiReviews: number;
+  auditScore: number;
+  lastRun: string;
+  summary: string;
+  issues: {
+    severity: 'CRITICAL' | 'MODERATE' | 'MINOR';
+    category: string;
+    points: number;
+    description: string;
+    sectionId: string;
+  }[];
+}
+
+export interface NoteSection {
+  id: string;
+  title: string;
+  code: string;
+  icon: any;
+  content: string;
+  highlight?: boolean;
+}

@@ -16,7 +16,7 @@ jobs:
 
     env:
       VITE_FRONTEND_URL: https://mmh-dev.theexpertscloud.com
-      VITE_BACKEND_URL: https://mmh-dev-backend.theexpertscloud.com
+      VITE_BACKEND_URL: https://mmh-dev-backend.theexpertscloud.com/api
 
     steps:
       - name: Checkout repository
