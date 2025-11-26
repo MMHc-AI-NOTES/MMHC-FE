@@ -6,7 +6,7 @@ export const TimTimLoader = () => {
 
   return beatLoader ? (
     <div className="fixed top-13 right-0 left-0 z-50 flex justify-center">
-      <ThreeDots height="40" width="40" color="#2563eb" />
+      <ThreeDots height="40" width="40" color="#1E4129" />
     </div>
   ) : null;
 };

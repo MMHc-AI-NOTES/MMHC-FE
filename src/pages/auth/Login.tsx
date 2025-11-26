@@ -5,6 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import SharedButton from '@/shared/GenericButton';
 import InputField from '@/shared/InputField';
 import { handleSignIn } from './authApiCalls';
+import Logo from '@/images/logo.svg';
 
 interface LoginFormValues {
   email: string;
@@ -25,8 +26,8 @@ const Login = () => {
       email: Yup.string().email('Invalid email address').required('Email is required'),
       password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
     }),
-    onSubmit: async () => {
-      const isSuccess = await handleSignIn();
+    onSubmit: async values => {
+      const isSuccess = await handleSignIn(values.email, values.password);
       if (isSuccess) navigate('/dashboard');
     },
   });
@@ -35,8 +36,8 @@ const Login = () => {
     <div className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="bg-primary text-primary-foreground mx-auto flex h-16 w-16 items-center justify-center rounded-2xl">
-            <span className="text-2xl font-bold">R</span>
+          <div className="flex items-center justify-center">
+            <img src={Logo} alt="logo" />
           </div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight">Welcome back</h2>
           <p className="text-muted-foreground mt-2 text-sm">Sign in to your account to continue</p>
@@ -52,7 +53,6 @@ const Login = () => {
               label="Password"
               placeholder="••••••••"
               formik={formik}
-              labelExtraParams
               icon={
                 <button
                   type="button"
@@ -69,7 +69,7 @@ const Login = () => {
             </SharedButton>
           </div>
 
-          <div className="text-center text-sm">
+          <div className="hidden text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
             <Link to="/signup" className="text-primary font-medium hover:underline">
               Sign up

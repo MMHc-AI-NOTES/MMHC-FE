@@ -33,11 +33,7 @@ export const fetchNotes = async (): Promise<FormattedNote[]> => {
 
       return [];
     } else {
-      // Handle API errors but still return empty array
-      // Some code paths attach `errors` directly on the Axios response object
-      const respAny = response as unknown as { errors?: any };
-      const apiErrors = respAny.errors ?? response.data?.errors ?? { message: 'API request failed' };
-      handleErrorMessages(apiErrors);
+      handleErrorMessages(response);
       return [];
     }
   } catch (error: any) {
