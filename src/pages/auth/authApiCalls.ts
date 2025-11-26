@@ -1,5 +1,5 @@
-import { AxiosError } from 'axios';
-import { handleCatchMessages, setLocalStorageItem } from '@/utils/helper';
+import axios, { AxiosError } from 'axios';
+import { handleCatchMessages, handleErrorMessages, setLocalStorageItem } from '@/utils/helper';
 import { showToast } from '../../lib/toast';
 import { setHideBeatLoader, setShowBeatLoader } from '@/store/slices/alertsSlice';
 import { dispatch } from '@/store/store';
@@ -36,33 +36,19 @@ export const logoutUser = async (): Promise<boolean> => {
   }
 };
 
-export const handleSignIn = async (): Promise<boolean> => {
+export const handleSignIn = async (email: string, password: string): Promise<boolean> => {
   dispatch(setShowBeatLoader());
-  await delay(1000);
 
   try {
-    // const response = await axios.post('/login', {
-    //   email: 'adnanafzal7111@gmail.com',
-    //   password: 'experts@123',
-    // });
-    const response = {
-      status: true,
-      data: {
-        token: { type: 'bearer', token: 'oat_MjU5.enk2YzNxb' },
-        id: 41,
-        fullName: 'Saqlain Ali',
-        email: 'imhassan66@gmail.com',
-      },
-      message: 'Logged In Successfully',
-    };
+    const response = await axios.post('/login', { email, password });
 
     if (response.status && response.data?.token?.token) {
       setLocalStorageItem('authentication_token', response.data.token.token);
-      showToast.success('Login successful! Welcome back.');
-
       return true;
+    } else {
+      handleErrorMessages(response);
+      return false;
     }
-    return false;
   } catch (error: any) {
     handleCatchMessages(error);
     return false;

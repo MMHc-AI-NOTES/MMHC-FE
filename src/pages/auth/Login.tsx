@@ -26,8 +26,8 @@ const Login = () => {
       email: Yup.string().email('Invalid email address').required('Email is required'),
       password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
     }),
-    onSubmit: async () => {
-      const isSuccess = await handleSignIn();
+    onSubmit: async values => {
+      const isSuccess = await handleSignIn(values.email, values.password);
       if (isSuccess) navigate('/dashboard');
     },
   });

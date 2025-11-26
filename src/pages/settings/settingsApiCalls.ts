@@ -34,9 +34,7 @@ export const createAgent = async (agentData: CreateAgentRequest): Promise<Agent 
       showToast.success('Agent Created Successfully!');
       return transformApiAgentToAgent(response.data);
     } else {
-      const respAny = response as unknown as { errors?: any };
-      const apiErrors = respAny.errors ?? response.data?.errors ?? { message: 'Failed to create agent' };
-      handleErrorMessages(apiErrors);
+      handleErrorMessages(response);
       return null;
     }
   } catch (error: any) {
@@ -58,9 +56,7 @@ export const fetchAgents = async (): Promise<Agent[]> => {
         return [];
       }
     } else {
-      const respAny = response as unknown as { errors?: any };
-      const apiErrors = respAny.errors ?? response.data?.errors ?? { message: 'Failed to fetch agents' };
-      handleErrorMessages(apiErrors);
+      handleErrorMessages(response);
       return [];
     }
   } catch (error: any) {
@@ -77,9 +73,7 @@ export const updateAgent = async (agentId: number, agentData: UpdateAgentRequest
       showToast.success('Agent Updated Successfully!');
       return transformApiAgentToAgent(response.data);
     } else {
-      const respAny = response as unknown as { errors?: any };
-      const apiErrors = respAny.errors ?? response.data?.errors ?? { message: 'Failed to update agent' };
-      handleErrorMessages(apiErrors);
+      handleErrorMessages(response);
       return null;
     }
   } catch (error: any) {
@@ -96,9 +90,7 @@ export const deleteAgent = async (agentId: number): Promise<boolean> => {
       showToast.success('Agent Deleted Successfully!');
       return true;
     } else {
-      const respAny = response as unknown as { errors?: any };
-      const apiErrors = respAny.errors ?? response.data?.errors ?? { message: 'Failed to delete agent' };
-      handleErrorMessages(apiErrors);
+      handleErrorMessages(response);
       return false;
     }
   } catch (error: any) {
