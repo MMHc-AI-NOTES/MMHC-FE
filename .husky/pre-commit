@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
-
+# Skip Husky when committing from GitHub Desktop
+if [[ "$GIT_EXEC_PATH" == *"github-desktop"* ]]; then
+exit 0
+fi
 cd "$(dirname "$0")/.."
 
 npm run build && npx lint-staged
