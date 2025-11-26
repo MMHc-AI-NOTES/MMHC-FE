@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
 import { Agent } from '@/types/agent';
-import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, FileText } from 'lucide-react';
+import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, Radio, Gavel } from 'lucide-react';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS, AGENT_TYPE_LABELS, AGENT_TYPES } from '@/constants';
+import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
 
 interface AgentAccordionProps {
   agents: Agent[];
@@ -23,32 +23,6 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
   const getModelDisplayName = (modelValue: string): string => {
     const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelValue);
     return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelValue;
-  };
-
-  const getTypeColor = (type: number) => {
-    switch (type) {
-      case AGENT_TYPES.SYSTEM:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case AGENT_TYPES.SOAP:
-        return 'bg-green-100 text-green-800 border-green-200';
-      case AGENT_TYPES.CUSTOM:
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getTypeIcon = (type: number) => {
-    switch (type) {
-      case AGENT_TYPES.SYSTEM:
-        return <Settings className="h-4 w-4" />;
-      case AGENT_TYPES.SOAP:
-        return <FileText className="h-4 w-4" />;
-      case AGENT_TYPES.CUSTOM:
-        return <Bot className="h-4 w-4" />;
-      default:
-        return <Cpu className="h-4 w-4" />;
-    }
   };
 
   const handleDeleteClick = (agent: Agent) => {
@@ -89,20 +63,29 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                       <div className="text-left">
                         <div className="flex items-center space-x-3">
                           <h3 className="text-xl font-semibold text-gray-900">{agent.name}</h3>
-                          <Badge className={`border ${getTypeColor(agent.type)} flex items-center space-x-1 px-3 py-1`}>
-                            {getTypeIcon(agent.type)}
-                            <span>{AGENT_TYPE_LABELS[agent.type] || 'Unknown'}</span>
-                          </Badge>
+                          {agent.is_default ? (
+                            <Badge className="bg-primary-light flex items-center space-x-1 border px-3 py-1">
+                              <span>Default</span>
+                            </Badge>
+                          ) : null}
                         </div>
                         <p className="mt-1 text-sm text-gray-600">{agent.description}</p>
-                        <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                        <div className="mt-2 flex items-center space-x-4 text-xs text-gray-600">
                           <span className="flex items-center space-x-1">
-                            <Cpu className="h-3 w-3" />
+                            <Cpu className="text-primary h-4 w-4" />
                             <span>{getModelDisplayName(agent.model)}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <Zap className="h-3 w-3" />
+                            <Zap className="text-primary h-4 w-4" />
                             <span>Temp: {agent.temperature}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Radio className="text-primary h-4 w-4" />
+                            <span>Freq: {agent.temperature}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Gavel className="text-primary h-4 w-4" />
+                            <span>Pres: {agent.temperature}</span>
                           </span>
                         </div>
                       </div>
@@ -150,8 +133,8 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                   <CardContent className="space-y-6 p-0">
                     {/* Configuration Grid */}
                     <div className="grid gap-6 sm:grid-cols-2">
-                      <div className="space-y-4">
-                        <div className="rounded-lg bg-gray-50 p-4">
+                      <div className="h-full space-y-4">
+                        <div className="h-full rounded-lg bg-gray-50 p-4">
                           <h4 className="mb-3 flex items-center space-x-2 font-semibold text-gray-900">
                             <Settings className="h-4 w-4" />
                             <span>Configuration</span>
@@ -161,16 +144,10 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                               <span className="text-gray-600">Model</span>
                               <span className="font-medium">{getModelDisplayName(agent.model)}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Use Context</span>
-                              <Badge variant={agent.use_context ? 'default' : 'secondary'}>
-                                {agent.use_context ? 'Enabled' : 'Disabled'}
-                              </Badge>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Transcript</span>
-                              <Badge variant={agent.transcript ? 'default' : 'secondary'}>
-                                {agent.transcript ? 'Enabled' : 'Disabled'}
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Is Default</span>
+                              <Badge className="text-md px-4 py-1" variant={agent.is_default ? 'default' : 'destructive'}>
+                                {agent.is_default ? 'Yes' : 'No'}
                               </Badge>
                             </div>
                           </div>
