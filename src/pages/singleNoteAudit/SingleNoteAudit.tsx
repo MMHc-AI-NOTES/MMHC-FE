@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -12,74 +14,115 @@ import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
-import { NoteDetail } from '@/types/notes';
+
+// Services and Types
+import { NoteDetail, ApiNoteDetail } from '@/types/notes';
+import { RootState } from '@/store/store';
+import { getNoteDetailWithChat } from './singleNoteApiCalls';
+import TherapySessionCard from './TherapySessionCard';
+import { fetchAgents } from '../settings/settingsApiCalls';
+import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
+
+// Utility function to format API response to component expected format
+const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
+  // Use moment for date formatting
+  const sessionDate = moment(apiData.sessionTime);
+  const formattedDate = sessionDate.format('MMM D, YYYY');
+
+  // Use actual data from the API response if available
+  const latestChat = apiData.chats?.[0];
+  const bedrockResponse = latestChat?.bedrockResponse;
+  const formattedDateTime = latestChat?.createdAt ? moment(bedrockResponse.createdAt).format('MMM D, YYYY h:mm A') : '';
+
+  // Convert API issues to the expected format
+  const issues = bedrockResponse?.issues?.map((issue: any) => ({
+    severity: (issue.severity?.toUpperCase() as 'CRITICAL' | 'MODERATE' | 'MINOR') || 'MINOR',
+    category: issue.section || 'General',
+    points: issue.points_deducted || 0,
+    description: issue.justification || 'No description provided',
+    sectionId: issue.section_id || 'general',
+  })) || [
+    // Fallback to default issues if no chat data
+    {
+      severity: 'CRITICAL' as const,
+      category: 'Assessment & Therapeutic Intervention',
+      points: 25,
+      description:
+        'Missing specific DSM-5 diagnostic criteria documentation. Clinical assessment lacks measurable symptoms or severity indicators required for medical necessity.',
+      sectionId: 'zad8-1',
+    },
+    {
+      severity: 'MODERATE' as const,
+      category: 'Plan & Collaboration',
+      points: 10,
+      description:
+        'Treatment plan lacks specific, measurable goals. Coordination with psychiatrist mentioned but no documentation of actual communication or consent for information sharing.',
+      sectionId: 'hwh-1',
+    },
+  ];
+
+  return {
+    id: apiData.noteId,
+    date: formattedDate,
+    practitioner: apiData.practitioner.fullName,
+    cptCode: '90791', // You'll need to get this from your API
+    noteType: 'Progress Note', // You'll need to get this from your API
+    aiReviews: apiData.chats?.length || 0,
+    auditScore: bedrockResponse?.score || 0, // Use actual score from chat or fallback
+    lastRun: formattedDateTime,
+    aiSummary: bedrockResponse?.summary, // Use chat summary or fallback to session
+    therapySummary: apiData.session, // Use chat summary or fallback to session
+    bedrockResponse: bedrockResponse,
+    issues: issues,
+  };
+};
 
 const SingleNoteAudit = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const { id: noteId } = useParams<{ id: string }>();
+  const { selectedAgentId } = useSelector((state: RootState) => state.agents);
+
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showHumanReview, setShowHumanReview] = useState(false);
 
-  // Dummy API call to fetch note details
-  const fetchNoteDetail = async (id: string): Promise<NoteDetail> => {
-    await new Promise(resolve => setTimeout(resolve, 1200));
+  useEffect(() => {
+    (async () => {
+      const agentsData = await fetchAgents();
+      if (agentsData) {
+        dispatch(setAgents(agentsData));
 
-    return {
-      id: id,
-      date: 'Feb 9, 2025',
-      practitioner: 'Jane Thompson',
-      cptCode: '90791',
-      noteType: 'Progress Note',
-      aiReviews: 1,
-      auditScore: 82,
-      lastRun: 'Feb 9, 2025 – 10:32 AM',
-      summary:
-        'This progress note demonstrates adequate clinical documentation with appropriate coverage of therapeutic interventions and patient response. However, several areas require attention to meet full compliance standards, particularly regarding diagnostic criteria specificity and treatment plan measurability.',
-      issues: [
-        {
-          severity: 'CRITICAL',
-          category: 'Assessment & Therapeutic Intervention',
-          points: 25,
-          description:
-            'Missing specific DSM-5 diagnostic criteria documentation. Clinical assessment lacks measurable symptoms or severity indicators required for medical necessity.',
-          sectionId: 'zad8-1',
-        },
-        {
-          severity: 'MODERATE',
-          category: 'Plan & Collaboration',
-          points: 10,
-          description:
-            'Treatment plan lacks specific, measurable goals. Coordination with psychiatrist mentioned but no documentation of actual communication or consent for information sharing.',
-          sectionId: 'hwh-1',
-        },
-        {
-          severity: 'MINOR',
-          category: 'Subjective',
-          points: 5,
-          description:
-            'Could benefit from more specific timeline documentation (e.g., exact duration and frequency of symptoms). Current documentation meets minimum requirements.',
-          sectionId: '6tx9-1',
-        },
-      ],
-    };
-  };
+        // Set default agent automatically
+        const defaultAgent = agentsData.find(agent => agent.is_default === 1);
+        if (defaultAgent) {
+          dispatch(setSelectedAgentId(defaultAgent.id));
+        } else if (agentsData.length > 0) {
+          // If no default agent, select the first one
+          dispatch(setSelectedAgentId(agentsData[0].id));
+        }
+      }
+    })();
+  }, [dispatch]);
+
+  const loadNoteDetail = useCallback(
+    async (isRerun: boolean = false) => {
+      setLoading(true);
+      if (noteId && selectedAgentId) {
+        const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentId, isRerun);
+        const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
+
+        setNoteDetail(formattedNoteDetail);
+      }
+      setLoading(false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [noteId],
+  );
 
   useEffect(() => {
-    const loadNoteDetail = async () => {
-      try {
-        setLoading(true);
-        const detail = await fetchNoteDetail('12439');
-        setNoteDetail(detail);
-      } catch (error) {
-        console.error('Error fetching note detail:', error);
-        setNoteDetail(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadNoteDetail();
-  }, []);
+  }, [loadNoteDetail]);
 
   const handleSaveDraft = () => {
     console.log('Saving draft...');
@@ -101,47 +144,36 @@ const SingleNoteAudit = () => {
     return <LoadingSkeleton />;
   }
 
-  if (!noteDetail) {
-    return (
+  return (
+    noteDetail && (
       <div>
         <Button onClick={() => navigate('/notes-queue')} className="mb-2">
           <ArrowLeft />
         </Button>
-        <div className="flex flex-col items-center justify-between">
-          <h1 className="text-2xl font-bold">Note not found</h1>
-          <p className="mt-2 text-gray-600">Please check the note ID and try again.</p>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+          {/* Left Sidebar */}
+          <div className="space-y-4">
+            <NoteInformation noteDetail={noteDetail} />
+            <TherapySessionCard summary={noteDetail.therapySummary} />
+
+            <NoteSections bedrockResponse={noteDetail.bedrockResponse} />
+          </div>
+
+          {/* Right Content */}
+          <div className="space-y-4">
+            <AuditScoreCard noteDetail={noteDetail} />
+            <AISummaryCard summary={noteDetail.aiSummary} />
+            <IssuesIdentifiedCard issues={noteDetail.issues} />
+
+            {/* Conditionally render Human Review or Action Buttons */}
+            {showHumanReview ? (
+              <HumanReviewSection onSaveDraft={handleSaveDraft} onSubmit={handleSubmitReview} setShowHumanReview={setShowHumanReview} />
+            ) : null}
+            <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
+          </div>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div>
-      <Button onClick={() => navigate('/notes-queue')} className="mb-2">
-        <ArrowLeft />
-      </Button>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-        {/* Left Sidebar */}
-        <div className="space-y-4">
-          <NoteInformation noteDetail={noteDetail} />
-          <NoteSections />
-        </div>
-
-        {/* Right Content */}
-        <div className="space-y-4">
-          <AuditScoreCard noteDetail={noteDetail} />
-          <AISummaryCard summary={noteDetail.summary} />
-          <IssuesIdentifiedCard issues={noteDetail.issues} />
-
-          {/* Conditionally render Human Review or Action Buttons */}
-
-          {showHumanReview ? (
-            <HumanReviewSection onSaveDraft={handleSaveDraft} onSubmit={handleSubmitReview} setShowHumanReview={setShowHumanReview} />
-          ) : null}
-          <ActionButtons onFlagReview={handleFlagReview} />
-        </div>
-      </div>
-    </div>
+    )
   );
 };
 

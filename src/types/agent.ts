@@ -3,8 +3,8 @@ export interface Agent {
   name: string;
   model: string;
   temperature: number;
-  frequency_penalty: number;
-  presence_penalty: number;
+  top_k: number;
+  top_p: number;
   previous_section: number[] | null;
   prompt: string;
   description: string;
@@ -19,8 +19,8 @@ export interface ApiAgent {
   name: string;
   model: string;
   temperature: number;
-  frequencyPenalty: number;
-  presencePenalty: number;
+  topK: number;
+  topP: number;
   previousSection: number[] | null;
   prompt: string;
   description: string;
@@ -33,8 +33,8 @@ export interface CreateAgentRequest {
   name: string;
   model: string;
   temperature: number;
-  frequency_penalty: number;
-  presence_penalty: number;
+  top_k: number;
+  top_p: number;
   previous_section: number[];
   prompt: string;
   description: string;

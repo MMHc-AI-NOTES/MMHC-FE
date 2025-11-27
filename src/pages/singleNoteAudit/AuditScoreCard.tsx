@@ -25,7 +25,7 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
               <span>{noteDetail.auditScore}</span>
               <span>/ 100</span>
             </div>
-            <p className="mt-3 text-sm">Last AI run: {noteDetail.lastRun}</p>
+            <p className="mt-3 text-sm">Last AI Run: {noteDetail.lastRun}</p>
           </div>
           <Badge
             className={`text-primary text-md rounded-full border-gray-50 bg-gradient-to-br from-gray-50 px-8 py-2 font-semibold shadow-sm ${isGoodAuditScore ? 'to-primary-light' : 'via-red-300 to-red-700'}`}

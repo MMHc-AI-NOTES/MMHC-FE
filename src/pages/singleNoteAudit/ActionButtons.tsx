@@ -3,39 +3,21 @@ import { Button } from '@/components/ui/button';
 import { RefreshCcw, Send, Flag, Check, ChevronsUpDown } from 'lucide-react';
 import { RootState } from '@/store/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useState } from 'react';
-import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
-import { fetchAgents } from '../settings/settingsApiCalls';
+import { useState } from 'react';
+import { setSelectedAgentId } from '@/store/slices/agentsSlice';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 interface ActionButtonsProps {
   onFlagReview: () => void;
+  onReRunAudit: (isRerun: boolean) => void;
 }
 
-const ActionButtons = ({ onFlagReview }: ActionButtonsProps) => {
+const ActionButtons = ({ onFlagReview, onReRunAudit }: ActionButtonsProps) => {
   const dispatch = useDispatch();
   const { agents, selectedAgentId } = useSelector((state: RootState) => state.agents);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const agentsData = await fetchAgents();
-      if (agentsData) {
-        dispatch(setAgents(agentsData));
-
-        // Set default agent automatically
-        const defaultAgent = agentsData.find(agent => agent.is_default === 1);
-        if (defaultAgent) {
-          dispatch(setSelectedAgentId(defaultAgent.id));
-        } else if (agentsData.length > 0) {
-          // If no default agent, select the first one
-          dispatch(setSelectedAgentId(agentsData[0].id));
-        }
-      }
-    })();
-  }, [dispatch]);
 
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
@@ -83,6 +65,7 @@ const ActionButtons = ({ onFlagReview }: ActionButtonsProps) => {
         <Button
           className="to-primary-light text-primary h-12 w-full border-0 bg-gradient-to-r from-gray-50 shadow-sm"
           disabled={!selectedAgentId}
+          onClick={() => onReRunAudit(true)}
         >
           <RefreshCcw className="mr-2" />
           Re-Run Audit

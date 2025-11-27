@@ -34,8 +34,19 @@ const Settings: React.FC = () => {
     const newAgent = await createAgent(agentData);
 
     if (newAgent) {
-      // Add new agent to Redux store
-      dispatch(addAgent(newAgent));
+      // If new agent is set as default, set all other agents to not default
+      if (newAgent.is_default) {
+        const updatedAgents = agents.map(agent => ({
+          ...agent,
+          is_default: 0,
+        }));
+        // Add the new agent to the updated list
+        const finalAgents = [...updatedAgents, newAgent];
+        dispatch(setAgents(finalAgents));
+      } else {
+        dispatch(addAgent(newAgent));
+      }
+
       setIsDialogOpen(false);
     }
     setIsSubmitting(false);

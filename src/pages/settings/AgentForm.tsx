@@ -26,8 +26,8 @@ const agentValidationSchema = yup.object({
   model: yup.string().required('Model is required'),
   is_default: yup.number().required(),
   temperature: yup.number().min(0).max(2).required('Temperature is required'),
-  frequency_penalty: yup.number().min(-2).max(2).required('Frequency penalty is required'),
-  presence_penalty: yup.number().min(-2).max(2).required('Presence penalty is required'),
+  top_k: yup.number().min(0).max(1000).required('Frequency penalty is required'),
+  top_p: yup.number().min(0).max(1).required('Presence penalty is required'),
   previous_section: yup.array().of(yup.number()).required(),
   prompt: yup.string().required('Prompt is required'),
   description: yup.string().required('Description is required'),
@@ -38,8 +38,8 @@ interface AgentFormValues {
   model: string;
   is_default: number;
   temperature: number;
-  frequency_penalty: number;
-  presence_penalty: number;
+  top_k: number;
+  top_p: number;
   previous_section: number[];
   prompt: string;
   description: string;
@@ -59,12 +59,12 @@ const TOOLTIP_CONTENT = {
     description:
       'Controls randomness: Lower values make responses more deterministic and focused, while higher values make them more creative and diverse. Range: 0 to 2',
   },
-  frequency_penalty: {
-    title: 'Frequency Penalty',
+  top_k: {
+    title: 'Top K',
     description: 'Reduces repetition by penalizing frequently used tokens. Higher values decrease repetition. Range: -2 to 2',
   },
-  presence_penalty: {
-    title: 'Presence Penalty',
+  top_p: {
+    title: 'Top P',
     description:
       'Encourages new topics by penalizing tokens that have already appeared. Higher values promote new concepts. Range: -2 to 2',
   },
@@ -75,10 +75,10 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
     initialValues: {
       name: agent?.name || '',
       model: agent?.model || AGENT_MODEL_KEYS.CLAUDE_3_5_HAIKU_V1,
-      is_default: agent?.is_default || 0,
+      is_default: agent?.is_default ? 1 : 0,
       temperature: agent?.temperature || 0.5,
-      frequency_penalty: agent?.frequency_penalty || 0,
-      presence_penalty: agent?.presence_penalty || 0,
+      top_k: agent?.top_k || 0,
+      top_p: agent?.top_p || 0,
       previous_section: agent?.previous_section || [],
       prompt: agent?.prompt || '',
       description: agent?.description || '',
@@ -109,7 +109,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
           <Switch
             id="is_default"
             checked={formik.values.is_default ? true : false}
-            onCheckedChange={checked => formik.setFieldValue('is_default', checked ? 1 : 0)}
+            onCheckedChange={(checked: any) => formik.setFieldValue('is_default', checked ? 1 : 0)}
           />
           <Label htmlFor="is_default" className="cursor-pointer">
             Set as Default
@@ -183,35 +183,35 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
 
           <div className="rounded-lg border bg-white p-4 shadow">
             <div className="flex items-center gap-2">
-              <Label htmlFor="frequency_penalty" className="text-sm font-medium">
-                Frequency Penalty
+              <Label htmlFor="top_p" className="text-sm font-medium">
+                Top P
               </Label>
-              <InfoTooltip content={TOOLTIP_CONTENT.frequency_penalty} />
+              <InfoTooltip content={TOOLTIP_CONTENT.top_p} />
             </div>
             <SliderField
-              id="frequency_penalty"
+              id="top_p"
               formik={formik}
               label=""
-              min={SLIDER_CONFIGS.FREQUENCY_PENALTY.min}
-              max={SLIDER_CONFIGS.FREQUENCY_PENALTY.max}
-              step={SLIDER_CONFIGS.FREQUENCY_PENALTY.step}
+              min={SLIDER_CONFIGS.TOP_P.min}
+              max={SLIDER_CONFIGS.TOP_P.max}
+              step={SLIDER_CONFIGS.TOP_P.step}
             />
           </div>
 
           <div className="rounded-lg border bg-white p-4 shadow">
             <div className="flex items-center gap-2">
-              <Label htmlFor="presence_penalty" className="text-sm font-medium">
-                Presence Penalty
+              <Label htmlFor="top_k" className="text-sm font-medium">
+                Top K
               </Label>
-              <InfoTooltip content={TOOLTIP_CONTENT.presence_penalty} />
+              <InfoTooltip content={TOOLTIP_CONTENT.top_k} />
             </div>
             <SliderField
-              id="presence_penalty"
+              id="top_k"
               formik={formik}
               label=""
-              min={SLIDER_CONFIGS.PRESENCE_PENALTY.min}
-              max={SLIDER_CONFIGS.PRESENCE_PENALTY.max}
-              step={SLIDER_CONFIGS.PRESENCE_PENALTY.step}
+              min={SLIDER_CONFIGS.TOP_K.min}
+              max={SLIDER_CONFIGS.TOP_K.max}
+              step={SLIDER_CONFIGS.TOP_K.step}
             />
           </div>
         </div>
