@@ -116,8 +116,7 @@ const SingleNoteAudit = () => {
       }
       setLoading(false);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [noteId],
+    [noteId, selectedAgentId],
   );
 
   useEffect(() => {
