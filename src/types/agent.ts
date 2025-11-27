@@ -2,19 +2,13 @@ export interface Agent {
   id: number;
   name: string;
   model: string;
-  use_context: boolean;
   temperature: number;
   frequency_penalty: number;
   presence_penalty: number;
   previous_section: number[] | null;
-  transcript: boolean;
   prompt: string;
   description: string;
-  type: 1 | 2 | 3;
-  agent_key?: string;
-  is_active?: boolean;
-  is_default?: boolean;
-  ai_safety_settings?: any;
+  is_default?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -23,20 +17,14 @@ export interface Agent {
 export interface ApiAgent {
   id: number;
   name: string;
-  agentKey: string;
   model: string;
-  useContext: boolean;
   temperature: number;
   frequencyPenalty: number;
   presencePenalty: number;
   previousSection: number[] | null;
-  transcript: boolean;
   prompt: string;
   description: string;
-  isActive: boolean;
-  isDefault: boolean;
-  type: 1 | 2 | 3;
-  aiSafetySettings: any;
+  isDefault: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,15 +32,13 @@ export interface ApiAgent {
 export interface CreateAgentRequest {
   name: string;
   model: string;
-  use_context: boolean;
   temperature: number;
   frequency_penalty: number;
   presence_penalty: number;
   previous_section: number[];
-  transcript: boolean;
   prompt: string;
   description: string;
-  type: 1 | 2 | 3;
+  is_default: number;
 }
 
 export type UpdateAgentRequest = Partial<CreateAgentRequest>;
