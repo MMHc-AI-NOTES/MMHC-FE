@@ -36,7 +36,7 @@ const QuickActions = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+        <CardTitle className="text-primary text-lg font-semibold">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {actions.map(action => {

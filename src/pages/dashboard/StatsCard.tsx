@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, TrendingUp, CheckCircle, Ban, Info } from 'lucide-react';
+import { FileText, TrendingUp, CheckCircle, Ban, Info, ArrowRight } from 'lucide-react';
 
 interface StatsCardProps {
   notesAuditedToday: number;
@@ -14,7 +14,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       title: 'Notes Audited Today',
       value: notesAuditedToday,
       icon: FileText,
-      iconBg: 'bg-green-100',
+      iconBg: 'bg-green-50',
       iconColor: 'text-primary',
       isTrendingUp: true,
       trendingValue: 12,
@@ -23,7 +23,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       title: 'Pass Rate',
       value: `${weeklyGrowth}%`,
       icon: CheckCircle,
-      iconBg: 'bg-green-100',
+      iconBg: 'bg-green-50',
       iconColor: 'text-primary',
       isTrendingUp: true,
       trendingValue: 3,
@@ -34,6 +34,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       icon: Info,
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
+      isReview: true,
     },
     {
       title: 'Blacklisted Notes',
@@ -53,7 +54,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
           <Card key={index} className="border-0 shadow-md">
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className={`rounded-full p-2 ${stat.iconBg}`}>
+                <div className={`rounded-lg p-2 ${stat.iconBg}`}>
                   <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
 
@@ -61,13 +62,17 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
                   <div className="text-primary-light flex items-center gap-1.5 text-xs">
                     <TrendingUp size={14} /> <p>+{stat.trendingValue}%</p>{' '}
                   </div>
+                ) : stat.isReview ? (
+                  <div className={`rounded-full p-1.5 ${stat.iconBg}`}>
+                    <ArrowRight className={`h-4 w-4 ${stat.iconColor}`} />
+                  </div>
                 ) : stat.isAlert ? (
-                  <p className="rounded-lg bg-red-100 px-3 py-0.5 text-sm text-red-600">ALERT</p>
+                  <p className="rounded-lg bg-red-100 px-3 py-1 text-sm font-medium text-red-600">ALERT</p>
                 ) : null}
               </div>
 
-              <h2 className="text-primary mt-2 text-4xl font-bold">{stat.value.toLocaleString()}</h2>
-              <p className="text-sm">{stat.title}</p>
+              <h2 className="text-primary mt-2 text-5xl font-bold">{stat.value.toLocaleString()}</h2>
+              <p>{stat.title}</p>
             </CardContent>
           </Card>
         );

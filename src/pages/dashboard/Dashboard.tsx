@@ -8,6 +8,8 @@ import PractitionerTrendsChart from './PractitionerTrendsChart';
 import RecentActivity from './RecentActivity';
 import QuickActions from './QuickActions';
 import DashboardSkeleton from './DashboardSkeleton';
+import DashboardCardHeader from './DashboardCardHeader';
+import { Activity, Clock, Users } from 'lucide-react';
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
@@ -55,7 +57,7 @@ const Dashboard = () => {
         {/* Weekly Audit Volume */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Weekly Audit Volume</CardTitle>
+            <DashboardCardHeader title="Weekly Audit Volume" icon={Activity} />
           </CardHeader>
           <CardContent>
             <WeeklyVolumeChart data={dashboardData.weeklyAuditVolume} />
@@ -65,7 +67,9 @@ const Dashboard = () => {
         {/* Practitioner Quality Trends */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Practitioner Quality Trends</CardTitle>
+            <DashboardCardHeader title="Practitioner Quality Trends" icon={Users} />
+
+            <CardTitle className="text-lg font-semibold"></CardTitle>
           </CardHeader>
           <CardContent>
             <PractitionerTrendsChart data={dashboardData.practitionerTrends} />
@@ -73,18 +77,17 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentActivity activities={dashboardData.recentActivities} />
-            </CardContent>
-          </Card>
-        </div>
+
+        <Card>
+          <CardHeader>
+            <DashboardCardHeader title="Recent Activity" icon={Clock} />
+          </CardHeader>
+          <CardContent>
+            <RecentActivity activities={dashboardData.recentActivities} />
+          </CardContent>
+        </Card>
 
         {/* Quick Actions */}
         <QuickActions />
