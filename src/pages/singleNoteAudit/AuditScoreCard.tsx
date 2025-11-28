@@ -21,11 +21,11 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
               <ChartColumn />
               <span>Audit Score</span>
             </div>
-            <div className="flex items-baseline gap-2 text-6xl font-bold">
+            <div className="flex items-baseline gap-2 font-bold md:text-4xl lg:text-6xl">
               <span>{noteDetail.auditScore}</span>
               <span>/ 100</span>
             </div>
-            <p className="mt-3 text-sm">Last AI run: {noteDetail.lastRun}</p>
+            <p className="mt-3 text-sm">Last AI Run: {noteDetail.lastRun}</p>
           </div>
           <Badge
             className={`text-primary text-md rounded-full border-gray-50 bg-gradient-to-br from-gray-50 px-8 py-2 font-semibold shadow-sm ${isGoodAuditScore ? 'to-primary-light' : 'via-red-300 to-red-700'}`}

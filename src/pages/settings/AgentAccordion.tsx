@@ -80,12 +80,12 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                             <span>Temp: {agent.temperature}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <Radio className="text-primary h-4 w-4" />
-                            <span>Freq: {agent.temperature}</span>
+                            <Gavel className="text-primary h-4 w-4" />
+                            <span>Top P: {agent.temperature}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <Gavel className="text-primary h-4 w-4" />
-                            <span>Pres: {agent.temperature}</span>
+                            <Radio className="text-primary h-4 w-4" />
+                            <span>Top K: {agent.temperature}</span>
                           </span>
                         </div>
                       </div>
@@ -165,13 +165,14 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                               <span className="text-gray-600">Temperature</span>
                               <span className="font-medium">{agent.temperature}</span>
                             </div>
+
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Frequency Penalty</span>
-                              <span className="font-medium">{agent.frequency_penalty}</span>
+                              <span className="text-gray-600">Top P</span>
+                              <span className="font-medium">{agent.top_p}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Presence Penalty</span>
-                              <span className="font-medium">{agent.presence_penalty}</span>
+                              <span className="text-gray-600">Top K</span>
+                              <span className="font-medium">{agent.top_k}</span>
                             </div>
                           </div>
                         </div>
