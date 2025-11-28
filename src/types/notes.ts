@@ -41,6 +41,8 @@ export interface NoteDetail {
   aiSummary: string;
   therapySummary: string;
   bedrockResponse: object;
+  prompt: string;
+  rawResponse: string;
   issues: {
     severity: 'CRITICAL' | 'MODERATE' | 'MINOR';
     category: string;
@@ -90,6 +92,7 @@ export interface Chat {
     '9z5t-1_therapist_reflection': string;
     'gm4p-1_progress': string;
     'kxgx-7_&_kxgx-8_suicidality/homicidality': string;
+    raw_response: string;
   };
   noteId: string;
   userId: number;
@@ -114,6 +117,7 @@ export interface ApiNoteDetail {
   session: string;
   sessionTime: string;
   practitionerId: number;
+  patient: { uuid: string };
   createdAt: string;
   updatedAt: string;
   practitioner: Practitioner; // Object type

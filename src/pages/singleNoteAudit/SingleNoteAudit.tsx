@@ -1,15 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundPen } from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
 import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
-import AISummaryCard from './AISummaryCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
@@ -19,9 +18,9 @@ import LoadingSkeleton from './LoadingSkeleton';
 import { NoteDetail, ApiNoteDetail } from '@/types/notes';
 import { RootState } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
-import TherapySessionCard from './TherapySessionCard';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
+import SummaryCard from './SummaryCard';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
@@ -32,7 +31,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
   const bedrockResponse = latestChat?.bedrockResponse;
-  const formattedDateTime = latestChat?.createdAt ? moment(bedrockResponse.createdAt).format('MMM D, YYYY h:mm A') : '';
+  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY h:mm A') : '';
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({
@@ -65,15 +64,17 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     id: apiData.noteId,
     date: formattedDate,
     practitioner: apiData.practitioner.fullName,
-    cptCode: '90791', // You'll need to get this from your API
-    noteType: 'Progress Note', // You'll need to get this from your API
+    cptCode: apiData.patient?.uuid || '-',
+    noteType: 'Progress Note',
     aiReviews: apiData.chats?.length || 0,
-    auditScore: bedrockResponse?.score || 0, // Use actual score from chat or fallback
+    auditScore: bedrockResponse?.score || 0,
     lastRun: formattedDateTime,
-    aiSummary: bedrockResponse?.summary, // Use chat summary or fallback to session
-    therapySummary: apiData.session, // Use chat summary or fallback to session
+    aiSummary: bedrockResponse?.summary,
+    therapySummary: apiData.session,
     bedrockResponse: bedrockResponse,
     issues: issues,
+    prompt: latestChat?.prompt || '',
+    rawResponse: bedrockResponse?.raw_response || '',
   };
 };
 
@@ -84,54 +85,101 @@ const SingleNoteAudit = () => {
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useSelector((state: RootState) => state.agents);
 
+  // Create a ref to store the latest selectedAgentId
+  const selectedAgentIdRef = useRef(selectedAgentId);
+  const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
+
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [showHumanReview, setShowHumanReview] = useState(false);
+  const [agentsLoaded, setAgentsLoaded] = useState(false);
 
+  // Update the ref whenever selectedAgentId changes
   useEffect(() => {
+    selectedAgentIdRef.current = selectedAgentId;
+  }, [selectedAgentId]);
+
+  const loadNoteDetail = useCallback(
+    async (isRerun: boolean = false) => {
+      if (!noteId || !selectedAgentIdRef.current) {
+        console.log('Missing noteId or selectedAgentId');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentIdRef.current, isRerun);
+        const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
+
+        setNoteDetail(formattedNoteDetail);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [noteId],
+  );
+
+  // Load agents and set default agent - runs on every mount
+  useEffect(() => {
+    let isMounted = true;
+
     (async () => {
+      setLoading(true);
       const agentsData = await fetchAgents();
-      if (agentsData) {
+
+      if (isMounted && agentsData) {
         dispatch(setAgents(agentsData));
 
         // Set default agent automatically
         const defaultAgent = agentsData.find(agent => agent.is_default === 1);
         if (defaultAgent) {
           dispatch(setSelectedAgentId(defaultAgent.id));
+          initialAgentIdRef.current = defaultAgent.id; // Store initial agent ID
         } else if (agentsData.length > 0) {
           // If no default agent, select the first one
           dispatch(setSelectedAgentId(agentsData[0].id));
+          initialAgentIdRef.current = agentsData[0].id; // Store initial agent ID
         }
+
+        setAgentsLoaded(true);
+      }
+
+      if (isMounted) {
+        setLoading(false);
       }
     })();
-  }, [dispatch]);
 
-  const loadNoteDetail = useCallback(
-    async (isRerun: boolean = false) => {
-      setLoading(true);
-      if (noteId && selectedAgentId) {
-        const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentId, isRerun);
-        const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      setAgentsLoaded(false);
+    };
+  }, [dispatch, noteId]);
 
-        setNoteDetail(formattedNoteDetail);
-      }
-      setLoading(false);
-    },
-    [noteId, selectedAgentId],
-  );
-
+  // Load note detail only on initial load, not when agent changes
   useEffect(() => {
-    loadNoteDetail();
-  }, [loadNoteDetail]);
+    if (agentsLoaded && selectedAgentId && noteId && !noteDetail) {
+      loadNoteDetail(false);
+    }
+  }, [agentsLoaded, selectedAgentId, noteId, noteDetail, loadNoteDetail]);
+
+  // Cleanup ref on unmount
+  useEffect(() => {
+    return () => {
+      selectedAgentIdRef.current = null;
+      initialAgentIdRef.current = null;
+      setNoteDetail(null);
+    };
+  }, []);
 
   const handleSaveDraft = () => {
     console.log('Saving draft...');
-    // Implement save draft logic
     setShowHumanReview(false);
   };
 
   const handleSubmitReview = () => {
     console.log('Submitting review...');
-    // Implement submit logic
     setShowHumanReview(false);
   };
 
@@ -153,15 +201,14 @@ const SingleNoteAudit = () => {
           {/* Left Sidebar */}
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} />
-            <TherapySessionCard summary={noteDetail.therapySummary} />
-
+            <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} />
           </div>
 
           {/* Right Content */}
           <div className="space-y-4">
             <AuditScoreCard noteDetail={noteDetail} />
-            <AISummaryCard summary={noteDetail.aiSummary} />
+            <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
             <IssuesIdentifiedCard issues={noteDetail.issues} />
 
             {/* Conditionally render Human Review or Action Buttons */}
@@ -169,6 +216,9 @@ const SingleNoteAudit = () => {
               <HumanReviewSection onSaveDraft={handleSaveDraft} onSubmit={handleSubmitReview} setShowHumanReview={setShowHumanReview} />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
+
+            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
+            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>
         </div>
       </div>

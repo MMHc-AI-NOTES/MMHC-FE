@@ -21,7 +21,7 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
               <ChartColumn />
               <span>Audit Score</span>
             </div>
-            <div className="flex items-baseline gap-2 text-6xl font-bold">
+            <div className="flex items-baseline gap-2 font-bold md:text-4xl lg:text-6xl">
               <span>{noteDetail.auditScore}</span>
               <span>/ 100</span>
             </div>

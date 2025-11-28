@@ -5,7 +5,7 @@ import { ApiNoteDetail } from '@/types/notes';
 /**
  * Fetch note detail by noteId
  */
-export const fetchNoteDetail = async (noteId: string): Promise<ApiNoteDetail> => {
+export const fetchNoteDetail = async (noteId?: string): Promise<ApiNoteDetail> => {
   try {
     const response = await axios.get(`/notes/${noteId}`);
     // Check HTTP status and if data exists
@@ -24,7 +24,7 @@ export const fetchNoteDetail = async (noteId: string): Promise<ApiNoteDetail> =>
 /**
  * Create chat for a note
  */
-export const createChat = async (payload: { note_id: string; prompt_id: number }): Promise<any> => {
+export const createChat = async (payload: { note_id?: string; prompt_id?: number }): Promise<any> => {
   try {
     const response = await axios.post('/chats', payload);
 
@@ -43,7 +43,7 @@ export const createChat = async (payload: { note_id: string; prompt_id: number }
 /**
  * Enhanced function to get note detail with chat creation if needed
  */
-export const getNoteDetailWithChat = async (noteId: string, promptId: number, isRerun: boolean): Promise<ApiNoteDetail> => {
+export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isRerun?: boolean): Promise<ApiNoteDetail> => {
   // First attempt to get note detail
   let noteDetail = null;
   if (!isRerun) {
