@@ -48,7 +48,7 @@ const Dashboard = () => {
         notesAuditedToday={dashboardData.notesAuditedToday}
         weeklyGrowth={15} // Example data - you can add this to your API response
         activePractitioners={24} // Example data
-        criticalIssues={8} // Example data
+        criticalIssues={10} // Example data
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
