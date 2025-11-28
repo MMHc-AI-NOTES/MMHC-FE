@@ -10,7 +10,7 @@ const AxiosInterceptor = {
     AxiosInterceptor.initialized = true;
 
     axios.defaults.baseURL = config.backendUrl;
-    axios.defaults.timeout = 10000;
+    axios.defaults.timeout = 50000;
     axios.defaults.headers['Content-Type'] = 'application/json';
 
     axios.interceptors.request.use(

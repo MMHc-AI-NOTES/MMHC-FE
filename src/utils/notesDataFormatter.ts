@@ -9,6 +9,6 @@ export const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => 
       practitioner: item.practitioner.fullName,
       sessionTime: moment(item.sessionTime).format('MMM D, YYYY h:mm A'),
       rawData: item,
-    };
+    } as unknown as FormattedNote;
   });
 };

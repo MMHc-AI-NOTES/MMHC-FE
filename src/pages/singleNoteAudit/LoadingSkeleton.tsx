@@ -16,9 +16,17 @@ const LoadingSkeleton = () => {
         <div className="space-y-4">
           <Card>
             <CardContent className="space-y-4">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-44 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-72 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-72 w-full" />
             </CardContent>
           </Card>
         </div>
@@ -31,6 +39,11 @@ const LoadingSkeleton = () => {
           <Card>
             <CardContent className="space-y-4">
               <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-96 w-full" />
             </CardContent>
           </Card>
         </div>

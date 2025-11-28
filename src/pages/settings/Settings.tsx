@@ -8,32 +8,45 @@ import AgentAccordion from './AgentAccordion';
 import AgentForm from './AgentForm';
 import { createAgent, deleteAgent, fetchAgents, updateAgent } from './settingsApiCalls';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RootState } from '@/store/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { addAgent, deleteAgentFromStore, setAgents, setLoading, updateAgentInStore } from '@/store/slices/agentsSlice';
 
 const Settings: React.FC = () => {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { agents, loading } = useSelector((state: RootState) => state.agents);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadAgents = async () => {
-    setLoading(true);
-    const agentsData = await fetchAgents();
-    if (agentsData) setAgents(agentsData);
-    setLoading(false);
-  };
-
   useEffect(() => {
-    loadAgents();
-  }, []);
+    (async () => {
+      dispatch(setLoading(true));
+      const agentsData = await fetchAgents();
+      if (agentsData) dispatch(setAgents(agentsData));
+      dispatch(setLoading(false));
+    })();
+  }, [dispatch]);
 
   const handleCreateAgent = async (agentData: CreateAgentRequest) => {
     setIsSubmitting(true);
     const newAgent = await createAgent(agentData);
 
     if (newAgent) {
-      // Add new agent to local state instead of reloading
-      setAgents(prev => [...prev, newAgent]);
+      // If new agent is set as default, set all other agents to not default
+      if (newAgent.is_default) {
+        const updatedAgents = agents.map(agent => ({
+          ...agent,
+          is_default: 0,
+        }));
+        // Add the new agent to the updated list
+        const finalAgents = [...updatedAgents, newAgent];
+        dispatch(setAgents(finalAgents));
+      } else {
+        dispatch(addAgent(newAgent));
+      }
+
       setIsDialogOpen(false);
     }
     setIsSubmitting(false);
@@ -46,8 +59,13 @@ const Settings: React.FC = () => {
     const updatedAgent = await updateAgent(editingAgent.id, agentData);
 
     if (updatedAgent) {
-      // Update agent in local state instead of reloading
-      setAgents(prev => prev.map(agent => (agent.id === editingAgent.id ? updatedAgent : agent)));
+      // If updated agent is set as default, set all other agents to not default
+      if (updatedAgent.is_default) {
+        const updatedAgents = agents.map(agent => (agent.id === editingAgent.id ? updatedAgent : { ...agent, is_default: 0 }));
+        dispatch(setAgents(updatedAgents));
+      } else {
+        dispatch(updateAgentInStore(updatedAgent));
+      }
       setIsDialogOpen(false);
       setEditingAgent(undefined);
     }
@@ -58,8 +76,7 @@ const Settings: React.FC = () => {
     const success = await deleteAgent(agentId);
 
     if (success) {
-      // Remove agent from local state instead of reloading
-      setAgents(prev => prev.filter(agent => agent.id !== agentId));
+      dispatch(deleteAgentFromStore(agentId));
     }
     return success;
   };
