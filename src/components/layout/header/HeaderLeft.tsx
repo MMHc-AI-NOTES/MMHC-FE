@@ -1,11 +1,9 @@
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useRouteTitle } from '@/hooks/useRouteTitle';
 
 const HeaderLogo = () => {
   const title = useRouteTitle();
   return (
     <div className="flex items-center gap-3">
-      <SidebarTrigger />
       <p className="text-primary text-xl font-semibold">{title}</p>
     </div>
   );

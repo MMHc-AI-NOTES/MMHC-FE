@@ -1,7 +1,6 @@
-import { SidebarGroup, SidebarGroupContent, SidebarMenu, useSidebar } from '@/components/ui/sidebar';
+import { SidebarGroup, SidebarGroupContent, SidebarMenu } from '@/components/ui/sidebar';
 import SidebarNavItem from './SidebarNavItem';
 import { NavItem } from './navItems';
-import clsx from 'clsx';
 
 interface SidebarMenuSectionProps {
   items: NavItem[];
@@ -12,10 +11,8 @@ interface SidebarMenuSectionProps {
 }
 
 const SidebarMenuSection = ({ items, isActive, hasActiveChild, onItemClick }: SidebarMenuSectionProps) => {
-  const { state } = useSidebar();
-
   return (
-    <SidebarGroup className={clsx(state !== 'expanded' && 'p-2', 'pr-0')}>
+    <SidebarGroup>
       {/* <SidebarGroupLabel className="text-sm">{label}</SidebarGroupLabel> */}
       <SidebarGroupContent>
         <SidebarMenu>
