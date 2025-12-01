@@ -1,65 +1,46 @@
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Bot, User, FileText, Ban } from 'lucide-react';
 import { RecentActivity as RecentActivityType } from '@/types/dashboard';
 
 interface RecentActivityProps {
   activities: RecentActivityType[];
 }
 
-const getActivityIcon = (type: RecentActivityType['type']) => {
-  switch (type) {
-    case 'failed_audit':
-      return <AlertTriangle className="h-4 w-4 text-red-500" />;
-    case 'ai_update':
-      return <Bot className="h-4 w-4 text-blue-500" />;
-    case 'practitioner_submission':
-      return <User className="h-4 w-4 text-green-500" />;
-    case 'report_generated':
-      return <FileText className="h-4 w-4 text-purple-500" />;
-    case 'blacklisted':
-      return <Ban className="h-4 w-4 text-orange-500" />;
-    default:
-      return <FileText className="h-4 w-4 text-gray-500" />;
-  }
+interface ActivityItemProps {
+  activity: RecentActivityType;
+}
+
+const ActivityIcon = ({ type }: { type: RecentActivityType['type'] }) => {
+  const iconConfig = { critical: 'bg-red-500', progress: 'bg-green-500', info: 'bg-orange-500', default: 'bg-gray-500' } as const;
+
+  return <div className={`mt-2 h-2 w-2 rounded-full ${iconConfig[type]}`} aria-label={`${type} activity`} />;
 };
 
-const getActivityVariant = (type: RecentActivityType['type']) => {
-  switch (type) {
-    case 'failed_audit':
-      return 'destructive';
-    case 'ai_update':
-      return 'default';
-    case 'practitioner_submission':
-      return 'secondary';
-    case 'report_generated':
-      return 'outline';
-    case 'blacklisted':
-      return 'destructive';
-    default:
-      return 'outline';
-  }
+const ActivityItem = ({ activity }: ActivityItemProps) => {
+  const description = activity.description || 'This action was performed';
+
+  return (
+    <div className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-gray-50">
+      <ActivityIcon type={activity.type} />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+          <span className="truncate text-sm font-medium text-gray-900">{activity.title}</span>
+          <span className="hidden text-gray-400 sm:inline">—</span>
+          <span className="truncate text-sm text-gray-600">{description}</span>
+        </div>
+
+        <p className="text-xs text-gray-500">{activity.timeAgo}</p>
+      </div>
+    </div>
+  );
 };
 
 const RecentActivity = ({ activities }: RecentActivityProps) => {
+  if (activities.length === 0) return <div className="px-4 py-8 text-center text-gray-500">No recent activity</div>;
+
   return (
-    <div className="space-y-4">
+    <div className="divide-y divide-gray-100">
       {activities.map(activity => (
-        <div
-          key={activity.id}
-          className="flex items-start space-x-3 rounded-lg border border-gray-100 p-3 transition-colors hover:bg-gray-50"
-        >
-          <div className="mt-0.5 flex-shrink-0">{getActivityIcon(activity.type)}</div>
-          <div className="min-w-0 flex-1">
-            <div className="mb-1 flex items-center space-x-2">
-              <p className="truncate text-sm font-medium text-gray-900">{activity.title}</p>
-              <Badge variant={getActivityVariant(activity.type)} className="text-xs">
-                {activity.type.replace('_', ' ')}
-              </Badge>
-            </div>
-            {activity.description && <p className="mb-1 text-sm text-gray-600">{activity.description}</p>}
-            <p className="text-xs text-gray-500">{activity.timeAgo}</p>
-          </div>
-        </div>
+        <ActivityItem key={activity.id} activity={activity} />
       ))}
     </div>
   );

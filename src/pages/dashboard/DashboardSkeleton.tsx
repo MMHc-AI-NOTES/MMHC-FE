@@ -29,6 +29,24 @@ const DashboardSkeleton = () => {
             <Skeleton className="h-6 w-40" />
           </CardHeader>
           <CardContent>
+            <Skeleton className="h-28 w-full" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-28 w-full" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
             <Skeleton className="h-64 w-full" />
           </CardContent>
         </Card>

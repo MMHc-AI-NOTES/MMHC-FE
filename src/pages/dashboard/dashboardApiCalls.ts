@@ -10,14 +10,15 @@ export const fetchDashboardData = async (): Promise<DashboardStats> => {
     weeklyGrowth: 15,
     activePractitioners: 24,
     criticalIssues: 8,
+    // Update the weeklyAuditVolume data in your fetchDashboardData function
     weeklyAuditVolume: [
-      { day: 'Mon', volume: 45 },
-      { day: 'Tue', volume: 78 },
-      { day: 'Wed', volume: 92 },
-      { day: 'Thu', volume: 120 },
-      { day: 'Fri', volume: 156 },
-      { day: 'Sat', volume: 89 },
-      { day: 'Sun', volume: 67 },
+      { day: 'Mon', criticalFailures: 0, hitl: 45, passed: 100, practitionerCorrections: 10 },
+      { day: 'Tue', criticalFailures: 12, hitl: 38, passed: 70, practitionerCorrections: 18 },
+      { day: 'Wed', criticalFailures: 8, hitl: 42, passed: 35, practitionerCorrections: 12 },
+      { day: 'Thu', criticalFailures: 20, hitl: 50, passed: 40, practitionerCorrections: 20 },
+      { day: 'Fri', criticalFailures: 10, hitl: 35, passed: 50, practitionerCorrections: 15 },
+      { day: 'Sat', criticalFailures: 19, hitl: 25, passed: 60, practitionerCorrections: 13 },
+      { day: 'Sun', criticalFailures: 13, hitl: 20, passed: 20, practitionerCorrections: 21 },
     ],
     practitionerTrends: [
       {
@@ -72,7 +73,7 @@ export const fetchDashboardData = async (): Promise<DashboardStats> => {
     recentActivities: [
       {
         id: '1',
-        type: 'failed_audit',
+        type: 'info',
         title: 'Note #12439 failed audit',
         description: 'Critical issues detected.',
         timestamp: '2024-01-20T10:28:00Z',
@@ -80,7 +81,7 @@ export const fetchDashboardData = async (): Promise<DashboardStats> => {
       },
       {
         id: '2',
-        type: 'ai_update',
+        type: 'progress',
         title: 'AI model v1.3 deployed',
         description: 'Improved stability.',
         timestamp: '2024-01-20T09:30:00Z',
@@ -88,7 +89,7 @@ export const fetchDashboardData = async (): Promise<DashboardStats> => {
       },
       {
         id: '3',
-        type: 'practitioner_submission',
+        type: 'progress',
         title: 'Practitioner submitted updated note #9921',
         description: '',
         timestamp: '2024-01-20T07:15:00Z',
@@ -96,7 +97,7 @@ export const fetchDashboardData = async (): Promise<DashboardStats> => {
       },
       {
         id: '4',
-        type: 'report_generated',
+        type: 'critical',
         title: 'Weekly report generated',
         description: '876 notes processed.',
         timestamp: '2024-01-20T05:10:00Z',
@@ -104,7 +105,7 @@ export const fetchDashboardData = async (): Promise<DashboardStats> => {
       },
       {
         id: '5',
-        type: 'blacklisted',
+        type: 'default',
         title: 'Note #8745 moved to blacklist',
         description: 'Repeat violations.',
         timestamp: '2024-01-20T02:45:00Z',

@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, TrendingUp, CheckCircle, Ban, Info, ArrowRight } from 'lucide-react';
+import { FileText, TrendingUp, CheckCircle, Info, ArrowRight, User } from 'lucide-react';
 
 interface StatsCardProps {
   notesAuditedToday: number;
@@ -37,11 +37,12 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       isReview: true,
     },
     {
-      title: 'Blacklisted Notes',
+      title: 'Pending HITL Reviews',
+      description: 'Awaiting human-in-the-loop validation',
       value: criticalIssues,
-      icon: Ban,
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
+      icon: User,
+      iconBg: 'bg-green-50',
+      iconColor: 'text-primary',
       isAlert: true,
     },
   ];
@@ -67,12 +68,15 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
                     <ArrowRight className={`h-4 w-4 ${stat.iconColor}`} />
                   </div>
                 ) : stat.isAlert ? (
-                  <p className="rounded-lg bg-red-100 px-3 py-1 text-sm font-medium text-red-600">ALERT</p>
+                  <TrendingUp size={14} className="text-primary" />
                 ) : null}
               </div>
 
               <h2 className="text-primary mt-2 text-5xl font-bold">{stat.value.toLocaleString()}</h2>
-              <p>{stat.title}</p>
+              <div>
+                <p>{stat.title}</p>
+                <p className="text-sm text-gray-400">{stat.description ? stat.description : ''}</p>
+              </div>
             </CardContent>
           </Card>
         );

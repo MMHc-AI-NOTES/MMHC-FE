@@ -10,7 +10,10 @@ export interface DashboardStats {
 
 export interface WeeklyData {
   day: string;
-  volume: number;
+  criticalFailures: number;
+  hitl: number;
+  passed: number;
+  practitionerCorrections: number;
 }
 
 export interface PractitionerTrend {
@@ -23,7 +26,7 @@ export interface PractitionerTrend {
 
 export interface RecentActivity {
   id: string;
-  type: 'failed_audit' | 'ai_update' | 'practitioner_submission' | 'report_generated' | 'blacklisted';
+  type: 'info' | 'progress' | 'critical' | 'default';
   title: string;
   description: string;
   timestamp: string;

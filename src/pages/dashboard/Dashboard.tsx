@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { DashboardStats } from '@/types/dashboard';
 import { fetchDashboardData } from './dashboardApiCalls';
 import StatsCard from './StatsCard';
@@ -9,7 +9,8 @@ import RecentActivity from './RecentActivity';
 import QuickActions from './QuickActions';
 import DashboardSkeleton from './DashboardSkeleton';
 import DashboardCardHeader from './DashboardCardHeader';
-import { Activity, Clock, Users } from 'lucide-react';
+import { Activity, Clock, Settings, Users, Zap } from 'lucide-react';
+import DashboardHeader from './DashboardHeader';
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
@@ -45,6 +46,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      <DashboardHeader count={2} />
       {/* Stats Card */}
       <StatsCard
         notesAuditedToday={dashboardData.notesAuditedToday}
@@ -54,8 +56,28 @@ const Dashboard = () => {
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Weekly Audit Volume */}
-        <Card>
+        <Card className="gap-2">
+          <CardHeader>
+            <DashboardCardHeader title="Current Validation Phase" icon={Zap} isIconBg />
+          </CardHeader>
+
+          <CardContent>
+            <p className="text-primary text-3xl font-semibold">Week 3 &mdash; Supervised Automation</p>
+            <p className="mt-2 text-gray-400">AI primary decisions, 50% HITL audit sampling</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-2">
+          <CardHeader>
+            <DashboardCardHeader title="Model & Rules Version" icon={Settings} isIconBg />
+          </CardHeader>
+          <CardContent>
+            <p className="text-primary text-3xl font-semibold"> Model v1.4 • Rules v1.0</p>
+            <p className="mt-2 text-gray-400">Last updated 2 days ago</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-2">
           <CardHeader>
             <DashboardCardHeader title="Weekly Audit Volume" icon={Activity} />
           </CardHeader>
@@ -65,11 +87,9 @@ const Dashboard = () => {
         </Card>
 
         {/* Practitioner Quality Trends */}
-        <Card>
+        <Card className="gap-2">
           <CardHeader>
             <DashboardCardHeader title="Practitioner Quality Trends" icon={Users} />
-
-            <CardTitle className="text-lg font-semibold"></CardTitle>
           </CardHeader>
           <CardContent>
             <PractitionerTrendsChart data={dashboardData.practitionerTrends} />
@@ -80,7 +100,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
 
-        <Card>
+        <Card className="gap-2">
           <CardHeader>
             <DashboardCardHeader title="Recent Activity" icon={Clock} />
           </CardHeader>
