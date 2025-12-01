@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { PanelLeftIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -234,7 +234,7 @@ function Sidebar({
 }
 
 function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
 
   return (
     <Button
@@ -242,15 +242,14 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn('size-7', className)}
+      className={cn('hover:bg-primary-light size-7', className)}
       onClick={event => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      {state === 'collapsed' ? <ChevronRight className="h-6! w-6!" /> : <ChevronLeft className="h-6! w-6!" />}
     </Button>
   );
 }
@@ -301,7 +300,7 @@ function SidebarInput({ className, ...props }: React.ComponentProps<typeof Input
 }
 
 function SidebarHeader({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div data-slot="sidebar-header" data-sidebar="header" className={cn('flex flex-col gap-2 p-2', className)} {...props} />;
+  return <div data-slot="sidebar-header" data-sidebar="header" className={cn('bg-primary flex items-center p-2', className)} {...props} />;
 }
 
 function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {
@@ -331,10 +330,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sidebar-content"
       data-sidebar="content"
-      className={cn(
-        'min-h-0 flex-1 flex-col overflow-auto rounded-4xl bg-[linear-gradient(180deg,#1E4129_0%,#A1E681_125.78%)] group-data-[collapsible=icon]:overflow-hidden',
-        className,
-      )}
+      className={cn('bg-primary min-h-0 flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden', className)}
       {...props}
     />
   );
@@ -404,11 +400,11 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full rounded-l-4xl items-center gap-2 overflow-hidden text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-white hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-white active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-white data-[active=true]:text-[#1E4129] data-[active=true]:font-medium data-[active=true]:rounded-l-4xl data-[active=true]:rounded-r-none data-[state=open]:hover:bg-white data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-1.5! [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0 ',
+  'peer/menu-button flex w-full rounded-lg items-center gap-2 overflow-hidden text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-primary-light hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-primary-light active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-6 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-primary-light data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:rounded-lg data-[state=open]:hover:bg-primary-light data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:p-2.5! [&>span:last-child]:truncate [&>svg]:size-6 [&>svg]:shrink-0 ',
   {
     variants: {
       variant: {
-        default: 'hover:bg-white hover:text-sidebar-accent-foreground',
+        default: 'hover:bg-primary-light hover:text-sidebar-accent-foreground',
         outline:
           'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-white hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]',
       },

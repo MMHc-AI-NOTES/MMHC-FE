@@ -6,7 +6,7 @@ import UserDropdown from './UserDropdown';
 const Header = () => {
   return (
     <header>
-      <div className="flex h-[90px] items-center justify-between">
+      <div className="flex h-16 items-center justify-between bg-white px-2">
         <HeaderLeft />
 
         <div className="flex items-center gap-2">
