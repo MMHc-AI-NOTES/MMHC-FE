@@ -12,9 +12,10 @@ import { cn } from '@/lib/utils';
 interface ActionButtonsProps {
   onFlagReview: () => void;
   onReRunAudit: (isRerun: boolean) => void;
+  isReRun?: boolean;
 }
 
-const ActionButtons = ({ onFlagReview, onReRunAudit }: ActionButtonsProps) => {
+const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionButtonsProps) => {
   const dispatch = useDispatch();
   const { agents, selectedAgentId } = useSelector((state: RootState) => state.agents);
   const [open, setOpen] = useState(false);
@@ -64,7 +65,7 @@ const ActionButtons = ({ onFlagReview, onReRunAudit }: ActionButtonsProps) => {
       <div className="space-y-2">
         <Button
           className="to-primary-light text-primary h-12 w-full border-0 bg-gradient-to-r from-gray-50 shadow-sm"
-          disabled={!selectedAgentId}
+          disabled={!selectedAgentId || isReRun}
           onClick={() => onReRunAudit(true)}
         >
           <RefreshCcw className="mr-2" />

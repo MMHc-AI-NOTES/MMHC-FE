@@ -188,7 +188,15 @@ const SingleNoteAudit = () => {
   };
 
   if (loading) {
-    return <LoadingSkeleton />;
+    return (
+      <div>
+        <LoadingSkeleton />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+          <div></div>
+          <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} isReRun={loading} />
+        </div>
+      </div>
+    );
   }
 
   return (
