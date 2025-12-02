@@ -54,99 +54,101 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
           <Card key={agent.id} className="border-l-primary overflow-hidden border-l-4 shadow-sm transition-all hover:shadow-md">
             <Accordion type="single" collapsible>
               <AccordionItem value={agent.id.toString()} className="border-0">
-                <AccordionTrigger className="px-6 py-4 hover:bg-gray-50/50 hover:no-underline">
-                  <div className="flex w-full items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="from-primary to-primary/80 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br">
-                        <Bot className="h-6 w-6 text-white" />
+                <AccordionTrigger className="px-4 py-4 hover:bg-gray-50/50 hover:no-underline md:px-6">
+                  <div className="flex w-full flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
+                    <div className="flex w-full items-start gap-3 sm:items-center sm:gap-4">
+                      <div className="from-primary to-primary/80 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br sm:h-12 sm:w-12">
+                        <Bot className="h-5 w-5 text-white sm:h-6 sm:w-6" />
                       </div>
-                      <div className="text-left">
-                        <div className="flex items-center space-x-3">
-                          <h3 className="text-xl font-semibold text-gray-900">{agent.name}</h3>
+                      <div className="flex-1 text-left">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                          <h3 className="text-lg font-semibold text-gray-900 sm:text-xl">{agent.name}</h3>
                           {agent.is_default ? (
-                            <Badge className="bg-primary-light flex items-center space-x-1 border px-3 py-1">
-                              <span>Default</span>
+                            <Badge className="bg-primary-light flex w-fit items-center space-x-1 border px-2 py-0.5 sm:px-3 sm:py-1">
+                              <span className="text-xs sm:text-sm">Default</span>
                             </Badge>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-sm text-gray-600">{agent.description}</p>
-                        <div className="mt-2 flex items-center space-x-4 text-xs text-gray-600">
+                        <p className="mt-1 line-clamp-2 text-sm text-gray-600">{agent.description}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-600 sm:gap-4">
                           <span className="flex items-center space-x-1">
-                            <Cpu className="text-primary h-4 w-4" />
-                            <span>{getModelDisplayName(agent.model)}</span>
+                            <Cpu className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm">{getModelDisplayName(agent.model)}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <Zap className="text-primary h-4 w-4" />
-                            <span>Temp: {agent.temperature}</span>
+                            <Zap className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm">Temp: {agent.temperature}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <Gavel className="text-primary h-4 w-4" />
-                            <span>Top P: {agent.temperature}</span>
+                            <Gavel className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm">Top P: {agent.top_p}</span>
                           </span>
                           <span className="flex items-center space-x-1">
-                            <Radio className="text-primary h-4 w-4" />
-                            <span>Top K: {agent.temperature}</span>
+                            <Radio className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="text-xs sm:text-sm">Top K: {agent.top_k}</span>
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition-all hover:bg-blue-100 hover:text-blue-700"
-                            onClick={e => {
-                              e.stopPropagation();
-                              onEdit(agent);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Edit Agent</p>
-                        </TooltipContent>
-                      </Tooltip>
+                    <div className="flex w-full items-center justify-between sm:w-auto sm:justify-normal">
+                      <div className="flex items-center space-x-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition-all hover:bg-blue-100 hover:text-blue-700 sm:h-9 sm:w-9"
+                              onClick={e => {
+                                e.stopPropagation();
+                                onEdit(agent);
+                              }}
+                            >
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit Agent</p>
+                          </TooltipContent>
+                        </Tooltip>
 
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all hover:bg-red-100 hover:text-red-700"
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleDeleteClick(agent);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Delete Agent</p>
-                        </TooltipContent>
-                      </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all hover:bg-red-100 hover:text-red-700 sm:h-9 sm:w-9"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleDeleteClick(agent);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Delete Agent</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                   </div>
                 </AccordionTrigger>
 
-                <AccordionContent className="px-6 pt-2 pb-6">
+                <AccordionContent className="px-4 pt-2 pb-6 md:px-6">
                   <CardContent className="space-y-6 p-0">
                     {/* Configuration Grid */}
-                    <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
                       <div className="h-full space-y-4">
-                        <div className="h-full rounded-lg bg-gray-50 p-4">
-                          <h4 className="mb-3 flex items-center space-x-2 font-semibold text-gray-900">
-                            <Settings className="h-4 w-4" />
+                        <div className="h-full rounded-lg bg-gray-50 p-3 sm:p-4">
+                          <h4 className="mb-3 flex items-center space-x-2 text-sm font-semibold text-gray-900 sm:text-base">
+                            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>Configuration</span>
                           </h4>
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
+                          <div className="space-y-2 text-xs sm:space-y-3 sm:text-sm">
+                            <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Model</span>
-                              <span className="font-medium">{getModelDisplayName(agent.model)}</span>
+                              <span className="text-right font-medium">{getModelDisplayName(agent.model)}</span>
                             </div>
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Is Default</span>
-                              <Badge className="text-md px-4 py-1" variant={agent.is_default ? 'default' : 'destructive'}>
+                              <Badge className="w-fit px-3 py-1 text-xs sm:text-sm" variant={agent.is_default ? 'default' : 'destructive'}>
                                 {agent.is_default ? 'Yes' : 'No'}
                               </Badge>
                             </div>
@@ -155,24 +157,23 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                       </div>
 
                       <div className="space-y-4">
-                        <div className="rounded-lg bg-gray-50 p-4">
-                          <h4 className="mb-3 flex items-center space-x-2 font-semibold text-gray-900">
-                            <Zap className="h-4 w-4" />
+                        <div className="rounded-lg bg-gray-50 p-3 sm:p-4">
+                          <h4 className="mb-3 flex items-center space-x-2 text-sm font-semibold text-gray-900 sm:text-base">
+                            <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>Parameters</span>
                           </h4>
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
+                          <div className="space-y-2 text-xs sm:space-y-3 sm:text-sm">
+                            <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Temperature</span>
-                              <span className="font-medium">{agent.temperature}</span>
+                              <span className="text-right font-medium">{agent.temperature}</span>
                             </div>
-
-                            <div className="flex justify-between">
+                            <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Top P</span>
-                              <span className="font-medium">{agent.top_p}</span>
+                              <span className="text-right font-medium">{agent.top_p}</span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Top K</span>
-                              <span className="font-medium">{agent.top_k}</span>
+                              <span className="text-right font-medium">{agent.top_k}</span>
                             </div>
                           </div>
                         </div>
@@ -180,13 +181,13 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                     </div>
 
                     {/* Prompt Section */}
-                    <div className="rounded-lg bg-gray-50 p-4">
-                      <h4 className="mb-3 flex items-center space-x-2 font-semibold text-gray-900">
-                        <MessageSquare className="h-4 w-4" />
+                    <div className="rounded-lg bg-gray-50 p-3 sm:p-4">
+                      <h4 className="mb-3 flex items-center space-x-2 text-sm font-semibold text-gray-900 sm:text-base">
+                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>Prompt</span>
                       </h4>
-                      <div className="rounded-md bg-white p-4">
-                        <p className="text-sm leading-relaxed text-gray-700">{agent.prompt}</p>
+                      <div className="rounded-md bg-white p-3 sm:p-4">
+                        <p className="text-xs leading-relaxed text-gray-700 sm:text-sm">{agent.prompt}</p>
                       </div>
                     </div>
                   </CardContent>
