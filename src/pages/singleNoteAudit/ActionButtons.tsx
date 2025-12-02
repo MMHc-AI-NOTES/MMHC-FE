@@ -64,18 +64,23 @@ const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionBu
       {/* Action Buttons */}
       <div className="space-y-2">
         <Button
-          className="to-primary-light text-primary h-12 w-full border-0 bg-gradient-to-r from-gray-50 shadow-sm"
+          className="bg-primary-light text-primary h-12 w-full border-0 shadow-sm"
           disabled={!selectedAgentId || isReRun}
           onClick={() => onReRunAudit(true)}
         >
           <RefreshCcw className="mr-2" />
           Re-Run Audit
         </Button>
-        <Button variant="outline" className="border-primary text-primary h-12 w-full border-2" disabled={!selectedAgentId}>
+        <Button variant="outline" className="border-primary text-primary h-12 w-full border-2 bg-transparent" disabled={!selectedAgentId}>
           <Send className="mr-2" />
           Send to Practitioner
         </Button>
-        <Button variant="ghost" className="h-12 w-full" onClick={onFlagReview} disabled={!selectedAgentId}>
+        <Button
+          variant="outline"
+          className="h-12 w-full border-2 border-red-700 bg-transparent text-red-700"
+          onClick={onFlagReview}
+          disabled={!selectedAgentId}
+        >
           <Flag className="mr-2" />
           Flag for Manager Review
         </Button>

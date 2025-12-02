@@ -29,7 +29,7 @@ export const DataTablePagination = ({
   onPageChange,
   onItemsPerPageChange,
   itemsPerPageOptions = [5, 10, 20, 50],
-  showItemsPerPage = true,
+  showItemsPerPage = false,
   showPageNumbers = true,
   showFirstLastButtons = false,
   className = '',

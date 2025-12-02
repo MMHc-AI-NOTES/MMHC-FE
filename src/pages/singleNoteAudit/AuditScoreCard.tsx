@@ -11,9 +11,7 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
   const isGoodAuditScore = noteDetail.auditScore >= 95;
 
   return (
-    <Card
-      className={`overflow-hidden bg-gradient-to-br from-gray-100 ${isGoodAuditScore ? 'to-primary-light' : 'via-red-200 to-red-700'} shadow-sm`}
-    >
+    <Card className={`overflow-hidden shadow-sm`}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="text-primary">
@@ -25,12 +23,14 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
               <span>{noteDetail.auditScore}</span>
               <span>/ 100</span>
             </div>
+            <p className="text-muted-foreground mt-1 text-sm font-medium">Passing Threshold: ≥95</p>
+            <p className="text-muted-foreground text-sm">Goal: 100</p>
             <p className="mt-3 text-sm">Last AI Run: {noteDetail.lastRun}</p>
           </div>
           <Badge
-            className={`text-primary text-md rounded-full border-gray-50 bg-gradient-to-br from-gray-50 px-8 py-2 font-semibold shadow-sm ${isGoodAuditScore ? 'to-primary-light' : 'via-red-300 to-red-700'}`}
+            className={`text-md rounded-lg border-none px-4 py-1.5 shadow-lg ${isGoodAuditScore ? 'text-primary bg-green-200' : 'bg-red-200 text-red-700'}`}
           >
-            {isGoodAuditScore ? 'PASS' : 'FAILED'}
+            {isGoodAuditScore ? 'Pass' : 'Failed'}
           </Badge>
         </div>
       </CardContent>

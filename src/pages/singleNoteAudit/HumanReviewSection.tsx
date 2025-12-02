@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Check, Save, UserCheck, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Check, Save, UserCheck, X, CircleHelp } from 'lucide-react';
 
 interface HumanReviewSectionProps {
   onSaveDraft: () => void;
@@ -12,10 +13,11 @@ interface HumanReviewSectionProps {
 
 const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: HumanReviewSectionProps) => {
   const [decision, setDecision] = useState<string>('');
+  const [reviewerName, setReviewerName] = useState<string>('');
   const [manualScore, setManualScore] = useState<string>('');
   const [comments, setComments] = useState<string>('');
 
-  const isSubmitDisabled = !decision;
+  const isSubmitDisabled = !decision || !reviewerName;
 
   const decisionOptions = [
     { value: 'accept', label: 'Accept AI evaluation' },
@@ -37,10 +39,25 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
     <Card className="gap-1 shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
-            <UserCheck />
-            Human Review
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
+              <UserCheck />
+              Human Review
+            </CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Conduct a human review of the AI evaluation. Your decision will override or confirm the AI's assessment and help improve
+                    future evaluations.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => setShowHumanReview(false)} className="h-6 w-6">
             <X size={16} />
           </Button>
@@ -49,7 +66,22 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
       <CardContent className="space-y-4">
         {/* Decision Section */}
         <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-700">Decision</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-700">Decision</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Select the appropriate action based on your review. This decision will determine the next steps in the workflow and may
+                    trigger notifications to relevant parties.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <div className="space-y-1">
             {decisionOptions.map(item => (
               <div key={item.value} className="flex items-center space-x-2 rounded-lg border-gray-200 py-1.5">
@@ -70,9 +102,53 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
           </div>
         </div>
 
+        {/* Reviewer Name Section */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-700">
+              Reviewer Name <span className="text-red-500">*</span>
+            </p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Enter your full name as the reviewer. This is required for accountability and audit trail purposes.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <input
+            type="text"
+            value={reviewerName}
+            onChange={e => setReviewerName(e.target.value)}
+            placeholder="Enter your full name"
+            className="focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:ring-1 focus:outline-none"
+          />
+        </div>
+
         {/* Manual Score Section */}
         <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-700">Manual Score (Optional)</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-700">Manual Score (Optional)</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Override the AI score with your manual assessment. Enter a score between 0-100, or use PASS/FAIL buttons. Scores ≥95 are
+                    considered passing.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-xs text-gray-500">PASS = score ≥ 95 • FAIL = score {'<'} 95</p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">
               <input
@@ -89,18 +165,11 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
             <div className="flex gap-2">
               <button
                 onClick={() => setManualScore('PASS')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                  manualScore === 'PASS' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                className="bg-primary-light text-primary rounded-full border px-4 py-2 text-sm font-medium"
               >
                 PASS
               </button>
-              <button
-                onClick={() => setManualScore('FAIL')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                  manualScore === 'FAIL' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
+              <button onClick={() => setManualScore('FAIL')} className="rounded-full border px-4 py-2 text-sm font-medium text-red-700">
                 FAIL
               </button>
             </div>
@@ -124,7 +193,7 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
             <Save />
             Save Draft
           </Button>
-          <Button onClick={onSubmit} disabled={isSubmitDisabled}>
+          <Button className="bg-primary-light text-primary" onClick={onSubmit} disabled={isSubmitDisabled}>
             <Check />
             Submit Human Review
           </Button>

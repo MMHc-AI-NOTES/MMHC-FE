@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import Routes from './routes/routes';
 import ProgressAlerts from './components/layout/loader/ProgressAlerts';
+import { ErrorBoundary } from './shared/ErrorBoundary';
 
 const ThemeWrapper = () => {
   return (
@@ -13,9 +14,11 @@ const ThemeWrapper = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <ThemeWrapper />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeWrapper />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

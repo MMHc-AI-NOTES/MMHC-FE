@@ -64,7 +64,7 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                           <h3 className="text-lg font-semibold text-gray-900 sm:text-xl">{agent.name}</h3>
                           {agent.is_default ? (
-                            <Badge className="bg-primary-light flex w-fit items-center space-x-1 border px-2 py-0.5 sm:px-3 sm:py-1">
+                            <Badge className="bg-primary flex w-fit items-center space-x-1 border px-2 py-0.5 text-white sm:px-3 sm:py-1">
                               <span className="text-xs sm:text-sm">Default</span>
                             </Badge>
                           ) : null}

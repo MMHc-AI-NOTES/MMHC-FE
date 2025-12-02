@@ -1,9 +1,23 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NoteDetail } from '@/types/notes';
-import { Info } from 'lucide-react';
+import { Info, CircleHelp } from 'lucide-react';
 
 const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
+  const getSeverityTooltip = (severity: 'CRITICAL' | 'MODERATE' | 'MINOR') => {
+    switch (severity) {
+      case 'CRITICAL':
+        return 'Critical issues require immediate attention and may significantly impact the quality or compliance of the note. These issues could lead to serious consequences if not addressed.';
+      case 'MODERATE':
+        return 'Moderate issues should be addressed to improve the quality of documentation. These issues may affect clarity or completeness but are not immediately critical.';
+      case 'MINOR':
+        return 'Minor issues are suggestions for improvement. While not critical, addressing these can enhance the overall quality and professionalism of the documentation.';
+      default:
+        return '';
+    }
+  };
+
   return (
     <Card className="gap-1 shadow-sm">
       <CardHeader className="pb-3">
@@ -17,17 +31,29 @@ const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
           issues.map((issue, index) => (
             <div key={index} className="space-y-2">
               <div className="flex items-center justify-between">
-                <Badge
-                  className={`px-3 py-1 text-xs font-semibold uppercase ${
-                    issue.severity === 'CRITICAL'
-                      ? 'bg-red-100 text-red-700 hover:bg-red-100'
-                      : issue.severity === 'MODERATE'
-                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-100'
-                        : 'bg-blue-100 text-blue-700 hover:bg-blue-100'
-                  }`}
-                >
-                  {issue.severity}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    className={`px-3 py-1 text-xs font-semibold uppercase ${
+                      issue.severity === 'CRITICAL'
+                        ? 'bg-red-100 text-red-700 hover:bg-red-100'
+                        : issue.severity === 'MODERATE'
+                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-100'
+                          : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+                    }`}
+                  >
+                    {issue.severity}
+                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-sm">{getSeverityTooltip(issue.severity)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <span className="text-xs font-medium text-gray-500">{issue.sectionId}</span>
               </div>
               <div>

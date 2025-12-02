@@ -13,14 +13,16 @@ import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
+import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail } from '@/types/notes';
+import { NoteDetail, ApiNoteDetail, Chat } from '@/types/notes';
 import { RootState } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
+import ModelInformation from './ModelInformation';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
@@ -31,7 +33,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
   const bedrockResponse = latestChat?.bedrockResponse;
-  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY h:mm A') : '';
+  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY - h:mm A') : '';
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({
@@ -75,6 +77,11 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     issues: issues,
     prompt: latestChat?.prompt || '',
     rawResponse: bedrockResponse?.raw_response || '',
+    modelDetail: {
+      modelVersion: latestChat.modelId,
+      auditRunId: latestChat.id,
+      lastRun: formattedDateTime,
+    },
   };
 };
 
@@ -90,6 +97,7 @@ const SingleNoteAudit = () => {
   const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+  const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [showHumanReview, setShowHumanReview] = useState(false);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
@@ -113,6 +121,8 @@ const SingleNoteAudit = () => {
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
 
         setNoteDetail(formattedNoteDetail);
+        // Store all chats for audit history
+        setAuditHistory(apiNoteDetail.chats || []);
       } finally {
         setLoading(false);
       }
@@ -211,22 +221,22 @@ const SingleNoteAudit = () => {
             <NoteInformation noteDetail={noteDetail} />
             <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} />
+            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
+            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>
 
           {/* Right Content */}
           <div className="space-y-4">
             <AuditScoreCard noteDetail={noteDetail} />
+            <ModelInformation modelDetail={noteDetail.modelDetail} />
             <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
             <IssuesIdentifiedCard issues={noteDetail.issues} />
-
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview ? (
               <HumanReviewSection onSaveDraft={handleSaveDraft} onSubmit={handleSubmitReview} setShowHumanReview={setShowHumanReview} />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
-
-            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
-            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
+            <AuditHistoryCard chats={auditHistory} />
           </div>
         </div>
       </div>

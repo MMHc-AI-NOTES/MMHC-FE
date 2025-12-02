@@ -80,7 +80,7 @@ const NoteSections = ({ bedrockResponse }: any) => {
               <AccordionItem key={section.id} value={section.id} className="border-b-0">
                 <AccordionTrigger
                   className={`flex w-full items-center justify-between p-4 text-left transition-all hover:no-underline ${
-                    isActive && 'from-primary-light bg-gradient-to-r to-gray-50'
+                    isActive && 'bg-primary-light'
                   }`}
                 >
                   <div className="flex items-center gap-2">
