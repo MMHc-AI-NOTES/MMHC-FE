@@ -1,15 +1,14 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { RootState } from '@/store/store';
+import { useAppSelector } from '@/store/store';
 import { ModelDetail } from '@/types/notes';
 import { Hash, Cpu, FileCode, Clock } from 'lucide-react';
-import { useSelector } from 'react-redux';
 
 interface ModelInformationProps {
   modelDetail: ModelDetail;
 }
 
 const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
-  const { agents, selectedAgentId } = useSelector((state: RootState) => state.agents);
+  const { agents, selectedAgentId } = useAppSelector(state => state.agents);
 
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 

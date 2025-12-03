@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundPen } from 'lucide-react';
@@ -17,7 +17,7 @@ import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
 import { NoteDetail, ApiNoteDetail, Chat } from '@/types/notes';
-import { RootState } from '@/store/store';
+import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
@@ -90,7 +90,7 @@ const SingleNoteAudit = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
-  const { selectedAgentId } = useSelector((state: RootState) => state.agents);
+  const { selectedAgentId } = useAppSelector(state => state.agents);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
@@ -221,8 +221,6 @@ const SingleNoteAudit = () => {
             <NoteInformation noteDetail={noteDetail} />
             <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} />
-            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
-            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>
 
           {/* Right Content */}
@@ -237,6 +235,8 @@ const SingleNoteAudit = () => {
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
             <AuditHistoryCard chats={auditHistory} />
+            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
+            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>
         </div>
       </div>

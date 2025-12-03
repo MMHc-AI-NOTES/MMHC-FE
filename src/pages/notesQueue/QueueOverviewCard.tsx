@@ -4,24 +4,30 @@ import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp } from
 import { QueueOverview } from '@/types/notes';
 
 interface QueueOverviewCardProps {
-  data: QueueOverview;
+  data?: QueueOverview | null;
   loading?: boolean;
 }
 
 export const QueueOverviewCard = ({ data, loading }: QueueOverviewCardProps) => {
   const stats = [
-    { icon: FileText, label: 'Total Notes', value: data.total_notes, bgColor: 'bg-green-50', iconColor: 'text-primary' },
-    { icon: CheckCircle, label: 'AI Passed', value: data.ai_passed, bgColor: 'bg-green-50', iconColor: 'text-green-600' },
-    { icon: XCircle, label: 'AI Failed', value: data.ai_failed, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
-    { icon: Clock, label: 'Pending Human Review', value: data.pending_human_review, bgColor: 'bg-green-50', iconColor: 'text-primary' },
+    { icon: FileText, label: 'Total Notes', value: data?.total_notes || 0, bgColor: 'bg-green-50', iconColor: 'text-primary' },
+    { icon: CheckCircle, label: 'AI Passed', value: data?.ai_passed || 0, bgColor: 'bg-green-50', iconColor: 'text-green-600' },
+    { icon: XCircle, label: 'AI Failed', value: data?.ai_failed || 0, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
+    {
+      icon: Clock,
+      label: 'Pending Human Review',
+      value: data?.pending_human_review || 0,
+      bgColor: 'bg-green-50',
+      iconColor: 'text-primary',
+    },
     {
       icon: TrendingUp,
       label: 'Pending Manager Review',
-      value: data.pending_manager_review,
+      value: data?.pending_manager_review || 0,
       bgColor: 'bg-orange-50',
       iconColor: 'text-orange-600',
     },
-    { icon: AlertTriangle, label: 'Blacklisted', value: data.blacklist, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
+    { icon: AlertTriangle, label: 'Blacklisted', value: data?.blacklist || 0, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
   ];
 
   if (loading) {
@@ -29,7 +35,7 @@ export const QueueOverviewCard = ({ data, loading }: QueueOverviewCardProps) => 
       <Card className="p-6">
         <Skeleton className="mb-6 h-6 w-40" />
         <div className="space-y-5">
-          {[1, 2, 3, 4, 5, 6].map(i => (
+          {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className="flex items-center justify-between border-b-2 pb-5 last:border-b-0">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-lg" />

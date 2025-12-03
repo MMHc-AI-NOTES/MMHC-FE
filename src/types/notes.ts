@@ -8,13 +8,13 @@ export interface RawApiNote {
   client?: string;
   clientId?: string;
   type?: number;
-  noteType?: string;
-  aiScore?: number;
-  aiStatus?: number;
-  humanReview?: number;
-  manager?: number;
-  workflow?: number;
-  priority?: number;
+  noteType?: { id: number; name: string };
+  aiScore?: { id: number; name: string };
+  aiStatus?: { id: number; name: string };
+  humanReview?: { id: number; name: string };
+  manager?: { id: number; name: string };
+  workflow?: { id: number; name: string };
+  priority?: { id: number; name: string };
   createdAt: string;
   updatedAt: string;
   practitioner: {
@@ -166,10 +166,10 @@ export interface QueueOverview {
 
 // Workload Data
 export interface Workload {
-  notesAssignedToYou: number;
-  avgReviewTime: string;
-  returnRate: string;
-  aiDisagreementRate: string;
+  assign_notes: number;
+  avg_review_time: string;
+  return_rate: string;
+  ai_disagreement_rate: string;
 }
 
 // Filter Options

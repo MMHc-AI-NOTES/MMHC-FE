@@ -9,13 +9,13 @@ export const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => 
       practitioner: item.practitioner.fullName,
       client: item.patient.uuid || 'N/A',
       date: moment(item.sessionTime).format('MMM D, YYYY'),
-      type: item.noteType || 'Progress Note',
-      aiScore: item.aiScore || 0,
-      aiStatus: item.aiStatus || 4, // Default to not_reviewed
-      humanReview: item.humanReview || 1, // Default to not_needed
-      manager: item.manager || 1, // Default to not_needed
-      workflow: item.workflow || 2, // Default to in_queue
-      priority: item.priority || 1, // Default to low
+      type: item.noteType?.id || 'Progress Note',
+      aiScore: item.aiScore?.id || 0,
+      aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
+      humanReview: item.humanReview?.id || 1, // Default to not_needed
+      manager: item.manager?.id || 1, // Default to not_needed
+      workflow: item.workflow?.id || 1, // Default to in_queue
+      priority: item.priority?.id || 1, // Default to low
       sessionTime: moment(item.sessionTime).format('MMM D, YYYY h:mm A'),
       rawData: item,
     } as FormattedNote;

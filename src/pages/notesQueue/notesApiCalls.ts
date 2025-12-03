@@ -120,40 +120,22 @@ export const fetchQueueOverview = async (): Promise<QueueOverview | null> => {
 };
 
 export const fetchWorkload = async (): Promise<Workload | null> => {
-  // TODO: Replace with actual API call when endpoint is available
-  // Returning dummy data for now
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        notesAssignedToYou: 8,
-        avgReviewTime: '6.2 min',
-        returnRate: '12%',
-        aiDisagreementRate: '15%',
-      });
-    }, 500);
-  });
-
-  /* Uncomment when endpoint is available
   try {
-    const response = await axios.get<ApiResponse<Workload>>('/notes/workload');
- 
-    if (response?.data?.status && response.data.data) {
-      return response.data.data;
+    const response = await axios.get<Workload>('/notes/workload-statistics');
+
+    if (response?.status && response.data) {
+      return response.data;
     } else {
-      handleErrorMessages(response.data);
+      handleErrorMessages(response);
       return null;
     }
   } catch (error: any) {
     handleCatchMessages(error);
     return null;
   }
-  */
 };
 
 export const fetchPractitioners = async (): Promise<PractitionerOption[]> => {
-  // TODO: Replace with actual API call when endpoint is available
-  // Returning dummy data for now
-
   try {
     const response = await axios.post<ApiResponse<PractitionerOption[]>>('practitioners/listing');
 

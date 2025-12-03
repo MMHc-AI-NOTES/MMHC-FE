@@ -1,8 +1,8 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCcw, Send, Flag, Check, ChevronsUpDown } from 'lucide-react';
-import { RootState } from '@/store/store';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppSelector } from '@/store/store';
+import { useDispatch } from 'react-redux';
 import { useState } from 'react';
 import { setSelectedAgentId } from '@/store/slices/agentsSlice';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -17,7 +17,7 @@ interface ActionButtonsProps {
 
 const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionButtonsProps) => {
   const dispatch = useDispatch();
-  const { agents, selectedAgentId } = useSelector((state: RootState) => state.agents);
+  const { agents, selectedAgentId } = useAppSelector(state => state.agents);
   const [open, setOpen] = useState(false);
 
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
@@ -34,7 +34,7 @@ const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionBu
         <p className="text-sm font-medium">Select Agent</p>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+            <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between bg-white shadow-sm">
               {selectedAgent ? selectedAgent.name : 'Select agent...'}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>

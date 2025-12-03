@@ -1,23 +1,30 @@
 // @/pages/notesQueue/NotesQueue.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
-import { FormattedNote, QueueOverview, Workload, PractitionerOption, CptCodeOption } from '@/types/notes';
+import { FormattedNote, QueueOverview, Workload } from '@/types/notes';
 import { fetchNotes, fetchQueueOverview, fetchWorkload, fetchPractitioners, fetchCptCodes, getDateRange } from './notesApiCalls';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueOverviewCard } from './QueueOverviewCard';
 import { WorkloadCard } from './WorkloadCard';
+import { useAppSelector } from '@/store/store';
+import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 
 const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [notesLoading, setNotesLoading] = useState(true);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
   const [workload, setWorkload] = useState<Workload | null>(null);
-  const [practitioners, setPractitioners] = useState<PractitionerOption[]>([]);
-  const [cptCodes, setCptCodes] = useState<CptCodeOption[]>([]);
+
+  // Get filter options from Redux
+  const dispatch = useDispatch();
+  const { practitioners, cptCodes, practitionersLoaded, cptCodesLoaded } = useAppSelector(state => state.filterOptions);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,43 +49,84 @@ const NotesQueue = () => {
 
   const navigate = useNavigate();
 
-  // Load initial data
+  // Load initial data - each API call has its own loading state
   useEffect(() => {
-    const loadInitialData = async () => {
+    // Initial payload for notes
+    const initialPayload = {
+      page: 1,
+      pageSize: itemsPerPage,
+      filters: [],
+    };
+
+    // Fetch notes
+    const loadNotes = async () => {
       try {
-        setLoading(true);
-
-        // Initial payload
-        const initialPayload = {
-          page: 1,
-          pageSize: itemsPerPage,
-          filters: [],
-        };
-
-        // Fetch all data in parallel
-        const [notesResponse, overviewData, workloadData, practitionersData, cptCodesData] = await Promise.all([
-          fetchNotes(initialPayload),
-          fetchQueueOverview(),
-          fetchWorkload(),
-          fetchPractitioners(),
-          fetchCptCodes(),
-        ]);
-
+        setNotesLoading(true);
+        const notesResponse = await fetchNotes(initialPayload);
         setNotes(notesResponse.data);
         setTotalItems(notesResponse.totalCount || 0);
-        setQueueOverview(overviewData);
-        setWorkload(workloadData);
-        setPractitioners(practitionersData);
-        setCptCodes(cptCodesData);
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading notes:', error);
       } finally {
-        setLoading(false);
+        setNotesLoading(false);
       }
     };
 
-    loadInitialData();
-  }, []);
+    // Fetch queue overview
+    const loadQueueOverview = async () => {
+      try {
+        setOverviewLoading(true);
+        const overviewData = await fetchQueueOverview();
+        setQueueOverview(overviewData);
+      } catch (error) {
+        console.error('Error loading queue overview:', error);
+      } finally {
+        setOverviewLoading(false);
+      }
+    };
+
+    // Fetch workload
+    const loadWorkload = async () => {
+      try {
+        setWorkloadLoading(true);
+        const workloadData = await fetchWorkload();
+        setWorkload(workloadData);
+      } catch (error) {
+        console.error('Error loading workload:', error);
+      } finally {
+        setWorkloadLoading(false);
+      }
+    };
+
+    // Fetch practitioners only if not already loaded in Redux
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+
+    // Fetch CPT codes only if not already loaded in Redux
+    const loadCptCodes = async () => {
+      if (cptCodesLoaded) return; // Skip if already loaded
+      try {
+        const cptCodesData = await fetchCptCodes();
+        dispatch(setCptCodes(cptCodesData));
+      } catch (error) {
+        console.error('Error loading CPT codes:', error);
+      }
+    };
+
+    // Run all fetches in parallel - each with its own loading state
+    loadNotes();
+    loadQueueOverview();
+    loadWorkload();
+    loadPractitioners();
+    loadCptCodes();
+  }, [practitionersLoaded, cptCodesLoaded, dispatch]);
 
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string) => {
@@ -94,91 +142,54 @@ const NotesQueue = () => {
 
     // Note Type filter
     if (filters.noteType && filters.noteType !== 'all') {
-      filterArray.push({
-        columnName: 'type',
-        type: 'exact',
-        value: parseInt(filters.noteType),
-      });
+      filterArray.push({ columnName: 'type', type: 'exact', value: parseInt(filters.noteType) });
     }
 
     // Practitioner filter
     if (filters.practitioner && filters.practitioner !== 'all') {
-      filterArray.push({
-        columnName: 'practitioner_id',
-        type: 'exact',
-        value: parseInt(filters.practitioner),
-      });
+      filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.practitioner) });
     }
 
     // Priority filter
     if (filters.priority && filters.priority !== 'all') {
-      filterArray.push({
-        columnName: 'priority',
-        type: 'exact',
-        value: parseInt(filters.priority),
-      });
+      filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
     }
 
     // CPT Code filter
     if (filters.cptCode && filters.cptCode !== 'all') {
-      filterArray.push({
-        columnName: 'patient_id',
-        type: 'exact',
-        value: parseInt(filters.cptCode),
-      });
+      filterArray.push({ columnName: 'patient_id', type: 'exact', value: parseInt(filters.cptCode) });
     }
 
     // AI Status filter
     if (filters.aiStatus && filters.aiStatus !== 'all') {
-      filterArray.push({
-        columnName: 'ai_status',
-        type: 'exact',
-        value: parseInt(filters.aiStatus),
-      });
+      filterArray.push({ columnName: 'ai_status', type: 'exact', value: parseInt(filters.aiStatus) });
     }
 
     // Workflow filter
     if (filters.workflow && filters.workflow !== 'all') {
-      filterArray.push({
-        columnName: 'workflow',
-        type: 'exact',
-        value: parseInt(filters.workflow),
-      });
+      filterArray.push({ columnName: 'workflow', type: 'exact', value: parseInt(filters.workflow) });
     }
 
     // Search filter
     if (filters.search) {
-      filterArray.push({
-        columnName: 'search',
-        type: 'like',
-        value: filters.search,
-      });
+      filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
     }
 
     // Date Range filter
     if (filters.dateRange && filters.dateRange !== 'all') {
       const dateRange = getDateRange(filters.dateRange);
       if (dateRange) {
-        filterArray.push({
-          columnName: 'created_at',
-          type: 'date_range',
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate,
-        });
+        filterArray.push({ columnName: 'created_at', type: 'date_range', startDate: dateRange.startDate, endDate: dateRange.endDate });
       }
     }
 
-    return {
-      page: currentPage,
-      pageSize: itemsPerPage,
-      filters: filterArray,
-    };
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
   };
 
   // Apply filters - makes API call with current filter values
   const handleApplyFilters = async () => {
     try {
-      setLoading(true);
+      setNotesLoading(true);
       setCurrentPage(1); // Reset to first page on filter apply
 
       const payload = buildFilterPayload();
@@ -189,7 +200,7 @@ const NotesQueue = () => {
     } catch (error) {
       console.error('Error applying filters:', error);
     } finally {
-      setLoading(false);
+      setNotesLoading(false);
     }
   };
 
@@ -214,19 +225,15 @@ const NotesQueue = () => {
     setCurrentPage(1);
 
     try {
-      setLoading(true);
-      const payload = {
-        page: 1,
-        pageSize: itemsPerPage,
-        filters: [],
-      };
+      setNotesLoading(true);
+      const payload = { page: 1, pageSize: itemsPerPage, filters: [] };
       const response = await fetchNotes(payload);
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
     } catch (error) {
       console.error('Error clearing filters:', error);
     } finally {
-      setLoading(false);
+      setNotesLoading(false);
     }
   };
 
@@ -235,7 +242,7 @@ const NotesQueue = () => {
     setCurrentPage(page);
 
     try {
-      setLoading(true);
+      setNotesLoading(true);
       const payload = buildFilterPayload();
       payload.page = page; // Update the page number
 
@@ -245,7 +252,7 @@ const NotesQueue = () => {
     } catch (error) {
       console.error('Error changing page:', error);
     } finally {
-      setLoading(false);
+      setNotesLoading(false);
     }
   };
 
@@ -264,7 +271,7 @@ const NotesQueue = () => {
               filters={filters}
               practitioners={practitioners}
               cptCodes={cptCodes}
-              loading={loading}
+              loading={notesLoading}
               onFilterChange={handleFilterChange}
               onApplyFilters={handleApplyFilters}
               onClearFilters={handleClearFilters}
@@ -277,11 +284,11 @@ const NotesQueue = () => {
                 <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
               </div>
 
-              {loading ? (
+              {notesLoading ? (
                 <div className="space-y-3">
                   <div className="rounded-md border">
                     <div className="space-y-3 p-4">
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
+                      {Array.from({ length: 10 }, (_, i) => (
                         <div key={i} className="flex items-center gap-4">
                           <Skeleton className="h-12 flex-1" />
                         </div>
@@ -319,23 +326,8 @@ const NotesQueue = () => {
 
       {/* Right Column: Overview Cards */}
       <div className="space-y-6 lg:col-span-4">
-        <QueueOverviewCard
-          data={
-            queueOverview || {
-              total_notes: 0,
-              ai_passed: 0,
-              ai_failed: 0,
-              pending_human_review: 0,
-              pending_manager_review: 0,
-              blacklist: 0,
-            }
-          }
-          loading={loading && !queueOverview}
-        />
-        <WorkloadCard
-          data={workload || { notesAssignedToYou: 0, avgReviewTime: '0 min', returnRate: '0%', aiDisagreementRate: '0%' }}
-          loading={loading && !workload}
-        />
+        <QueueOverviewCard data={queueOverview} loading={overviewLoading} />
+        <WorkloadCard data={workload} loading={workloadLoading} />
       </div>
     </div>
   );

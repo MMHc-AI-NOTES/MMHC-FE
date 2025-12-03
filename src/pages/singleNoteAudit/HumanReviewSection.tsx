@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Check, Save, UserCheck, X, CircleHelp } from 'lucide-react';
+import { useAppSelector } from '@/store/store';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface HumanReviewSectionProps {
   onSaveDraft: () => void;
@@ -12,6 +14,8 @@ interface HumanReviewSectionProps {
 }
 
 const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: HumanReviewSectionProps) => {
+  const { practitioners } = useAppSelector(state => state.filterOptions);
+
   const [decision, setDecision] = useState<string>('');
   const [reviewerName, setReviewerName] = useState<string>('');
   const [manualScore, setManualScore] = useState<string>('');
@@ -104,30 +108,40 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
 
         {/* Reviewer Name Section */}
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-gray-700">
-              Reviewer Name <span className="text-red-500">*</span>
-            </p>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    Enter your full name as the reviewer. This is required for accountability and audit trail purposes.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-gray-700">
+                Reviewer Name <span className="text-red-500">*</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-sm">
+                        Select the reviewer from the list of reviewers. This is required for accountability and audit trail purposes.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+            <Select value={reviewerName} onValueChange={value => setReviewerName(value)}>
+              <SelectTrigger className="mt-2 w-full">
+                <SelectValue placeholder="Select a reviewer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Select a reviewer</SelectItem>
+                {practitioners.map(p => (
+                  <SelectItem key={p.id} value={p.id.toString()}>
+                    {p.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <input
-            type="text"
-            value={reviewerName}
-            onChange={e => setReviewerName(e.target.value)}
-            placeholder="Enter your full name"
-            className="focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:ring-1 focus:outline-none"
-          />
         </div>
 
         {/* Manual Score Section */}
