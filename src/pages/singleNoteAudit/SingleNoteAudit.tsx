@@ -188,11 +188,6 @@ const SingleNoteAudit = () => {
     setShowHumanReview(false);
   };
 
-  const handleSubmitReview = () => {
-    console.log('Submitting review...');
-    setShowHumanReview(false);
-  };
-
   const handleFlagReview = () => {
     setShowHumanReview(true);
   };
@@ -230,8 +225,8 @@ const SingleNoteAudit = () => {
             <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
             <IssuesIdentifiedCard issues={noteDetail.issues} />
             {/* Conditionally render Human Review or Action Buttons */}
-            {showHumanReview ? (
-              <HumanReviewSection onSaveDraft={handleSaveDraft} onSubmit={handleSubmitReview} setShowHumanReview={setShowHumanReview} />
+            {showHumanReview && noteId ? (
+              <HumanReviewSection noteId={noteId} onSaveDraft={handleSaveDraft} setShowHumanReview={setShowHumanReview} />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
             <AuditHistoryCard chats={auditHistory} />

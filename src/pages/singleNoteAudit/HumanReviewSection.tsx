@@ -1,34 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Check, Save, UserCheck, X, CircleHelp } from 'lucide-react';
+import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { HumanReviewDecisionEnum } from '@/constants/common';
+import { submitHumanReview } from './singleNoteApiCalls';
+import { useDispatch } from 'react-redux';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 
 interface HumanReviewSectionProps {
+  noteId: string;
   onSaveDraft: () => void;
-  onSubmit: () => void;
   setShowHumanReview: (show: boolean) => void;
 }
 
-const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: HumanReviewSectionProps) => {
-  const { practitioners } = useAppSelector(state => state.filterOptions);
+const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview }: HumanReviewSectionProps) => {
+  const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const dispatch = useDispatch();
 
   const [decision, setDecision] = useState<string>('');
   const [reviewerName, setReviewerName] = useState<string>('');
   const [manualScore, setManualScore] = useState<string>('');
   const [comments, setComments] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isSubmitDisabled = !decision || !reviewerName;
+  const isSubmitDisabled = !decision || reviewerName === 'none' || reviewerName === '' || isSubmitting;
 
   const decisionOptions = [
-    { value: 'accept', label: 'Accept AI evaluation' },
-    { value: 'override', label: 'AI is incorrect — override score' },
-    { value: 'acceptable', label: 'Note is clinically acceptable despite AI issues' },
-    { value: 'correction', label: 'Note needs practitioner correction' },
-    { value: 'escalate', label: 'Escalate to Office Manager' },
+    { value: HumanReviewDecisionEnum.accept_ai_evaluation, label: 'Accept AI evaluation' },
+    { value: HumanReviewDecisionEnum.ai_incorrect_override_score, label: 'AI is incorrect — override score' },
+    { value: HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues, label: 'Note is clinically acceptable despite AI issues' },
+    { value: HumanReviewDecisionEnum.needs_practitioner_correction, label: 'Note needs practitioner correction' },
+    { value: HumanReviewDecisionEnum.escalate_to_office_manager, label: 'Escalate to Office Manager' },
   ];
 
   const handleCheckboxChange = (itemValue: string, checked: boolean | string) => {
@@ -36,6 +43,60 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
       setDecision(itemValue);
     } else {
       setDecision('');
+    }
+  };
+
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
+
+  const handleManualScoreChange = (value: string) => {
+    // Allow empty, PASS, FAIL, or numeric values 0-100
+    if (value === '' || value === 'PASS' || value === 'FAIL') {
+      setManualScore(value);
+      return;
+    }
+
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue)) {
+      // Clamp value between 0 and 100
+      const clampedValue = Math.min(100, Math.max(0, numValue));
+      setManualScore(clampedValue.toString());
+    }
+  };
+
+  const getNumericScore = (): number | undefined => {
+    if (manualScore === '') return undefined;
+    if (manualScore === 'PASS') return 100;
+    if (manualScore === 'FAIL') return 0;
+    return parseInt(manualScore, 10);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!decision || !noteId) return;
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        note_id: noteId,
+        decision: parseInt(decision, 10),
+        practitioner_id: reviewerName ? parseInt(reviewerName, 10) : null,
+        ...(manualScore && { manual_score: getNumericScore() }),
+        ...(comments && { comment: comments }),
+      };
+
+      await submitHumanReview(payload);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,13 +151,13 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
             {decisionOptions.map(item => (
               <div key={item.value} className="flex items-center space-x-2 rounded-lg border-gray-200 py-1.5">
                 <Checkbox
-                  id={item.value}
-                  checked={decision === item.value}
-                  onCheckedChange={checked => handleCheckboxChange(item.value, checked)}
+                  id={item.value.toString()}
+                  checked={decision === item.value.toString()}
+                  onCheckedChange={checked => handleCheckboxChange(item.value.toString(), checked)}
                   className="border-primary rounded-full border-2"
                 />
                 <label
-                  htmlFor={item.value}
+                  htmlFor={item.value.toString()}
                   className="text-primary text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   {item.label}
@@ -133,7 +194,7 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
                 <SelectValue placeholder="Select a reviewer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Select a reviewer</SelectItem>
+                <SelectItem value="none">Select a reviewer</SelectItem>
                 {practitioners.map(p => (
                   <SelectItem key={p.id} value={p.id.toString()}>
                     {p.fullName}
@@ -169,23 +230,16 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
                 type="number"
                 min="0"
                 max="100"
-                value={manualScore}
-                onChange={e => setManualScore(e.target.value)}
+                value={manualScore === 'PASS' || manualScore === 'FAIL' ? '' : manualScore}
+                onChange={e => handleManualScoreChange(e.target.value)}
                 placeholder="0-100"
                 className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
               <span className="text-sm text-gray-500">Score</span>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setManualScore('PASS')}
-                className="bg-primary-light text-primary rounded-full border px-4 py-2 text-sm font-medium"
-              >
-                PASS
-              </button>
-              <button onClick={() => setManualScore('FAIL')} className="rounded-full border px-4 py-2 text-sm font-medium text-red-700">
-                FAIL
-              </button>
+              <p className="bg-primary-light text-primary rounded-full px-4 py-2.5 text-sm font-medium shadow-sm">PASS</p>
+              <p className="rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium text-red-600">FAIL</p>
             </div>
           </div>
         </div>
@@ -203,12 +257,12 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-2">
-          <Button onClick={onSaveDraft} variant="outline" className="min-w-44">
+          <Button onClick={onSaveDraft} variant="outline" className="min-w-44" disabled={isSubmitting}>
             <Save />
             Save Draft
           </Button>
-          <Button className="bg-primary-light text-primary" onClick={onSubmit} disabled={isSubmitDisabled}>
-            <Check />
+          <Button className="bg-primary-light text-primary hover:bg-primary-light" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
             Submit Human Review
           </Button>
         </div>

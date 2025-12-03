@@ -38,11 +38,11 @@ export const WorkloadCard = ({ data, loading }: WorkloadCardProps) => {
         </div>
         <div className="flex items-center justify-between">
           <div className="text-muted-foreground mb-1 text-sm">Return Rate</div>
-          <div className="text-xl font-bold">{data?.return_rate || '0%'}</div>
+          <div className="text-xl font-bold">{data?.return_rate || '0'}%</div>
         </div>
         <div className="flex items-center justify-between">
           <div className="text-muted-foreground mb-1 text-sm">AI Disagreement Rate</div>
-          <div className="text-xl font-bold">{data?.ai_disagreement_rate || '0%'}</div>
+          <div className="text-xl font-bold">{data?.ai_disagreement_rate || '0'}%</div>
         </div>
       </div>
     </Card>

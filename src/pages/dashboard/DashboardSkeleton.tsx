@@ -4,6 +4,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 const DashboardSkeleton = () => {
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Card className="flex items-center rounded-full px-3.5 py-2">
+          <CardContent>
+            <Skeleton className="h-6 w-32" />
+          </CardContent>
+        </Card>
+      </div>
       {/* Stats Cards Skeleton - 4 cards grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (

@@ -1,6 +1,33 @@
 import axios from 'axios';
 import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import { ApiNoteDetail } from '@/types/notes';
+import { showToast } from '@/lib/toast';
+
+export interface HumanReviewPayload {
+  note_id: string;
+  decision: number;
+  manual_score?: number;
+  comment?: string;
+}
+
+/**
+ * Submit human review for a note
+ */
+export const submitHumanReview = async (payload: HumanReviewPayload): Promise<any> => {
+  try {
+    const response = await axios.post('/human-reviews', payload);
+
+    if (response?.status) {
+      showToast.success('Human review submitted successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
 
 /**
  * Fetch note detail by noteId

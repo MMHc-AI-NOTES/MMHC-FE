@@ -166,6 +166,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="text-primary min-w-[120px]">Note ID</TableHead>
               <TableHead className="text-primary min-w-[120px]">Practitioner</TableHead>
               <TableHead className="text-primary min-w-[100px]">Client</TableHead>
               <TableHead className="text-primary min-w-[100px]">Date</TableHead>
@@ -210,6 +211,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
+                <TableCell className="text-left font-medium">#{note.id}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.client}</TableCell>
                 <TableCell>{note.date}</TableCell>

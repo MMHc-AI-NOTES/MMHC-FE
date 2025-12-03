@@ -4,6 +4,14 @@ export const SLIDER_CONFIGS = {
   TOP_K: { min: 0, max: 1000, step: 100 },
 } as const;
 
+export const HumanReviewDecisionEnum = {
+  accept_ai_evaluation: 1,
+  ai_incorrect_override_score: 2,
+  clinically_acceptable_despite_ai_issues: 3,
+  needs_practitioner_correction: 4,
+  escalate_to_office_manager: 5,
+} as const;
+
 // Session Type Enum
 export const SessionTypeEnum = {
   progress_note: 1,

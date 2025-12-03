@@ -29,7 +29,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       trendingValue: 3,
     },
     {
-      title: 'Needs Practitioner Review',
+      title: 'Practitioner Corrections Required',
       value: activePractitioners,
       icon: Info,
       iconBg: 'bg-orange-100',
