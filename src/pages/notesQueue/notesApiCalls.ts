@@ -41,20 +41,30 @@ export const getDateRange = (range: string): { startDate: string; endDate: strin
   const today = moment();
 
   switch (range) {
-    case 'this_week':
+    case 'today':
       return {
-        startDate: today.startOf('week').format('YYYY-MM-DD'),
-        endDate: today.endOf('week').format('YYYY-MM-DD'),
+        startDate: today.format('YYYY-MM-DD'),
+        endDate: today.format('YYYY-MM-DD'),
+      };
+    case 'last_7_days':
+      return {
+        startDate: today.clone().subtract(6, 'days').format('YYYY-MM-DD'),
+        endDate: today.format('YYYY-MM-DD'),
+      };
+    case 'last_30_days':
+      return {
+        startDate: today.clone().subtract(29, 'days').format('YYYY-MM-DD'),
+        endDate: today.format('YYYY-MM-DD'),
       };
     case 'this_month':
       return {
         startDate: today.startOf('month').format('YYYY-MM-DD'),
         endDate: today.endOf('month').format('YYYY-MM-DD'),
       };
-    case 'this_year':
+    case 'last_month':
       return {
-        startDate: today.startOf('year').format('YYYY-MM-DD'),
-        endDate: today.endOf('year').format('YYYY-MM-DD'),
+        startDate: today.clone().subtract(1, 'month').startOf('month').format('YYYY-MM-DD'),
+        endDate: today.clone().subtract(1, 'month').endOf('month').format('YYYY-MM-DD'),
       };
     case 'all':
     default:

@@ -152,9 +152,11 @@ export const FiltersSection = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              <SelectItem value="this_week">This Week</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="last_7_days">Last 7 Days</SelectItem>
+              <SelectItem value="last_30_days">Last 30 Days</SelectItem>
               <SelectItem value="this_month">This Month</SelectItem>
-              <SelectItem value="this_year">This Year</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
             </SelectContent>
           </Select>
         </div>
