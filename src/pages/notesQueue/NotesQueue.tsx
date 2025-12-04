@@ -179,7 +179,7 @@ const NotesQueue = () => {
     if (filters.dateRange && filters.dateRange !== 'all') {
       const dateRange = getDateRange(filters.dateRange);
       if (dateRange) {
-        filterArray.push({ columnName: 'created_at', type: 'date_range', startDate: dateRange.startDate, endDate: dateRange.endDate });
+        filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
       }
     }
 
