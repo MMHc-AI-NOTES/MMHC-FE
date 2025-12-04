@@ -29,7 +29,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       trendingValue: 3,
     },
     {
-      title: 'Needs Practitioner Review',
+      title: 'Practitioner Corrections Required',
       value: activePractitioners,
       icon: Info,
       iconBg: 'bg-orange-100',
@@ -53,7 +53,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
         const IconComponent = stat.icon;
         return (
           <Card key={index} className="border-0 shadow-md">
-            <CardContent className="space-y-4">
+            <CardContent className="">
               <div className="flex items-center justify-between">
                 <div className={`rounded-lg p-2 ${stat.iconBg}`}>
                   <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
@@ -73,7 +73,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
               </div>
 
               <h2 className="text-primary mt-2 text-5xl font-bold">{stat.value.toLocaleString()}</h2>
-              <div>
+              <div className="mt-2">
                 <p>{stat.title}</p>
                 <p className="text-sm text-gray-400">{stat.description ? stat.description : ''}</p>
               </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundPen } from 'lucide-react';
@@ -13,14 +13,16 @@ import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
+import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail } from '@/types/notes';
-import { RootState } from '@/store/store';
+import { NoteDetail, ApiNoteDetail, Chat } from '@/types/notes';
+import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
+import ModelInformation from './ModelInformation';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
@@ -31,7 +33,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
   const bedrockResponse = latestChat?.bedrockResponse;
-  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY h:mm A') : '';
+  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY - h:mm A') : '';
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({
@@ -75,6 +77,11 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     issues: issues,
     prompt: latestChat?.prompt || '',
     rawResponse: bedrockResponse?.raw_response || '',
+    modelDetail: {
+      modelVersion: latestChat.modelId,
+      auditRunId: latestChat.id,
+      lastRun: formattedDateTime,
+    },
   };
 };
 
@@ -83,13 +90,14 @@ const SingleNoteAudit = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
-  const { selectedAgentId } = useSelector((state: RootState) => state.agents);
+  const { selectedAgentId } = useAppSelector(state => state.agents);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
   const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+  const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [showHumanReview, setShowHumanReview] = useState(false);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
@@ -113,6 +121,8 @@ const SingleNoteAudit = () => {
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
 
         setNoteDetail(formattedNoteDetail);
+        // Store all chats for audit history
+        setAuditHistory(apiNoteDetail.chats || []);
       } finally {
         setLoading(false);
       }
@@ -178,11 +188,6 @@ const SingleNoteAudit = () => {
     setShowHumanReview(false);
   };
 
-  const handleSubmitReview = () => {
-    console.log('Submitting review...');
-    setShowHumanReview(false);
-  };
-
   const handleFlagReview = () => {
     setShowHumanReview(true);
   };
@@ -216,15 +221,15 @@ const SingleNoteAudit = () => {
           {/* Right Content */}
           <div className="space-y-4">
             <AuditScoreCard noteDetail={noteDetail} />
+            <ModelInformation modelDetail={noteDetail.modelDetail} />
             <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
             <IssuesIdentifiedCard issues={noteDetail.issues} />
-
             {/* Conditionally render Human Review or Action Buttons */}
-            {showHumanReview ? (
-              <HumanReviewSection onSaveDraft={handleSaveDraft} onSubmit={handleSubmitReview} setShowHumanReview={setShowHumanReview} />
+            {showHumanReview && noteId ? (
+              <HumanReviewSection noteId={noteId} onSaveDraft={handleSaveDraft} setShowHumanReview={setShowHumanReview} />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
-
+            <AuditHistoryCard chats={auditHistory} />
             <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>

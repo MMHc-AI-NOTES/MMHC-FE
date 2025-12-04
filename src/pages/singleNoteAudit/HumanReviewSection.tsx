@@ -1,28 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Check, Save, UserCheck, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
+import { useAppSelector } from '@/store/store';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { HumanReviewDecisionEnum } from '@/constants/common';
+import { submitHumanReview } from './singleNoteApiCalls';
+import { useDispatch } from 'react-redux';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 
 interface HumanReviewSectionProps {
+  noteId: string;
   onSaveDraft: () => void;
-  onSubmit: () => void;
   setShowHumanReview: (show: boolean) => void;
 }
 
-const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: HumanReviewSectionProps) => {
+const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview }: HumanReviewSectionProps) => {
+  const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const dispatch = useDispatch();
+
   const [decision, setDecision] = useState<string>('');
+  const [reviewerName, setReviewerName] = useState<string>('');
   const [manualScore, setManualScore] = useState<string>('');
   const [comments, setComments] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isSubmitDisabled = !decision;
+  const isSubmitDisabled = !decision || reviewerName === 'none' || reviewerName === '' || isSubmitting;
 
   const decisionOptions = [
-    { value: 'accept', label: 'Accept AI evaluation' },
-    { value: 'override', label: 'AI is incorrect — override score' },
-    { value: 'acceptable', label: 'Note is clinically acceptable despite AI issues' },
-    { value: 'correction', label: 'Note needs practitioner correction' },
-    { value: 'escalate', label: 'Escalate to Office Manager' },
+    { value: HumanReviewDecisionEnum.accept_ai_evaluation, label: 'Accept AI evaluation' },
+    { value: HumanReviewDecisionEnum.ai_incorrect_override_score, label: 'AI is incorrect — override score' },
+    { value: HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues, label: 'Note is clinically acceptable despite AI issues' },
+    { value: HumanReviewDecisionEnum.needs_practitioner_correction, label: 'Note needs practitioner correction' },
+    { value: HumanReviewDecisionEnum.escalate_to_office_manager, label: 'Escalate to Office Manager' },
   ];
 
   const handleCheckboxChange = (itemValue: string, checked: boolean | string) => {
@@ -33,14 +46,83 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
     }
   };
 
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
+
+  const handleManualScoreChange = (value: string) => {
+    // Allow empty, PASS, FAIL, or numeric values 0-100
+    if (value === '' || value === 'PASS' || value === 'FAIL') {
+      setManualScore(value);
+      return;
+    }
+
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue)) {
+      // Clamp value between 0 and 100
+      const clampedValue = Math.min(100, Math.max(0, numValue));
+      setManualScore(clampedValue.toString());
+    }
+  };
+
+  const getNumericScore = (): number | undefined => {
+    if (manualScore === '') return undefined;
+    if (manualScore === 'PASS') return 100;
+    if (manualScore === 'FAIL') return 0;
+    return parseInt(manualScore, 10);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!decision || !noteId) return;
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        note_id: noteId,
+        decision: parseInt(decision, 10),
+        practitioner_id: reviewerName ? parseInt(reviewerName, 10) : null,
+        ...(manualScore && { manual_score: getNumericScore() }),
+        ...(comments && { comment: comments }),
+      };
+
+      await submitHumanReview(payload);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Card className="gap-1 shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
-            <UserCheck />
-            Human Review
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
+              <UserCheck />
+              Human Review
+            </CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Conduct a human review of the AI evaluation. Your decision will override or confirm the AI's assessment and help improve
+                    future evaluations.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => setShowHumanReview(false)} className="h-6 w-6">
             <X size={16} />
           </Button>
@@ -49,18 +131,33 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
       <CardContent className="space-y-4">
         {/* Decision Section */}
         <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-700">Decision</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-700">Decision</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Select the appropriate action based on your review. This decision will determine the next steps in the workflow and may
+                    trigger notifications to relevant parties.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <div className="space-y-1">
             {decisionOptions.map(item => (
               <div key={item.value} className="flex items-center space-x-2 rounded-lg border-gray-200 py-1.5">
                 <Checkbox
-                  id={item.value}
-                  checked={decision === item.value}
-                  onCheckedChange={checked => handleCheckboxChange(item.value, checked)}
+                  id={item.value.toString()}
+                  checked={decision === item.value.toString()}
+                  onCheckedChange={checked => handleCheckboxChange(item.value.toString(), checked)}
                   className="border-primary rounded-full border-2"
                 />
                 <label
-                  htmlFor={item.value}
+                  htmlFor={item.value.toString()}
                   className="text-primary text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   {item.label}
@@ -70,39 +167,79 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
           </div>
         </div>
 
+        {/* Reviewer Name Section */}
+        <div className="space-y-1">
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-gray-700">
+                Reviewer Name <span className="text-red-500">*</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-sm">
+                        Select the reviewer from the list of reviewers. This is required for accountability and audit trail purposes.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+            <Select value={reviewerName} onValueChange={value => setReviewerName(value)}>
+              <SelectTrigger className="mt-2 w-full">
+                <SelectValue placeholder="Select a reviewer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select a reviewer</SelectItem>
+                {practitioners.map(p => (
+                  <SelectItem key={p.id} value={p.id.toString()}>
+                    {p.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Manual Score Section */}
         <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-700">Manual Score (Optional)</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-700">Manual Score (Optional)</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Override the AI score with your manual assessment. Enter a score between 0-100, or use PASS/FAIL buttons. Scores ≥95 are
+                    considered passing.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-xs text-gray-500">PASS = score ≥ 95 • FAIL = score {'<'} 95</p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">
               <input
                 type="number"
                 min="0"
                 max="100"
-                value={manualScore}
-                onChange={e => setManualScore(e.target.value)}
+                value={manualScore === 'PASS' || manualScore === 'FAIL' ? '' : manualScore}
+                onChange={e => handleManualScoreChange(e.target.value)}
                 placeholder="0-100"
                 className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
               <span className="text-sm text-gray-500">Score</span>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setManualScore('PASS')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                  manualScore === 'PASS' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                PASS
-              </button>
-              <button
-                onClick={() => setManualScore('FAIL')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                  manualScore === 'FAIL' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                FAIL
-              </button>
+              <p className="bg-primary-light text-primary rounded-full px-4 py-2.5 text-sm font-medium shadow-sm">PASS</p>
+              <p className="rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium text-red-600">FAIL</p>
             </div>
           </div>
         </div>
@@ -120,12 +257,12 @@ const HumanReviewSection = ({ onSaveDraft, onSubmit, setShowHumanReview }: Human
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-2">
-          <Button onClick={onSaveDraft} variant="outline" className="min-w-44">
+          <Button onClick={onSaveDraft} variant="outline" className="min-w-44" disabled={isSubmitting}>
             <Save />
             Save Draft
           </Button>
-          <Button onClick={onSubmit} disabled={isSubmitDisabled}>
-            <Check />
+          <Button className="bg-primary-light text-primary hover:bg-primary-light" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
             Submit Human Review
           </Button>
         </div>

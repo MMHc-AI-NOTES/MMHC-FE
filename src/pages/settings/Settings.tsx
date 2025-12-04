@@ -8,13 +8,13 @@ import AgentAccordion from './AgentAccordion';
 import AgentForm from './AgentForm';
 import { createAgent, deleteAgent, fetchAgents, updateAgent } from './settingsApiCalls';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RootState } from '@/store/store';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppSelector } from '@/store/store';
+import { useDispatch } from 'react-redux';
 import { addAgent, deleteAgentFromStore, setAgents, setLoading, updateAgentInStore } from '@/store/slices/agentsSlice';
 
 const Settings: React.FC = () => {
   const dispatch = useDispatch();
-  const { agents, loading } = useSelector((state: RootState) => state.agents);
+  const { agents, loading } = useAppSelector(state => state.agents);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | undefined>();

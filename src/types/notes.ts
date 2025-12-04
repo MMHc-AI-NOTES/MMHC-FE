@@ -5,6 +5,16 @@ export interface RawApiNote {
   sessionId: string;
   sessionTime: string;
   practitionerId: number;
+  client?: string;
+  clientId?: string;
+  type?: number;
+  noteType?: { id: number; name: string };
+  aiScore?: { id: number; name: string };
+  aiStatus?: { id: number; name: string };
+  humanReview?: { id: number; name: string };
+  manager?: { id: number; name: string };
+  workflow?: { id: number; name: string };
+  priority?: { id: number; name: string };
   createdAt: string;
   updatedAt: string;
   practitioner: {
@@ -16,17 +26,36 @@ export interface RawApiNote {
     createdAt: string;
     updatedAt: string;
   };
+  patient: {
+    uuid: string;
+  };
 }
 
 export interface FormattedNote {
   id: string;
   practitioner: string;
-  sessionTime: string;
+  client: string;
+  date: string;
+  type: string;
+  aiScore: number;
+  aiStatus: number;
+  humanReview: number;
+  manager: number;
+  workflow: number;
+  priority: number;
+  sessionTime?: string;
   rawData?: RawApiNote;
 }
 
 export interface DataFormatterProps {
   data: RawApiNote[];
+}
+
+export interface ModelDetail {
+  modelVersion: string;
+  lastRun: string;
+  promptVersion?: string;
+  auditRunId: number | string;
 }
 
 export interface NoteDetail {
@@ -43,6 +72,7 @@ export interface NoteDetail {
   bedrockResponse: object;
   prompt: string;
   rawResponse: string;
+  modelDetail: ModelDetail;
   issues: {
     severity: 'CRITICAL' | 'MODERATE' | 'MINOR';
     category: string;
@@ -124,34 +154,36 @@ export interface ApiNoteDetail {
   chats: Chat[];
 }
 
-export interface FormattedNote {
-  id: string;
-  date: string;
-  practitioner: string; // String type for formatted note
-  cptCode: string;
-  noteType: string;
-  aiReviews: number;
-  auditScore: number;
-  lastRun: string;
+// Queue Overview Data
+export interface QueueOverview {
+  total_notes: number;
+  ai_passed: number;
+  ai_failed: number;
+  pending_human_review: number;
+  pending_manager_review: number;
+  blacklist: number;
 }
 
-export interface NoteDetail {
-  id: string;
-  date: string;
-  practitioner: string; // String type for component
-  cptCode: string;
-  noteType: string;
-  aiReviews: number;
-  auditScore: number;
-  lastRun: string;
-  aiSummary: string;
-  therapySummary: string;
-  bedrockResponse: object;
-  issues: {
-    severity: 'CRITICAL' | 'MODERATE' | 'MINOR';
-    category: string;
-    points: number;
-    description: string;
-    sectionId: string;
-  }[];
+// Workload Data
+export interface Workload {
+  assign_notes: number;
+  avg_review_time: string;
+  return_rate: string;
+  ai_disagreement_rate: string;
+}
+
+// Filter Options
+export interface FilterOption {
+  value: string | number;
+  label: string;
+}
+
+export interface PractitionerOption {
+  id: number;
+  fullName: string;
+}
+
+export interface CptCodeOption {
+  id: number;
+  uuid: string;
 }
