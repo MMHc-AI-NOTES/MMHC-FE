@@ -96,3 +96,8 @@ const extractErrorsFromResponse = (responseData: any): ErrorMessage[] => {
 
   return [{ message: 'Operation failed' }];
 };
+
+// Helper to safely get enum values
+export const getEnumValues = (enumObj: Record<string, number>): number[] => {
+  return Object.values(enumObj).filter((value): value is number => typeof value === 'number');
+};

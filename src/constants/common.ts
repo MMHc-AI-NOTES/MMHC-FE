@@ -119,3 +119,20 @@ export const DateRangeLabels: Record<string, string> = {
   this_month: 'This Month',
   this_year: 'This Year',
 };
+
+export const ChatSeverityEnum = {
+  info: 1,
+  warning: 2,
+  error: 3,
+} as const;
+
+export const ChatSeverityLabels: Record<number, string> = {
+  [ChatSeverityEnum.info]: 'Info',
+  [ChatSeverityEnum.warning]: 'Warning',
+  [ChatSeverityEnum.error]: 'Error',
+};
+
+export const ChatTriggerSourceEnum = {
+  webhook: 1,
+  rerun: 2,
+} as const;
