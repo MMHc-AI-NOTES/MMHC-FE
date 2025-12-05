@@ -143,6 +143,7 @@ export interface Practitioner {
 export interface ApiNoteDetail {
   id: number;
   noteId: string;
+  chatId: string;
   sessionId: string;
   session: string;
   sessionTime: string;

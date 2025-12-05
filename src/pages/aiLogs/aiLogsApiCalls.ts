@@ -97,19 +97,7 @@ export const getModelVersions = (logs: AILog[]): string[] => {
 
 // Get result status based on evaluation score
 export const getResultStatus = (score: number): 'pass' | 'fail' | 'error' => {
-  if (score >= 75) return 'pass';
-  if (score >= 50) return 'fail';
+  if (score >= 95) return 'pass';
+  if (score < 95) return 'fail';
   return 'error';
-};
-
-// Get severity based on issues
-export const getSeverity = (bedrockResponse: AILog['bedrockResponse']): 'info' | 'warning' | 'error' => {
-  if (!bedrockResponse?.issues || bedrockResponse.issues.length === 0) return 'info';
-
-  const hasCritical = bedrockResponse.issues.some(issue => issue.severity?.toLowerCase() === 'critical');
-  const hasModerate = bedrockResponse.issues.some(issue => issue.severity?.toLowerCase() === 'moderate');
-
-  if (hasCritical) return 'error';
-  if (hasModerate) return 'warning';
-  return 'info';
 };

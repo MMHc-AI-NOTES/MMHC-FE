@@ -18,7 +18,7 @@ const LogDetailsSection = ({ log, agents, onReRunAudit }: LogDetailsSectionProps
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left Column */}
         <div className="space-y-6">
-          <LogDetailsCard log={log} agents={agents} />
+          <LogDetailsCard log={log} />
           <ModelInfoCard log={log} />
           <AIHumanComparisonCard log={log} />
           <ReRunAuditCard log={log} agents={agents} onReRunAudit={onReRunAudit} />

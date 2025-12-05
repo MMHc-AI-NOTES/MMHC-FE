@@ -1,6 +1,10 @@
 // AI Log Types for chats/listing endpoint
 export interface AILogHumanReview {
   id: number;
+  practitioner: {
+    id: number;
+    fullName: string;
+  };
   decision: {
     id: number;
     name: string;
@@ -49,6 +53,9 @@ export interface AILogBedrockResponse {
 
 export interface AILog {
   id: number;
+  triggerSource: { id: number; name: string };
+  agent: { id: number; name: string };
+  severity: { id: number; name: string };
   prompt: string;
   userNote: string;
   modelId: string;

@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
 import { Cpu, Code, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Agent } from '@/types/agent';
-import { ChatSeverityEnum, ChatSeverityLabels } from '@/constants/common';
+import { ChatResultEnum, ChatResultLabels, ChatSeverityEnum, ChatSeverityLabels } from '@/constants/common';
 import { getEnumValues } from '@/utils/helper';
 
 interface AILogsFilters {
@@ -86,9 +86,11 @@ export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApp
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Results</SelectItem>
-              <SelectItem value="pass">Pass</SelectItem>
-              <SelectItem value="fail">Fail</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
+              {getEnumValues(ChatResultEnum).map(value => (
+                <SelectItem key={value} value={value.toString()}>
+                  {ChatResultLabels[value]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

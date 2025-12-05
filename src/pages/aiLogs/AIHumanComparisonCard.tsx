@@ -9,6 +9,7 @@ interface AIHumanComparisonCardProps {
 
 const AIHumanComparisonCard = ({ log }: AIHumanComparisonCardProps) => {
   const humanReview = log.humanReviews?.[0];
+  const reviewerName = humanReview?.practitioner?.fullName || '-';
   const aiScore = log.evaluationScore;
   const humanScore = humanReview?.manualScore;
   const aiIssueCount = log.bedrockResponse?.issues?.length || 0;
@@ -57,12 +58,12 @@ const AIHumanComparisonCard = ({ log }: AIHumanComparisonCardProps) => {
 
             <div className="mb-3">
               <p className="mb-1 text-xs text-gray-500">Reviewer</p>
-              <p className="text-sm font-bold text-gray-900">{log.user?.fullName || '-'}</p>
+              <p className="text-sm font-bold text-gray-900">{reviewerName || '-'}</p>
             </div>
             <Separator className="my-4" />
             <div className="mb-4">
               <p className="mb-1 text-xs text-gray-500">Score</p>
-              <p className="text-primary text-5xl font-bold">{humanScore || '-'}</p>
+              {humanScore ? <p className="text-primary text-5xl font-bold">{humanScore}</p> : <p>-</p>}
             </div>
             <Separator className="my-4" />
             <div className="mb-4">

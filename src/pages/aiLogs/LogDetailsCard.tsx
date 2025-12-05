@@ -3,25 +3,18 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AILog } from '@/types/aiLogs';
-import { Agent } from '@/types/agent';
 import { FileText, Hash, Database, Code, Clock, Activity, Calendar, Zap, HelpCircle } from 'lucide-react';
 import moment from 'moment';
-import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
 import { cn } from '@/lib/utils';
+import { getModelDisplayName } from '@/utils/helper';
+import { ChatTriggerSourceEnum } from '@/constants/common';
 
 interface LogDetailsCardProps {
   log: AILog;
-  agents: Agent[];
 }
 
-const LogDetailsCard = ({ log, agents }: LogDetailsCardProps) => {
-  const getModelDisplayName = (modelId: string): string => {
-    const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelId);
-    return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelId;
-  };
-
+const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
   const modelDisplayName = getModelDisplayName(log.modelId);
-  const defaultAgent = agents.find(a => a.is_default === 1) || agents[0];
 
   const getConfidenceLevel = (score: number) => {
     if (score >= 95) {
@@ -82,7 +75,7 @@ const LogDetailsCard = ({ log, agents }: LogDetailsCardProps) => {
                 <Code className="h-4 w-4" />
                 <span className="text-sm">Prompt Agent:</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">{defaultAgent?.name || 'N/A'}</span>
+              <span className="text-sm font-medium text-gray-900">{log.agent?.name || '-'}</span>
             </div>
           </div>
           <div>
@@ -164,7 +157,9 @@ const LogDetailsCard = ({ log, agents }: LogDetailsCardProps) => {
                 <Zap className="h-4 w-4" />
                 <span className="text-sm">Trigger Source:</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">Re-run</span>
+              <span className="text-sm font-medium text-gray-900">
+                {log.triggerSource?.id === ChatTriggerSourceEnum.rerun ? 'Re-run' : '-'}
+              </span>
             </div>
           </div>
         </div>

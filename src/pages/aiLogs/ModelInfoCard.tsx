@@ -2,18 +2,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AILog } from '@/types/aiLogs';
 import { Cpu, FileCode, Hash, Clock } from 'lucide-react';
 import moment from 'moment';
-import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
+import { getModelDisplayName } from '@/utils/helper';
 
 interface ModelInfoCardProps {
   log: AILog;
 }
 
 const ModelInfoCard = ({ log }: ModelInfoCardProps) => {
-  const getModelDisplayName = (modelId: string): string => {
-    const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelId);
-    return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelId;
-  };
-
   const modelDisplayName = getModelDisplayName(log.modelId);
 
   return (
@@ -31,7 +26,7 @@ const ModelInfoCard = ({ log }: ModelInfoCardProps) => {
             <FileCode className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Prompt Version</p>
-              <p className="text-sm text-black">P-2.1</p>
+              <p className="text-sm text-black">{log.agent?.name || '-'}</p>
             </div>
           </div>
         </div>

@@ -121,18 +121,30 @@ export const DateRangeLabels: Record<string, string> = {
 };
 
 export const ChatSeverityEnum = {
-  info: 1,
-  warning: 2,
-  error: 3,
+  minor: 1,
+  moderate: 2,
+  critical: 3,
 } as const;
 
 export const ChatSeverityLabels: Record<number, string> = {
-  [ChatSeverityEnum.info]: 'Info',
-  [ChatSeverityEnum.warning]: 'Warning',
-  [ChatSeverityEnum.error]: 'Error',
+  [ChatSeverityEnum.minor]: 'Minor',
+  [ChatSeverityEnum.moderate]: 'Moderate',
+  [ChatSeverityEnum.critical]: 'Critical',
 };
 
 export const ChatTriggerSourceEnum = {
   webhook: 1,
   rerun: 2,
 } as const;
+
+export const ChatResultEnum = {
+  pass: 1,
+  fail: 2,
+  error: 3,
+} as const;
+
+export const ChatResultLabels: Record<number, string> = {
+  [ChatResultEnum.pass]: 'Pass',
+  [ChatResultEnum.fail]: 'Fail',
+  [ChatResultEnum.error]: 'Error',
+};

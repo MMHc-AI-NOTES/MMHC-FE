@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AILog } from '@/types/aiLogs';
 import moment from 'moment';
-import { getResultStatus, getSeverity } from './aiLogsApiCalls';
+import { getResultStatus } from './aiLogsApiCalls';
+import { getModelDisplayName } from '@/utils/helper';
 
 interface AILogsTableProps {
   logs: AILog[];
@@ -18,22 +19,22 @@ const getResultBadgeStyle = (result: 'pass' | 'fail' | 'error') => {
     case 'pass':
       return 'bg-green-light text-green border-green';
     case 'fail':
-      return 'bg-orange-light text-orange border-orange';
-    case 'error':
       return 'bg-red-light text-red border-red';
+    case 'error':
+      return 'bg-black-100 text-black border-black-100';
     default:
       return 'bg-gray-light text-gray border-gray';
   }
 };
 
 // Helper to get badge styling for Severity column
-const getSeverityBadgeStyle = (severity: 'info' | 'warning' | 'error') => {
+const getSeverityBadgeStyle = (severity: string) => {
   switch (severity) {
-    case 'info':
+    case 'minor':
       return 'bg-blue-light text-blue border-blue';
-    case 'warning':
+    case 'moderate':
       return 'bg-orange-light text-orange border-orange';
-    case 'error':
+    case 'critical':
       return 'bg-red-light text-red border-red';
     default:
       return 'bg-gray-light text-gray border-gray';
@@ -55,27 +56,17 @@ const getResultIcon = (result: 'pass' | 'fail' | 'error') => {
 };
 
 // Helper to get severity icon
-const getSeverityIcon = (severity: 'info' | 'warning' | 'error') => {
+const getSeverityIcon = (severity: string) => {
   switch (severity) {
-    case 'info':
+    case 'minor':
       return <Info className="h-4 w-4" />;
-    case 'warning':
+    case 'moderate':
       return <AlertTriangle className="h-4 w-4" />;
-    case 'error':
+    case 'critical':
       return <AlertTriangle className="h-4 w-4" />;
     default:
       return null;
   }
-};
-
-// Format model version badge with color
-const getModelVersionBadge = (modelId: string) => {
-  return (
-    <Badge className="text-blue bg-blue-light gap-2 rounded-[6px] [&>svg]:!size-4">
-      <Database className="h-4 w-4" />
-      {modelId}
-    </Badge>
-  );
 };
 
 export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTableProps) => {
@@ -128,7 +119,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
           <TableBody>
             {logs.map(log => {
               const result = getResultStatus(log.evaluationScore);
-              const severity = getSeverity(log.bedrockResponse);
+              const severity = log.severity?.name || '-';
               const isSelected = selectedLogId === log.id;
 
               return (
@@ -138,9 +129,14 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                   onClick={() => onSelectLog(log)}
                 >
                   <TableCell className="text-sm font-medium text-gray-900">LOG-{log.id}</TableCell>
-                  <TableCell className="text-sm text-gray-600">{log.noteId?.slice(0, 8) || '-'}</TableCell>
-                  <TableCell>{getModelVersionBadge(log.modelId)}</TableCell>
-                  <TableCell className="text-sm text-gray-600">P-2.1</TableCell>
+                  <TableCell className="text-sm text-gray-600">{log.noteId || '-'}</TableCell>
+                  <TableCell>
+                    <Badge className="text-blue bg-blue-light gap-2 rounded-[6px] [&>svg]:!size-4">
+                      <Database className="h-4 w-4" />
+                      {getModelDisplayName(log.modelId)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">{log.agent?.name || '-'}</TableCell>
                   <TableCell className="text-sm text-gray-600">{moment(log.createdAt).format('MMM D, YYYY – h:mm A')}</TableCell>
                   <TableCell>
                     <Badge className={`gap-2 rounded-[6px] border capitalize [&>svg]:!size-4 ${getResultBadgeStyle(result)}`}>
@@ -151,7 +147,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                   <TableCell>
                     <Badge className={`gap-2 rounded-[6px] border capitalize [&>svg]:!size-4 ${getSeverityBadgeStyle(severity)}`}>
                       {getSeverityIcon(severity)}
-                      {severity === 'info' ? 'Info' : severity === 'warning' ? 'Warning' : 'Error'}
+                      {severity.toUpperCase()}
                     </Badge>
                   </TableCell>
                   <TableCell>
