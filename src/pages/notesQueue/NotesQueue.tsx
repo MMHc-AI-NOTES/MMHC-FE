@@ -263,63 +263,62 @@ const NotesQueue = () => {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Left Column: Table with Filters */}
-      <div className="lg:col-span-8">
+      <div className="space-y-6 lg:col-span-8">
         <Card className="p-6">
-          <div className="space-y-6">
-            {/* Filters Section */}
-            <FiltersSection
-              filters={filters}
-              practitioners={practitioners}
-              cptCodes={cptCodes}
-              loading={notesLoading}
-              onFilterChange={handleFilterChange}
-              onApplyFilters={handleApplyFilters}
-              onClearFilters={handleClearFilters}
-            />
+          {/* Filters Section */}
+          <FiltersSection
+            filters={filters}
+            practitioners={practitioners}
+            cptCodes={cptCodes}
+            loading={notesLoading}
+            onFilterChange={handleFilterChange}
+            onApplyFilters={handleApplyFilters}
+            onClearFilters={handleClearFilters}
+          />
+        </Card>
+        <Card className="p-6">
+          {/* All Notes Section */}
+          <div>
+            <div className="mb-4">
+              <h3 className="text-primary text-lg font-semibold">All Notes</h3>
+              <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
+            </div>
 
-            {/* All Notes Section */}
-            <div>
-              <div className="mb-4">
-                <h3 className="text-primary text-lg font-semibold">All Notes</h3>
-                <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
-              </div>
-
-              {notesLoading ? (
-                <div className="space-y-3">
-                  <div className="rounded-md border">
-                    <div className="space-y-3 p-4">
-                      {Array.from({ length: 10 }, (_, i) => (
-                        <div key={i} className="flex items-center gap-4">
-                          <Skeleton className="h-12 flex-1" />
-                        </div>
-                      ))}
-                    </div>
+            {notesLoading ? (
+              <div className="space-y-3">
+                <div className="rounded-md border">
+                  <div className="space-y-3 p-4">
+                    {Array.from({ length: 10 }, (_, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-12 flex-1" />
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ) : (
-                <>
-                  <NotesTable notes={notes} onViewNote={handleViewNote} />
+              </div>
+            ) : (
+              <>
+                <NotesTable notes={notes} onViewNote={handleViewNote} />
 
-                  {/* Pagination */}
-                  {notes.length > 0 && (
-                    <div className="mt-6">
-                      <DataTablePagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(totalItems / itemsPerPage)}
-                        itemsPerPage={itemsPerPage}
-                        totalItems={totalItems}
-                        onPageChange={handlePageChange}
-                        onItemsPerPageChange={() => {}} // No-op since pageSize is fixed
-                        itemName="note"
-                        itemNamePlural="notes"
-                        itemsPerPageOptions={[20]} // Only show 20 as it's fixed
-                        showFirstLastButtons={true}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                {/* Pagination */}
+                {notes.length > 0 && (
+                  <div className="mt-6">
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={Math.ceil(totalItems / itemsPerPage)}
+                      itemsPerPage={itemsPerPage}
+                      totalItems={totalItems}
+                      onPageChange={handlePageChange}
+                      onItemsPerPageChange={() => {}} // No-op since pageSize is fixed
+                      itemName="note"
+                      itemNamePlural="notes"
+                      itemsPerPageOptions={[20]} // Only show 20 as it's fixed
+                      showFirstLastButtons={true}
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </Card>
       </div>

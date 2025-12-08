@@ -41,6 +41,7 @@ export const ManagerEnum = {
   not_needed: 1,
   pending: 2,
   in_progress: 3,
+  completed: 4,
 } as const;
 
 // Workflow Enum
@@ -56,6 +57,14 @@ export const PriorityEnum = {
   low: 1,
   medium: 2,
   high: 3,
+} as const;
+
+// Review Cycle Enum
+export const ReviewCycleEnum = {
+  cycle_1: 1,
+  cycle_2: 2,
+  cycle_3: 3,
+  blacklisted: 4,
 } as const;
 
 // Review Stage Enum
@@ -97,6 +106,7 @@ export const ManagerLabels: Record<number, string> = {
   [ManagerEnum.not_needed]: 'Not Needed',
   [ManagerEnum.pending]: 'Pending',
   [ManagerEnum.in_progress]: 'In Progress',
+  [ManagerEnum.completed]: 'Completed',
 };
 
 export const WorkflowLabels: Record<number, string> = {
@@ -110,6 +120,13 @@ export const PriorityLabels: Record<number, string> = {
   [PriorityEnum.low]: 'Low',
   [PriorityEnum.medium]: 'Medium',
   [PriorityEnum.high]: 'High',
+};
+
+export const ReviewCycleLabels: Record<number, string> = {
+  [ReviewCycleEnum.cycle_1]: 'Cycle 1',
+  [ReviewCycleEnum.cycle_2]: 'Cycle 2',
+  [ReviewCycleEnum.cycle_3]: 'Cycle 3',
+  [ReviewCycleEnum.blacklisted]: 'Blacklisted',
 };
 
 // Date Range Labels

@@ -118,12 +118,12 @@ export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApp
       </div>
       {/* Apply and Reset Buttons */}
       <div className="flex items-center gap-2">
-        <Button onClick={onApplyFilters} disabled={loading} size="sm">
-          Apply Filters
+        <Button onClick={onApplyFilters} disabled={loading} size="lg">
+          Apply
         </Button>
-        <Button variant="ghost" size="sm" onClick={onClearFilters} disabled={loading} className="text-muted-foreground">
+        <Button variant="ghost" size="lg" onClick={onClearFilters} disabled={loading} className="text-muted-foreground">
           <RefreshCw className="h-4 w-4" />
-          Reset Filters
+          Reset
         </Button>
       </div>
     </div>

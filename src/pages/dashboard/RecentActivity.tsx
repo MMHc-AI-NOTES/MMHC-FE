@@ -1,4 +1,5 @@
 import { RecentActivity as RecentActivityType } from '@/types/dashboard';
+import { AlertOctagon, CircleAlert, FileText, Zap } from 'lucide-react';
 
 interface RecentActivityProps {
   activities: RecentActivityType[];
@@ -9,26 +10,32 @@ interface ActivityItemProps {
 }
 
 const ActivityIcon = ({ type }: { type: RecentActivityType['type'] }) => {
-  const iconConfig = { critical: 'bg-red-500', progress: 'bg-green-500', info: 'bg-orange-500', default: 'bg-gray-500' } as const;
+  const iconConfig = {
+    critical: { Icon: AlertOctagon, classes: 'bg-red-50 text-red-600' },
+    progress: { Icon: Zap, classes: 'bg-emerald-50 text-emerald-600' },
+    info: { Icon: CircleAlert, classes: 'bg-amber-50 text-amber-600' },
+    default: { Icon: FileText, classes: 'bg-gray-50 text-gray-600' },
+  } as const;
 
-  return <div className={`mt-2 h-2 w-2 rounded-full ${iconConfig[type]}`} aria-label={`${type} activity`} />;
+  const { Icon, classes } = iconConfig[type] ?? iconConfig.default;
+
+  return (
+    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${classes}`} aria-label={`${type} activity`}>
+      <Icon size={20} />
+    </span>
+  );
 };
 
 const ActivityItem = ({ activity }: ActivityItemProps) => {
-  const description = activity.description || 'This action was performed';
+  const description = activity.description ? ` — ${activity.description}` : '';
 
   return (
-    <div className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-gray-50">
+    <div className="flex items-start gap-3 px-3 py-3">
       <ActivityIcon type={activity.type} />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-          <span className="truncate text-sm font-medium text-gray-900">{activity.title}</span>
-          <span className="hidden text-gray-400 sm:inline">—</span>
-          <span className="truncate text-sm text-gray-600">{description}</span>
-        </div>
-
-        <p className="text-xs text-gray-500">{activity.timeAgo}</p>
+      <div className="min-w-0 flex-1 space-y-2 font-light">
+        <p className="truncate">{activity.title + description}</p>
+        <p className="text-sm">{activity.timeAgo}</p>
       </div>
     </div>
   );

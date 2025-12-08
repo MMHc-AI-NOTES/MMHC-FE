@@ -5,7 +5,7 @@ const DashboardSkeleton = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Card className="flex items-center rounded-full px-3.5 py-2">
+        <Card className="flex items-center rounded-full py-2">
           <CardContent>
             <Skeleton className="h-6 w-32" />
           </CardContent>

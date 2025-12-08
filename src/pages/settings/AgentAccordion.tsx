@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
 import { Agent } from '@/types/agent';
-import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, Radio, Gavel } from 'lucide-react';
+import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, Radio, Gavel, Database } from 'lucide-react';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { getModelDisplayName } from '@/utils/helper';
+import { GradientBadge } from '@/shared/GradientBadge';
 
 interface AgentAccordionProps {
   agents: Agent[];
@@ -59,7 +60,7 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                           <h3 className="text-lg font-semibold text-gray-900 sm:text-xl">{agent.name}</h3>
                           {agent.is_default ? (
-                            <Badge className="bg-primary-light text-primary flex w-fit items-center space-x-1 border px-2 py-0.5 sm:px-3 sm:py-1">
+                            <Badge className="bg-gradient-light text-primary flex w-fit items-center space-x-1 border px-2 py-0.5 sm:px-3 sm:py-1">
                               <span className="text-xs sm:text-sm">Default</span>
                             </Badge>
                           ) : null}
@@ -139,16 +140,20 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                           <div className="space-y-2 text-xs sm:space-y-3 sm:text-sm">
                             <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Model</span>
-                              <Badge className="bg-blue-light text-blue gap-1.5 rounded-md [&>svg]:!size-3">
-                                <Cpu className="h-3 w-3" />
-                                {getModelDisplayName(agent.model)}
-                              </Badge>
+                              <GradientBadge
+                                label={getModelDisplayName(agent.model)}
+                                gradient="bg-gradient-blue"
+                                icon={<Database className="h-4 w-4" />}
+                                className="rounded-[6px] text-[#0369a1]!"
+                              />
                             </div>
                             <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-0">
                               <span className="text-gray-600">Is Default</span>
-                              <Badge className="w-fit px-3 py-1 text-xs sm:text-sm" variant={agent.is_default ? 'default' : 'destructive'}>
-                                {agent.is_default ? 'Yes' : 'No'}
-                              </Badge>
+                              <GradientBadge
+                                label={agent.is_default ? 'Yes' : 'No'}
+                                gradient={agent.is_default ? 'bg-gradient-green' : 'bg-gradient-red'}
+                                className="rounded-[6px]"
+                              />
                             </div>
                           </div>
                         </div>

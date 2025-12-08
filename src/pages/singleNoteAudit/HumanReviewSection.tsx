@@ -11,6 +11,8 @@ import { submitHumanReview } from './singleNoteApiCalls';
 import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface HumanReviewSectionProps {
   noteId: string;
@@ -118,9 +120,11 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-sm">
-                    Conduct a human review of the AI evaluation. Your decision will override or confirm the AI's assessment and help improve
-                    future evaluations.
+                    Human review allows you to accept, override, or escalate the AI's audit decision. Your decision will be logged in the
+                    audit history.
                   </p>
+                  <Separator className="my-2 bg-gray-400" />
+                  <p className="text-sm text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -141,31 +145,45 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                   <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    Select the appropriate action based on your review. This decision will determine the next steps in the workflow and may
-                    trigger notifications to relevant parties.
-                  </p>
+                  <p className="text-sm">Select the appropriate action based on your review of the AI audit and the clinical note.</p>
+                  <Separator className="my-2 bg-gray-400" />
+                  <p className="text-sm text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <div className="space-y-1">
-            {decisionOptions.map(item => (
-              <div key={item.value} className="flex items-center space-x-2 rounded-lg border-gray-200 py-1.5">
-                <Checkbox
-                  id={item.value.toString()}
-                  checked={decision === item.value.toString()}
-                  onCheckedChange={checked => handleCheckboxChange(item.value.toString(), checked)}
-                  className="border-primary rounded-full border-2"
-                />
-                <label
-                  htmlFor={item.value.toString()}
-                  className="text-primary text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {item.label}
-                </label>
-              </div>
-            ))}
+            {decisionOptions.map(item => {
+              const isChecked = decision === item.value.toString();
+              return (
+                <div key={item.value} className="flex items-center space-x-2 rounded-lg border-gray-200 py-1.5">
+                  <div className="relative">
+                    <Checkbox
+                      id={item.value.toString()}
+                      checked={isChecked}
+                      onCheckedChange={checked => handleCheckboxChange(item.value.toString(), checked)}
+                      className={cn(
+                        'h-5 w-5 rounded-full border-2 transition-all',
+                        isChecked
+                          ? 'bg-primary-light border-transparent data-[state=checked]:border-transparent data-[state=checked]:bg-[#B0E490] [&>span[data-slot="checkbox-indicator"]]:hidden'
+                          : 'border-primary bg-transparent',
+                      )}
+                    />
+                    {isChecked && (
+                      <div className="pointer-events-none absolute inset-0 bottom-1 flex items-center justify-center">
+                        <div className="bg-primary h-2.5 w-2.5 rounded-full" />
+                      </div>
+                    )}
+                  </div>
+                  <label
+                    htmlFor={item.value.toString()}
+                    className={cn('cursor-pointer text-sm leading-none font-medium', isChecked ? 'text-[#3F5F40]' : 'text-primary')}
+                  >
+                    {item.label}
+                  </label>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -184,8 +202,11 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p className="text-sm">
-                        Select the reviewer from the list of reviewers. This is required for accountability and audit trail purposes.
+                        Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
+                        accountability.
                       </p>
+                      <Separator className="my-2 bg-gray-400" />
+                      <p className="text-sm text-gray-400">Click anywhere to close</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -218,9 +239,10 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-sm">
-                    Override the AI score with your manual assessment. Enter a score between 0-100, or use PASS/FAIL buttons. Scores ≥95 are
-                    considered passing.
+                    Enter a manual score (0-100) if you want to override the AI's evaluation. A score of 95 or higher is required to PASS.
                   </p>
+                  <Separator className="my-2 bg-gray-400" />
+                  <p className="text-sm text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -240,7 +262,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
               <span className="text-sm text-gray-500">Score</span>
             </div>
             <div className="flex gap-2">
-              <p className="bg-primary-light text-primary rounded-full px-4 py-2.5 text-sm font-medium shadow-sm">PASS</p>
+              <p className="bg-gradient-light text-primary rounded-full px-4 py-2.5 text-sm font-medium shadow-sm">PASS</p>
               <p className="rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium text-red-600">FAIL</p>
             </div>
           </div>
@@ -263,7 +285,11 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
             <Save />
             Save Draft
           </Button>
-          <Button className="bg-primary-light text-primary hover:bg-primary-light" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
+          <Button
+            className="bg-gradient-light text-primary hover:bg-primary-light"
+            onClick={handleSubmitReview}
+            disabled={isSubmitDisabled}
+          >
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
             Submit Human Review
           </Button>

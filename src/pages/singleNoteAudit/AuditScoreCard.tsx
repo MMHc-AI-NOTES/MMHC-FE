@@ -1,5 +1,4 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ChartColumn } from 'lucide-react';
 import { NoteDetail } from '@/types/notes';
 
@@ -27,11 +26,11 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
             <p className="text-muted-foreground text-sm">Goal: 100</p>
             <p className="mt-3 text-sm">Last AI Run: {noteDetail.lastRun}</p>
           </div>
-          <Badge
-            className={`text-md rounded-lg border-none px-4 py-1.5 shadow-lg ${isGoodAuditScore ? 'text-primary bg-green-200' : 'bg-red-200 text-red-700'}`}
+          <span
+            className={`inline-flex items-center rounded-full px-6 py-3 text-lg font-medium text-white ${isGoodAuditScore ? 'bg-gradient-ai-passed' : 'bg-gradient-ai-failed'}`}
           >
-            {isGoodAuditScore ? 'Pass' : 'Failed'}
-          </Badge>
+            {isGoodAuditScore ? 'PASS' : 'FAIL'}
+          </span>
         </div>
       </CardContent>
     </Card>

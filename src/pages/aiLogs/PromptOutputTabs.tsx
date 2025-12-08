@@ -26,7 +26,7 @@ const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
         <Button
           size="lg"
           onClick={() => setActiveTab('prompt')}
-          className={`h-12 ${activeTab === 'prompt' ? 'bg-primary-light text-primary' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+          className={`h-12 ${activeTab === 'prompt' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
         >
           <Code className="h-4 w-4" />
           Prompt (Raw Input)

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import {
   AiStatusEnum,
   WorkflowEnum,
@@ -193,12 +193,12 @@ export const FiltersSection = ({
 
       {/* Apply and Clear Buttons */}
       <div className="flex justify-end gap-3">
-        <Button onClick={onApplyFilters} disabled={loading} size="sm">
-          Apply Filters
+        <Button className="bg-white" variant="outline" onClick={onClearFilters} disabled={loading} size="lg">
+          {/* <RefreshCw className="h-4 w-4" /> */}
+          Clear
         </Button>
-        <Button className="text-muted-foreground" variant="ghost" onClick={onClearFilters} disabled={loading} size="sm">
-          <RefreshCw className="h-4 w-4" />
-          Clear Filters
+        <Button onClick={onApplyFilters} disabled={loading} size="lg">
+          Apply
         </Button>
       </div>
     </div>
