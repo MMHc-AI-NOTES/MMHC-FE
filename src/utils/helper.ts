@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { showToast } from '@/lib/toast';
+import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
 
 export interface ErrorMessage {
   message: string;
@@ -95,4 +96,14 @@ const extractErrorsFromResponse = (responseData: any): ErrorMessage[] => {
   }
 
   return [{ message: 'Operation failed' }];
+};
+
+// Helper to safely get enum values
+export const getEnumValues = (enumObj: Record<string, number>): number[] => {
+  return Object.values(enumObj).filter((value): value is number => typeof value === 'number');
+};
+
+export const getModelDisplayName = (modelId: string): string => {
+  const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelId);
+  return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelId;
 };

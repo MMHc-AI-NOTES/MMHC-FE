@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import {
   AiStatusEnum,
   WorkflowEnum,
@@ -13,11 +13,7 @@ import {
   SessionTypeLabels,
 } from '@/constants/common';
 import { PractitionerOption, CptCodeOption } from '@/types/notes';
-
-// Helper to safely get enum values
-const getEnumValues = (enumObj: Record<string, number>): number[] => {
-  return Object.values(enumObj).filter((value): value is number => typeof value === 'number');
-};
+import { getEnumValues } from '@/utils/helper';
 
 interface FiltersSectionProps {
   filters: {
@@ -197,10 +193,11 @@ export const FiltersSection = ({
 
       {/* Apply and Clear Buttons */}
       <div className="flex justify-end gap-3">
-        <Button onClick={onApplyFilters} disabled={loading}>
+        <Button onClick={onApplyFilters} disabled={loading} size="sm">
           Apply Filters
         </Button>
-        <Button variant="outline" onClick={onClearFilters} disabled={loading}>
+        <Button className="text-muted-foreground" variant="ghost" onClick={onClearFilters} disabled={loading} size="sm">
+          <RefreshCw className="h-4 w-4" />
           Clear Filters
         </Button>
       </div>

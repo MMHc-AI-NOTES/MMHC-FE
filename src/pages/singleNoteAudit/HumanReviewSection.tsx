@@ -16,9 +16,10 @@ interface HumanReviewSectionProps {
   noteId: string;
   onSaveDraft: () => void;
   setShowHumanReview: (show: boolean) => void;
+  chatId: number;
 }
 
-const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview }: HumanReviewSectionProps) => {
+const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }: HumanReviewSectionProps) => {
   const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
   const dispatch = useDispatch();
 
@@ -88,6 +89,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview }: HumanRe
     try {
       const payload = {
         note_id: noteId,
+        chat_id: chatId,
         decision: parseInt(decision, 10),
         practitioner_id: reviewerName ? parseInt(reviewerName, 10) : null,
         ...(manualScore && { manual_score: getNumericScore() }),

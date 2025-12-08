@@ -226,7 +226,12 @@ const SingleNoteAudit = () => {
             <IssuesIdentifiedCard issues={noteDetail.issues} />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (
-              <HumanReviewSection noteId={noteId} onSaveDraft={handleSaveDraft} setShowHumanReview={setShowHumanReview} />
+              <HumanReviewSection
+                noteId={noteId}
+                onSaveDraft={handleSaveDraft}
+                setShowHumanReview={setShowHumanReview}
+                chatId={auditHistory[0]?.id}
+              />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
             <AuditHistoryCard chats={auditHistory} />

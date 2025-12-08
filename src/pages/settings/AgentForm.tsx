@@ -76,7 +76,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
       name: agent?.name || '',
       model: agent?.model || AGENT_MODEL_KEYS.CLAUDE_3_5_HAIKU_V1,
       is_default: agent?.is_default ? 1 : 0,
-      temperature: agent?.temperature || 0.5,
+      temperature: agent?.temperature || 0,
       top_k: agent?.top_k || 0,
       top_p: agent?.top_p || 0,
       previous_section: agent?.previous_section || [],
