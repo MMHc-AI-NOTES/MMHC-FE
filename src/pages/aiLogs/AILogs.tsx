@@ -179,14 +179,12 @@ const AILogs = () => {
         <div className="px-4">
           {loading ? (
             <div className="space-y-3">
-              <div className="rounded-md border">
-                <div className="space-y-3 p-4">
-                  {Array.from({ length: 10 }, (_, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <Skeleton className="h-12 flex-1" />
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-3 p-4">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-12 flex-1" />
+                  </div>
+                ))}
               </div>
             </div>
           ) : (

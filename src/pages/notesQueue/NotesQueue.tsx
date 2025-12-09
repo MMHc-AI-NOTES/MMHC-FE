@@ -13,6 +13,10 @@ import { QueueOverviewCard } from './QueueOverviewCard';
 import { WorkloadCard } from './WorkloadCard';
 import { useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
+import { Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ColorKey } from './ColorKey';
 
 const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
@@ -276,24 +280,35 @@ const NotesQueue = () => {
             onClearFilters={handleClearFilters}
           />
         </Card>
-        <Card className="p-6">
+        <Card>
           {/* All Notes Section */}
           <div>
-            <div className="mb-4">
-              <h3 className="text-primary text-lg font-semibold">All Notes</h3>
-              <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
+            <div className="mb-4 flex items-center justify-between px-6">
+              <div>
+                <h3 className="text-primary text-lg font-semibold">All Notes</h3>
+                <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="lg">
+                    <Info />
+                    Color Key
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end">
+                  <ColorKey />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {notesLoading ? (
               <div className="space-y-3">
-                <div className="rounded-md border">
-                  <div className="space-y-3 p-4">
-                    {Array.from({ length: 10 }, (_, i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <Skeleton className="h-12 flex-1" />
-                      </div>
-                    ))}
-                  </div>
+                <div className="space-y-3 p-4">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-12 flex-1" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (

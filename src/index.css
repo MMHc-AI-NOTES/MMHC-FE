@@ -21,6 +21,7 @@
   --color-orange-light: var(--orange-light);
   --color-gray: var(--gray);
   --color-gray-light: var(--gray-light);
+  --color-header-bg: var(--header-bg);
   --color-gradient-primary: var(--gradient-primary);
   --color-gradient-light: var(--gradient-light);
   --color-orange-dark: var(--orange-dark);
@@ -61,7 +62,7 @@
   --radius: 0.625rem;
   --background: oklch(94.7% 0.001 285);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: #ffffff99;
   --blue: #1976d2;
   --blue-light: #e3f2fd;
   --green: #2e7d32;
@@ -72,6 +73,7 @@
   --orange-light: #fff3e0;
   --gray: #616161;
   --gray-light: #f5f5f5;
+  --header-bg: #e3e3e3;
   --gradient-primary: linear-gradient(to right, #f59e0b, #d97706);
   --gradient-light: linear-gradient(to right, #a1e681, #8fd86f);
   --orange-dark: #d97706;
@@ -88,7 +90,7 @@
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --accent: #d9d9d9;
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);

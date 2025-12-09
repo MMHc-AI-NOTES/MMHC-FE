@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { NoteDetail } from '@/types/notes';
-import { Hash, User, Calendar, ClipboardList, Code, Bot } from 'lucide-react';
+import { Hash, User, Calendar, ClipboardList, Code, Bot, RefreshCw } from 'lucide-react';
 
 interface NoteInformationProps {
   noteDetail: NoteDetail;
@@ -60,6 +60,16 @@ const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
             <div>
               <p className="font-medium">AI Reviews</p>
               <p className="text-sm text-black">{noteDetail.aiReviews}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-primary flex gap-1 text-sm">
+            <RefreshCw className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Review Cycle</p>
+              <p className="text-sm text-black">-</p>
             </div>
           </div>
         </div>

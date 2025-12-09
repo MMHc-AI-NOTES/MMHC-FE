@@ -119,12 +119,12 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                   <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
+                  <p>
                     Human review allows you to accept, override, or escalate the AI's audit decision. Your decision will be logged in the
                     audit history.
                   </p>
                   <Separator className="my-2 bg-gray-400" />
-                  <p className="text-sm text-gray-400">Click anywhere to close</p>
+                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -145,9 +145,9 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                   <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p className="text-sm">Select the appropriate action based on your review of the AI audit and the clinical note.</p>
+                  <p>Select the appropriate action based on your review of the AI audit and the clinical note.</p>
                   <Separator className="my-2 bg-gray-400" />
-                  <p className="text-sm text-gray-400">Click anywhere to close</p>
+                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -201,12 +201,12 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                       <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      <p className="text-sm">
+                      <p>
                         Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
                         accountability.
                       </p>
                       <Separator className="my-2 bg-gray-400" />
-                      <p className="text-sm text-gray-400">Click anywhere to close</p>
+                      <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -238,11 +238,11 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                   <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
+                  <p>
                     Enter a manual score (0-100) if you want to override the AI's evaluation. A score of 95 or higher is required to PASS.
                   </p>
                   <Separator className="my-2 bg-gray-400" />
-                  <p className="text-sm text-gray-400">Click anywhere to close</p>
+                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -262,8 +262,30 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
               <span className="text-sm text-gray-500">Score</span>
             </div>
             <div className="flex gap-2">
-              <p className="bg-gradient-light text-primary rounded-full px-4 py-2.5 text-sm font-medium shadow-sm">PASS</p>
-              <p className="rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium text-red-600">FAIL</p>
+              {(() => {
+                const numericScore = getNumericScore();
+                const shouldHighlightFail = numericScore !== undefined && numericScore < 95;
+                const shouldHighlightPass = numericScore !== undefined && numericScore >= 95;
+
+                return (
+                  <>
+                    <p
+                      className={`rounded-full px-4 py-2.5 text-sm font-medium shadow-sm ${
+                        shouldHighlightPass ? 'bg-gradient-light text-primary' : 'border bg-transparent text-gray-600'
+                      }`}
+                    >
+                      PASS
+                    </p>
+                    <p
+                      className={`rounded-full px-4 py-2.5 text-sm font-medium ${
+                        shouldHighlightFail ? 'bg-red-100 text-red-600' : 'border bg-transparent text-red-600'
+                      }`}
+                    >
+                      FAIL
+                    </p>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

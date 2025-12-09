@@ -72,19 +72,19 @@ const getSeverityIcon = (severity: string) => {
 export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTableProps) => {
   if (logs.length === 0) {
     return (
-      <div className="rounded-md border">
+      <div>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50/50">
-                <TableHead className="text-primary min-w-[100px] font-medium">Log ID</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-medium">Note ID</TableHead>
-                <TableHead className="text-primary min-w-[130px] font-medium">Model Version</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-medium">Prompt Version</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-medium">Timestamp</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-medium">Result</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-medium">Severity</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-medium">Action</TableHead>
+            <TableHeader className="bg-transparent!">
+              <TableRow>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Log ID</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
+                <TableHead className="text-primary min-w-[130px] font-semibold">Model Version</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Prompt Version</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">Timestamp</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Result</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Severity</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -101,19 +101,19 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
   }
 
   return (
-    <div className="rounded-md border">
+    <div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50/50">
-              <TableHead className="text-primary min-w-[100px] font-medium">Log ID</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-medium">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[130px] font-medium">Model Version</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-medium">Prompt Version</TableHead>
-              <TableHead className="text-primary min-w-[160px] font-medium">Timestamp</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-medium">Result</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-medium">Severity</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-medium">Action</TableHead>
+          <TableHeader className="bg-transparent!">
+            <TableRow>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Log ID</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
+              <TableHead className="text-primary min-w-[130px] font-semibold">Model Version</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Prompt Version</TableHead>
+              <TableHead className="text-primary min-w-[160px] font-semibold">Timestamp</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Result</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Severity</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

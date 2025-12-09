@@ -1,5 +1,5 @@
 // @/components/notes/NotesTable.tsx
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CircleQuestionMark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormattedNote } from '@/types/notes';
@@ -18,8 +18,8 @@ import {
   // ReviewCycleEnum,
 } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
 import { GradientBadge } from '@/shared/GradientBadge';
+import { Separator } from '@/components/ui/separator';
 
 interface NotesTableProps {
   notes: FormattedNote[];
@@ -121,26 +121,26 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
 
   if (notes.length === 0) {
     return (
-      <div className="rounded-md border">
+      <div className="border">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[120px]">Practitioner</TableHead>
-                <TableHead className="text-primary min-w-[100px]">Client</TableHead>
-                <TableHead className="text-primary min-w-[100px]">Date</TableHead>
-                <TableHead className="text-primary min-w-[120px]">Type</TableHead>
-                <TableHead className="text-primary min-w-[100px]">AI Score</TableHead>
-                <TableHead className="text-primary min-w-[120px]">AI Status</TableHead>
-                <TableHead className="text-primary min-w-[140px]">Human Review</TableHead>
-                <TableHead className="text-primary min-w-[120px]">Manager</TableHead>
-                <TableHead className="text-primary min-w-[120px]">
+                <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Type</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">AI Score</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">Human Review</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Manager</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
                   <div className="text-primary flex items-center gap-1">
                     Workflow
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="text-muted-foreground h-3 w-3" />
+                        <TooltipTrigger asChild>
+                          <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Current workflow status</p>
@@ -149,13 +149,13 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </TooltipProvider>
                   </div>
                 </TableHead>
-                <TableHead className="min-w-[100px]">
+                <TableHead className="min-w-[100px] font-semibold">
                   <div className="text-primary flex items-center gap-1">
                     Priority
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="text-muted-foreground h-3 w-3" />
+                        <TooltipTrigger asChild>
+                          <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Review priority level</p>
@@ -165,13 +165,13 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                   </div>
                 </TableHead>
                 {/* REVIEW CYCLE Column - Commented out for now */}
-                {/* <TableHead className="text-primary min-w-[140px]">
+                <TableHead className="text-primary min-w-[140px]">
                   <div className="text-primary flex items-center gap-1">
                     Review Cycle
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="text-muted-foreground h-3 w-3" />
+                        <TooltipTrigger asChild>
+                          <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Current review cycle status</p>
@@ -179,8 +179,8 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                </TableHead> */}
-                <TableHead className="text-primary min-w-[100px] text-center">Action</TableHead>
+                </TableHead>
+                <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -197,67 +197,82 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="border-y">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary min-w-[120px]">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[120px]">Practitioner</TableHead>
-              <TableHead className="text-primary min-w-[100px]">Client</TableHead>
-              <TableHead className="text-primary min-w-[100px]">Date</TableHead>
-              <TableHead className="text-primary min-w-[120px]">Type</TableHead>
-              <TableHead className="text-primary min-w-[100px]">AI Score</TableHead>
-              <TableHead className="text-primary min-w-[120px]">AI Status</TableHead>
-              <TableHead className="text-primary min-w-[140px]">Human Review</TableHead>
-              <TableHead className="text-primary min-w-[120px]">Manager</TableHead>
-              <TableHead className="text-primary min-w-[120px]">
+              <TableHead className="text-primary min-w-[120px] font-semibold">Note ID</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Type</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">AI Score</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">Human Review</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Manager</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
                 <div className="flex items-center gap-1">
                   Workflow
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="text-muted-foreground h-3 w-3" />
+                      <TooltipTrigger asChild>
+                        <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                       </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Current workflow status</p>
+                      <TooltipContent className="max-w-xs">
+                        <p>
+                          Current workflow status: In Queue (awaiting review), Returned (sent back to practitioner), Blacklisted (critical
+                          issues), Completed (approved)
+                        </p>
+                        <Separator className="my-2 bg-gray-400" />
+                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
               </TableHead>
-              <TableHead className="text-primary min-w-[100px]">
+              <TableHead className="text-primary min-w-[100px] font-semibold">
                 <div className="flex items-center gap-1">
                   Priority
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="text-muted-foreground h-3 w-3" />
+                      <TooltipTrigger asChild>
+                        <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                       </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Review priority level</p>
+                      <TooltipContent className="max-w-xs">
+                        <p>
+                          Priority level based on AI score and review status. High (urgent attention needed), Medium (review soon), Low
+                          (routine review)
+                        </p>
+                        <Separator className="my-2 bg-gray-400" />
+                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
               </TableHead>
               {/* REVIEW CYCLE Column - Commented out for now */}
-              {/* <TableHead className="text-primary min-w-[140px]">
+              <TableHead className="text-primary min-w-[140px]">
                 <div className="flex items-center gap-1">
                   Review Cycle
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="text-muted-foreground h-3 w-3" />
+                      <TooltipTrigger asChild>
+                        <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                       </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Current review cycle status</p>
+                      <TooltipContent className="max-w-xs">
+                        <p>
+                          Review cycle tracking. Cycle 1 (Initial), Cycle 2 (Therapist Revision), Cycle 3 (Final). Notes exceeding 3 cycles
+                          are auto-blacklisted.
+                        </p>
+                        <Separator className="my-2 bg-gray-400" />
+                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </TableHead> */}
-              <TableHead className="text-primary min-w-[100px] text-center">Action</TableHead>
+              </TableHead>
+              <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -285,12 +300,13 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                   <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
                 </TableCell>
                 {/* REVIEW CYCLE Cell - Commented out for now */}
-                {/* <TableCell>
-                  <GradientBadge 
+                <TableCell>
+                  -
+                  {/* <GradientBadge 
                     label={ReviewCycleLabels[note.reviewCycle || ReviewCycleEnum.cycle_1]} 
                     gradient={getReviewCycleGradient(note.reviewCycle || ReviewCycleEnum.cycle_1)} 
-                  />
-                </TableCell> */}
+                  /> */}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center">
                     <Button
