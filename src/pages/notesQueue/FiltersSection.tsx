@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import {
   AiStatusEnum,
   WorkflowEnum,
@@ -158,7 +158,7 @@ export const FiltersSection = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Row 3: CPT Code, Search */}
         <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">CPT Code</label>
@@ -193,12 +193,12 @@ export const FiltersSection = ({
 
       {/* Apply and Clear Buttons */}
       <div className="flex justify-end gap-3">
-        <Button onClick={onApplyFilters} disabled={loading} size="sm">
-          Apply Filters
+        <Button className="bg-white text-black" variant="outline" onClick={onClearFilters} disabled={loading} size="lg">
+          {/* <RefreshCw className="h-4 w-4" /> */}
+          Clear
         </Button>
-        <Button className="text-muted-foreground" variant="ghost" onClick={onClearFilters} disabled={loading} size="sm">
-          <RefreshCw className="h-4 w-4" />
-          Clear Filters
+        <Button onClick={onApplyFilters} disabled={loading} size="lg">
+          Apply
         </Button>
       </div>
     </div>

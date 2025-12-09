@@ -1,8 +1,7 @@
 // @/components/notes/NotesTable.tsx
-import { ChevronRight } from 'lucide-react';
+import { ArrowRight, CircleQuestionMark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { FormattedNote } from '@/types/notes';
 import {
   AiStatusLabels,
@@ -10,117 +9,138 @@ import {
   ManagerLabels,
   WorkflowLabels,
   PriorityLabels,
+  // ReviewCycleLabels,
   AiStatusEnum,
   HumanReviewEnum,
   ManagerEnum,
   WorkflowEnum,
   PriorityEnum,
+  // ReviewCycleEnum,
 } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
+import { GradientBadge } from '@/shared/GradientBadge';
+import { Separator } from '@/components/ui/separator';
 
 interface NotesTableProps {
   notes: FormattedNote[];
   onViewNote: (noteId: string) => void;
 }
 
-// Helper function to get badge variant based on status
-const getAiStatusVariant = (status: number): 'default' | 'destructive' | 'warning' | 'secondary' | 'outline' => {
+// Helper functions to get gradient CSS classes for badges
+const getAiStatusGradient = (status: number): string => {
   switch (status) {
     case AiStatusEnum.passed:
-      return 'default'; // green
+      return 'bg-gradient-ai-passed';
     case AiStatusEnum.failed:
-      return 'destructive'; // red
+      return 'bg-gradient-ai-failed';
     case AiStatusEnum.warning:
-      return 'warning'; // yellow/orange
-    case AiStatusEnum.not_reviewed:
-      return 'secondary'; // gray
+      return 'bg-gradient-ai-warning';
     case AiStatusEnum.needs_review:
-      return 'warning'; // yellow/orange
+      return 'bg-gradient-ai-needs-review';
+    case AiStatusEnum.not_reviewed:
+      return 'bg-gradient-ai-not-reviewed';
     default:
-      return 'outline';
+      return 'bg-gradient-neutral';
   }
 };
 
-const getHumanReviewVariant = (status: number): 'default' | 'destructive' | 'secondary' => {
+const getHumanReviewGradient = (status: number): string => {
   switch (status) {
-    case HumanReviewEnum.not_needed:
-      return 'secondary'; // gray
-    case HumanReviewEnum.completed:
-      return 'default'; // green
     case HumanReviewEnum.pending:
-      return 'secondary'; // yellow
+      return 'bg-gradient-human-pending';
+    case HumanReviewEnum.completed:
+      return 'bg-gradient-human-completed';
+    case HumanReviewEnum.not_needed:
+      return 'bg-gradient-human-not-needed';
     default:
-      return 'outline' as any;
+      return 'bg-gradient-neutral';
   }
 };
 
-const getManagerVariant = (status: number): 'default' | 'destructive' | 'secondary' => {
+const getManagerGradient = (status: number): string => {
   switch (status) {
-    case ManagerEnum.not_needed:
-      return 'secondary';
     case ManagerEnum.pending:
-      return 'secondary';
+      return 'bg-gradient-manager-pending';
     case ManagerEnum.in_progress:
-      return 'warning' as any;
+      return 'bg-gradient-manager-in-progress';
+    case ManagerEnum.completed:
+      return 'bg-gradient-manager-completed';
+    case ManagerEnum.not_needed:
+      return 'bg-gradient-manager-not-needed';
     default:
-      return 'outline' as any;
+      return 'bg-gradient-neutral';
   }
 };
 
-const getWorkflowVariant = (status: number): 'default' | 'destructive' | 'secondary' | 'warning' => {
+const getWorkflowGradient = (status: number): string => {
   switch (status) {
-    case WorkflowEnum.completed:
-      return 'default';
     case WorkflowEnum.in_queue:
-      return 'secondary';
+      return 'bg-gradient-workflow-in-queue';
     case WorkflowEnum.returned:
-      return 'warning' as any;
+      return 'bg-gradient-workflow-returned';
     case WorkflowEnum.blacklisted:
-      return 'destructive';
+      return 'bg-gradient-workflow-blacklisted';
+    case WorkflowEnum.completed:
+      return 'bg-gradient-workflow-completed';
     default:
-      return 'outline' as any;
+      return 'bg-gradient-neutral';
   }
 };
 
-const getPriorityVariant = (priority: number): 'default' | 'destructive' | 'secondary' | 'warning' => {
+const getPriorityGradient = (priority: number): string => {
   switch (priority) {
-    case PriorityEnum.low:
-      return 'default';
-    case PriorityEnum.medium:
-      return 'warning' as any;
     case PriorityEnum.high:
-      return 'destructive';
+      return 'bg-gradient-priority-high';
+    case PriorityEnum.medium:
+      return 'bg-gradient-priority-medium';
+    case PriorityEnum.low:
+      return 'bg-gradient-priority-low';
     default:
-      return 'outline' as any;
+      return 'bg-gradient-neutral';
   }
 };
+
+// REVIEW CYCLE gradients (commented out for now)
+// const getReviewCycleGradient = (cycle: number): string => {
+//   switch (cycle) {
+//     case ReviewCycleEnum.cycle_1:
+//       return 'bg-gradient-review-cycle-1';
+//     case ReviewCycleEnum.cycle_2:
+//       return 'bg-gradient-review-cycle-2';
+//     case ReviewCycleEnum.cycle_3:
+//       return 'bg-gradient-review-cycle-3';
+//     case ReviewCycleEnum.blacklisted:
+//       return 'bg-gradient-review-cycle-blacklisted';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
 
 export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
   const columnCount = 11;
 
   if (notes.length === 0) {
     return (
-      <div className="rounded-md border">
+      <div className="border">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[120px]">Practitioner</TableHead>
-                <TableHead className="text-primary min-w-[100px]">Client</TableHead>
-                <TableHead className="text-primary min-w-[100px]">Date</TableHead>
-                <TableHead className="text-primary min-w-[120px]">Type</TableHead>
-                <TableHead className="text-primary min-w-[100px]">AI Score</TableHead>
-                <TableHead className="text-primary min-w-[120px]">AI Status</TableHead>
-                <TableHead className="text-primary min-w-[140px]">Human Review</TableHead>
-                <TableHead className="text-primary min-w-[120px]">Manager</TableHead>
-                <TableHead className="text-primary min-w-[120px]">
+                <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Type</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">AI Score</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">Human Review</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Manager</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
                   <div className="text-primary flex items-center gap-1">
                     Workflow
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="text-muted-foreground h-3 w-3" />
+                        <TooltipTrigger asChild>
+                          <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Current workflow status</p>
@@ -129,13 +149,13 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </TooltipProvider>
                   </div>
                 </TableHead>
-                <TableHead className="min-w-[100px]">
+                <TableHead className="min-w-[100px] font-semibold">
                   <div className="text-primary flex items-center gap-1">
                     Priority
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="text-muted-foreground h-3 w-3" />
+                        <TooltipTrigger asChild>
+                          <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Review priority level</p>
@@ -144,7 +164,23 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </TooltipProvider>
                   </div>
                 </TableHead>
-                <TableHead className="text-primary min-w-[100px] text-center">Action</TableHead>
+                {/* REVIEW CYCLE Column - Commented out for now */}
+                <TableHead className="text-primary min-w-[140px]">
+                  <div className="text-primary flex items-center gap-1">
+                    Review Cycle
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Current review cycle status</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </TableHead>
+                <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,51 +197,82 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="border-y">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary min-w-[120px]">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[120px]">Practitioner</TableHead>
-              <TableHead className="text-primary min-w-[100px]">Client</TableHead>
-              <TableHead className="text-primary min-w-[100px]">Date</TableHead>
-              <TableHead className="text-primary min-w-[120px]">Type</TableHead>
-              <TableHead className="text-primary min-w-[100px]">AI Score</TableHead>
-              <TableHead className="text-primary min-w-[120px]">AI Status</TableHead>
-              <TableHead className="text-primary min-w-[140px]">Human Review</TableHead>
-              <TableHead className="text-primary min-w-[120px]">Manager</TableHead>
-              <TableHead className="text-primary min-w-[120px]">
+              <TableHead className="text-primary min-w-[120px] font-semibold">Note ID</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Type</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">AI Score</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">Human Review</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Manager</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
                 <div className="flex items-center gap-1">
                   Workflow
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="text-muted-foreground h-3 w-3" />
+                      <TooltipTrigger asChild>
+                        <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                       </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Current workflow status</p>
+                      <TooltipContent className="max-w-xs">
+                        <p>
+                          Current workflow status: In Queue (awaiting review), Returned (sent back to practitioner), Blacklisted (critical
+                          issues), Completed (approved)
+                        </p>
+                        <Separator className="my-2 bg-gray-400" />
+                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
               </TableHead>
-              <TableHead className="text-primary min-w-[100px]">
+              <TableHead className="text-primary min-w-[100px] font-semibold">
                 <div className="flex items-center gap-1">
                   Priority
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="text-muted-foreground h-3 w-3" />
+                      <TooltipTrigger asChild>
+                        <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
                       </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Review priority level</p>
+                      <TooltipContent className="max-w-xs">
+                        <p>
+                          Priority level based on AI score and review status. High (urgent attention needed), Medium (review soon), Low
+                          (routine review)
+                        </p>
+                        <Separator className="my-2 bg-gray-400" />
+                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
               </TableHead>
-              <TableHead className="text-primary min-w-[100px] text-center">Action</TableHead>
+              {/* REVIEW CYCLE Column - Commented out for now */}
+              <TableHead className="text-primary min-w-[140px]">
+                <div className="flex items-center gap-1">
+                  Review Cycle
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CircleQuestionMark className="text-muted-foreground h-4 w-4" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>
+                          Review cycle tracking. Cycle 1 (Initial), Cycle 2 (Therapist Revision), Cycle 3 (Final). Notes exceeding 3 cycles
+                          are auto-blacklisted.
+                        </p>
+                        <Separator className="my-2 bg-gray-400" />
+                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </TableHead>
+              <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -218,19 +285,27 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 <TableCell>{note.type}</TableCell>
                 <TableCell className="font-semibold">{note.aiScore}</TableCell>
                 <TableCell>
-                  <Badge variant={getAiStatusVariant(note.aiStatus)}>{AiStatusLabels[note.aiStatus]}</Badge>
+                  <GradientBadge label={AiStatusLabels[note.aiStatus]} gradient={getAiStatusGradient(note.aiStatus)} />
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getHumanReviewVariant(note.humanReview)}>{HumanReviewLabels[note.humanReview]}</Badge>
+                  <GradientBadge label={HumanReviewLabels[note.humanReview]} gradient={getHumanReviewGradient(note.humanReview)} />
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getManagerVariant(note.manager)}>{ManagerLabels[note.manager]}</Badge>
+                  <GradientBadge label={ManagerLabels[note.manager]} gradient={getManagerGradient(note.manager)} />
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getWorkflowVariant(note.workflow)}>{WorkflowLabels[note.workflow]}</Badge>
+                  <GradientBadge label={WorkflowLabels[note.workflow]} gradient={getWorkflowGradient(note.workflow)} />
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getPriorityVariant(note.priority)}>{PriorityLabels[note.priority]}</Badge>
+                  <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
+                </TableCell>
+                {/* REVIEW CYCLE Cell - Commented out for now */}
+                <TableCell>
+                  -
+                  {/* <GradientBadge 
+                    label={ReviewCycleLabels[note.reviewCycle || ReviewCycleEnum.cycle_1]} 
+                    gradient={getReviewCycleGradient(note.reviewCycle || ReviewCycleEnum.cycle_1)} 
+                  /> */}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center">
@@ -240,7 +315,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                       className="border-primary text-primary h-8 gap-1 bg-transparent py-2"
                     >
                       Open
-                      <ChevronRight className="h-4 w-4" />
+                      <ArrowRight className="ml-1" />
                     </Button>
                   </div>
                 </TableCell>

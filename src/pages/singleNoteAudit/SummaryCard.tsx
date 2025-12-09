@@ -46,7 +46,10 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-sm leading-relaxed text-gray-700" dangerouslySetInnerHTML={formatHtmlContent(summary)} />
+        <div
+          className="rounded-lg bg-[#F0F0F0] p-4 text-sm leading-relaxed text-gray-700"
+          dangerouslySetInnerHTML={formatHtmlContent(summary)}
+        />
       </CardContent>
     </Card>
   );

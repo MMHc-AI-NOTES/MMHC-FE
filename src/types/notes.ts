@@ -60,6 +60,7 @@ export interface ModelDetail {
 
 export interface NoteDetail {
   id: string;
+  aiStatus: { id: number; name: string };
   date: string;
   practitioner: string;
   cptCode: string;
@@ -142,6 +143,7 @@ export interface Practitioner {
 
 export interface ApiNoteDetail {
   id: number;
+  aiStatus: { id: number; name: string };
   noteId: string;
   chatId: string;
   sessionId: string;

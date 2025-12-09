@@ -31,7 +31,7 @@ const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
         </h3>
 
         <div className="space-y-4">
-          <Button size="lg" onClick={() => onReRunAudit?.(true)} className="bg-primary-light text-primary h-12 w-full">
+          <Button size="lg" onClick={() => onReRunAudit?.(true)} className="bg-gradient-light text-primary h-12 w-full">
             <RefreshCw />
             Re-run with Same Prompt
           </Button>
@@ -45,7 +45,7 @@ const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
             size="lg"
             onClick={() => onReRunAudit?.(false)}
             variant="outline"
-            className="text-primary border-primary h-12 w-full bg-transparent"
+            className="text-primary border-primary h-12 w-full border-2 bg-transparent"
           >
             <Sparkles />
             Re-run with Default Prompt

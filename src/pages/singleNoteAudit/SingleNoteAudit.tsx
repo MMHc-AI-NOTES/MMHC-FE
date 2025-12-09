@@ -77,11 +77,8 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     issues: issues,
     prompt: latestChat?.prompt || '',
     rawResponse: bedrockResponse?.raw_response || '',
-    modelDetail: {
-      modelVersion: latestChat.modelId,
-      auditRunId: latestChat.id,
-      lastRun: formattedDateTime,
-    },
+    aiStatus: apiData.aiStatus,
+    modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
   };
 };
 

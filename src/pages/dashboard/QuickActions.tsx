@@ -41,9 +41,9 @@ const QuickActions = () => {
             key={action.label}
             variant={action.variant}
             size="lg"
-            className={`w-full justify-between rounded-lg text-sm font-medium transition-all ${
+            className={`h-12 w-full justify-between rounded-lg font-medium transition-all ${
               action.variant === 'default'
-                ? 'bg-primary-light text-primary hover:bg-primary-light/90 shadow-sm'
+                ? 'bg-gradient-light text-primary hover:bg-gradient-light/90 shadow-sm'
                 : action.variant === 'outline'
                   ? 'border-primary border-2 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   : 'text-primary hover:bg-primary/10 hover:text-primary'

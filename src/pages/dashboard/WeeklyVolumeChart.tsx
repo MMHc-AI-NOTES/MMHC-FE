@@ -1,4 +1,5 @@
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, Rectangle } from 'recharts';
+import { Separator } from '@/components/ui/separator';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, Rectangle, TooltipProps } from 'recharts';
 
 interface WeeklyDataPoint {
   day: string;
@@ -12,7 +13,7 @@ interface WeeklyVolumeChartProps {
   data: WeeklyDataPoint[];
 }
 
-const colorPalette = { criticalFailures: '#C62828', hitl: '#FDD835', passed: '#A1E681', practitionerCorrections: '#EF6C00' };
+const colorPalette = { criticalFailures: '#B91C1C', hitl: '#FDE047', passed: '#059669', practitionerCorrections: '#d97706' };
 const getTopRadius = (entry: WeeklyDataPoint, key: keyof WeeklyDataPoint) => {
   const order: (keyof WeeklyDataPoint)[] = ['passed', 'practitionerCorrections', 'hitl', 'criticalFailures'];
 
@@ -26,6 +27,43 @@ const getTopRadius = (entry: WeeklyDataPoint, key: keyof WeeklyDataPoint) => {
   }
 
   return [0, 0, 0, 0];
+};
+
+const displayNames: Record<string, string> = {
+  criticalFailures: 'Critical Failures',
+  hitl: 'HITL',
+  passed: 'Passed',
+  practitionerCorrections: 'Practitioner Corrections',
+};
+
+const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+        <p className="mb-2 font-semibold text-gray-700">{payload[0].payload.day}</p>
+        <div className="space-y-1">
+          {payload.map((entry, index) => {
+            const name = displayNames[entry.dataKey as string] || entry.name || entry.dataKey;
+            return (
+              <div key={index} className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-3 w-3 rounded"
+                    style={{ backgroundColor: entry.color || colorPalette[entry.dataKey as keyof typeof colorPalette] }}
+                  />
+                  <span className="text-sm text-gray-600">{name}:</span>
+                </div>
+                <span className="text-sm font-semibold text-gray-900">{entry.value}</span>
+              </div>
+            );
+          })}
+        </div>
+        <Separator className="my-2" />
+        <p className="text-sm text-gray-400">Click anywhere to close</p>
+      </div>
+    );
+  }
+  return null;
 };
 
 const WeeklyVolumeChart = ({ data }: WeeklyVolumeChartProps) => {
@@ -46,18 +84,7 @@ const WeeklyVolumeChart = ({ data }: WeeklyVolumeChartProps) => {
             <Legend formatter={value => <span className="text-sm">{value}</span>} />
 
             {/* Tooltip */}
-            <Tooltip
-              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '12px' }}
-              formatter={(value: number, name: string) => {
-                const displayNames: Record<string, string> = {
-                  criticalFailures: 'Critical Failures',
-                  hitl: 'HITL',
-                  passed: 'Passed',
-                  practitionerCorrections: 'Practitioner Corrections',
-                };
-                return [value, displayNames[name]];
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
 
             {/* Stacked Bars */}
             <Bar
@@ -105,7 +132,7 @@ const WeeklyVolumeChart = ({ data }: WeeklyVolumeChartProps) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-1 text-center text-sm text-gray-400">Daily Throughput Target: 500+ notes/day</div>
+      <div className="mt-5 text-center text-sm text-gray-400">Daily Throughput Target: 500+ notes/day</div>
     </div>
   );
 };

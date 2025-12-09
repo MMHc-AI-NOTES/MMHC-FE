@@ -13,6 +13,10 @@ import { QueueOverviewCard } from './QueueOverviewCard';
 import { WorkloadCard } from './WorkloadCard';
 import { useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
+import { Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ColorKey } from './ColorKey';
 
 const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
@@ -263,63 +267,73 @@ const NotesQueue = () => {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Left Column: Table with Filters */}
-      <div className="lg:col-span-8">
+      <div className="space-y-6 lg:col-span-8">
         <Card className="p-6">
-          <div className="space-y-6">
-            {/* Filters Section */}
-            <FiltersSection
-              filters={filters}
-              practitioners={practitioners}
-              cptCodes={cptCodes}
-              loading={notesLoading}
-              onFilterChange={handleFilterChange}
-              onApplyFilters={handleApplyFilters}
-              onClearFilters={handleClearFilters}
-            />
-
-            {/* All Notes Section */}
-            <div>
-              <div className="mb-4">
+          {/* Filters Section */}
+          <FiltersSection
+            filters={filters}
+            practitioners={practitioners}
+            cptCodes={cptCodes}
+            loading={notesLoading}
+            onFilterChange={handleFilterChange}
+            onApplyFilters={handleApplyFilters}
+            onClearFilters={handleClearFilters}
+          />
+        </Card>
+        <Card>
+          {/* All Notes Section */}
+          <div>
+            <div className="mb-4 flex items-center justify-between px-6">
+              <div>
                 <h3 className="text-primary text-lg font-semibold">All Notes</h3>
                 <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
               </div>
-
-              {notesLoading ? (
-                <div className="space-y-3">
-                  <div className="rounded-md border">
-                    <div className="space-y-3 p-4">
-                      {Array.from({ length: 10 }, (_, i) => (
-                        <div key={i} className="flex items-center gap-4">
-                          <Skeleton className="h-12 flex-1" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <NotesTable notes={notes} onViewNote={handleViewNote} />
-
-                  {/* Pagination */}
-                  {notes.length > 0 && (
-                    <div className="mt-6">
-                      <DataTablePagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(totalItems / itemsPerPage)}
-                        itemsPerPage={itemsPerPage}
-                        totalItems={totalItems}
-                        onPageChange={handlePageChange}
-                        onItemsPerPageChange={() => {}} // No-op since pageSize is fixed
-                        itemName="note"
-                        itemNamePlural="notes"
-                        itemsPerPageOptions={[20]} // Only show 20 as it's fixed
-                        showFirstLastButtons={true}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="lg">
+                    <Info />
+                    Color Key
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end">
+                  <ColorKey />
+                </PopoverContent>
+              </Popover>
             </div>
+
+            {notesLoading ? (
+              <div className="space-y-3">
+                <div className="space-y-3 p-4">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-12 flex-1" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                <NotesTable notes={notes} onViewNote={handleViewNote} />
+
+                {/* Pagination */}
+                {notes.length > 0 && (
+                  <div className="mt-6">
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={Math.ceil(totalItems / itemsPerPage)}
+                      itemsPerPage={itemsPerPage}
+                      totalItems={totalItems}
+                      onPageChange={handlePageChange}
+                      onItemsPerPageChange={() => {}} // No-op since pageSize is fixed
+                      itemName="note"
+                      itemNamePlural="notes"
+                      itemsPerPageOptions={[20]} // Only show 20 as it's fixed
+                      showFirstLastButtons={true}
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </Card>
       </div>

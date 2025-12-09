@@ -1,7 +1,7 @@
 // @/components/aiLogs/AILogsTable.tsx
 import { ChevronDown, AlertTriangle, Info, Database, CircleCheckBig, CircleX } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { GradientBadge } from '@/shared/GradientBadge';
 import { AILog } from '@/types/aiLogs';
 import moment from 'moment';
 import { getResultStatus } from './aiLogsApiCalls';
@@ -13,31 +13,31 @@ interface AILogsTableProps {
   onSelectLog: (log: AILog) => void;
 }
 
-// Helper to get badge styling for Result column
-const getResultBadgeStyle = (result: 'pass' | 'fail' | 'error') => {
+// Helper to get gradient class for Result column
+const getResultGradient = (result: 'pass' | 'fail' | 'error'): string => {
   switch (result) {
     case 'pass':
-      return 'bg-green-light text-green border-green';
+      return 'bg-gradient-result-pass';
     case 'fail':
-      return 'bg-red-light text-red border-red';
+      return 'bg-gradient-result-fail';
     case 'error':
-      return 'bg-black-100 text-black border-black-100';
+      return 'bg-gradient-result-error';
     default:
-      return 'bg-gray-light text-gray border-gray';
+      return 'bg-gradient-neutral';
   }
 };
 
-// Helper to get badge styling for Severity column
-const getSeverityBadgeStyle = (severity: string) => {
-  switch (severity) {
+// Helper to get gradient class for Severity column
+const getSeverityGradient = (severity: string): string => {
+  switch (severity.toLowerCase()) {
     case 'minor':
-      return 'bg-blue-light text-blue border-blue';
+      return 'bg-gradient-severity-minor';
     case 'moderate':
-      return 'bg-orange-light text-orange border-orange';
+      return 'bg-gradient-severity-moderate';
     case 'critical':
-      return 'bg-red-light text-red border-red';
+      return 'bg-gradient-severity-critical';
     default:
-      return 'bg-gray-light text-gray border-gray';
+      return 'bg-gradient-neutral';
   }
 };
 
@@ -72,19 +72,19 @@ const getSeverityIcon = (severity: string) => {
 export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTableProps) => {
   if (logs.length === 0) {
     return (
-      <div className="rounded-md border">
+      <div>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50/50">
-                <TableHead className="text-primary min-w-[100px] font-medium">Log ID</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-medium">Note ID</TableHead>
-                <TableHead className="text-primary min-w-[130px] font-medium">Model Version</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-medium">Prompt Version</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-medium">Timestamp</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-medium">Result</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-medium">Severity</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-medium">Action</TableHead>
+            <TableHeader className="bg-transparent!">
+              <TableRow>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Log ID</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
+                <TableHead className="text-primary min-w-[130px] font-semibold">Model Version</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Prompt Version</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">Timestamp</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Result</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">Severity</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -101,19 +101,19 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
   }
 
   return (
-    <div className="rounded-md border">
+    <div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50/50">
-              <TableHead className="text-primary min-w-[100px] font-medium">Log ID</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-medium">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[130px] font-medium">Model Version</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-medium">Prompt Version</TableHead>
-              <TableHead className="text-primary min-w-[160px] font-medium">Timestamp</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-medium">Result</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-medium">Severity</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-medium">Action</TableHead>
+          <TableHeader className="bg-transparent!">
+            <TableRow>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Log ID</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
+              <TableHead className="text-primary min-w-[130px] font-semibold">Model Version</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Prompt Version</TableHead>
+              <TableHead className="text-primary min-w-[160px] font-semibold">Timestamp</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Result</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">Severity</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,24 +131,30 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                   <TableCell className="text-sm font-medium text-gray-900">LOG-{log.id}</TableCell>
                   <TableCell className="text-sm text-gray-600">{log.noteId || '-'}</TableCell>
                   <TableCell>
-                    <Badge className="text-blue bg-blue-light gap-2 rounded-[6px] [&>svg]:!size-4">
-                      <Database className="h-4 w-4" />
-                      {getModelDisplayName(log.modelId)}
-                    </Badge>
+                    <GradientBadge
+                      label={getModelDisplayName(log.modelId)}
+                      gradient="bg-gradient-blue"
+                      icon={<Database className="h-4 w-4" />}
+                      className="rounded-[6px] text-[#0369a1]!"
+                    />
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">{log.agent?.name || '-'}</TableCell>
                   <TableCell className="text-sm text-gray-600">{moment(log.createdAt).format('MMM D, YYYY – h:mm A')}</TableCell>
                   <TableCell>
-                    <Badge className={`gap-2 rounded-[6px] border capitalize [&>svg]:!size-4 ${getResultBadgeStyle(result)}`}>
-                      {getResultIcon(result)}
-                      {result === 'pass' ? 'Pass' : result === 'fail' ? 'Fail' : 'Error'}
-                    </Badge>
+                    <GradientBadge
+                      label={result === 'pass' ? 'Pass' : result === 'fail' ? 'Fail' : 'Error'}
+                      gradient={getResultGradient(result)}
+                      icon={getResultIcon(result)}
+                      className="rounded-[6px]"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Badge className={`gap-2 rounded-[6px] border capitalize [&>svg]:!size-4 ${getSeverityBadgeStyle(severity)}`}>
-                      {getSeverityIcon(severity)}
-                      {severity.toUpperCase()}
-                    </Badge>
+                    <GradientBadge
+                      label={severity.charAt(0).toUpperCase() + severity.slice(1).toLowerCase()}
+                      gradient={getSeverityGradient(severity)}
+                      icon={getSeverityIcon(severity)}
+                      className="rounded-[6px]"
+                    />
                   </TableCell>
                   <TableCell>
                     <button

@@ -45,7 +45,7 @@ const AuditHistoryCard = ({ chats }: AuditHistoryCardProps) => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-                      <Bot className="h-5 w-5 text-green-600" />
+                      <Bot className="text-primary h-5 w-5" />
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900">AI Audit Run</h3>
