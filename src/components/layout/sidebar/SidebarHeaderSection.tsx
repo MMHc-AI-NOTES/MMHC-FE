@@ -6,7 +6,7 @@ const SidebarHeaderSection = () => {
   const { state } = useSidebar();
 
   return (
-    <SidebarHeader>
+    <SidebarHeader className={`${state === 'expanded' ? 'px-4' : 'px-2'}`}>
       {state === 'expanded' ? (
         <div className="flex w-full items-center justify-between">
           <img src={LogoText} alt="logo-with-text" className="h-12" />
