@@ -67,6 +67,13 @@ export const ReviewCycleEnum = {
   blacklisted: 4,
 } as const;
 
+// Review Status Enum (for Human Review Queue)
+export const ReviewStatusEnum = {
+  pending: 1,
+  in_progress: 2,
+  returned: 3,
+} as const;
+
 // Review Stage Enum
 export const ReviewStageEnum = {
   all: 0,
@@ -127,6 +134,12 @@ export const ReviewCycleLabels: Record<number, string> = {
   [ReviewCycleEnum.cycle_2]: 'Cycle 2',
   [ReviewCycleEnum.cycle_3]: 'Cycle 3',
   [ReviewCycleEnum.blacklisted]: 'Blacklisted',
+};
+
+export const ReviewStatusLabels: Record<number, string> = {
+  [ReviewStatusEnum.pending]: 'Pending',
+  [ReviewStatusEnum.in_progress]: 'In Progress',
+  [ReviewStatusEnum.returned]: 'Returned',
 };
 
 // Date Range Labels

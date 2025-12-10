@@ -300,7 +300,14 @@ function SidebarInput({ className, ...props }: React.ComponentProps<typeof Input
 }
 
 function SidebarHeader({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div data-slot="sidebar-header" data-sidebar="header" className={cn('bg-primary flex items-center p-2', className)} {...props} />;
+  return (
+    <div
+      data-slot="sidebar-header"
+      data-sidebar="header"
+      className={cn('bg-primary flex h-16 items-center border-b border-gray-600', className)}
+      {...props}
+    />
+  );
 }
 
 function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {

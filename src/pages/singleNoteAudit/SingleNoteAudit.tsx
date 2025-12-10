@@ -205,7 +205,7 @@ const SingleNoteAudit = () => {
   return (
     noteDetail && (
       <div>
-        <Button onClick={() => navigate('/notes-queue')} className="mb-2">
+        <Button onClick={() => navigate(-1)} className="mb-2">
           <ArrowLeft />
         </Button>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">

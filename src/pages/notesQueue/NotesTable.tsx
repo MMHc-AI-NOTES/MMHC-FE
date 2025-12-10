@@ -121,7 +121,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
 
   if (notes.length === 0) {
     return (
-      <div className="border">
+      <div className="border-y">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

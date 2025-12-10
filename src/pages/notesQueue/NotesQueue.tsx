@@ -267,7 +267,7 @@ const NotesQueue = () => {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Left Column: Table with Filters */}
-      <div className="space-y-6 lg:col-span-8">
+      <div className="space-y-6 lg:col-span-9">
         <Card className="p-6">
           {/* Filters Section */}
           <FiltersSection
@@ -290,7 +290,7 @@ const NotesQueue = () => {
               </div>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline" size="lg" className="hover:border-green-300 hover:bg-green-50">
                     <Info />
                     Color Key
                   </Button>
@@ -339,7 +339,7 @@ const NotesQueue = () => {
       </div>
 
       {/* Right Column: Overview Cards */}
-      <div className="space-y-6 lg:col-span-4">
+      <div className="space-y-6 lg:col-span-3">
         <QueueOverviewCard data={queueOverview} loading={overviewLoading} />
         <WorkloadCard data={workload} loading={workloadLoading} />
       </div>
