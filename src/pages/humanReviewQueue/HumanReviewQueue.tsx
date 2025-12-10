@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { HumanReviewTable } from './HumanReviewTable';
-import { HumanReviewFiltersSection } from './HumanReviewFiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
 import { fetchHumanReviewNotes, fetchReviewerOverview, fetchQueueStatus, fetchReviewers } from './humanReviewApiCalls';
@@ -17,6 +16,8 @@ import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { HumanReviewColorKey } from './HumanReviewColorKey';
+import { FiltersSection } from './FiltersSection';
+import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 
 const HumanReviewQueue = () => {
   const [notes, setNotes] = useState<HumanReviewNote[]>([]);
@@ -35,30 +36,41 @@ const HumanReviewQueue = () => {
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 20; // Fixed at 20 as per requirement
 
-  // Filter states
-  const [filters, setFilters] = useState({ status: 'all', priority: 'all', reviewer: 'all', search: '' });
+  // Filter states with persistence
+  const defaultFilters = { status: 'all', priority: 'all', reviewer: 'all', search: '' };
+  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('humanReviewQueueFilters', defaultFilters);
 
   const navigate = useNavigate();
 
+  // Build filter payload
+  const buildFilterPayload = () => {
+    const filterArray: any[] = [];
+
+    // Review Status filter
+    if (filters.status && filters.status !== 'all') {
+      filterArray.push({ columnName: 'review_status', type: 'exact', value: parseInt(filters.status) });
+    }
+
+    // Priority filter
+    if (filters.priority && filters.priority !== 'all') {
+      filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
+    }
+
+    // Reviewer filter
+    if (filters.reviewer && filters.reviewer !== 'all') {
+      filterArray.push({ columnName: 'reviewer_id', type: 'exact', value: parseInt(filters.reviewer) });
+    }
+
+    // Search filter
+    if (filters.search) {
+      filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
+    }
+
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+  };
+
   // Load initial data
   useEffect(() => {
-    // Initial payload for notes
-    const initialPayload = { page: 1, pageSize: itemsPerPage, filters: [] };
-
-    // Fetch human review notes
-    const loadNotes = async () => {
-      try {
-        setNotesLoading(true);
-        const notesResponse = await fetchHumanReviewNotes(initialPayload);
-        setNotes(notesResponse.data);
-        setTotalItems(notesResponse.totalCount || 0);
-      } catch (error) {
-        console.error('Error loading human review notes:', error);
-      } finally {
-        setNotesLoading(false);
-      }
-    };
-
     // Fetch reviewer overview
     const loadReviewerOverview = async () => {
       try {
@@ -96,43 +108,62 @@ const HumanReviewQueue = () => {
       }
     };
 
-    // Run all fetches in parallel
-    loadNotes();
+    // Run non-note fetches in parallel
     loadReviewerOverview();
     loadQueueStatus();
     loadReviewers();
   }, [reviewersLoaded, dispatch]);
 
+  // Load notes - apply saved filters if they exist
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        setNotesLoading(true);
+        setCurrentPage(1);
+
+        // Check if filters are active (not all defaults)
+        const hasActive = filters.status !== 'all' || filters.priority !== 'all' || filters.reviewer !== 'all' || filters.search !== '';
+
+        let payload;
+        if (hasActive) {
+          // Build filter payload
+          const filterArray: any[] = [];
+
+          if (filters.status && filters.status !== 'all') {
+            filterArray.push({ columnName: 'review_status', type: 'exact', value: parseInt(filters.status) });
+          }
+          if (filters.priority && filters.priority !== 'all') {
+            filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
+          }
+          if (filters.reviewer && filters.reviewer !== 'all') {
+            filterArray.push({ columnName: 'reviewer_id', type: 'exact', value: parseInt(filters.reviewer) });
+          }
+          if (filters.search) {
+            filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
+          }
+
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+        } else {
+          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+        }
+
+        const notesResponse = await fetchHumanReviewNotes(payload);
+        setNotes(notesResponse.data);
+        setTotalItems(notesResponse.totalCount || 0);
+      } catch (error) {
+        console.error('Error loading human review notes:', error);
+      } finally {
+        setNotesLoading(false);
+      }
+    };
+
+    loadNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  // Build filter payload
-  const buildFilterPayload = () => {
-    const filterArray: any[] = [];
-
-    // Review Status filter
-    if (filters.status && filters.status !== 'all') {
-      filterArray.push({ columnName: 'review_status', type: 'exact', value: parseInt(filters.status) });
-    }
-
-    // Priority filter
-    if (filters.priority && filters.priority !== 'all') {
-      filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
-    }
-
-    // Reviewer filter
-    if (filters.reviewer && filters.reviewer !== 'all') {
-      filterArray.push({ columnName: 'reviewer_id', type: 'exact', value: parseInt(filters.reviewer) });
-    }
-
-    // Search filter
-    if (filters.search) {
-      filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
-    }
-
-    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+    setFilters({ ...filters, [key]: value });
   };
 
   // Apply filters
@@ -155,9 +186,7 @@ const HumanReviewQueue = () => {
 
   // Clear filters
   const handleClearFilters = async () => {
-    const clearedFilters = { status: 'all', priority: 'all', reviewer: 'all', search: '' };
-
-    setFilters(clearedFilters);
+    clearPersistedFilters();
     setCurrentPage(1);
 
     try {
@@ -202,7 +231,7 @@ const HumanReviewQueue = () => {
       <div className="space-y-6 lg:col-span-9">
         <Card className="p-6">
           {/* Filters Section */}
-          <HumanReviewFiltersSection
+          <FiltersSection
             filters={filters}
             reviewers={reviewers}
             loading={notesLoading}
@@ -226,7 +255,7 @@ const HumanReviewQueue = () => {
                     Color Key
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end">
+                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
                   <HumanReviewColorKey />
                 </PopoverContent>
               </Popover>

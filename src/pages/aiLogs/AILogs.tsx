@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import LogDetailsSection from './LogDetailsSection';
 import { FileText } from 'lucide-react';
+import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 
 const AILogs = () => {
   const [logs, setLogs] = useState<AILog[]>([]);
@@ -23,8 +24,9 @@ const AILogs = () => {
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 20;
 
-  // Filter states
-  const [filters, setFilters] = useState({ model: 'all', prompt: 'all', result: 'all', severity: 'all' });
+  // Filter states with persistence
+  const defaultFilters = { model: 'all', prompt: 'all', result: 'all', severity: 'all' };
+  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('aiLogsFilters', defaultFilters);
 
   // Build filter payload for API
   const buildFilterPayload = () => {
@@ -53,24 +55,6 @@ const AILogs = () => {
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
   };
 
-  // Load initial data
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        setLoading(true);
-        const response = await fetchAILogs({ page: 1, pageSize: itemsPerPage, filters: [] });
-        setLogs(response.data);
-        setTotalItems(response.totalCount || 0);
-      } catch (error) {
-        console.error('Error loading logs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadLogs();
-  }, []);
-
   // Load agents for prompt options
   useEffect(() => {
     const loadAgents = async () => {
@@ -85,9 +69,57 @@ const AILogs = () => {
     loadAgents();
   }, []);
 
+  // Load logs - apply saved filters if they exist
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        setLoading(true);
+        setCurrentPage(1);
+        setSelectedLog(null);
+
+        // Check if filters are active (not all defaults)
+        const hasActive = filters.model !== 'all' || filters.prompt !== 'all' || filters.result !== 'all' || filters.severity !== 'all';
+
+        let payload;
+        if (hasActive) {
+          // Build filter payload
+          const filterArray: any[] = [];
+
+          if (filters.model && filters.model !== 'all') {
+            filterArray.push({ columnName: 'model_id', type: 'like', value: filters.model });
+          }
+          if (filters.prompt && filters.prompt !== 'all') {
+            filterArray.push({ columnName: 'agent_id', type: 'exact', value: parseInt(filters.prompt) });
+          }
+          if (filters.result && filters.result !== 'all') {
+            filterArray.push({ columnName: 'result', type: 'exact', value: parseInt(filters.result) });
+          }
+          if (filters.severity && filters.severity !== 'all') {
+            filterArray.push({ columnName: 'severity', type: 'exact', value: parseInt(filters.severity) });
+          }
+
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+        } else {
+          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+        }
+
+        const response = await fetchAILogs(payload);
+        setLogs(response.data);
+        setTotalItems(response.totalCount || 0);
+      } catch (error) {
+        console.error('Error loading logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount - filters are loaded from localStorage on mount
+
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters({ ...filters, [key]: value });
   };
 
   // Apply filters - makes API call with current filter values
@@ -112,9 +144,7 @@ const AILogs = () => {
 
   // Clear filters - resets all filters and fetches unfiltered data
   const handleClearFilters = async () => {
-    const clearedFilters = { model: 'all', prompt: 'all', result: 'all', severity: 'all' };
-
-    setFilters(clearedFilters);
+    clearPersistedFilters();
     setCurrentPage(1);
     setSelectedLog(null);
 

@@ -17,6 +17,7 @@ import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorKey } from './ColorKey';
+import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 
 const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
@@ -35,8 +36,8 @@ const NotesQueue = () => {
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 20; // Fixed at 20 as per requirement
 
-  // Filter states
-  const [filters, setFilters] = useState({
+  // Filter states with persistence
+  const defaultFilters = {
     status: 'all',
     noteType: 'all',
     practitioner: 'all',
@@ -49,33 +50,63 @@ const NotesQueue = () => {
     manager: 'all',
     workflow: 'all',
     search: '',
-  });
+  };
+  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('notesQueueFilters', defaultFilters);
 
   const navigate = useNavigate();
 
+  // Build filter payload in the new format
+  const buildFilterPayload = () => {
+    const filterArray: any[] = [];
+
+    // Note Type filter
+    if (filters.noteType && filters.noteType !== 'all') {
+      filterArray.push({ columnName: 'type', type: 'exact', value: parseInt(filters.noteType) });
+    }
+
+    // Practitioner filter
+    if (filters.practitioner && filters.practitioner !== 'all') {
+      filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.practitioner) });
+    }
+
+    // Priority filter
+    if (filters.priority && filters.priority !== 'all') {
+      filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
+    }
+
+    // CPT Code filter
+    if (filters.cptCode && filters.cptCode !== 'all') {
+      filterArray.push({ columnName: 'cpt_code_id', type: 'exact', value: parseInt(filters.cptCode) });
+    }
+
+    // AI Status filter
+    if (filters.aiStatus && filters.aiStatus !== 'all') {
+      filterArray.push({ columnName: 'ai_status', type: 'exact', value: parseInt(filters.aiStatus) });
+    }
+
+    // Workflow filter
+    if (filters.workflow && filters.workflow !== 'all') {
+      filterArray.push({ columnName: 'workflow', type: 'exact', value: parseInt(filters.workflow) });
+    }
+
+    // Search filter
+    if (filters.search) {
+      filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
+    }
+
+    // Date Range filter
+    if (filters.dateRange && filters.dateRange !== 'all') {
+      const dateRange = getDateRange(filters.dateRange);
+      if (dateRange) {
+        filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
+      }
+    }
+
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+  };
+
   // Load initial data - each API call has its own loading state
   useEffect(() => {
-    // Initial payload for notes
-    const initialPayload = {
-      page: 1,
-      pageSize: itemsPerPage,
-      filters: [],
-    };
-
-    // Fetch notes
-    const loadNotes = async () => {
-      try {
-        setNotesLoading(true);
-        const notesResponse = await fetchNotes(initialPayload);
-        setNotes(notesResponse.data);
-        setTotalItems(notesResponse.totalCount || 0);
-      } catch (error) {
-        console.error('Error loading notes:', error);
-      } finally {
-        setNotesLoading(false);
-      }
-    };
-
     // Fetch queue overview
     const loadQueueOverview = async () => {
       try {
@@ -124,70 +155,90 @@ const NotesQueue = () => {
       }
     };
 
-    // Run all fetches in parallel - each with its own loading state
-    loadNotes();
+    // Run non-note fetches in parallel
     loadQueueOverview();
     loadWorkload();
     loadPractitioners();
     loadCptCodes();
   }, [practitionersLoaded, cptCodesLoaded, dispatch]);
 
+  // Load notes - apply saved filters if they exist
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        setNotesLoading(true);
+        setCurrentPage(1);
+
+        // Check if filters are active (not all defaults)
+        const hasActive =
+          filters.status !== 'all' ||
+          filters.noteType !== 'all' ||
+          filters.practitioner !== 'all' ||
+          filters.reviewStage !== 'all' ||
+          filters.priority !== 'all' ||
+          filters.dateRange !== 'all' ||
+          filters.cptCode !== 'all' ||
+          filters.aiStatus !== 'all' ||
+          filters.humanReview !== 'all' ||
+          filters.manager !== 'all' ||
+          filters.workflow !== 'all' ||
+          filters.search !== '';
+
+        let payload;
+        if (hasActive) {
+          // Build filter payload
+          const filterArray: any[] = [];
+
+          if (filters.noteType && filters.noteType !== 'all') {
+            filterArray.push({ columnName: 'type', type: 'exact', value: parseInt(filters.noteType) });
+          }
+          if (filters.practitioner && filters.practitioner !== 'all') {
+            filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.practitioner) });
+          }
+          if (filters.priority && filters.priority !== 'all') {
+            filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
+          }
+          if (filters.cptCode && filters.cptCode !== 'all') {
+            filterArray.push({ columnName: 'cpt_code_id', type: 'exact', value: parseInt(filters.cptCode) });
+          }
+          if (filters.aiStatus && filters.aiStatus !== 'all') {
+            filterArray.push({ columnName: 'ai_status', type: 'exact', value: parseInt(filters.aiStatus) });
+          }
+          if (filters.workflow && filters.workflow !== 'all') {
+            filterArray.push({ columnName: 'workflow', type: 'exact', value: parseInt(filters.workflow) });
+          }
+          if (filters.search) {
+            filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
+          }
+          if (filters.dateRange && filters.dateRange !== 'all') {
+            const dateRange = getDateRange(filters.dateRange);
+            if (dateRange) {
+              filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
+            }
+          }
+
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+        } else {
+          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+        }
+
+        const notesResponse = await fetchNotes(payload);
+        setNotes(notesResponse.data);
+        setTotalItems(notesResponse.totalCount || 0);
+      } catch (error) {
+        console.error('Error loading notes:', error);
+      } finally {
+        setNotesLoading(false);
+      }
+    };
+
+    loadNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  // Build filter payload in the new format
-  const buildFilterPayload = () => {
-    const filterArray: any[] = [];
-
-    // Note Type filter
-    if (filters.noteType && filters.noteType !== 'all') {
-      filterArray.push({ columnName: 'type', type: 'exact', value: parseInt(filters.noteType) });
-    }
-
-    // Practitioner filter
-    if (filters.practitioner && filters.practitioner !== 'all') {
-      filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.practitioner) });
-    }
-
-    // Priority filter
-    if (filters.priority && filters.priority !== 'all') {
-      filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
-    }
-
-    // CPT Code filter
-    if (filters.cptCode && filters.cptCode !== 'all') {
-      filterArray.push({ columnName: 'patient_id', type: 'exact', value: parseInt(filters.cptCode) });
-    }
-
-    // AI Status filter
-    if (filters.aiStatus && filters.aiStatus !== 'all') {
-      filterArray.push({ columnName: 'ai_status', type: 'exact', value: parseInt(filters.aiStatus) });
-    }
-
-    // Workflow filter
-    if (filters.workflow && filters.workflow !== 'all') {
-      filterArray.push({ columnName: 'workflow', type: 'exact', value: parseInt(filters.workflow) });
-    }
-
-    // Search filter
-    if (filters.search) {
-      filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
-    }
-
-    // Date Range filter
-    if (filters.dateRange && filters.dateRange !== 'all') {
-      const dateRange = getDateRange(filters.dateRange);
-      if (dateRange) {
-        filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
-      }
-    }
-
-    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+    setFilters({ ...filters, [key]: value });
   };
 
   // Apply filters - makes API call with current filter values
@@ -210,22 +261,7 @@ const NotesQueue = () => {
 
   // Clear filters - resets all filters and fetches unfiltered data
   const handleClearFilters = async () => {
-    const clearedFilters = {
-      status: 'all',
-      noteType: 'all',
-      practitioner: 'all',
-      reviewStage: 'all',
-      priority: 'all',
-      dateRange: 'all',
-      cptCode: 'all',
-      aiStatus: 'all',
-      humanReview: 'all',
-      manager: 'all',
-      workflow: 'all',
-      search: '',
-    };
-
-    setFilters(clearedFilters);
+    clearPersistedFilters();
     setCurrentPage(1);
 
     try {
@@ -269,7 +305,6 @@ const NotesQueue = () => {
       {/* Left Column: Table with Filters */}
       <div className="space-y-6 lg:col-span-9">
         <Card className="p-6">
-          {/* Filters Section */}
           <FiltersSection
             filters={filters}
             practitioners={practitioners}
@@ -281,7 +316,6 @@ const NotesQueue = () => {
           />
         </Card>
         <Card>
-          {/* All Notes Section */}
           <div>
             <div className="mb-4 flex items-center justify-between px-6">
               <div>

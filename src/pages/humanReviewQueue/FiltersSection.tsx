@@ -23,9 +23,9 @@ interface FiltersSectionProps {
 export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {/* Status */}
-        <div className="w-full">
+        <div className="w-full md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-500">Status</label>
           <Select value={filters.status} onValueChange={value => onFilterChange('status', value)}>
             <SelectTrigger className="w-full">
@@ -43,7 +43,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
         </div>
 
         {/* Priority */}
-        <div className="w-full">
+        <div className="w-full md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-500">Priority</label>
           <Select value={filters.priority} onValueChange={value => onFilterChange('priority', value)}>
             <SelectTrigger className="w-full">
@@ -61,7 +61,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
         </div>
 
         {/* Reviewer */}
-        <div className="w-full">
+        <div className="w-full md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-500">Reviewer</label>
           <Select value={filters.reviewer} onValueChange={value => onFilterChange('reviewer', value)}>
             <SelectTrigger className="w-full">
@@ -79,7 +79,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
         </div>
 
         {/* Search */}
-        <div className="w-full">
+        <div className="w-full md:col-span-6">
           <label className="mb-2 block text-sm font-medium text-gray-500">Search</label>
           <div className="relative w-full">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />

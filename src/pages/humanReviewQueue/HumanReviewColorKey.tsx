@@ -1,17 +1,6 @@
 // @/pages/humanReviewQueue/HumanReviewColorKey.tsx
-interface ColorKeyItemProps {
-  label: string;
-  gradient: string;
-}
 
-const ColorKeyItem = ({ label, gradient }: ColorKeyItemProps) => {
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`h-4 w-6 rounded ${gradient}`} />
-      <span className="text-sm text-gray-700">{label}</span>
-    </div>
-  );
-};
+import { ColorKeyItem } from '@/shared/ColorKeyItem';
 
 export const HumanReviewColorKey = () => {
   return (

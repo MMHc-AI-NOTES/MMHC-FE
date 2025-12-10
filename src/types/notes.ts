@@ -27,7 +27,7 @@ export interface RawApiNote {
     updatedAt: string;
   };
   patient: {
-    client_id: string;
+    clientId: string;
   };
 }
 
@@ -63,7 +63,7 @@ export interface NoteDetail {
   aiStatus: { id: number; name: string };
   date: string;
   practitioner: string;
-  cptCode: string;
+  cptCode: number;
   clientId: string;
   noteType: string;
   aiReviews: number;
@@ -151,7 +151,8 @@ export interface ApiNoteDetail {
   session: string;
   sessionTime: string;
   practitionerId: number;
-  patient: { client_id: string };
+  patient: { clientId: string };
+  cptCodeId: number;
   createdAt: string;
   updatedAt: string;
   practitioner: Practitioner; // Object type

@@ -148,7 +148,7 @@ export const fetchPractitioners = async (): Promise<PractitionerOption[]> => {
 
 export const fetchCptCodes = async (): Promise<CptCodeOption[]> => {
   try {
-    const response = await axios.post<ApiResponse<CptCodeOption[]>>('/patients/listing');
+    const response = await axios.get<ApiResponse<CptCodeOption[]>>('/cpt-codes');
 
     if (response?.status && response.data.data) {
       return response.data.data;

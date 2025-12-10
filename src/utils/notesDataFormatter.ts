@@ -7,7 +7,7 @@ export const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => 
     return {
       id: item.noteId,
       practitioner: item.practitioner.fullName,
-      client: item.patient.client_id || '-',
+      client: item.patient.clientId || '-',
       date: moment(item.sessionTime).format('MMM D, YYYY'),
       type: item.noteType?.id || 'Progress Note',
       aiScore: item.aiScore || 0,

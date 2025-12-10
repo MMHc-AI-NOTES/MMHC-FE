@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useAppSelector } from '@/store/store';
 import { NoteDetail } from '@/types/notes';
 import { Hash, User, Calendar, ClipboardList, Code, Bot, RefreshCw, UserSearch } from 'lucide-react';
 
@@ -7,7 +8,9 @@ interface NoteInformationProps {
 }
 
 const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
-  console.log('🚀 ~ NoteInformation ~ noteDetail:', noteDetail);
+  const { cptCodes } = useAppSelector(state => state.filterOptions);
+  const cptCode = cptCodes.find(cptCode => cptCode.id === noteDetail.cptCode);
+
   return (
     <Card className="bg-white shadow-sm">
       <CardContent className="space-y-7">
@@ -52,7 +55,7 @@ const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
             <Code className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">CPT Code</p>
-              <p className="text-sm text-black">{noteDetail.cptCode}</p>
+              <p className="text-sm text-black">{cptCode?.code || '-'}</p>
             </div>
           </div>
 
