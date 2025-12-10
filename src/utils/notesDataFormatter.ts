@@ -6,6 +6,8 @@ export const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => 
   return data.map((item: RawApiNote) => {
     return {
       id: item.noteId,
+      cptCode: item.cptCodeId,
+      reviewCycle: item.reviewCycle,
       practitioner: item.practitioner.fullName,
       client: item.patient.clientId || '-',
       date: moment(item.sessionTime).format('MMM D, YYYY'),

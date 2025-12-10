@@ -1,6 +1,8 @@
 // @/types/notes.ts
 export interface RawApiNote {
   id: number;
+  cptCodeId: number;
+  reviewCycle?: { id: number; name: string };
   noteId: string;
   sessionId: string;
   sessionTime: string;
@@ -33,6 +35,7 @@ export interface RawApiNote {
 
 export interface FormattedNote {
   id: string;
+  cptCode: number;
   practitioner: string;
   client: string;
   date: string;
@@ -43,6 +46,7 @@ export interface FormattedNote {
   manager: number;
   workflow: number;
   priority: number;
+  reviewCycle?: { id: number; name: string };
   sessionTime?: string;
   rawData?: RawApiNote;
 }
@@ -153,6 +157,7 @@ export interface ApiNoteDetail {
   practitionerId: number;
   patient: { clientId: string };
   cptCodeId: number;
+  reviewCycle: { id: number; name: string };
   createdAt: string;
   updatedAt: string;
   practitioner: Practitioner; // Object type

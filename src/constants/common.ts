@@ -130,10 +130,10 @@ export const PriorityLabels: Record<number, string> = {
 };
 
 export const ReviewCycleLabels: Record<number, string> = {
-  [ReviewCycleEnum.cycle_1]: 'Cycle 1',
-  [ReviewCycleEnum.cycle_2]: 'Cycle 2',
-  [ReviewCycleEnum.cycle_3]: 'Cycle 3',
-  [ReviewCycleEnum.blacklisted]: 'Blacklisted',
+  [ReviewCycleEnum.cycle_1]: 'Cycle 1 of 3',
+  [ReviewCycleEnum.cycle_2]: 'Cycle 2 of 3 – Therapist Revision',
+  [ReviewCycleEnum.cycle_3]: 'Cycle 3 of 3 – Final Review',
+  [ReviewCycleEnum.blacklisted]: 'Auto-Blacklisted – Max Cycles Exceeded',
 };
 
 export const ReviewStatusLabels: Record<number, string> = {
