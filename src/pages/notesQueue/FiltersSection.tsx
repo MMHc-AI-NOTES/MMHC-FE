@@ -170,7 +170,7 @@ export const FiltersSection = ({
               <SelectItem value="all">All</SelectItem>
               {cptCodes.map(code => (
                 <SelectItem key={code.id} value={code.id.toString()}>
-                  {code.uuid}
+                  {code.code}
                 </SelectItem>
               ))}
             </SelectContent>

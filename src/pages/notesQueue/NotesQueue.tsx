@@ -295,7 +295,7 @@ const NotesQueue = () => {
                     Color Key
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end">
+                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
                   <ColorKey />
                 </PopoverContent>
               </Popover>

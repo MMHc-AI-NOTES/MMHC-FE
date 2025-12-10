@@ -1,12 +1,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { NoteDetail } from '@/types/notes';
-import { Hash, User, Calendar, ClipboardList, Code, Bot, RefreshCw } from 'lucide-react';
+import { Hash, User, Calendar, ClipboardList, Code, Bot, RefreshCw, UserSearch } from 'lucide-react';
 
 interface NoteInformationProps {
   noteDetail: NoteDetail;
 }
 
 const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
+  console.log('🚀 ~ NoteInformation ~ noteDetail:', noteDetail);
   return (
     <Card className="bg-white shadow-sm">
       <CardContent className="space-y-7">
@@ -70,6 +71,13 @@ const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
             <div>
               <p className="font-medium">Review Cycle</p>
               <p className="text-sm text-black">-</p>
+            </div>
+          </div>
+          <div className="text-primary flex gap-1 text-sm">
+            <UserSearch className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Client Id</p>
+              <p className="text-sm text-black">{noteDetail.clientId}</p>
             </div>
           </div>
         </div>

@@ -7,10 +7,10 @@ export const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => 
     return {
       id: item.noteId,
       practitioner: item.practitioner.fullName,
-      client: item.patient.uuid || 'N/A',
+      client: item.patient.client_id || '-',
       date: moment(item.sessionTime).format('MMM D, YYYY'),
       type: item.noteType?.id || 'Progress Note',
-      aiScore: item.aiScore?.id || 0,
+      aiScore: item.aiScore || 0,
       aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
       humanReview: item.humanReview?.id || 1, // Default to not_needed
       manager: item.manager?.id || 1, // Default to not_needed

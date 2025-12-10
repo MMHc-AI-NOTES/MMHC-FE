@@ -87,29 +87,14 @@ export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> 
         formattedNotes = formatApiData({ data: notesArray });
       }
 
-      return {
-        data: formattedNotes,
-        totalCount,
-        page,
-        pageSize,
-      };
+      return { data: formattedNotes, totalCount, page, pageSize };
     } else {
       handleErrorMessages(response);
-      return {
-        data: [],
-        totalCount: 0,
-        page: 1,
-        pageSize: 20,
-      };
+      return { data: [], totalCount: 0, page: 1, pageSize: 20 };
     }
   } catch (error: any) {
     handleCatchMessages(error);
-    return {
-      data: [],
-      totalCount: 0,
-      page: 1,
-      pageSize: 20,
-    };
+    return { data: [], totalCount: 0, page: 1, pageSize: 20 };
   }
 };
 
