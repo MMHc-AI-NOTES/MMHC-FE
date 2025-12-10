@@ -190,3 +190,34 @@ export interface CptCodeOption {
   id: number;
   uuid: string;
 }
+
+// Human Review Queue Types
+export interface HumanReviewNote {
+  id: string;
+  practitioner: string;
+  date: string;
+  score: number;
+  aiStatus: number;
+  reviewStatus: number;
+  reviewer?: string;
+  priority: number;
+  rawData?: any;
+}
+
+export interface ReviewerOverview {
+  total_assigned: number;
+  awaiting_reassignment: number;
+  avg_review_time: string;
+  ai_disagreement_rate: string;
+}
+
+export interface QueueStatus {
+  pending: number;
+  in_progress: number;
+  returned: number;
+}
+
+export interface ReviewerOption {
+  id: number;
+  fullName: string;
+}

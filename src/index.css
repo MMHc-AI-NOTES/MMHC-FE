@@ -204,6 +204,9 @@
   .bg-gradient-human-pending {
     background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   }
+  .bg-gradient-human-returned {
+    background: linear-gradient(135deg, #e8927d 0%, #d97c67 100%);
+  }
   .bg-gradient-human-completed {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   }
