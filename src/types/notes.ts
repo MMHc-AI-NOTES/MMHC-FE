@@ -74,6 +74,7 @@ export interface HumanReview {
 export interface NoteDetail {
   id: string;
   aiStatus: { id: number; name: string };
+  priority: { id: number; name: string };
   humanReview: HumanReview[] | null;
   date: string;
   practitioner: string;
@@ -87,6 +88,7 @@ export interface NoteDetail {
   therapySummary: string;
   bedrockResponse: object;
   prompt: string;
+  promptData: string;
   rawResponse: string;
   modelDetail: ModelDetail;
   issues: {
@@ -160,6 +162,7 @@ export interface Practitioner {
 export interface ApiNoteDetail {
   id: number;
   aiStatus: { id: number; name: string };
+  priority: { id: number; name: string };
   noteId: string;
   chatId: string;
   sessionId: string;
@@ -213,6 +216,7 @@ export interface CptCodeOption {
 // Human Review Queue Types
 export interface HumanReviewNote {
   id: string;
+  chatId: number;
   practitioner: string;
   date: string;
   score: number;

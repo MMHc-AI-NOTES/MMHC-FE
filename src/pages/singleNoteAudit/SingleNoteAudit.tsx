@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundPen } from 'lucide-react';
+import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundCog, UserRoundPen } from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
@@ -25,13 +25,14 @@ import SummaryCard from './SummaryCard';
 import ModelInformation from './ModelInformation';
 
 // Utility function to format API response to component expected format
-const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
+const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
   // Use moment for date formatting
   const sessionDate = moment(apiData.sessionTime);
   const formattedDate = sessionDate.format('MMM D, YYYY');
 
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
+  const extractedHumanReviewChat = apiData.chats?.find(chat => chat.id === chatId);
   const bedrockResponse = latestChat?.bedrockResponse;
   const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY - h:mm A') : '';
 
@@ -72,14 +73,16 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     aiReviews: apiData.chats?.length || 0,
     auditScore: bedrockResponse?.score || 0,
     lastRun: formattedDateTime,
-    humanReview: latestChat?.humanReviews || null,
+    humanReview: extractedHumanReviewChat?.humanReviews || null,
     aiSummary: bedrockResponse?.summary,
     therapySummary: apiData.session,
     bedrockResponse: bedrockResponse,
     issues: issues,
     prompt: latestChat?.prompt || '',
+    promptData: latestChat?.userNote || '',
     rawResponse: bedrockResponse?.raw_response || '',
     aiStatus: apiData.aiStatus,
+    priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
   };
 };
@@ -101,6 +104,7 @@ const SingleNoteAudit = () => {
 
   // Check if coming from human-review-queue
   const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
+  const chatId = location.state?.chatId;
   const [showHumanReview, setShowHumanReview] = useState(isFromHumanReviewQueue);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
@@ -121,7 +125,7 @@ const SingleNoteAudit = () => {
 
       try {
         const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentIdRef.current, isRerun);
-        const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
+        const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);
         // Store all chats for audit history
@@ -130,7 +134,7 @@ const SingleNoteAudit = () => {
         setLoading(false);
       }
     },
-    [noteId],
+    [chatId, noteId],
   );
 
   // Load agents and set default agent - runs on every mount
@@ -231,6 +235,8 @@ const SingleNoteAudit = () => {
             {showHumanReview && noteId ? (
               <HumanReviewSection
                 noteId={noteId}
+                priority={noteDetail.priority?.id || 0}
+                aiStatus={noteDetail.aiStatus?.id || 0}
                 onSaveDraft={handleSaveDraft}
                 setShowHumanReview={setShowHumanReview}
                 chatId={auditHistory[0]?.id}
@@ -241,6 +247,7 @@ const SingleNoteAudit = () => {
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
             <AuditHistoryCard chats={auditHistory} />
             <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
+            <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />
             <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>
         </div>

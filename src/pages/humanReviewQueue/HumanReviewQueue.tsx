@@ -41,7 +41,7 @@ const HumanReviewQueue = () => {
 
     // Review Status filter
     if (filters.status && filters.status !== 'all') {
-      filterArray.push({ columnName: 'review_status', type: 'exact', value: parseInt(filters.status) });
+      filterArray.push({ columnName: 'ai_status', type: 'exact', value: parseInt(filters.status) });
     }
 
     // Priority filter
@@ -51,7 +51,7 @@ const HumanReviewQueue = () => {
 
     // Reviewer filter
     if (filters.reviewer && filters.reviewer !== 'all') {
-      filterArray.push({ columnName: 'reviewer_id', type: 'exact', value: parseInt(filters.reviewer) });
+      filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.reviewer) });
     }
 
     // Search filter
@@ -204,7 +204,7 @@ const HumanReviewQueue = () => {
 
   const handleReviewNote = (noteId: string) => {
     navigate(`/human-review-queue/single-note-audit/${noteId}`, {
-      state: { from: 'human-review-queue' },
+      state: { from: 'human-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
     });
   };
 

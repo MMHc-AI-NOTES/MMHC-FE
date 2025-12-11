@@ -12,11 +12,12 @@ import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 import { HumanReview } from '@/types/notes';
 
 interface HumanReviewSectionProps {
   noteId: string;
+  priority: number;
+  aiStatus: number;
   onSaveDraft: () => void;
   setShowHumanReview: (show: boolean) => void;
   chatId: number;
@@ -26,6 +27,8 @@ interface HumanReviewSectionProps {
 
 const HumanReviewSection = ({
   noteId,
+  priority,
+  aiStatus,
   onSaveDraft,
   setShowHumanReview,
   chatId,
@@ -113,6 +116,8 @@ const HumanReviewSection = ({
       const payload = {
         note_id: noteId,
         chat_id: chatId,
+        priority: priority,
+        ai_status: aiStatus,
         decision: parseInt(decision, 10),
         practitioner_id: reviewerName ? parseInt(reviewerName, 10) : null,
         ...(manualScore && { manual_score: getNumericScore() }),
@@ -126,6 +131,7 @@ const HumanReviewSection = ({
         // Create new review
         await submitHumanReview(payload);
       }
+      // setShowHumanReview(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -150,8 +156,6 @@ const HumanReviewSection = ({
                     Human review allows you to accept, override, or escalate the AI's audit decision. Your decision will be logged in the
                     audit history.
                   </p>
-                  <Separator className="my-2 bg-gray-400" />
-                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -173,8 +177,6 @@ const HumanReviewSection = ({
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p>Select the appropriate action based on your review of the AI audit and the clinical note.</p>
-                  <Separator className="my-2 bg-gray-400" />
-                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -202,10 +204,7 @@ const HumanReviewSection = ({
                       </div>
                     )}
                   </div>
-                  <label
-                    htmlFor={item.value.toString()}
-                    className={cn('cursor-pointer text-sm leading-none font-medium', isChecked ? 'text-[#3F5F40]' : 'text-primary')}
-                  >
+                  <label htmlFor={item.value.toString()} className={cn('text-primary cursor-pointer text-sm leading-none font-medium')}>
                     {item.label}
                   </label>
                 </div>
@@ -232,8 +231,6 @@ const HumanReviewSection = ({
                         Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
                         accountability.
                       </p>
-                      <Separator className="my-2 bg-gray-400" />
-                      <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -268,8 +265,6 @@ const HumanReviewSection = ({
                   <p>
                     Enter a manual score (0-100) if you want to override the AI's evaluation. A score of 95 or higher is required to PASS.
                   </p>
-                  <Separator className="my-2 bg-gray-400" />
-                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

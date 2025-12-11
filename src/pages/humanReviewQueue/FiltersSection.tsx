@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { PriorityEnum, ReviewStatusEnum, PriorityLabels, ReviewStatusLabels } from '@/constants/common';
+import { PriorityEnum, PriorityLabels, AiStatusEnum, AiStatusLabels } from '@/constants/common';
 import { getEnumValues } from '@/utils/helper';
 import { useAppSelector } from '@/store/store';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
@@ -50,9 +50,9 @@ export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilter
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {getEnumValues(ReviewStatusEnum).map(value => (
+              {getEnumValues(AiStatusEnum).map(value => (
                 <SelectItem key={value} value={value.toString()}>
-                  {ReviewStatusLabels[value]}
+                  {AiStatusLabels[value]}
                 </SelectItem>
               ))}
             </SelectContent>

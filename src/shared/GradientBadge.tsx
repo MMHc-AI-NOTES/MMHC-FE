@@ -30,9 +30,11 @@ interface GradientBadgeProps {
 export const GradientBadge = ({ label, gradient, icon, className = '' }: GradientBadgeProps) => {
   const textColor = getTextColor(gradient);
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold ${gradient} ${textColor} ${className}`}>
+    <p
+      className={`inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-xs font-medium tracking-widest ${gradient} ${textColor} ${className}`}
+    >
       {icon && <span className="[&>svg]:!size-4">{icon}</span>}
       {label}
-    </span>
+    </p>
   );
 };

@@ -1,4 +1,3 @@
-import { Separator } from '@/components/ui/separator';
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, TooltipProps } from 'recharts';
 import { PractitionerTrend } from '@/types/dashboard';
 
@@ -48,8 +47,6 @@ const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
             );
           })}
         </div>
-        <Separator className="my-2" />
-        <p className="text-sm text-gray-400">Click anywhere to close</p>
       </div>
     );
   }

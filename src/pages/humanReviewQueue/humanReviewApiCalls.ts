@@ -37,13 +37,14 @@ interface HumanReviewResponse {
 const formatHumanReviewData = (data: any[]): HumanReviewNote[] => {
   return data.map((item: any) => ({
     id: item.noteId || item.id?.toString(),
+    chatId: item.chatId || 0,
     practitioner: item.practitioner?.fullName || 'Unknown',
     date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
     score: item.note?.aiScore || 0,
-    aiStatus: item.note?.aiStatus?.id || 1,
+    aiStatus: item.aiStatus?.id || 1,
     reviewStatus: item.note?.humanReview?.id || 1,
     reviewer: item.practitioner?.fullName || undefined,
-    priority: item.note?.priority?.id || 1,
+    priority: item.priority?.id || 1,
     rawData: item,
   }));
 };
@@ -77,34 +78,63 @@ export const fetchHumanReviewNotes = async (payload: HumanReviewPayload): Promis
 
 // Fetch reviewer overview statistics
 export const fetchReviewerOverview = async (): Promise<ReviewerOverview | null> => {
-  try {
-    const response = await axios.get<ReviewerOverview>('/human-review/reviewer-statistics');
+  // TODO: replace with real API once available
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({
+        total_assigned: 42,
+        awaiting_reassignment: 3,
+        avg_review_time: '12m',
+        ai_disagreement_rate: '8%',
+      });
+    }, 600);
+  });
 
-    if (response?.status && response.data) {
-      return response.data;
-    } else {
-      handleErrorMessages(response);
-      return null;
-    }
-  } catch (error: any) {
-    handleCatchMessages(error);
-    return null;
-  }
+  // try {
+  // const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+  // const finalStartDate = startDate || defaultStart;
+  // const finalEndDate = endDate || defaultEnd;
+  //   const response = await axios.get<ReviewerOverview>('/human-review/reviewer-statistics',{params:{start_date: finalStartDate, end_date: finalEndDate}});
+  //
+  //   if (response?.status && response.data) {
+  //      return response.data;
+  //   } else {
+  //     handleErrorMessages(response);
+  //     return null;
+  //   }
+  // } catch (error: any) {
+  //   handleCatchMessages(error);
+  //   return null;
+  // }
 };
 
 // Fetch queue status statistics
 export const fetchQueueStatus = async (): Promise<QueueStatus | null> => {
-  try {
-    const response = await axios.get<QueueStatus>('/human-review/queue-status');
+  // TODO: replace with real API once available
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({
+        pending: 18,
+        in_progress: 7,
+        returned: 2,
+      });
+    }, 600);
+  });
 
-    if (response?.status && response.data) {
-      return response.data;
-    } else {
-      handleErrorMessages(response);
-      return null;
-    }
-  } catch (error: any) {
-    handleCatchMessages(error);
-    return null;
-  }
+  // try {
+  // const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+  // const finalStartDate = startDate || defaultStart;
+  // const finalEndDate = endDate || defaultEnd;
+  //   const response = await axios.get<QueueStatus>('/human-review/queue-status',{params:{start_date: finalStartDate, end_date: finalEndDate}});
+  //
+  //   if (response?.status && response.data) {
+  //     return response.data;
+  //   } else {
+  //     handleErrorMessages(response);
+  //     return null;
+  //   }
+  // } catch (error: any) {
+  //   handleCatchMessages(error);
+  //   return null;
+  // }
 };

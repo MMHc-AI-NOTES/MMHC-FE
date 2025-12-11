@@ -19,7 +19,6 @@ import {
 } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientBadge } from '@/shared/GradientBadge';
-import { Separator } from '@/components/ui/separator';
 import { useAppSelector } from '@/store/store';
 
 interface NotesTableProps {
@@ -229,8 +228,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                           Current workflow status: In Queue (awaiting review), Returned (sent back to practitioner), Blacklisted (critical
                           issues), Completed (approved)
                         </p>
-                        <Separator className="my-2 bg-gray-400" />
-                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -249,8 +246,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                           Priority level based on AI score and review status. High (urgent attention needed), Medium (review soon), Low
                           (routine review)
                         </p>
-                        <Separator className="my-2 bg-gray-400" />
-                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -270,8 +265,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                           Review cycle tracking. Cycle 1 (Initial), Cycle 2 (Therapist Revision), Cycle 3 (Final). Notes exceeding 3 cycles
                           are auto-blacklisted.
                         </p>
-                        <Separator className="my-2 bg-gray-400" />
-                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
