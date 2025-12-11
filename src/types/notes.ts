@@ -114,6 +114,7 @@ export interface Chat {
   id: number;
   prompt: string;
   userNote: string;
+  userInput: string;
   modelId: string;
   evaluationScore: number;
   humanReviews: HumanReview[] | null;

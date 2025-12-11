@@ -56,7 +56,7 @@ const noteSections = [
 ];
 
 const NoteSections = ({ bedrockResponse }: any) => {
-  const [accordionValue, setAccordionValue] = useState<string[]>(['si-hi']);
+  const [accordionValue, setAccordionValue] = useState<string[]>(['subjective']);
 
   // Function to get content from bedrockResponse or fallback to default
   const getSectionContent = (extractKey: string): string => {
