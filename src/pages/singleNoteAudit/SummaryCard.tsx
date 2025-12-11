@@ -9,20 +9,30 @@ interface SummaryCardProps {
   summary: string;
   icon: LucideIcon;
   showCopyButton?: boolean;
+  showExpandable?: boolean;
   className?: string;
 }
 
 const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, className }: SummaryCardProps) => {
   const [copied, setCopied] = useState(false);
 
-  // Function to convert newlines to <br> tags and basic HTML rendering
-  const formatHtmlContent = (html: string) => {
-    return { __html: html.replace(/\n/g, '<br />') };
+  // Clean and structure the summary
+  const cleanSummary = (text: string) => {
+    // Remove the JSON structure markers
+    let cleaned = text.replace(/\\n/g, '\n').replace(/ {2}\n\n/g, '\n\n');
+
+    // Remove any remaining quotes and braces
+    cleaned = cleaned.replace(/["{}]/g, '');
+
+    return cleaned.trim();
   };
+
+  const displayText = cleanSummary(summary);
+  const lines = displayText.split('\n').filter(line => line.trim());
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(summary);
+      await navigator.clipboard.writeText(displayText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -45,11 +55,45 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
           )}
         </div>
       </CardHeader>
+
       <CardContent>
-        <div
-          className="rounded-lg bg-[#F0F0F0] p-4 text-sm leading-relaxed text-gray-700"
-          dangerouslySetInnerHTML={formatHtmlContent(summary)}
-        />
+        <div className="rounded-lg bg-[#F0F0F0] p-4">
+          <div className="space-y-2 text-sm leading-relaxed text-gray-700">
+            {lines.map((line, index) => {
+              if (!line.trim()) return null;
+
+              // Check if line is a section header (ends with colon or contains specific headers)
+              const isSectionHeader =
+                line.includes(':') &&
+                (line.includes('Session Duration') ||
+                  line.includes('Suicidality') ||
+                  line.includes('Homicidality') ||
+                  line.includes('Subjective') ||
+                  line.includes('Objective') ||
+                  line.includes('Assessment') ||
+                  line.includes('Reaction') ||
+                  line.includes('Plan') ||
+                  line.includes('Progress') ||
+                  line.includes('Therapist'));
+
+              if (isSectionHeader) {
+                const [header, ...content] = line.split(':');
+                return (
+                  <div key={index} className="mb-2">
+                    <h4 className="font-semibold text-gray-800">{header}:</h4>
+                    {content.length > 0 && <p className="ml-4 text-gray-700">{content.join(':').trim()}</p>}
+                  </div>
+                );
+              }
+
+              return (
+                <p key={index} className="text-gray-700">
+                  {line}
+                </p>
+              );
+            })}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
