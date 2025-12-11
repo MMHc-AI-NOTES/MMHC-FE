@@ -3,8 +3,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import { PriorityEnum, ReviewStatusEnum, PriorityLabels, ReviewStatusLabels } from '@/constants/common';
-import { ReviewerOption } from '@/types/notes';
 import { getEnumValues } from '@/utils/helper';
+import { useAppSelector } from '@/store/store';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { useEffect } from 'react';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { useDispatch } from 'react-redux';
 
 interface FiltersSectionProps {
   filters: {
@@ -13,14 +17,27 @@ interface FiltersSectionProps {
     reviewer: string;
     search: string;
   };
-  reviewers: ReviewerOption[];
   loading: boolean;
   onFilterChange: (key: string, value: string) => void;
   onApplyFilters: () => void;
   onClearFilters: () => void;
 }
 
-export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
+export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
+  const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
@@ -69,7 +86,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {reviewers.map(r => (
+              {practitioners.map(r => (
                 <SelectItem key={r.id} value={r.id.toString()}>
                   {r.fullName}
                 </SelectItem>

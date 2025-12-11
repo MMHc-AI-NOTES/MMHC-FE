@@ -1,17 +1,14 @@
 // @/pages/humanReviewQueue/HumanReviewQueue.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { HumanReviewTable } from './HumanReviewTable';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
-import { fetchHumanReviewNotes, fetchReviewerOverview, fetchQueueStatus, fetchReviewers } from './humanReviewApiCalls';
+import { fetchHumanReviewNotes, fetchReviewerOverview, fetchQueueStatus } from './humanReviewApiCalls';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReviewerOverviewCard } from './ReviewerOverviewCard';
 import { QueueStatusCard } from './QueueStatusCard';
-import { useAppSelector } from '@/store/store';
-import { setReviewers } from '@/store/slices/filterOptionsSlice';
 import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,10 +23,6 @@ const HumanReviewQueue = () => {
   const [queueStatusLoading, setQueueStatusLoading] = useState(true);
   const [reviewerOverview, setReviewerOverview] = useState<ReviewerOverview | null>(null);
   const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
-
-  // Get filter options from Redux
-  const dispatch = useDispatch();
-  const { reviewers, reviewersLoaded } = useAppSelector(state => state.filterOptions);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,22 +90,10 @@ const HumanReviewQueue = () => {
       }
     };
 
-    // Fetch reviewers only if not already loaded in Redux
-    const loadReviewers = async () => {
-      if (reviewersLoaded) return;
-      try {
-        const reviewersData = await fetchReviewers();
-        dispatch(setReviewers(reviewersData));
-      } catch (error) {
-        console.error('Error loading reviewers:', error);
-      }
-    };
-
     // Run non-note fetches in parallel
     loadReviewerOverview();
     loadQueueStatus();
-    loadReviewers();
-  }, [reviewersLoaded, dispatch]);
+  }, []);
 
   // Load notes - apply saved filters if they exist
   useEffect(() => {
@@ -222,7 +203,9 @@ const HumanReviewQueue = () => {
   };
 
   const handleReviewNote = (noteId: string) => {
-    navigate(`/human-review-queue/single-note-audit/${noteId}`);
+    navigate(`/human-review-queue/single-note-audit/${noteId}`, {
+      state: { from: 'human-review-queue' },
+    });
   };
 
   return (
@@ -233,7 +216,6 @@ const HumanReviewQueue = () => {
           {/* Filters Section */}
           <FiltersSection
             filters={filters}
-            reviewers={reviewers}
             loading={notesLoading}
             onFilterChange={handleFilterChange}
             onApplyFilters={handleApplyFilters}

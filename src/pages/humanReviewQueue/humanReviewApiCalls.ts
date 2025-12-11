@@ -1,7 +1,7 @@
 // @/pages/humanReviewQueue/humanReviewApiCalls.ts
 import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
-import { HumanReviewNote, ReviewerOverview, QueueStatus, ReviewerOption } from '@/types/notes';
+import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
 import moment from 'moment';
 
 interface ApiResponse<T> {
@@ -38,12 +38,12 @@ const formatHumanReviewData = (data: any[]): HumanReviewNote[] => {
   return data.map((item: any) => ({
     id: item.noteId || item.id?.toString(),
     practitioner: item.practitioner?.fullName || 'Unknown',
-    date: item.sessionTime ? moment(item.sessionTime).format('MMM D, YYYY') : 'N/A',
-    score: item.aiScore?.id || 0,
-    aiStatus: item.aiStatus?.id || 1,
-    reviewStatus: item.reviewStatus?.id || 1,
-    reviewer: item.reviewer?.fullName || undefined,
-    priority: item.priority?.id || 1,
+    date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
+    score: item.note?.aiScore || 0,
+    aiStatus: item.note?.aiStatus?.id || 1,
+    reviewStatus: item.note?.humanReview?.id || 1,
+    reviewer: item.practitioner?.fullName || undefined,
+    priority: item.note?.priority?.id || 1,
     rawData: item,
   }));
 };
@@ -51,7 +51,7 @@ const formatHumanReviewData = (data: any[]): HumanReviewNote[] => {
 // Fetch human review notes
 export const fetchHumanReviewNotes = async (payload: HumanReviewPayload): Promise<HumanReviewResponse> => {
   try {
-    const response = await axios.post<ApiResponse<any>>('/human-review/listing', payload);
+    const response = await axios.post<ApiResponse<any>>('/human-reviews/listing', payload);
 
     if (response?.status) {
       const notesArray = response.data?.data || [];
@@ -106,22 +106,5 @@ export const fetchQueueStatus = async (): Promise<QueueStatus | null> => {
   } catch (error: any) {
     handleCatchMessages(error);
     return null;
-  }
-};
-
-// Fetch reviewers for filter dropdown
-export const fetchReviewers = async (): Promise<ReviewerOption[]> => {
-  try {
-    const response = await axios.post<ApiResponse<ReviewerOption[]>>('/reviewers/listing');
-
-    if (response?.status && response.data.data) {
-      return response.data.data;
-    } else {
-      handleErrorMessages(response);
-      return [];
-    }
-  } catch (error: any) {
-    handleCatchMessages(error);
-    return [];
   }
 };

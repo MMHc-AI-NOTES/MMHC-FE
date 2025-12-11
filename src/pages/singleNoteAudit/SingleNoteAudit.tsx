@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
@@ -72,6 +72,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     aiReviews: apiData.chats?.length || 0,
     auditScore: bedrockResponse?.score || 0,
     lastRun: formattedDateTime,
+    humanReview: latestChat?.humanReviews || null,
     aiSummary: bedrockResponse?.summary,
     therapySummary: apiData.session,
     bedrockResponse: bedrockResponse,
@@ -85,6 +86,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
 
 const SingleNoteAudit = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
@@ -96,7 +98,10 @@ const SingleNoteAudit = () => {
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
-  const [showHumanReview, setShowHumanReview] = useState(false);
+
+  // Check if coming from human-review-queue
+  const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
+  const [showHumanReview, setShowHumanReview] = useState(isFromHumanReviewQueue);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -229,6 +234,8 @@ const SingleNoteAudit = () => {
                 onSaveDraft={handleSaveDraft}
                 setShowHumanReview={setShowHumanReview}
                 chatId={auditHistory[0]?.id}
+                humanReview={isFromHumanReviewQueue ? noteDetail.humanReview : null}
+                isEditMode={isFromHumanReviewQueue}
               />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />

@@ -7,21 +7,31 @@ import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HumanReviewDecisionEnum } from '@/constants/common';
-import { submitHumanReview } from './singleNoteApiCalls';
+import { submitHumanReview, updateHumanReview } from './singleNoteApiCalls';
 import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { HumanReview } from '@/types/notes';
 
 interface HumanReviewSectionProps {
   noteId: string;
   onSaveDraft: () => void;
   setShowHumanReview: (show: boolean) => void;
   chatId: number;
+  humanReview?: HumanReview[] | null;
+  isEditMode?: boolean;
 }
 
-const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }: HumanReviewSectionProps) => {
+const HumanReviewSection = ({
+  noteId,
+  onSaveDraft,
+  setShowHumanReview,
+  chatId,
+  humanReview,
+  isEditMode = false,
+}: HumanReviewSectionProps) => {
   const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
   const dispatch = useDispatch();
 
@@ -48,6 +58,17 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
       setDecision('');
     }
   };
+
+  // Pre-fill form values if in edit mode (use first review from array)
+  useEffect(() => {
+    if (isEditMode && humanReview && humanReview.length > 0) {
+      const firstReview = humanReview[0];
+      setDecision(firstReview.decision?.id?.toString() || '');
+      setReviewerName(firstReview.practitionerId?.toString() || '');
+      setManualScore(firstReview.manualScore?.toString() || '');
+      setComments(firstReview.comment || '');
+    }
+  }, [isEditMode, humanReview]);
 
   useEffect(() => {
     const loadPractitioners = async () => {
@@ -98,7 +119,13 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
         ...(comments && { comment: comments }),
       };
 
-      await submitHumanReview(payload);
+      if (isEditMode && humanReview && humanReview.length > 0 && humanReview[0]?.id) {
+        // Update existing review (use first review from array)
+        await updateHumanReview(humanReview[0].id, payload);
+      } else {
+        // Create new review
+        await submitHumanReview(payload);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -111,7 +138,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
           <div className="flex items-center gap-2">
             <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
               <UserCheck />
-              Human Review
+              {isEditMode ? 'Edit Human Review' : 'Human Review'}
             </CardTitle>
             <TooltipProvider>
               <Tooltip>
@@ -313,7 +340,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
             disabled={isSubmitDisabled}
           >
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
-            Submit Human Review
+            {isEditMode ? 'Update Human Review' : 'Submit Human Review'}
           </Button>
         </div>
       </CardContent>

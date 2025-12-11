@@ -3,15 +3,12 @@ import { ReactNode } from 'react';
 // Helper to determine text color based on gradient class
 const getTextColor = (gradientClass: string): string => {
   // Light gradients need dark text, dark gradients need white text
-  if (gradientClass.includes('review-cycle-1')) {
-    return 'text-cycle-1';
-  }
-  if (gradientClass.includes('review-cycle-2')) {
-    return 'text-cycle-2';
-  }
-  if (gradientClass.includes('review-cycle-3')) {
-    return 'text-cycle-3';
-  }
+  if (gradientClass.includes('review-cycle-1')) return 'text-cycle-1';
+
+  if (gradientClass.includes('review-cycle-2')) return 'text-cycle-2';
+
+  if (gradientClass.includes('review-cycle-3')) return 'text-cycle-3';
+
   if (
     gradientClass.includes('not-reviewed') ||
     gradientClass.includes('not-needed') ||

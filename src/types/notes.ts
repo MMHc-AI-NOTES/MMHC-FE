@@ -62,9 +62,19 @@ export interface ModelDetail {
   auditRunId: number | string;
 }
 
+export interface HumanReview {
+  id?: number;
+  chatId?: number;
+  comment?: string;
+  decision?: { id: number; name: string };
+  manualScore?: number;
+  noteId?: string;
+  practitionerId?: number;
+}
 export interface NoteDetail {
   id: string;
   aiStatus: { id: number; name: string };
+  humanReview: HumanReview[] | null;
   date: string;
   practitioner: string;
   cptCode: number;
@@ -104,6 +114,7 @@ export interface Chat {
   userNote: string;
   modelId: string;
   evaluationScore: number;
+  humanReviews: HumanReview[] | null;
   sentiment: string;
   evaluation: string;
   bedrockResponse: {
@@ -162,6 +173,7 @@ export interface ApiNoteDetail {
   updatedAt: string;
   practitioner: Practitioner; // Object type
   chats: Chat[];
+  humanReview: HumanReview[] | null;
 }
 
 // Queue Overview Data
@@ -222,9 +234,4 @@ export interface QueueStatus {
   pending: number;
   in_progress: number;
   returned: number;
-}
-
-export interface ReviewerOption {
-  id: number;
-  fullName: string;
 }

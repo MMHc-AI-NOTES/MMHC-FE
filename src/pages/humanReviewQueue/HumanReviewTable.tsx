@@ -36,7 +36,7 @@ const getReviewStatusGradient = (status: number): string => {
     case ReviewStatusEnum.in_progress:
       return 'bg-gradient-manager-in-progress';
     case ReviewStatusEnum.returned:
-      return 'bg-gradient-workflow-returned';
+      return 'bg-gradient-human-returned';
     default:
       return 'bg-gradient-neutral';
   }
@@ -126,9 +126,10 @@ export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps)
                 <TableCell>
                   <div className="flex items-center justify-center">
                     <Button
+                      size="lg"
                       variant="outline"
                       onClick={() => onReviewNote(note.id)}
-                      className="border-primary text-primary h-8 gap-1 bg-transparent py-2"
+                      className="border-primary text-primary h-9 gap-1 bg-transparent"
                     >
                       Review Note
                       <ArrowRight className="ml-1" />
