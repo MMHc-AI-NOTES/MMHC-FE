@@ -84,7 +84,7 @@ const EmailTemplateDialog: React.FC<EmailTemplateDialogProps> = ({ isOpen, onClo
           <DialogTitle className="text-primary">{editingTemplate ? 'Edit Email Template' : 'New Email Template'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit}>
-          <div className="space-y-4 px-6">
+          <div className="mb-4 space-y-4 px-6">
             <InputField id="name" placeholder="e.g., Note Failed Alert" formik={formik} label="Template Name" />
 
             <div className="space-y-2">

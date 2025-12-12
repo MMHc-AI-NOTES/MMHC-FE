@@ -70,7 +70,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, editingUser, o
           <DialogTitle className="text-primary">{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit}>
-          <div className="space-y-4 px-6">
+          <div className="mb-4 space-y-4 px-6">
             <InputField id="fullName" placeholder="Enter full name" formik={formik} label="Full Name" />
 
             <InputField id="email" type="email" placeholder="email@example.com" formik={formik} label="Email Address" />
