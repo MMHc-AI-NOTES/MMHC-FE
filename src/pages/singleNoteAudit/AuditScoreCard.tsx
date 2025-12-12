@@ -3,7 +3,6 @@ import { ChartColumn, CircleHelp } from 'lucide-react';
 import { NoteDetail } from '@/types/notes';
 import { AiStatusEnum } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
 
 interface AuditScoreCardProps {
   noteDetail: NoteDetail;
@@ -29,8 +28,6 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
                       The audit score is calculated based on four categories: Diagnostic Specificity (25 pts), Treatment Measurability (20
                       pts), Clinical Coherence (15 pts), and Safety Documentation (10 pts). A score of 95 or higher is required to PASS.
                     </p>
-                    <Separator className="my-2 bg-gray-400" />
-                    <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

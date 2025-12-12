@@ -1,4 +1,3 @@
-import { Separator } from '@/components/ui/separator';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, Rectangle, TooltipProps } from 'recharts';
 
 interface WeeklyDataPoint {
@@ -58,8 +57,6 @@ const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
             );
           })}
         </div>
-        <Separator className="my-2" />
-        <p className="text-sm text-gray-400">Click anywhere to close</p>
       </div>
     );
   }

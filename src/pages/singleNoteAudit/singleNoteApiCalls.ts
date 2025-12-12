@@ -30,6 +30,25 @@ export const submitHumanReview = async (payload: HumanReviewPayload): Promise<an
 };
 
 /**
+ * Update existing human review
+ */
+export const updateHumanReview = async (reviewId: number, payload: HumanReviewPayload): Promise<any> => {
+  try {
+    const response = await axios.patch(`/human-reviews/${reviewId}`, payload);
+
+    if (response?.status) {
+      showToast.success('Human review updated successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+/**
  * Fetch note detail by noteId
  */
 export const fetchNoteDetail = async (noteId?: string): Promise<ApiNoteDetail> => {

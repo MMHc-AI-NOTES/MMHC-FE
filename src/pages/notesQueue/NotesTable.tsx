@@ -9,17 +9,17 @@ import {
   ManagerLabels,
   WorkflowLabels,
   PriorityLabels,
-  // ReviewCycleLabels,
+  ReviewCycleLabels,
   AiStatusEnum,
   HumanReviewEnum,
   ManagerEnum,
   WorkflowEnum,
   PriorityEnum,
-  // ReviewCycleEnum,
+  ReviewCycleEnum,
 } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientBadge } from '@/shared/GradientBadge';
-import { Separator } from '@/components/ui/separator';
+import { useAppSelector } from '@/store/store';
 
 interface NotesTableProps {
   notes: FormattedNote[];
@@ -101,22 +101,23 @@ const getPriorityGradient = (priority: number): string => {
 };
 
 // REVIEW CYCLE gradients (commented out for now)
-// const getReviewCycleGradient = (cycle: number): string => {
-//   switch (cycle) {
-//     case ReviewCycleEnum.cycle_1:
-//       return 'bg-gradient-review-cycle-1';
-//     case ReviewCycleEnum.cycle_2:
-//       return 'bg-gradient-review-cycle-2';
-//     case ReviewCycleEnum.cycle_3:
-//       return 'bg-gradient-review-cycle-3';
-//     case ReviewCycleEnum.blacklisted:
-//       return 'bg-gradient-review-cycle-blacklisted';
-//     default:
-//       return 'bg-gradient-neutral';
-//   }
-// };
+const getReviewCycleGradient = (cycle: number): string => {
+  switch (cycle) {
+    case ReviewCycleEnum.cycle_1:
+      return 'bg-gradient-review-cycle-1';
+    case ReviewCycleEnum.cycle_2:
+      return 'bg-gradient-review-cycle-2';
+    case ReviewCycleEnum.cycle_3:
+      return 'bg-gradient-review-cycle-3';
+    case ReviewCycleEnum.blacklisted:
+      return 'bg-gradient-review-cycle-blacklisted';
+    default:
+      return 'bg-gradient-neutral';
+  }
+};
 
 export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
+  const { cptCodes } = useAppSelector(state => state.filterOptions);
   const columnCount = 11;
 
   if (notes.length === 0) {
@@ -126,6 +127,8 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Note ID</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">Cpt Code</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
@@ -203,6 +206,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <TableHeader>
             <TableRow>
               <TableHead className="text-primary min-w-[120px] font-semibold">Note ID</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">Cpt Code</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
@@ -224,8 +228,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                           Current workflow status: In Queue (awaiting review), Returned (sent back to practitioner), Blacklisted (critical
                           issues), Completed (approved)
                         </p>
-                        <Separator className="my-2 bg-gray-400" />
-                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -244,8 +246,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                           Priority level based on AI score and review status. High (urgent attention needed), Medium (review soon), Low
                           (routine review)
                         </p>
-                        <Separator className="my-2 bg-gray-400" />
-                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -265,8 +265,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                           Review cycle tracking. Cycle 1 (Initial), Cycle 2 (Therapist Revision), Cycle 3 (Final). Notes exceeding 3 cycles
                           are auto-blacklisted.
                         </p>
-                        <Separator className="my-2 bg-gray-400" />
-                        <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -279,6 +277,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
                 <TableCell className="text-left font-medium">#{note.id}</TableCell>
+                <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.client}</TableCell>
                 <TableCell>{note.date}</TableCell>
@@ -299,13 +298,12 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 <TableCell>
                   <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
                 </TableCell>
-                {/* REVIEW CYCLE Cell - Commented out for now */}
                 <TableCell>
-                  -
-                  {/* <GradientBadge 
-                    label={ReviewCycleLabels[note.reviewCycle || ReviewCycleEnum.cycle_1]} 
-                    gradient={getReviewCycleGradient(note.reviewCycle || ReviewCycleEnum.cycle_1)} 
-                  /> */}
+                  {note.reviewCycle ? (
+                    <GradientBadge label={ReviewCycleLabels[note.reviewCycle.id]} gradient={getReviewCycleGradient(note.reviewCycle.id)} />
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center">

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundPen } from 'lucide-react';
+import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundCog, UserRoundPen } from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
@@ -25,13 +25,14 @@ import SummaryCard from './SummaryCard';
 import ModelInformation from './ModelInformation';
 
 // Utility function to format API response to component expected format
-const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
+const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
   // Use moment for date formatting
   const sessionDate = moment(apiData.sessionTime);
   const formattedDate = sessionDate.format('MMM D, YYYY');
 
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
+  const extractedHumanReviewChat = apiData.chats?.find(chat => chat.id === chatId);
   const bedrockResponse = latestChat?.bedrockResponse;
   const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY - h:mm A') : '';
 
@@ -66,24 +67,29 @@ const formatNoteDetail = (apiData: ApiNoteDetail): NoteDetail => {
     id: apiData.noteId,
     date: formattedDate,
     practitioner: apiData.practitioner.fullName,
-    cptCode: apiData.patient?.uuid || '-',
+    cptCode: apiData.cptCodeId,
+    clientId: apiData.patient?.clientId || '-',
     noteType: 'Progress Note',
     aiReviews: apiData.chats?.length || 0,
     auditScore: bedrockResponse?.score || 0,
     lastRun: formattedDateTime,
+    humanReview: extractedHumanReviewChat?.humanReviews || null,
     aiSummary: bedrockResponse?.summary,
     therapySummary: apiData.session,
     bedrockResponse: bedrockResponse,
     issues: issues,
     prompt: latestChat?.prompt || '',
+    promptData: latestChat?.userInput || '',
     rawResponse: bedrockResponse?.raw_response || '',
     aiStatus: apiData.aiStatus,
+    priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
   };
 };
 
 const SingleNoteAudit = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
@@ -95,7 +101,11 @@ const SingleNoteAudit = () => {
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
-  const [showHumanReview, setShowHumanReview] = useState(false);
+
+  // Check if coming from human-review-queue
+  const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
+  const chatId = location.state?.chatId;
+  const [showHumanReview, setShowHumanReview] = useState(isFromHumanReviewQueue);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -115,7 +125,7 @@ const SingleNoteAudit = () => {
 
       try {
         const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentIdRef.current, isRerun);
-        const formattedNoteDetail = formatNoteDetail(apiNoteDetail);
+        const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);
         // Store all chats for audit history
@@ -124,7 +134,7 @@ const SingleNoteAudit = () => {
         setLoading(false);
       }
     },
-    [noteId],
+    [chatId, noteId],
   );
 
   // Load agents and set default agent - runs on every mount
@@ -225,14 +235,19 @@ const SingleNoteAudit = () => {
             {showHumanReview && noteId ? (
               <HumanReviewSection
                 noteId={noteId}
+                priority={noteDetail.priority?.id || 0}
+                aiStatus={noteDetail.aiStatus?.id || 0}
                 onSaveDraft={handleSaveDraft}
                 setShowHumanReview={setShowHumanReview}
                 chatId={auditHistory[0]?.id}
+                humanReview={isFromHumanReviewQueue ? noteDetail.humanReview : null}
+                isEditMode={isFromHumanReviewQueue}
               />
             ) : null}
             <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
             <AuditHistoryCard chats={auditHistory} />
             <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
+            <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />
             <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
           </div>
         </div>

@@ -7,21 +7,34 @@ import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HumanReviewDecisionEnum } from '@/constants/common';
-import { submitHumanReview } from './singleNoteApiCalls';
+import { submitHumanReview, updateHumanReview } from './singleNoteApiCalls';
 import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
+import { HumanReview } from '@/types/notes';
 
 interface HumanReviewSectionProps {
   noteId: string;
+  priority: number;
+  aiStatus: number;
   onSaveDraft: () => void;
   setShowHumanReview: (show: boolean) => void;
   chatId: number;
+  humanReview?: HumanReview[] | null;
+  isEditMode?: boolean;
 }
 
-const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }: HumanReviewSectionProps) => {
+const HumanReviewSection = ({
+  noteId,
+  priority,
+  aiStatus,
+  onSaveDraft,
+  setShowHumanReview,
+  chatId,
+  humanReview,
+  isEditMode = false,
+}: HumanReviewSectionProps) => {
   const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
   const dispatch = useDispatch();
 
@@ -48,6 +61,17 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
       setDecision('');
     }
   };
+
+  // Pre-fill form values if in edit mode (use first review from array)
+  useEffect(() => {
+    if (isEditMode && humanReview && humanReview.length > 0) {
+      const firstReview = humanReview[0];
+      setDecision(firstReview.decision?.id?.toString() || '');
+      setReviewerName(firstReview.practitionerId?.toString() || '');
+      setManualScore(firstReview.manualScore?.toString() || '');
+      setComments(firstReview.comment || '');
+    }
+  }, [isEditMode, humanReview]);
 
   useEffect(() => {
     const loadPractitioners = async () => {
@@ -92,13 +116,22 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
       const payload = {
         note_id: noteId,
         chat_id: chatId,
+        priority: priority,
+        ai_status: aiStatus,
         decision: parseInt(decision, 10),
         practitioner_id: reviewerName ? parseInt(reviewerName, 10) : null,
         ...(manualScore && { manual_score: getNumericScore() }),
         ...(comments && { comment: comments }),
       };
 
-      await submitHumanReview(payload);
+      if (isEditMode && humanReview && humanReview.length > 0 && humanReview[0]?.id) {
+        // Update existing review (use first review from array)
+        await updateHumanReview(humanReview[0].id, payload);
+      } else {
+        // Create new review
+        await submitHumanReview(payload);
+      }
+      // setShowHumanReview(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -111,7 +144,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
           <div className="flex items-center gap-2">
             <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
               <UserCheck />
-              Human Review
+              {isEditMode ? 'Edit Human Review' : 'Human Review'}
             </CardTitle>
             <TooltipProvider>
               <Tooltip>
@@ -123,8 +156,6 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                     Human review allows you to accept, override, or escalate the AI's audit decision. Your decision will be logged in the
                     audit history.
                   </p>
-                  <Separator className="my-2 bg-gray-400" />
-                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -146,8 +177,6 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p>Select the appropriate action based on your review of the AI audit and the clinical note.</p>
-                  <Separator className="my-2 bg-gray-400" />
-                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -175,10 +204,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                       </div>
                     )}
                   </div>
-                  <label
-                    htmlFor={item.value.toString()}
-                    className={cn('cursor-pointer text-sm leading-none font-medium', isChecked ? 'text-[#3F5F40]' : 'text-primary')}
-                  >
+                  <label htmlFor={item.value.toString()} className={cn('text-primary cursor-pointer text-sm leading-none font-medium')}>
                     {item.label}
                   </label>
                 </div>
@@ -205,8 +231,6 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                         Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
                         accountability.
                       </p>
-                      <Separator className="my-2 bg-gray-400" />
-                      <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -241,8 +265,6 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
                   <p>
                     Enter a manual score (0-100) if you want to override the AI's evaluation. A score of 95 or higher is required to PASS.
                   </p>
-                  <Separator className="my-2 bg-gray-400" />
-                  <p className="mb-1 text-xs text-gray-400">Click anywhere to close</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -313,7 +335,7 @@ const HumanReviewSection = ({ noteId, onSaveDraft, setShowHumanReview, chatId }:
             disabled={isSubmitDisabled}
           >
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
-            Submit Human Review
+            {isEditMode ? 'Update Human Review' : 'Submit Human Review'}
           </Button>
         </div>
       </CardContent>

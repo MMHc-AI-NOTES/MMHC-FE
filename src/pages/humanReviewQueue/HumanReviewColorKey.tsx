@@ -1,17 +1,6 @@
 // @/pages/humanReviewQueue/HumanReviewColorKey.tsx
-interface ColorKeyItemProps {
-  label: string;
-  gradient: string;
-}
 
-const ColorKeyItem = ({ label, gradient }: ColorKeyItemProps) => {
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`h-4 w-6 rounded ${gradient}`} />
-      <span className="text-sm text-gray-700">{label}</span>
-    </div>
-  );
-};
+import { ColorKeyItem } from '@/shared/ColorKeyItem';
 
 export const HumanReviewColorKey = () => {
   return (
@@ -22,9 +11,11 @@ export const HumanReviewColorKey = () => {
           <div>
             <h4 className="text-primary mb-2 text-sm font-semibold">AI STATUS</h4>
             <div className="space-y-2">
+              <ColorKeyItem label="Passed" gradient="bg-gradient-ai-passed" />
               <ColorKeyItem label="Failed" gradient="bg-gradient-ai-failed" />
               <ColorKeyItem label="Warning" gradient="bg-gradient-ai-warning" />
               <ColorKeyItem label="Needs Review" gradient="bg-gradient-ai-needs-review" />
+              <ColorKeyItem label="Not Reviewed" gradient="bg-gradient-ai-not-reviewed" />
             </div>
           </div>
 

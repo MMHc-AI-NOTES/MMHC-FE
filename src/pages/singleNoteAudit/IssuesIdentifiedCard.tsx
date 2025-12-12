@@ -49,7 +49,7 @@ const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
                         <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        <p className="text-sm">{getSeverityTooltip(issue.severity)}</p>
+                        <p>{getSeverityTooltip(issue.severity)}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

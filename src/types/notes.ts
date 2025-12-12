@@ -1,6 +1,8 @@
 // @/types/notes.ts
 export interface RawApiNote {
   id: number;
+  cptCodeId: number;
+  reviewCycle?: { id: number; name: string };
   noteId: string;
   sessionId: string;
   sessionTime: string;
@@ -27,12 +29,13 @@ export interface RawApiNote {
     updatedAt: string;
   };
   patient: {
-    uuid: string;
+    clientId: string;
   };
 }
 
 export interface FormattedNote {
   id: string;
+  cptCode: number;
   practitioner: string;
   client: string;
   date: string;
@@ -43,6 +46,7 @@ export interface FormattedNote {
   manager: number;
   workflow: number;
   priority: number;
+  reviewCycle?: { id: number; name: string };
   sessionTime?: string;
   rawData?: RawApiNote;
 }
@@ -58,12 +62,24 @@ export interface ModelDetail {
   auditRunId: number | string;
 }
 
+export interface HumanReview {
+  id?: number;
+  chatId?: number;
+  comment?: string;
+  decision?: { id: number; name: string };
+  manualScore?: number;
+  noteId?: string;
+  practitionerId?: number;
+}
 export interface NoteDetail {
   id: string;
   aiStatus: { id: number; name: string };
+  priority: { id: number; name: string };
+  humanReview: HumanReview[] | null;
   date: string;
   practitioner: string;
-  cptCode: string;
+  cptCode: number;
+  clientId: string;
   noteType: string;
   aiReviews: number;
   auditScore: number;
@@ -72,6 +88,7 @@ export interface NoteDetail {
   therapySummary: string;
   bedrockResponse: object;
   prompt: string;
+  promptData: string;
   rawResponse: string;
   modelDetail: ModelDetail;
   issues: {
@@ -97,8 +114,10 @@ export interface Chat {
   id: number;
   prompt: string;
   userNote: string;
+  userInput: string;
   modelId: string;
   evaluationScore: number;
+  humanReviews: HumanReview[] | null;
   sentiment: string;
   evaluation: string;
   bedrockResponse: {
@@ -144,17 +163,21 @@ export interface Practitioner {
 export interface ApiNoteDetail {
   id: number;
   aiStatus: { id: number; name: string };
+  priority: { id: number; name: string };
   noteId: string;
   chatId: string;
   sessionId: string;
   session: string;
   sessionTime: string;
   practitionerId: number;
-  patient: { uuid: string };
+  patient: { clientId: string };
+  cptCodeId: number;
+  reviewCycle: { id: number; name: string };
   createdAt: string;
   updatedAt: string;
   practitioner: Practitioner; // Object type
   chats: Chat[];
+  humanReview: HumanReview[] | null;
 }
 
 // Queue Overview Data
@@ -188,12 +211,13 @@ export interface PractitionerOption {
 
 export interface CptCodeOption {
   id: number;
-  uuid: string;
+  code: string;
 }
 
 // Human Review Queue Types
 export interface HumanReviewNote {
   id: string;
+  chatId: number;
   practitioner: string;
   date: string;
   score: number;
@@ -215,9 +239,4 @@ export interface QueueStatus {
   pending: number;
   in_progress: number;
   returned: number;
-}
-
-export interface ReviewerOption {
-  id: number;
-  fullName: string;
 }

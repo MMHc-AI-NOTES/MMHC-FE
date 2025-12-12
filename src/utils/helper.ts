@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { showToast } from '@/lib/toast';
 import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
+import moment from 'moment';
 
 export interface ErrorMessage {
   message: string;
@@ -106,4 +107,11 @@ export const getEnumValues = (enumObj: Record<string, number>): number[] => {
 export const getModelDisplayName = (modelId: string): string => {
   const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelId);
   return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelId;
+};
+
+// Utility function to get default date range
+export const getDefaultDateRange = () => {
+  const endDate = moment().format('YYYY-MM-DD');
+  const startDate = moment().subtract(30, 'days').format('YYYY-MM-DD');
+  return { startDate, endDate };
 };

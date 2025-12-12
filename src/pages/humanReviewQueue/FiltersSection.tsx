@@ -2,9 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { PriorityEnum, ReviewStatusEnum, PriorityLabels, ReviewStatusLabels } from '@/constants/common';
-import { ReviewerOption } from '@/types/notes';
+import { PriorityEnum, PriorityLabels, AiStatusEnum, AiStatusLabels } from '@/constants/common';
 import { getEnumValues } from '@/utils/helper';
+import { useAppSelector } from '@/store/store';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { useEffect } from 'react';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { useDispatch } from 'react-redux';
 
 interface FiltersSectionProps {
   filters: {
@@ -13,19 +17,32 @@ interface FiltersSectionProps {
     reviewer: string;
     search: string;
   };
-  reviewers: ReviewerOption[];
   loading: boolean;
   onFilterChange: (key: string, value: string) => void;
   onApplyFilters: () => void;
   onClearFilters: () => void;
 }
 
-export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
+export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
+  const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {/* Status */}
-        <div className="w-full">
+        <div className="w-full md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-500">Status</label>
           <Select value={filters.status} onValueChange={value => onFilterChange('status', value)}>
             <SelectTrigger className="w-full">
@@ -33,9 +50,9 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {getEnumValues(ReviewStatusEnum).map(value => (
+              {getEnumValues(AiStatusEnum).map(value => (
                 <SelectItem key={value} value={value.toString()}>
-                  {ReviewStatusLabels[value]}
+                  {AiStatusLabels[value]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -43,7 +60,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
         </div>
 
         {/* Priority */}
-        <div className="w-full">
+        <div className="w-full md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-500">Priority</label>
           <Select value={filters.priority} onValueChange={value => onFilterChange('priority', value)}>
             <SelectTrigger className="w-full">
@@ -61,7 +78,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
         </div>
 
         {/* Reviewer */}
-        <div className="w-full">
+        <div className="w-full md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-500">Reviewer</label>
           <Select value={filters.reviewer} onValueChange={value => onFilterChange('reviewer', value)}>
             <SelectTrigger className="w-full">
@@ -69,7 +86,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {reviewers.map(r => (
+              {practitioners.map(r => (
                 <SelectItem key={r.id} value={r.id.toString()}>
                   {r.fullName}
                 </SelectItem>
@@ -79,7 +96,7 @@ export const FiltersSection = ({ filters, reviewers, loading, onFilterChange, on
         </div>
 
         {/* Search */}
-        <div className="w-full">
+        <div className="w-full md:col-span-6">
           <label className="mb-2 block text-sm font-medium text-gray-500">Search</label>
           <div className="relative w-full">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />

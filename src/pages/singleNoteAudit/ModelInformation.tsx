@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { useAppSelector } from '@/store/store';
 import { ModelDetail } from '@/types/notes';
+import { getModelDisplayName } from '@/utils/helper';
 import { Hash, Cpu, FileCode, Clock } from 'lucide-react';
 
 interface ModelInformationProps {
@@ -20,7 +21,7 @@ const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
             <Cpu className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Model Version</p>
-              <p className="text-sm text-black">{modelDetail.modelVersion}</p>
+              <p className="text-sm text-black">{getModelDisplayName(modelDetail.modelVersion)}</p>
             </div>
           </div>
           <div className="text-primary flex gap-1 text-sm">
