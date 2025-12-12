@@ -29,7 +29,7 @@ const InputField: React.FC<InputFieldProps> = ({
       case 'unstyled':
         return 'border-none shadow-none px-0 py-0 focus-visible:ring-0';
       default:
-        return 'rounded-xl';
+        return 'rounded-md';
     }
   };
 
@@ -54,7 +54,7 @@ const InputField: React.FC<InputFieldProps> = ({
           placeholder={placeholder}
           {...formik?.getFieldProps(id)}
           value={value || formik?.values[id] || ''}
-          className={cn(getInputClasses(), 'w-full', inputClassName)}
+          className={cn(getInputClasses(), 'h-11 w-full', inputClassName)}
           disabled={formik?.isSubmitting || disabled}
           readOnly={readOnly}
         />

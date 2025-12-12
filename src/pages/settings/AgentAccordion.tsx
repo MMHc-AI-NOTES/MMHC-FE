@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
 import { Agent } from '@/types/agent';
-import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, Radio, Gavel, Database } from 'lucide-react';
+import { Trash2, Edit, Bot, Cpu, MessageSquare, Settings, Zap, Radio, Gavel, Database, Info } from 'lucide-react';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { getModelDisplayName } from '@/utils/helper';
 import { GradientBadge } from '@/shared/GradientBadge';
@@ -14,6 +14,23 @@ interface AgentAccordionProps {
   onEdit: (agent: Agent) => void;
   onDelete: (agentId: number) => void;
 }
+
+// Tooltip content for each parameter
+const TOOLTIP_CONTENT = {
+  temperature: {
+    title: 'Temperature',
+    description:
+      'Controls randomness: Lower values make responses more deterministic and focused, while higher values make them more creative and diverse. Range: 0 to 1',
+  },
+  top_k: {
+    title: 'Top K',
+    description: 'Reduces repetition by penalizing frequently used tokens. Higher values decrease repetition. Range: 0 to 1000',
+  },
+  top_p: {
+    title: 'Top P',
+    description: 'Encourages new topics by penalizing tokens that have already appeared. Higher values promote new concepts. Range: 0 to 1',
+  },
+};
 
 const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelete }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -71,18 +88,45 @@ const AgentAccordion: React.FC<AgentAccordionProps> = ({ agents, onEdit, onDelet
                             <Cpu className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="text-xs sm:text-sm">{getModelDisplayName(agent.model)}</span>
                           </span>
-                          <span className="flex items-center space-x-1">
-                            <Zap className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">Temp: {agent.temperature}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Gavel className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">Top P: {agent.top_p}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Radio className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="text-xs sm:text-sm">Top K: {agent.top_k}</span>
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="flex cursor-help items-center space-x-1">
+                                <Zap className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="text-xs sm:text-sm">Temp: {agent.temperature}</span>
+                                <Info className="text-muted-foreground mb-0.5 ml-1 h-3 w-3" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="font-semibold">{TOOLTIP_CONTENT.temperature.title}</p>
+                              <p className="text-sm">{TOOLTIP_CONTENT.temperature.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="flex cursor-help items-center space-x-1">
+                                <Gavel className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="text-xs sm:text-sm">Top P: {agent.top_p}</span>
+                                <Info className="text-muted-foreground mb-0.5 ml-1 h-3 w-3" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="font-semibold">{TOOLTIP_CONTENT.top_p.title}</p>
+                              <p className="text-sm">{TOOLTIP_CONTENT.top_p.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="flex cursor-help items-center space-x-1">
+                                <Radio className="text-primary h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="text-xs sm:text-sm">Top K: {agent.top_k}</span>
+                                <Info className="text-muted-foreground mb-0.5 ml-1 h-3 w-3" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="font-semibold">{TOOLTIP_CONTENT.top_k.title}</p>
+                              <p className="text-sm">{TOOLTIP_CONTENT.top_k.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     </div>

@@ -178,3 +178,13 @@ export const ChatResultLabels: Record<number, string> = {
   [ChatResultEnum.fail]: 'Fail',
   [ChatResultEnum.error]: 'Error',
 };
+
+export const HumanReviewResultEnum = {
+  pass: 1,
+  fail: 2,
+} as const;
+
+export const HumanReviewResultLabels: Record<number, string> = {
+  [HumanReviewResultEnum.pass]: 'Pass',
+  [HumanReviewResultEnum.fail]: 'Fail',
+};
