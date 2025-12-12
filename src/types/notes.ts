@@ -70,6 +70,7 @@ export interface HumanReview {
   manualScore?: number;
   noteId?: string;
   practitionerId?: number;
+  humanResult?: { id: number; name: string };
 }
 export interface NoteDetail {
   id: string;

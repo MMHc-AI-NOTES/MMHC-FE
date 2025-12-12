@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HumanReviewDecisionEnum } from '@/constants/common';
+import { HumanReviewDecisionEnum, HumanReviewResultEnum } from '@/constants/common';
 import { submitHumanReview, updateHumanReview } from './singleNoteApiCalls';
 import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
@@ -42,6 +42,7 @@ const HumanReviewSection = ({
   const [reviewerName, setReviewerName] = useState<string>('');
   const [manualScore, setManualScore] = useState<string>('');
   const [comments, setComments] = useState<string>('');
+  const [humanResult, setHumanResult] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isSubmitDisabled = !decision || reviewerName === 'none' || reviewerName === '' || isSubmitting;
@@ -70,6 +71,10 @@ const HumanReviewSection = ({
       setReviewerName(firstReview.practitionerId?.toString() || '');
       setManualScore(firstReview.manualScore?.toString() || '');
       setComments(firstReview.comment || '');
+      // Pre-fill human_result if available (assuming it's stored in the review object)
+      if (firstReview.humanResult) {
+        setHumanResult(firstReview.humanResult.id);
+      }
     }
   }, [isEditMode, humanReview]);
 
@@ -122,6 +127,7 @@ const HumanReviewSection = ({
         practitioner_id: reviewerName ? parseInt(reviewerName, 10) : null,
         ...(manualScore && { manual_score: getNumericScore() }),
         ...(comments && { comment: comments }),
+        ...(humanResult && { human_result: humanResult }),
       };
 
       if (isEditMode && humanReview && humanReview.length > 0 && humanReview[0]?.id) {
@@ -284,30 +290,28 @@ const HumanReviewSection = ({
               <span className="text-sm text-gray-500">Score</span>
             </div>
             <div className="flex gap-2">
-              {(() => {
-                const numericScore = getNumericScore();
-                const shouldHighlightFail = numericScore !== undefined && numericScore < 95;
-                const shouldHighlightPass = numericScore !== undefined && numericScore >= 95;
-
-                return (
-                  <>
-                    <p
-                      className={`rounded-full px-4 py-2.5 text-sm font-medium shadow-sm ${
-                        shouldHighlightPass ? 'bg-gradient-light text-primary' : 'border bg-transparent text-gray-600'
-                      }`}
-                    >
-                      PASS
-                    </p>
-                    <p
-                      className={`rounded-full px-4 py-2.5 text-sm font-medium ${
-                        shouldHighlightFail ? 'bg-red-100 text-red-600' : 'border bg-transparent text-red-600'
-                      }`}
-                    >
-                      FAIL
-                    </p>
-                  </>
-                );
-              })()}
+              <Button
+                size="lg"
+                onClick={() => setHumanResult(HumanReviewResultEnum.pass)}
+                className={`rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition-all ${
+                  humanResult === HumanReviewResultEnum.pass
+                    ? 'bg-gradient-ai-passed text-white'
+                    : 'border bg-transparent text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                PASS
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => setHumanResult(HumanReviewResultEnum.fail)}
+                className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                  humanResult === HumanReviewResultEnum.fail
+                    ? 'bg-gradient-ai-failed text-white'
+                    : 'border bg-transparent text-red-600 hover:bg-gray-50'
+                }`}
+              >
+                FAIL
+              </Button>
             </div>
           </div>
         </div>

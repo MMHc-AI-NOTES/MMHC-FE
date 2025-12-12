@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormik } from 'formik';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +12,7 @@ import { SLIDER_CONFIGS } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { DialogFooter } from '@/components/ui/dialog';
 
 interface AgentFormProps {
   agent?: Agent;
@@ -57,16 +57,15 @@ const TOOLTIP_CONTENT = {
   temperature: {
     title: 'Temperature',
     description:
-      'Controls randomness: Lower values make responses more deterministic and focused, while higher values make them more creative and diverse. Range: 0 to 2',
+      'Controls randomness: Lower values make responses more deterministic and focused, while higher values make them more creative and diverse. Range: 0 to 1',
   },
   top_k: {
     title: 'Top K',
-    description: 'Reduces repetition by penalizing frequently used tokens. Higher values decrease repetition. Range: -2 to 2',
+    description: 'Reduces repetition by penalizing frequently used tokens. Higher values decrease repetition. Range: 0 to 1000',
   },
   top_p: {
     title: 'Top P',
-    description:
-      'Encourages new topics by penalizing tokens that have already appeared. Higher values promote new concepts. Range: -2 to 2',
+    description: 'Encourages new topics by penalizing tokens that have already appeared. Higher values promote new concepts. Range: 0 to 1',
   },
 };
 
@@ -104,126 +103,128 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
 
   return (
     <TooltipProvider>
-      <form onSubmit={formik.handleSubmit} className="space-y-3">
-        <div className="flex items-center justify-end space-x-2">
-          <Switch
-            id="is_default"
-            checked={formik.values.is_default ? true : false}
-            onCheckedChange={(checked: any) => formik.setFieldValue('is_default', checked ? 1 : 0)}
-          />
-          <Label htmlFor="is_default" className="cursor-pointer">
-            Set as Default
-          </Label>
-        </div>
-        <InputField id="name" placeholder="Enter agent name" formik={formik} label="Agent Name" />
-        {/* <InputField id="description" placeholder="Enter agent description" formik={formik} label="Description" /> */}
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            placeholder="Enter agent description..."
-            value={formik.values.description}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-          />
-          {formik.touched.description && formik.errors.description && (
-            <div className="mt-1 text-sm text-red-500">{formik.errors.description}</div>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="prompt">Prompt</Label>
-          <Textarea
-            id="prompt"
-            name="prompt"
-            placeholder="Enter agent prompt..."
-            value={formik.values.prompt}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-          />
-          {formik.touched.prompt && formik.errors.prompt && <div className="mt-1 text-sm text-red-500">{formik.errors.prompt}</div>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="model">Model</Label>
-          <Select value={formik.values.model} onValueChange={value => formik.setFieldValue('model', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {modelOptions.map(model => (
-                <SelectItem key={model.key} value={model.value}>
-                  {model.displayName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {formik.touched.model && formik.errors.model && <div className="mt-1 text-sm text-red-500">{formik.errors.model}</div>}
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div className="rounded-lg border bg-white p-4 shadow">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="temperature" className="text-sm font-medium">
-                Temperature
-              </Label>
-              <InfoTooltip content={TOOLTIP_CONTENT.temperature} />
-            </div>
-            <SliderField
-              id="temperature"
-              formik={formik}
-              label=""
-              min={SLIDER_CONFIGS.TEMPERATURE.min}
-              max={SLIDER_CONFIGS.TEMPERATURE.max}
-              step={SLIDER_CONFIGS.TEMPERATURE.step}
+      <form onSubmit={formik.handleSubmit}>
+        <div className="mb-4 space-y-4 px-6">
+          <div className="flex items-center justify-end space-x-2">
+            <Switch
+              id="is_default"
+              checked={formik.values.is_default ? true : false}
+              onCheckedChange={(checked: any) => formik.setFieldValue('is_default', checked ? 1 : 0)}
             />
+            <Label htmlFor="is_default" className="cursor-pointer">
+              Set as Default
+            </Label>
+          </div>
+          <InputField id="name" placeholder="Enter agent name" formik={formik} label="Agent Name" />
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Enter agent description..."
+              value={formik.values.description}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+            {formik.touched.description && formik.errors.description && (
+              <div className="mt-1 text-sm text-red-500">{formik.errors.description}</div>
+            )}
           </div>
 
-          <div className="rounded-lg border bg-white p-4 shadow">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="top_p" className="text-sm font-medium">
-                Top P
-              </Label>
-              <InfoTooltip content={TOOLTIP_CONTENT.top_p} />
-            </div>
-            <SliderField
-              id="top_p"
-              formik={formik}
-              label=""
-              min={SLIDER_CONFIGS.TOP_P.min}
-              max={SLIDER_CONFIGS.TOP_P.max}
-              step={SLIDER_CONFIGS.TOP_P.step}
+          <div className="space-y-2">
+            <Label htmlFor="prompt">Prompt</Label>
+            <Textarea
+              id="prompt"
+              name="prompt"
+              placeholder="Enter agent prompt..."
+              value={formik.values.prompt}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
             />
+            {formik.touched.prompt && formik.errors.prompt && <div className="mt-1 text-sm text-red-500">{formik.errors.prompt}</div>}
           </div>
 
-          <div className="rounded-lg border bg-white p-4 shadow">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="top_k" className="text-sm font-medium">
-                Top K
-              </Label>
-              <InfoTooltip content={TOOLTIP_CONTENT.top_k} />
+          <div className="space-y-2">
+            <Label htmlFor="model">Model</Label>
+            <Select value={formik.values.model} onValueChange={value => formik.setFieldValue('model', value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {modelOptions.map(model => (
+                  <SelectItem key={model.key} value={model.value}>
+                    {model.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formik.touched.model && formik.errors.model && <div className="mt-1 text-sm text-red-500">{formik.errors.model}</div>}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="rounded-lg border bg-white p-4 shadow">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="temperature" className="text-sm font-medium">
+                  Temperature
+                </Label>
+                <InfoTooltip content={TOOLTIP_CONTENT.temperature} />
+              </div>
+              <SliderField
+                id="temperature"
+                formik={formik}
+                label=""
+                min={SLIDER_CONFIGS.TEMPERATURE.min}
+                max={SLIDER_CONFIGS.TEMPERATURE.max}
+                step={SLIDER_CONFIGS.TEMPERATURE.step}
+              />
             </div>
-            <SliderField
-              id="top_k"
-              formik={formik}
-              label=""
-              min={SLIDER_CONFIGS.TOP_K.min}
-              max={SLIDER_CONFIGS.TOP_K.max}
-              step={SLIDER_CONFIGS.TOP_K.step}
-            />
+
+            <div className="rounded-lg border bg-white p-4 shadow">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="top_p" className="text-sm font-medium">
+                  Top P
+                </Label>
+                <InfoTooltip content={TOOLTIP_CONTENT.top_p} />
+              </div>
+              <SliderField
+                id="top_p"
+                formik={formik}
+                label=""
+                min={SLIDER_CONFIGS.TOP_P.min}
+                max={SLIDER_CONFIGS.TOP_P.max}
+                step={SLIDER_CONFIGS.TOP_P.step}
+              />
+            </div>
+
+            <div className="rounded-lg border bg-white p-4 shadow">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="top_k" className="text-sm font-medium">
+                  Top K
+                </Label>
+                <InfoTooltip content={TOOLTIP_CONTENT.top_k} />
+              </div>
+              <SliderField
+                id="top_k"
+                formik={formik}
+                label=""
+                min={SLIDER_CONFIGS.TOP_K.min}
+                max={SLIDER_CONFIGS.TOP_K.max}
+                step={SLIDER_CONFIGS.TOP_K.step}
+              />
+            </div>
           </div>
         </div>
-
-        <div className="flex justify-end space-x-3">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : agent ? 'Update Agent' : 'Create Agent'}
-          </Button>
-        </div>
+        <DialogFooter className="border-t p-4">
+          <div className="flex justify-end space-x-3">
+            <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="bg-gradient-light text-primary border-0 font-semibold shadow-sm">
+              {isSubmitting ? 'Saving...' : agent ? 'Update Agent' : 'Create Agent'}
+            </Button>
+          </div>
+        </DialogFooter>
       </form>
     </TooltipProvider>
   );
