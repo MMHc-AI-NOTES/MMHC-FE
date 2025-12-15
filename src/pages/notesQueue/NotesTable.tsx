@@ -308,9 +308,10 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 <TableCell>
                   <div className="flex items-center justify-center">
                     <Button
+                      size="lg"
                       variant="outline"
                       onClick={() => onViewNote(note.id)}
-                      className="border-primary text-primary h-8 gap-1 bg-transparent py-2"
+                      className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
                     >
                       Open
                       <ArrowRight className="ml-1" />

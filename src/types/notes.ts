@@ -80,6 +80,7 @@ export interface NoteDetail {
   date: string;
   practitioner: string;
   cptCode: number;
+  reviewCycle: { id: number; name: string };
   clientId: string;
   noteType: string;
   aiReviews: number;

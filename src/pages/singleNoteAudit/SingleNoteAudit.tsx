@@ -79,6 +79,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     bedrockResponse: bedrockResponse,
     issues: issues,
     prompt: latestChat?.prompt || '',
+    reviewCycle: apiData.reviewCycle,
     promptData: latestChat?.userInput || '',
     rawResponse: bedrockResponse?.raw_response || '',
     aiStatus: apiData.aiStatus,
