@@ -12,6 +12,7 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-blue: var(--blue);
+  --color-blue-dark: var(--blue-dark);
   --color-blue-light: var(--blue-light);
   --color-green: var(--green);
   --color-green-light: var(--green-light);
@@ -32,6 +33,7 @@
   --color-primary: var(--primary);
   --color-primary-light: var(--primary-light);
   --color-active-accordion: var(--active-accordion);
+  --color-highlighted-row: var(--highlighted-row);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -64,6 +66,7 @@
   --foreground: oklch(0.145 0 0);
   --card: #ffffff99;
   --blue: #1976d2;
+  --blue-dark: #1e40af;
   --blue-light: #e3f2fd;
   --green: #2e7d32;
   --green-light: #e8f5e9;
@@ -80,6 +83,7 @@
   --orange-dark-light: #f59e0b;
   --green-dark: #059669;
   --active-accordion: #e8dcc8;
+  --highlighted-row: #a1e6811a;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);

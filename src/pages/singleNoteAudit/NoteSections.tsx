@@ -68,7 +68,7 @@ const NoteSections = ({ bedrockResponse }: any) => {
   };
 
   return (
-    <Card className="p-1 shadow-sm">
+    <Card className="p-1">
       <CardContent className="p-0">
         <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">
           {noteSections.map(section => {

@@ -19,7 +19,7 @@ const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
   };
 
   return (
-    <Card className="gap-1 shadow-sm">
+    <Card className="gap-1">
       <CardHeader className="pb-3">
         <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
           <Info />
@@ -33,12 +33,12 @@ const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Badge
-                    className={`px-3 py-1 text-xs font-semibold uppercase ${
+                    className={`px-3 py-1 text-xs font-semibold text-white uppercase ${
                       issue.severity === 'CRITICAL'
-                        ? 'bg-red-100 text-red-700 hover:bg-red-100'
+                        ? 'bg-gradient-red'
                         : issue.severity === 'MODERATE'
-                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-100'
-                          : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+                          ? 'bg-gradient-severity-moderate'
+                          : 'bg-gradient-severity-minor'
                     }`}
                   >
                     {issue.severity}

@@ -41,7 +41,7 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
   };
 
   return (
-    <Card className={cn('gap-1 shadow-sm', className)}>
+    <Card className={cn('gap-1', className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">

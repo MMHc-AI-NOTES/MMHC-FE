@@ -14,7 +14,7 @@ const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card>
       <CardContent className="space-y-7">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-primary flex gap-1 text-sm">
