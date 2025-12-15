@@ -86,7 +86,7 @@ const NoteSections = ({ bedrockResponse }: any) => {
                   <div className="flex items-center gap-2">
                     <IconComponent size={20} className={isActive ? 'text-primary' : 'text-black'} />
                     <p className={`font-medium ${isActive ? 'text-primary' : 'text-black'}`}>{section.title}</p>
-                    <p className={`text-sm ${isActive ? 'text-primary' : 'text-black'}`}>({section.code})</p>
+                    <p className={`font-light text-gray-500 ${isActive ? 'text-primary' : 'text-black'}`}>({section.code})</p>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-4 text-sm leading-relaxed text-gray-800">{content}</AccordionContent>

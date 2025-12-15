@@ -129,7 +129,7 @@ export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps)
                       size="lg"
                       variant="outline"
                       onClick={() => onReviewNote(note.id)}
-                      className="border-primary text-primary h-9 gap-1 bg-transparent"
+                      className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
                     >
                       Review Note
                       <ArrowRight className="ml-1" />
