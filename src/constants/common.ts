@@ -214,3 +214,8 @@ export const DisagreementLevelLabels: Record<string, string> = {
   [DisagreementLevelEnum.low]: 'Low',
   [DisagreementLevelEnum.none]: 'None',
 };
+
+export const EvaluationPromptKeys = {
+  currentNote: 'CURRENT_NOTE',
+  previousSessions: 'PREVIOUS_SESSIONS',
+} as const;

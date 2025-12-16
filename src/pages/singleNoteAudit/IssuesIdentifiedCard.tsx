@@ -1,10 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NoteDetail } from '@/types/notes';
 import { Info, CircleHelp } from 'lucide-react';
 
-const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
+interface IssuesIdentifiedCardProps {
+  issues: NoteDetail['issues'];
+  onCategoryClick?: (category: string) => void;
+}
+
+const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardProps) => {
   const getSeverityTooltip = (severity: 'CRITICAL' | 'MODERATE' | 'MINOR') => {
     switch (severity) {
       case 'CRITICAL':
@@ -29,39 +35,46 @@ const IssuesIdentifiedCard = ({ issues }: { issues: NoteDetail['issues'] }) => {
       <CardContent className="space-y-3">
         {issues.length ? (
           issues.map((issue, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    className={`px-3 py-1 text-xs font-semibold text-white uppercase ${
-                      issue.severity === 'CRITICAL'
-                        ? 'bg-gradient-red'
-                        : issue.severity === 'MODERATE'
-                          ? 'bg-gradient-severity-moderate'
-                          : 'bg-gradient-severity-minor'
-                    }`}
-                  >
-                    {issue.severity}
-                  </Badge>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p>{getSeverityTooltip(issue.severity)}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            <div key={index}>
+              <div
+                key={index}
+                onClick={() => onCategoryClick?.(issue.category)}
+                className={`cursor-pointer space-y-2 rounded-lg p-4 transition-colors ${onCategoryClick ? 'hover:border hover:border-green-300' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={`px-3 py-1 text-xs font-semibold text-white uppercase ${
+                        issue.severity === 'CRITICAL'
+                          ? 'bg-gradient-red'
+                          : issue.severity === 'MODERATE'
+                            ? 'bg-gradient-severity-moderate'
+                            : 'bg-gradient-severity-minor'
+                      }`}
+                    >
+                      {issue.severity}
+                    </Badge>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>{getSeverityTooltip(issue.severity)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">{issue.sectionId}</span>
                 </div>
-                <span className="text-xs font-medium text-gray-500">{issue.sectionId}</span>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">{issue.category}</h3>
+
+                  <p className="mt-1 text-sm font-bold text-red-600">–{issue.points} points</p>
+                  <p className="mt-2 text-xs leading-relaxed text-gray-600">{issue.description}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">{issue.category}</h3>
-                <p className="mt-1 text-sm font-bold text-red-600">–{issue.points} points</p>
-                <p className="mt-2 text-xs leading-relaxed text-gray-600">{issue.description}</p>
-              </div>
-              {index < issues.length - 1 && <div className="border-t border-gray-100 pt-3" />}
+              {index < issues.length - 1 && <Separator />}
             </div>
           ))
         ) : (

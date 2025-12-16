@@ -131,12 +131,27 @@ const fetchManagerAuditHistory = (): Promise<Chat[]> =>
 
 // --- Component ---
 
+// Map issue category to NoteSections accordion ID
+const mapCategoryToSectionId = (category: string): string => {
+  const categoryMap: Record<string, string> = {
+    Subjective: 'subjective',
+    Objective: 'objective',
+    'Assessment & Therapeutic Intervention': 'assessment',
+    'Reaction to Intervention': 'reaction',
+    'Plan & Collaboration': 'plan',
+    Progress: 'progress',
+    'SI / HI': 'si-hi',
+  };
+  return categoryMap[category] || 'subjective';
+};
+
 export const ManagerSingleReview = () => {
   const navigate = useNavigate();
   const { id: noteIdParam } = useParams<{ id: string }>();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+  const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
 
   const noteId = noteIdParam || dummyNoteDetail.id;
   const statusTags = ['Pending Manager Review', 'Practitioner Disputed', 'Awaiting SME Review'];
@@ -186,7 +201,7 @@ export const ManagerSingleReview = () => {
         {/* Left Sidebar */}
         <div className="space-y-4">
           <ManagerNoteInformation noteDetail={noteDetail} statusTags={statusTags} humanReviewStatus={humanReviewStatus} />
-          <NoteSections bedrockResponse={noteDetail.bedrockResponse} />
+          <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
         </div>
 
         {/* Right Content */}
@@ -198,7 +213,13 @@ export const ManagerSingleReview = () => {
             humanScore={humanReviewScore}
             comments={humanReviewComments}
           />
-          <IssuesIdentifiedCard issues={noteDetail.issues} />
+          <IssuesIdentifiedCard
+            issues={noteDetail.issues}
+            onCategoryClick={category => {
+              const sectionId = mapCategoryToSectionId(category);
+              setOpenSectionId(sectionId);
+            }}
+          />
           <ManagerDecisionCard onReturnToQueue={() => navigate('/manager-review')} />
           <ManagerReviewHistoryCard />
         </div>

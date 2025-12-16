@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { LucideIcon, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { EvaluationPromptKeys } from '@/constants/common';
 
 interface SummaryCardProps {
   title: string;
@@ -29,6 +30,21 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
 
   const displayText = cleanSummary(summary);
   const lines = displayText.split('\n').filter(line => line.trim());
+
+  // Function to highlight EvaluationPromptKeys in text
+  const highlightPromptKeys = (text: string) => {
+    const keys = Object.values(EvaluationPromptKeys);
+    let highlightedText = text;
+
+    keys.forEach(key => {
+      const regex = new RegExp(`(${key})`, 'gi');
+      highlightedText = highlightedText.replace(regex, match => {
+        return `<span class="font-bold text-lg text-primary">${match}</span>`;
+      });
+    });
+
+    return highlightedText;
+  };
 
   const handleCopy = async () => {
     try {
@@ -78,19 +94,19 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
 
               if (isSectionHeader) {
                 const [header, ...content] = line.split(':');
+                const highlightedHeader = highlightPromptKeys(header);
+                const highlightedContent = content.length > 0 ? highlightPromptKeys(content.join(':').trim()) : '';
                 return (
                   <div key={index} className="mb-2">
-                    <h4 className="font-semibold text-gray-800">{header}:</h4>
-                    {content.length > 0 && <p className="ml-4 text-gray-700">{content.join(':').trim()}</p>}
+                    <h4 className="font-semibold text-gray-800" dangerouslySetInnerHTML={{ __html: `${highlightedHeader}:` }} />
+                    {content.length > 0 && <p className="ml-4 text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedContent }} />}
                   </div>
                 );
               }
 
-              return (
-                <p key={index} className="text-gray-700">
-                  {line}
-                </p>
-              );
+              const highlightedLine = highlightPromptKeys(line);
+
+              return <p key={index} className="text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedLine }} />;
             })}
           </div>
         </div>

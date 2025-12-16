@@ -31,7 +31,7 @@ export const GradientBadge = ({ label, gradient, icon, className = '' }: Gradien
   const textColor = getTextColor(gradient);
   return (
     <p
-      className={`inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-xs font-medium tracking-widest ${gradient} ${textColor} ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-widest ${gradient} ${textColor} ${className}`}
     >
       {icon && <span className="[&>svg]:!size-4">{icon}</span>}
       {label}

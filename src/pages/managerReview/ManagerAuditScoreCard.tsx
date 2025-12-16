@@ -2,14 +2,31 @@ import { Card, CardContent } from '@/components/ui/card';
 import { NoteDetail } from '@/types/notes';
 import { Badge } from '@/components/ui/badge';
 import { ChartColumn, Info } from 'lucide-react';
+import { EvaluationPromptKeys } from '@/constants/common';
 
 interface ManagerAuditScoreCardProps {
   noteDetail: NoteDetail;
 }
 
+// Function to highlight EvaluationPromptKeys in text
+const highlightPromptKeys = (text: string) => {
+  const keys = Object.values(EvaluationPromptKeys);
+  let highlightedText = text;
+
+  keys.forEach(key => {
+    const regex = new RegExp(`(${key})`, 'gi');
+    highlightedText = highlightedText.replace(regex, match => {
+      return `<span class="font-bold text-primary">${match}</span>`;
+    });
+  });
+
+  return highlightedText;
+};
+
 export const ManagerAuditScoreCard = ({ noteDetail }: ManagerAuditScoreCardProps) => {
   const score = noteDetail.auditScore ?? 0;
   const confidence = 87; // dummy for now until manager-specific data is available
+  const highlightedSummary = highlightPromptKeys(noteDetail.aiSummary || '');
 
   return (
     <Card>
@@ -40,7 +57,7 @@ export const ManagerAuditScoreCard = ({ noteDetail }: ManagerAuditScoreCardProps
           <span>Score discrepancy detected</span>
         </div>
 
-        <p className="w-[90%] text-sm text-gray-700">{noteDetail.aiSummary}</p>
+        <p className="w-[90%] text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedSummary }} />
       </CardContent>
     </Card>
   );
