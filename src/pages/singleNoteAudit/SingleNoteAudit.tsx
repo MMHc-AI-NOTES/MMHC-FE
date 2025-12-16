@@ -23,6 +23,7 @@ import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
 import ModelInformation from './ModelInformation';
+import { mapCategoryToSectionId } from '@/utils/helper';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -95,6 +96,7 @@ const SingleNoteAudit = () => {
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useAppSelector(state => state.agents);
+  const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
@@ -223,7 +225,7 @@ const SingleNoteAudit = () => {
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} />
             <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
-            <NoteSections bedrockResponse={noteDetail.bedrockResponse} />
+            <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
           </div>
 
           {/* Right Content */}
@@ -231,7 +233,13 @@ const SingleNoteAudit = () => {
             <AuditScoreCard noteDetail={noteDetail} />
             <ModelInformation modelDetail={noteDetail.modelDetail} />
             <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
-            <IssuesIdentifiedCard issues={noteDetail.issues} />
+            <IssuesIdentifiedCard
+              issues={noteDetail.issues}
+              onCategoryClick={category => {
+                const sectionId = mapCategoryToSectionId(category);
+                setOpenSectionId(sectionId);
+              }}
+            />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (
               <HumanReviewSection

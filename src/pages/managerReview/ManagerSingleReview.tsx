@@ -14,6 +14,7 @@ import IssuesIdentifiedCard from '../singleNoteAudit/IssuesIdentifiedCard';
 import LoadingSkeleton from '../singleNoteAudit/LoadingSkeleton';
 
 import type { NoteDetail, Chat } from '@/types/notes';
+import { mapCategoryToSectionId } from '@/utils/helper';
 
 // --- Dummy API layer for Manager Single Review (replace with real endpoints later) ---
 
@@ -128,22 +129,6 @@ const fetchManagerAuditHistory = (): Promise<Chat[]> =>
   new Promise(resolve => {
     setTimeout(() => resolve(dummyChats), 600);
   });
-
-// --- Component ---
-
-// Map issue category to NoteSections accordion ID
-const mapCategoryToSectionId = (category: string): string => {
-  const categoryMap: Record<string, string> = {
-    Subjective: 'subjective',
-    Objective: 'objective',
-    'Assessment & Therapeutic Intervention': 'assessment',
-    'Reaction to Intervention': 'reaction',
-    'Plan & Collaboration': 'plan',
-    Progress: 'progress',
-    'SI / HI': 'si-hi',
-  };
-  return categoryMap[category] || 'subjective';
-};
 
 export const ManagerSingleReview = () => {
   const navigate = useNavigate();
