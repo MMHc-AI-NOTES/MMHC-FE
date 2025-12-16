@@ -54,6 +54,7 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
                     >
                       {issue.severity}
                     </Badge>
+                    <p className="text-primary rounded-[6px] border border-green-600 bg-green-50 px-2.5 py-1 text-xs font-semibold">AI</p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
