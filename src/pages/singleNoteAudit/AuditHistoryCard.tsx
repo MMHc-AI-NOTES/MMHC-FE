@@ -25,7 +25,7 @@ const AuditHistoryCard = ({ chats }: AuditHistoryCardProps) => {
   };
 
   return (
-    <Card className="shadow-sm">
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
           <History className="h-5 w-5" />

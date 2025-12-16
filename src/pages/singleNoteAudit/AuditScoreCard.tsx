@@ -11,7 +11,7 @@ interface AuditScoreCardProps {
 const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
   const isPassed = noteDetail.aiStatus.id === AiStatusEnum.passed;
   return (
-    <Card className={`overflow-hidden shadow-sm`}>
+    <Card>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="text-primary">

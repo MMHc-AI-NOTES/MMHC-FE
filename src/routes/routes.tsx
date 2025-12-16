@@ -13,6 +13,8 @@ const SingleNoteAudit = lazy(() => import('@/pages/singleNoteAudit/SingleNoteAud
 const HumanReviewQueue = lazy(() => import('@/pages/humanReviewQueue/HumanReviewQueue'));
 const Settings = lazy(() => import('@/pages/settings/Settings'));
 const AILogs = lazy(() => import('@/pages/aiLogs/AILogs'));
+const ManagerReviewQueue = lazy(() => import('@/pages/managerReview/ManagerReviewQueue'));
+const ManagerSingleReview = lazy(() => import('@/pages/managerReview/ManagerSingleReview'));
 
 const Routes = () => {
   const routes = useRoutes([
@@ -31,7 +33,8 @@ const Routes = () => {
         { path: 'human-review-queue', element: <HumanReviewQueue /> },
         { path: 'human-review-queue/single-note-audit/:id', element: <SingleNoteAudit /> },
         { path: 'blacklisted-notes', element: <h1>Blacklisted Notes</h1> },
-        { path: 'manager-review', element: <h1>Manager Review</h1> },
+        { path: 'manager-review', element: <ManagerReviewQueue /> },
+        { path: 'manager-review/single-review/:id', element: <ManagerSingleReview /> },
         { path: 'ai-logs', element: <AILogs /> },
         { path: 'settings', element: <Settings /> },
         { path: 'note-submission', element: <h1>Note Submission</h1> },

@@ -44,6 +44,19 @@ export const ManagerEnum = {
   completed: 4,
 } as const;
 
+export const ManagerDecisionEnum = {
+  approve_with_edits: 1,
+  return_to_practitioner: 2,
+  escalate: 3,
+} as const;
+
+export const DisagreementLevelEnum = {
+  high: 1,
+  medium: 2,
+  low: 3,
+  none: 4,
+} as const;
+
 // Workflow Enum
 export const WorkflowEnum = {
   completed: 1,
@@ -188,3 +201,21 @@ export const HumanReviewResultLabels: Record<number, string> = {
   [HumanReviewResultEnum.pass]: 'Pass',
   [HumanReviewResultEnum.fail]: 'Fail',
 };
+
+export const ManagerDecisionLabels: Record<number, string> = {
+  [ManagerDecisionEnum.approve_with_edits]: 'Approve with Edits',
+  [ManagerDecisionEnum.return_to_practitioner]: 'Return to Practitioner',
+  [ManagerDecisionEnum.escalate]: 'Escalate',
+};
+
+export const DisagreementLevelLabels: Record<string, string> = {
+  [DisagreementLevelEnum.high]: 'High',
+  [DisagreementLevelEnum.medium]: 'Medium',
+  [DisagreementLevelEnum.low]: 'Low',
+  [DisagreementLevelEnum.none]: 'None',
+};
+
+export const EvaluationPromptKeys = {
+  currentNote: 'CURRENT_NOTE',
+  previousSessions: 'PREVIOUS_SESSIONS',
+} as const;

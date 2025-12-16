@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertTriangle, MessageSquare, Eye, Target, Lightbulb, ListChecks, TrendingUp } from 'lucide-react';
@@ -55,8 +55,23 @@ const noteSections = [
   },
 ];
 
-const NoteSections = ({ bedrockResponse }: any) => {
+interface NoteSectionsProps {
+  bedrockResponse: any;
+  openSectionId?: string;
+  onSectionChange?: (value: string[]) => void;
+}
+
+const NoteSections = ({ bedrockResponse, openSectionId, onSectionChange }: NoteSectionsProps) => {
   const [accordionValue, setAccordionValue] = useState<string[]>(['subjective']);
+
+  // Update accordion when openSectionId prop changes
+  useEffect(() => {
+    if (openSectionId) {
+      const newValue = [openSectionId];
+      setAccordionValue(newValue);
+      onSectionChange?.(newValue);
+    }
+  }, [openSectionId, onSectionChange]);
 
   // Function to get content from bedrockResponse or fallback to default
   const getSectionContent = (extractKey: string): string => {
@@ -68,9 +83,17 @@ const NoteSections = ({ bedrockResponse }: any) => {
   };
 
   return (
-    <Card className="p-1 shadow-sm">
+    <Card className="p-1">
       <CardContent className="p-0">
-        <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">
+        <Accordion
+          type="multiple"
+          value={accordionValue}
+          onValueChange={value => {
+            setAccordionValue(value);
+            onSectionChange?.(value);
+          }}
+          className="w-full"
+        >
           {noteSections.map(section => {
             const IconComponent = section.icon;
             const isActive = accordionValue.includes(section.id);

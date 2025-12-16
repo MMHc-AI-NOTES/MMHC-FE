@@ -10,7 +10,6 @@ interface NoteInformationProps {
 }
 
 const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
-  console.log('🚀 ~ NoteInformation ~ noteDetail:', noteDetail);
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const cptCode = cptCodes.find(cptCode => cptCode.id === noteDetail.cptCode)?.code || '-';
 
@@ -30,7 +29,7 @@ const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
   };
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card>
       <CardContent className="space-y-7">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-primary flex gap-1 text-sm">

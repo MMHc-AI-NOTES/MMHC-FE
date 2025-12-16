@@ -351,7 +351,7 @@ const NotesQueue = () => {
 
                 {/* Pagination */}
                 {notes.length > 0 && (
-                  <div className="mt-6">
+                  <div className="mt-6 mr-4">
                     <DataTablePagination
                       currentPage={currentPage}
                       totalPages={Math.ceil(totalItems / itemsPerPage)}
