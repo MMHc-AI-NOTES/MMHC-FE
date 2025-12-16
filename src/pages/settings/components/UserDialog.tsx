@@ -93,7 +93,13 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, editingUser, o
             <div className="flex items-center justify-between">
               <div>
                 <Label>Status</Label>
-                <p className="text-sm text-gray-600">Set user as active or inactive</p>
+                <p className="text-sm text-gray-600">
+                  {editingUser
+                    ? formik.values.status === 'active'
+                      ? 'User is currently active.'
+                      : 'User is currently inactive.'
+                    : 'Set user as active or inactive.'}
+                </p>
               </div>
               <Switch
                 checked={formik.values.status === 'active'}

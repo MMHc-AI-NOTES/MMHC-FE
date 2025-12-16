@@ -77,14 +77,14 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
           <Table>
             <TableHeader className="bg-transparent!">
               <TableRow>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Log ID</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
-                <TableHead className="text-primary min-w-[130px] font-semibold">Model Version</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Prompt Version</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-semibold">Timestamp</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Result</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Severity</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Action</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">LOG ID</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[130px] font-semibold">MODEL VERSION</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">PROMPT VERSION</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">TIMESTAMP</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">RESULT</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">SEVERITY</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -106,14 +106,14 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
         <Table>
           <TableHeader className="bg-transparent!">
             <TableRow>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Log ID</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[130px] font-semibold">Model Version</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Prompt Version</TableHead>
-              <TableHead className="text-primary min-w-[160px] font-semibold">Timestamp</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Result</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Severity</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Action</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">LOG ID</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[130px] font-semibold">MODEL VERSION</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">PROMPT VERSION</TableHead>
+              <TableHead className="text-primary min-w-[160px] font-semibold">TIMESTAMP</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">RESULT</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">SEVERITY</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">ACTION</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

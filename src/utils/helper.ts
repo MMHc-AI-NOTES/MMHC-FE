@@ -115,3 +115,17 @@ export const getDefaultDateRange = () => {
   const startDate = moment().subtract(30, 'days').format('YYYY-MM-DD');
   return { startDate, endDate };
 };
+
+// Map issue category to NoteSections accordion ID
+export const mapCategoryToSectionId = (category: string): string => {
+  const categoryMap: Record<string, string> = {
+    Subjective: 'subjective',
+    Objective: 'objective',
+    'Assessment & Therapeutic Intervention': 'assessment',
+    'Reaction to Intervention': 'reaction',
+    'Plan & Collaboration': 'plan',
+    Progress: 'progress',
+    'SI / HI': 'si-hi',
+  };
+  return categoryMap[category] || 'subjective';
+};

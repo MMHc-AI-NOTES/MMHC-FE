@@ -3,6 +3,7 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, UserRole } from '@/types/settings';
+import { UserRoleEnum, UserRoleLabels } from '@/constants/common';
 import UserActionsDropdown from './UserActionsDropdown';
 
 interface UserTableRowProps {
@@ -34,9 +35,9 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Super Admin">Super Admin</SelectItem>
-            <SelectItem value="Practitioner">Practitioner</SelectItem>
-            <SelectItem value="Manager">Manager</SelectItem>
+            <SelectItem value={UserRoleEnum.super_admin.toString()}>{UserRoleLabels[UserRoleEnum.super_admin]}</SelectItem>
+            <SelectItem value={UserRoleEnum.practitioner.toString()}>{UserRoleLabels[UserRoleEnum.practitioner]}</SelectItem>
+            {/* <SelectItem value={UserRoleEnum.manager}>{UserRoleLabels[UserRoleEnum.manager]}</SelectItem> */}
           </SelectContent>
         </Select>
       </TableCell>

@@ -84,16 +84,16 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                     <Square className="ml-[7px] h-4 w-4" onClick={onToggleAll} />
                   )}
                 </TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-semibold">Practitioner</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Date</TableHead>
-                <TableHead className="text-primary min-w-[80px] font-semibold">AI Score</TableHead>
-                <TableHead className="text-primary min-w-[110px] font-semibold">Human Score</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Reviewer</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-semibold">Human Decision</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Disagreement</TableHead>
-                <TableHead className="text-primary min-w-[110px] font-semibold">Priority</TableHead>
-                <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">PRACTITIONER</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">DATE</TableHead>
+                <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead>
+                <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
+                <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead>
+                <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -122,16 +122,16 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                   <Square className="ml-[7px] h-4 w-4" onClick={onToggleAll} />
                 )}
               </TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[160px] font-semibold">Practitioner</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Date</TableHead>
-              <TableHead className="text-primary min-w-[80px] font-semibold">AI Score</TableHead>
-              <TableHead className="text-primary min-w-[110px] font-semibold">Human Score</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Reviewer</TableHead>
-              <TableHead className="text-primary min-w-[160px] font-semibold">Human Decision</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Disagreement</TableHead>
-              <TableHead className="text-primary min-w-[110px] font-semibold">Priority</TableHead>
-              <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[160px] font-semibold">PRACTITIONER</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">DATE</TableHead>
+              <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead>
+              <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
+              <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
+              <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead>
+              <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

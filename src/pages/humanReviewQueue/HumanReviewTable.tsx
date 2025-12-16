@@ -65,15 +65,15 @@ export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps)
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
-                <TableHead className="text-primary min-w-[140px] font-semibold">Practitioner</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
-                <TableHead className="text-primary min-w-[80px] font-semibold">Score</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
-                <TableHead className="text-primary min-w-[140px] font-semibold">Review Status</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Reviewer</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Priority</TableHead>
-                <TableHead className="text-primary min-w-[140px] text-center font-semibold">Action</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">PRACTITIONER</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+                <TableHead className="text-primary min-w-[80px] font-semibold">SCORE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">REVIEW STATUS</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">PRIORITY</TableHead>
+                <TableHead className="text-primary min-w-[140px] text-center font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -95,15 +95,15 @@ export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps)
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[140px] font-semibold">Practitioner</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
-              <TableHead className="text-primary min-w-[80px] font-semibold">Score</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
-              <TableHead className="text-primary min-w-[140px] font-semibold">Review Status</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Reviewer</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Priority</TableHead>
-              <TableHead className="text-primary min-w-[140px] text-center font-semibold">Action</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">PRACTITIONER</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+              <TableHead className="text-primary min-w-[80px] font-semibold">SCORE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">REVIEW STATUS</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">PRIORITY</TableHead>
+              <TableHead className="text-primary min-w-[140px] text-center font-semibold">ACTION</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

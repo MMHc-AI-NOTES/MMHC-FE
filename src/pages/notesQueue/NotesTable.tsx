@@ -127,19 +127,19 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Note ID</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Cpt Code</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Type</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">AI Score</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
-                <TableHead className="text-primary min-w-[140px] font-semibold">Human Review</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">Manager</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">TYPE</TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">
                   <div className="text-primary flex items-center gap-1">
-                    Workflow
+                    WORKFLOW
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -154,7 +154,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 </TableHead>
                 <TableHead className="min-w-[100px] font-semibold">
                   <div className="text-primary flex items-center gap-1">
-                    Priority
+                    PRIORITY
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -170,7 +170,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 {/* REVIEW CYCLE Column - Commented out for now */}
                 <TableHead className="text-primary min-w-[140px]">
                   <div className="text-primary flex items-center gap-1">
-                    Review Cycle
+                    REVIEW CYCLE
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -183,7 +183,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </TooltipProvider>
                   </div>
                 </TableHead>
-                <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
+                <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -205,19 +205,19 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Note ID</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Cpt Code</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Practitioner</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Client</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">Date</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Type</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">AI Score</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">AI Status</TableHead>
-              <TableHead className="text-primary min-w-[140px] font-semibold">Human Review</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">Manager</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">TYPE</TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">
                 <div className="flex items-center gap-1">
-                  Workflow
+                  WORKFLOW
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -235,7 +235,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
               </TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">
                 <div className="flex items-center gap-1">
-                  Priority
+                  PRIORITY
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -254,7 +254,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
               {/* REVIEW CYCLE Column - Commented out for now */}
               <TableHead className="text-primary min-w-[140px]">
                 <div className="flex items-center gap-1">
-                  Review Cycle
+                  REVIEW CYCLE
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

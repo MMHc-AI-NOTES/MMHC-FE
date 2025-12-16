@@ -219,3 +219,67 @@ export const EvaluationPromptKeys = {
   currentNote: 'CURRENT_NOTE',
   previousSessions: 'PREVIOUS_SESSIONS',
 } as const;
+
+// Blacklist Reason Enum
+export const BlacklistReasonEnum = {
+  repeated_critical_issues: 1,
+  unstable_ai_scoring: 2,
+  ai_unable_to_evaluate: 3,
+  missing_required_fields: 4,
+} as const;
+
+// Blacklist Status Enum
+export const BlacklistStatusEnum = {
+  blacklisted: 1,
+  locked: 2,
+  escalated: 3,
+  pending: 4,
+} as const;
+
+// Blacklist Reason Labels
+export const BlacklistReasonLabels: Record<number, string> = {
+  [BlacklistReasonEnum.repeated_critical_issues]: 'Repeated critical issues',
+  [BlacklistReasonEnum.unstable_ai_scoring]: 'Unstable AI scoring',
+  [BlacklistReasonEnum.ai_unable_to_evaluate]: 'AI unable to evaluate',
+  [BlacklistReasonEnum.missing_required_fields]: 'Missing required fields',
+};
+
+// Blacklist Status Labels
+export const BlacklistStatusLabels: Record<number, string> = {
+  [BlacklistStatusEnum.blacklisted]: 'Blacklisted',
+  [BlacklistStatusEnum.locked]: 'Locked',
+  [BlacklistStatusEnum.escalated]: 'Escalated',
+  [BlacklistStatusEnum.pending]: 'Pending',
+};
+
+// Resolution Action Enum
+export const ResolutionActionEnum = {
+  restore_to_notes_queue: 1,
+  send_to_practitioner: 2,
+  unlock_note: 3,
+  permanently_lock_note: 4,
+  escalate_for_system_review: 5,
+} as const;
+
+// Resolution Action Labels
+export const ResolutionActionLabels: Record<number, string> = {
+  [ResolutionActionEnum.restore_to_notes_queue]: 'Restore to Notes Queue',
+  [ResolutionActionEnum.send_to_practitioner]: 'Send to Practitioner for Forced Correction',
+  [ResolutionActionEnum.unlock_note]: 'Unlock Note',
+  [ResolutionActionEnum.permanently_lock_note]: 'Permanently Lock Note',
+  [ResolutionActionEnum.escalate_for_system_review]: 'Escalate for System Review',
+};
+
+// User Role Enum
+export const UserRoleEnum = {
+  super_admin: 1,
+  practitioner: 2,
+  manager: 3,
+} as const;
+
+// User Role Labels (for consistency, though values are the same as enum)
+export const UserRoleLabels: Record<string, string> = {
+  [UserRoleEnum.super_admin]: 'Super Admin',
+  [UserRoleEnum.practitioner]: 'Practitioner',
+  [UserRoleEnum.manager]: 'Manager',
+};
