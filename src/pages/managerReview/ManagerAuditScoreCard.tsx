@@ -25,7 +25,6 @@ const highlightPromptKeys = (text: string) => {
 
 export const ManagerAuditScoreCard = ({ noteDetail }: ManagerAuditScoreCardProps) => {
   const score = noteDetail.auditScore ?? 0;
-  const confidence = 87; // dummy for now until manager-specific data is available
   const highlightedSummary = highlightPromptKeys(noteDetail.aiSummary || '');
 
   return (
@@ -36,7 +35,7 @@ export const ManagerAuditScoreCard = ({ noteDetail }: ManagerAuditScoreCardProps
           <span>AI Audit Summary</span>
         </div>
         <div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between">
             <div className="text-primary flex items-baseline gap-2 font-bold md:text-4xl lg:text-5xl">
               <span>{score}</span>
               <span>/ 100</span>
@@ -49,7 +48,6 @@ export const ManagerAuditScoreCard = ({ noteDetail }: ManagerAuditScoreCardProps
           <p className="text-muted-foreground mt-2 text-sm">Pass threshold ≥95%</p>
         </div>
         <div>
-          <p className="text-primary mt-4 text-sm font-semibold">AI Confidence: {confidence}%</p>
           <p className="text-muted-foreground mt-1 text-xs">{noteDetail.lastRun}</p>
         </div>
         <div className="text-orange-dark bg-orange-light border-orange-dark inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold">

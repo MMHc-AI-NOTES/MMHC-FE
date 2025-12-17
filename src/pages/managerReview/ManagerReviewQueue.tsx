@@ -9,16 +9,16 @@ import { ManagerColorKey } from './ManagerColorKey';
 import { ManagerOverviewCard } from './ManagerOverviewCard';
 import { ManagerDecisionBreakdownCard } from './ManagerDecisionBreakdownCard';
 import { ManagerNote, ManagerOverview } from './managerReviewTypes';
-import { fetchManagerNotes, fetchManagerOverview } from './managerReviewApi';
+import { fetchManagerNotes, fetchManagerOverview } from './managerReviewApiCalls';
 import { ManagerFiltersSection } from './ManagerFiltersSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 
 const defaultFilters = {
-  humanDecision: 'all' as number | 'all',
-  disagreement: 'all' as number | 'all',
-  priority: 'all' as number | 'all',
+  humanDecision: 'all',
+  disagreement: 'all',
+  priority: 'all',
   search: '',
 };
 
@@ -37,28 +37,86 @@ export const ManagerReviewQueue = () => {
 
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('managerReviewFilters', defaultFilters);
 
+  const buildFilterPayload = () => {
+    const filterArray: any[] = [];
+
+    // Note Type filter
+    if (filters.humanDecision && filters.humanDecision !== 'all') {
+      filterArray.push({ columnName: 'human_decision', type: 'exact', value: parseInt(filters.humanDecision) });
+    }
+
+    // Practitioner filter
+    if (filters.disagreement && filters.disagreement !== 'all') {
+      filterArray.push({ columnName: 'disagreement', type: 'exact', value: parseInt(filters.disagreement) });
+    }
+
+    // Priority filter
+    if (filters.priority && filters.priority !== 'all') {
+      filterArray.push({ columnName: 'priority', type: 'exact', value: filters.priority });
+    }
+
+    // Search filter
+    if (filters.search) {
+      filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
+    }
+
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+  };
+
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
-      setOverviewLoading(true);
+      try {
+        setLoading(true);
+        setOverviewLoading(true);
+        setCurrentPage(1);
 
-      const [notesData, overviewData] = await Promise.all([fetchManagerNotes(), fetchManagerOverview()]);
+        // Check if filters are active (not all defaults)
+        const hasActiveFilters =
+          filters.humanDecision !== 'all' || filters.disagreement !== 'all' || filters.priority !== 'all' || filters.search !== '';
 
-      setNotes(notesData);
-      setTotalItems(notesData.length);
-      setCurrentPage(1);
+        let payload;
+        if (hasActiveFilters) {
+          // Build filter payload for persisted filters
+          const filterArray: any[] = [];
 
-      setOverview(overviewData);
+          if (filters.humanDecision && filters.humanDecision !== 'all') {
+            filterArray.push({ columnName: 'human_decision', type: 'exact', value: parseInt(filters.humanDecision) });
+          }
+          if (filters.disagreement && filters.disagreement !== 'all') {
+            filterArray.push({ columnName: 'disagreement', type: 'exact', value: parseInt(filters.disagreement) });
+          }
+          if (filters.priority && filters.priority !== 'all') {
+            filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
+          }
+          if (filters.search) {
+            filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
+          }
 
-      setLoading(false);
-      setOverviewLoading(false);
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+        } else {
+          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+        }
+
+        const [notesResponse, overviewData] = await Promise.all([fetchManagerNotes(payload), fetchManagerOverview()]);
+
+        setNotes(notesResponse.data);
+        setTotalItems(notesResponse.totalCount);
+
+        setOverview(overviewData);
+      } catch (error) {
+        console.error('Error loading manager review data:', error);
+      } finally {
+        setLoading(false);
+        setOverviewLoading(false);
+      }
     };
 
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
-  const handleReview = (id: string) => {
-    navigate(`/manager-review/single-review/${id}`);
+  const handleReview = (_id: string) => {
+    navigate(`/manager-review/single-review/${_id}`);
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -67,15 +125,11 @@ export const ManagerReviewQueue = () => {
 
   const handleApplyFilters = async () => {
     setLoading(true);
-    const payload: Partial<ManagerNote> & { search?: string } = {};
-    if (filters.humanDecision !== 'all') payload.humanDecision = filters.humanDecision;
-    if (filters.priority !== 'all') payload.priority = filters.priority;
-    if (filters.disagreement !== 'all') payload.disagreement = filters.disagreement;
-    if (filters.search) payload.search = filters.search;
-    const data = await fetchManagerNotes(payload);
-    setNotes(data);
-    setTotalItems(data.length);
-    setCurrentPage(1);
+    const payload = buildFilterPayload();
+    const response = await fetchManagerNotes(payload);
+    setNotes(response.data);
+    setTotalItems(response.totalCount);
+    setCurrentPage(response.page);
     setSelectedIds([]);
     setLoading(false);
   };
@@ -83,10 +137,10 @@ export const ManagerReviewQueue = () => {
   const handleClearFilters = async () => {
     clearPersistedFilters();
     setLoading(true);
-    const data = await fetchManagerNotes();
-    setNotes(data);
-    setTotalItems(data.length);
-    setCurrentPage(1);
+    const response = await fetchManagerNotes({ page: 1, pageSize: itemsPerPage, filters: [] });
+    setNotes(response.data);
+    setTotalItems(response.totalCount);
+    setCurrentPage(response.page);
     setSelectedIds([]);
     setLoading(false);
   };
@@ -99,17 +153,22 @@ export const ManagerReviewQueue = () => {
     if (selectedIds.length === notes.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(notes.map(n => n.id));
+      setSelectedIds(notes.map(n => n.id.toString()));
     }
   };
 
-  // For now, pagination is client-side only. When API supports it, this can call fetchManagerNotes with page info.
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  // Server-side pagination
+  const handlePageChange = async (page: number) => {
+    setLoading(true);
+    const payload = buildFilterPayload();
+    payload.page = page;
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedNotes = notes.slice(startIndex, startIndex + itemsPerPage);
+    const response = await fetchManagerNotes(payload);
+    setNotes(response.data);
+    setTotalItems(response.totalCount);
+    setCurrentPage(response.page);
+    setLoading(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -164,7 +223,7 @@ export const ManagerReviewQueue = () => {
             ) : (
               <>
                 <ManagerTable
-                  notes={paginatedNotes}
+                  notes={notes}
                   onReview={handleReview}
                   selectedIds={selectedIds}
                   onToggleRow={toggleRow}

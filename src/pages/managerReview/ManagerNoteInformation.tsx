@@ -21,7 +21,7 @@ export const ManagerNoteInformation = ({ noteDetail, statusTags, humanReviewStat
 
   return (
     <Card>
-      <CardContent className="space-y-11">
+      <CardContent className="space-y-6">
         {/* Status pills */}
         <div className="flex flex-wrap gap-2">
           {statusTags.map((tag, index) => (
@@ -36,59 +36,66 @@ export const ManagerNoteInformation = ({ noteDetail, statusTags, humanReviewStat
         </div>
 
         {/* Note meta */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="text-primary space-y-4 text-sm">
-            <div className="flex gap-2">
-              <Hash className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">Note ID</p>
-                <p className="text-black">{noteDetail.id}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Calendar className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">Date</p>
-                <p className="text-black">{noteDetail.date}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Code className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">CPT Code</p>
-                <p className="text-black">{cptCode}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <ShieldCheck className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">Human Review Status</p>
-                <p className="text-black">{humanReviewStatus}</p>
-              </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-primary flex gap-1 text-sm">
+            <Hash className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Note ID</p>
+              <p className="text-sm text-black">{noteDetail.id}</p>
             </div>
           </div>
 
-          <div className="text-primary space-y-4 text-sm">
-            <div className="flex gap-2">
-              <User className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">Practitioner</p>
-                <p className="text-black">{noteDetail.practitioner}</p>
-              </div>
+          <div className="text-primary flex gap-1 text-sm">
+            <User className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Practitioner</p>
+              <p className="text-sm text-black">{noteDetail.practitioner}</p>
             </div>
-            <div className="flex gap-2">
-              <ClipboardList className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">Note Type</p>
-                <p className="text-black">{noteDetail.noteType}</p>
-              </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-primary flex gap-1 text-sm">
+            <Calendar className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Date</p>
+              <p className="text-sm text-black">{noteDetail.date}</p>
             </div>
-            <div className="flex gap-2">
-              <Bot className="text-primary mt-0.5 h-4 w-4" />
-              <div>
-                <p className="font-medium">AI Review Attempts</p>
-                <p className="text-black">{noteDetail.aiReviews}</p>
-              </div>
+          </div>
+
+          <div className="text-primary flex gap-1 text-sm">
+            <ClipboardList className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Note Type</p>
+              <p className="text-sm text-black">{noteDetail.noteType}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-primary flex gap-1 text-sm">
+            <Code className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">CPT Code</p>
+              <p className="text-sm text-black">{cptCode}</p>
+            </div>
+          </div>
+
+          <div className="text-primary flex gap-1 text-sm">
+            <Bot className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">AI Reviews</p>
+              <p className="text-sm text-black">{noteDetail.aiReviews}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-primary flex gap-1 text-sm">
+            <ShieldCheck className="text-primary mt-0.5 h-4 w-4" />
+            <div>
+              <p className="font-medium">Human Review Status</p>
+              <p className="text-black">{humanReviewStatus}</p>
             </div>
           </div>
         </div>

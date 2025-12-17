@@ -12,6 +12,49 @@ export const HumanReviewDecisionEnum = {
   escalate_to_office_manager: 5,
 } as const;
 
+export const HumanReviewDecisionLabels: Record<number, string> = {
+  [HumanReviewDecisionEnum.accept_ai_evaluation]: 'Accept AI evaluation',
+  [HumanReviewDecisionEnum.ai_incorrect_override_score]: 'AI is incorrect — override score',
+  [HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues]: 'Note is clinically acceptable despite AI issues',
+  [HumanReviewDecisionEnum.needs_practitioner_correction]: 'Note needs practitioner correction',
+  [HumanReviewDecisionEnum.escalate_to_office_manager]: 'Escalate to Office Manager',
+};
+
+// Helper function to get decision options for select/checkbox components
+export const getHumanReviewDecisionOptions = () =>
+  Object.values(HumanReviewDecisionEnum).map(value => ({
+    value,
+    label: HumanReviewDecisionLabels[value],
+  }));
+
+// Manager Decision Enum
+export const ManagerDecisionEnum = {
+  approve_note_valid_and_compliant: 1,
+  reject_send_back_to_practitioner: 2,
+  reject_requires_correction_cycle: 3,
+  ai_evaluation_incorrect_escalate: 4,
+  require_sme_review: 5,
+  unlock_note_for_manual_editing: 6,
+  add_internal_audit_note_only: 7,
+} as const;
+
+export const ManagerDecisionLabels: Record<number, string> = {
+  [ManagerDecisionEnum.approve_note_valid_and_compliant]: 'Approve note (valid and compliant)',
+  [ManagerDecisionEnum.reject_send_back_to_practitioner]: 'Reject note — send back to practitioner',
+  [ManagerDecisionEnum.reject_requires_correction_cycle]: 'Reject note — requires practitioner correction cycle',
+  [ManagerDecisionEnum.ai_evaluation_incorrect_escalate]: 'AI evaluation incorrect — escalate to AI team',
+  [ManagerDecisionEnum.require_sme_review]: 'Require SME review',
+  [ManagerDecisionEnum.unlock_note_for_manual_editing]: 'Unlock the note for manual editing',
+  [ManagerDecisionEnum.add_internal_audit_note_only]: 'Add internal audit note only (no workflow action)',
+};
+
+// Helper function to get manager decision options
+export const getManagerDecisionOptions = () =>
+  Object.values(ManagerDecisionEnum).map(value => ({
+    value,
+    label: ManagerDecisionLabels[value],
+  }));
+
 // Session Type Enum
 export const SessionTypeEnum = {
   progress_note: 1,
@@ -42,12 +85,6 @@ export const ManagerEnum = {
   pending: 2,
   in_progress: 3,
   completed: 4,
-} as const;
-
-export const ManagerDecisionEnum = {
-  approve_with_edits: 1,
-  return_to_practitioner: 2,
-  escalate: 3,
 } as const;
 
 export const DisagreementLevelEnum = {
@@ -202,12 +239,6 @@ export const HumanReviewResultLabels: Record<number, string> = {
   [HumanReviewResultEnum.fail]: 'Fail',
 };
 
-export const ManagerDecisionLabels: Record<number, string> = {
-  [ManagerDecisionEnum.approve_with_edits]: 'Approve with Edits',
-  [ManagerDecisionEnum.return_to_practitioner]: 'Return to Practitioner',
-  [ManagerDecisionEnum.escalate]: 'Escalate',
-};
-
 export const DisagreementLevelLabels: Record<string, string> = {
   [DisagreementLevelEnum.high]: 'High',
   [DisagreementLevelEnum.medium]: 'Medium',
@@ -216,7 +247,7 @@ export const DisagreementLevelLabels: Record<string, string> = {
 };
 
 export const EvaluationPromptKeys = {
-  currentNote: 'CURRENT_NOTE',
+  currentSession: 'CURRENT_SESSION',
   previousSessions: 'PREVIOUS_SESSIONS',
 } as const;
 

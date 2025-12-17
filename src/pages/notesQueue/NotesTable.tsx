@@ -276,7 +276,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
-                <TableCell className="text-left font-medium">#{note.id}</TableCell>
+                <TableCell className="text-left font-medium">{note.id}</TableCell>
                 <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.client}</TableCell>
