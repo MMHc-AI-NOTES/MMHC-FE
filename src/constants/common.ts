@@ -283,3 +283,100 @@ export const UserRoleLabels: Record<string, string> = {
   [UserRoleEnum.practitioner]: 'Practitioner',
   [UserRoleEnum.manager]: 'Manager',
 };
+
+// Note Submission Enums
+
+// Note Type Enum (for submission form)
+export const NoteTypeEnum = {
+  progress_note: 1,
+  intake_note: 2,
+  treatment_plan: 3,
+  termination_note: 4,
+} as const;
+
+export const NoteTypeLabels: Record<number, string> = {
+  [NoteTypeEnum.progress_note]: 'Progress Note',
+  [NoteTypeEnum.intake_note]: 'Intake Note',
+  [NoteTypeEnum.treatment_plan]: 'Treatment Plan',
+  [NoteTypeEnum.termination_note]: 'Termination Note',
+};
+
+// Model Version Enum
+export const ModelVersionEnum = {
+  claude_3_5_haiku_v1: 1,
+  claude_3_haiku: 2,
+  claude_3_5_haiku_v2: 3,
+} as const;
+
+export const ModelVersionLabels: Record<number, string> = {
+  [ModelVersionEnum.claude_3_5_haiku_v1]: 'Claude 3.5 Haiku V1',
+  [ModelVersionEnum.claude_3_haiku]: 'Claude 3 Haiku',
+  [ModelVersionEnum.claude_3_5_haiku_v2]: 'Claude 3.5 Haiku V2',
+};
+
+// Prompt Agent Enum
+export const PromptAgentEnum = {
+  clinical_documentation_auditor: 1,
+  technical_support_agent: 2,
+} as const;
+
+export const PromptAgentLabels: Record<number, string> = {
+  [PromptAgentEnum.clinical_documentation_auditor]: 'Clinical Documentation Auditor',
+  [PromptAgentEnum.technical_support_agent]: 'Technical Support Agent',
+};
+
+// Practitioner Role Enum
+export const PractitionerRoleEnum = {
+  therapist: 1,
+  psychologist: 2,
+  psychiatrist: 3,
+  counselor: 4,
+  social_worker: 5,
+} as const;
+
+export const PractitionerRoleLabels: Record<number, string> = {
+  [PractitionerRoleEnum.therapist]: 'Therapist',
+  [PractitionerRoleEnum.psychologist]: 'Psychologist',
+  [PractitionerRoleEnum.psychiatrist]: 'Psychiatrist',
+  [PractitionerRoleEnum.counselor]: 'Counselor',
+  [PractitionerRoleEnum.social_worker]: 'Social Worker',
+};
+
+// Audit Mode Enum
+export const AuditModeEnum = {
+  default: 1,
+  strict: 2,
+  experimental: 3,
+} as const;
+
+export const AuditModeLabels: Record<number, string> = {
+  [AuditModeEnum.default]: 'Default',
+  [AuditModeEnum.strict]: 'Strict',
+  [AuditModeEnum.experimental]: 'Experimental',
+};
+
+// Pre-Audit Check Status Enum
+export const PreAuditCheckStatusEnum = {
+  passed: 1,
+  warning: 2,
+  failed: 3,
+} as const;
+
+export const PreAuditCheckStatusLabels: Record<number, string> = {
+  [PreAuditCheckStatusEnum.passed]: 'Passed',
+  [PreAuditCheckStatusEnum.warning]: 'Warning',
+  [PreAuditCheckStatusEnum.failed]: 'Needs Improvement',
+};
+
+// Structure Quality Enum
+export const StructureQualityEnum = {
+  strong: 1,
+  moderate: 2,
+  weak: 3,
+} as const;
+
+export const StructureQualityLabels: Record<number, string> = {
+  [StructureQualityEnum.strong]: 'Strong Structure',
+  [StructureQualityEnum.moderate]: 'Moderate Structure',
+  [StructureQualityEnum.weak]: 'Weak Structure',
+};

@@ -1,0 +1,103 @@
+import { NoteSubmissionFormData, NoteSubmissionResponse, PreAuditCheckResult, TokenEstimation } from '@/types/noteSubmission';
+import { PreAuditCheckStatusEnum, StructureQualityEnum } from '@/constants/common';
+
+// Dummy API call to submit note for audit
+export const submitNoteForAudit = async (formData: NoteSubmissionFormData): Promise<NoteSubmissionResponse> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Simulate successful response
+  return {
+    success: true,
+    auditId: `AUDIT-${Date.now()}`,
+    message: 'Note submitted successfully for audit.',
+    estimatedTokens: Math.floor(formData.progressNoteContent.length / 4),
+    expectedAuditTime: '2-4 seconds',
+  };
+};
+
+// Dummy API call to estimate tokens
+export const estimateTokens = async (content: string): Promise<TokenEstimation> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  const estimatedTokens = Math.floor(content.length / 4);
+
+  return {
+    estimatedTokens,
+    expectedAuditTime: estimatedTokens > 500 ? '4-6 seconds' : '2-4 seconds',
+  };
+};
+
+// Dummy API call to run pre-audit checks
+export const runPreAuditChecks = async (content: string): Promise<PreAuditCheckResult> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // PHI patterns to check
+  const phiPatterns = [
+    /\b\d{3}-\d{2}-\d{4}\b/, // SSN
+    /\b\d{3}\s\d{2}\s\d{4}\b/, // SSN with spaces
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, // Email
+    /\b\d{10}\b/, // Phone number
+    /\b\(\d{3}\)\s?\d{3}-\d{4}\b/, // Phone with formatting
+  ];
+
+  const hasPHI = phiPatterns.some(pattern => pattern.test(content));
+
+  // Key sections to look for in progress notes
+  const keySections = [
+    'subjective',
+    'objective',
+    'assessment',
+    'plan',
+    'treatment',
+    'diagnosis',
+    'intervention',
+    'goals',
+    'progress',
+    'symptoms',
+  ];
+
+  const contentLower = content.toLowerCase();
+  const foundSections = keySections.filter(section => contentLower.includes(section));
+
+  // Determine structure quality
+  let structureQuality: (typeof StructureQualityEnum)[keyof typeof StructureQualityEnum];
+  if (foundSections.length >= 5) {
+    structureQuality = StructureQualityEnum.strong;
+  } else if (foundSections.length >= 3) {
+    structureQuality = StructureQualityEnum.moderate;
+  } else {
+    structureQuality = StructureQualityEnum.weak;
+  }
+
+  const checks = [
+    {
+      id: 'phi',
+      name: hasPHI ? 'PHI Detected' : 'No PHI Detected',
+      status: hasPHI ? PreAuditCheckStatusEnum.failed : PreAuditCheckStatusEnum.passed,
+      description: hasPHI ? 'Potential PHI detected. Please remove before submission.' : undefined,
+    },
+    {
+      id: 'length',
+      name: content.length > 50 ? 'Length Check Passed' : 'Length Check Warning',
+      status: content.length > 50 ? PreAuditCheckStatusEnum.passed : PreAuditCheckStatusEnum.warning,
+      description: content.length > 50 ? `Length adequate (${content.length} characters)` : 'No content to analyze',
+    },
+    {
+      id: 'structure',
+      name: foundSections.length >= 3 ? 'Structure Check Passed' : 'Structure Needs Improvement',
+      status: foundSections.length >= 3 ? PreAuditCheckStatusEnum.passed : PreAuditCheckStatusEnum.warning,
+      description:
+        foundSections.length >= 3
+          ? `Found ${foundSections.length} key sections`
+          : `Weak structure: Only ${foundSections.length} key sections found (need 3+)`,
+    },
+  ];
+
+  return {
+    overallStatus: structureQuality,
+    checks,
+  };
+};
