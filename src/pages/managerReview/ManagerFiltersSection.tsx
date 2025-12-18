@@ -3,19 +3,18 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import {
-  ManagerDecisionEnum,
   PriorityEnum,
   DisagreementLevelEnum,
-  ManagerDecisionLabels,
   PriorityLabels,
   DisagreementLevelLabels,
+  getHumanReviewDecisionOptions,
 } from '@/constants/common';
 
 interface FiltersSectionProps {
   filters: {
-    humanDecision: number | 'all';
-    priority: number | 'all';
-    disagreement: number | 'all';
+    humanDecision: string | 'all';
+    priority: string | 'all';
+    disagreement: string | 'all';
     search: string;
   };
   loading: boolean;
@@ -24,7 +23,7 @@ interface FiltersSectionProps {
   onClearFilters: () => void;
 }
 
-const managerDecisions = Object.values(ManagerDecisionEnum) as number[];
+const managerDecisions = getHumanReviewDecisionOptions();
 const disagreementLevels = Object.values(DisagreementLevelEnum) as number[];
 const priorityLevels = Object.values(PriorityEnum) as number[];
 
@@ -44,8 +43,8 @@ export const ManagerFiltersSection = ({ filters, loading, onFilterChange, onAppl
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {managerDecisions.map(option => (
-                <SelectItem key={option} value={option.toString()}>
-                  {ManagerDecisionLabels[option]}
+                <SelectItem key={option.value} value={option.value.toString()}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

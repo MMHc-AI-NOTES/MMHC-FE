@@ -128,7 +128,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                   className={`cursor-pointer transition-colors hover:bg-green-50 ${isSelected && 'bg-green-50'}`}
                   onClick={() => onSelectLog(log)}
                 >
-                  <TableCell className="text-sm font-medium text-gray-900">LOG-{log.id}</TableCell>
+                  <TableCell className="text-sm font-medium text-gray-900">{log.id}</TableCell>
                   <TableCell className="text-sm text-gray-600">{log.noteId || '-'}</TableCell>
                   <TableCell>
                     <GradientBadge

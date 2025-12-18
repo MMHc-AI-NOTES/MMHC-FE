@@ -4,6 +4,7 @@ import { LucideIcon, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { EvaluationPromptKeys } from '@/constants/common';
+import { cleanSummary } from '@/utils/helper';
 
 interface SummaryCardProps {
   title: string;
@@ -16,17 +17,6 @@ interface SummaryCardProps {
 
 const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, className }: SummaryCardProps) => {
   const [copied, setCopied] = useState(false);
-
-  // Clean and structure the summary
-  const cleanSummary = (text: string) => {
-    // Remove the JSON structure markers
-    let cleaned = text.replace(/\\n/g, '\n').replace(/ {2}\n\n/g, '\n\n');
-
-    // Remove any remaining quotes and braces
-    cleaned = cleaned.replace(/["{}]/g, '');
-
-    return cleaned.trim();
-  };
 
   const displayText = cleanSummary(summary);
   const lines = displayText.split('\n').filter(line => line.trim());

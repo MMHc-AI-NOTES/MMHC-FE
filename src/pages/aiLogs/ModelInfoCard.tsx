@@ -36,7 +36,7 @@ const ModelInfoCard = ({ log }: ModelInfoCardProps) => {
             <Hash className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Audit Run ID</p>
-              <p className="text-sm text-black">LOG-{log.id}</p>
+              <p className="text-sm text-black">{log.id}</p>
             </div>
           </div>
           <div className="text-primary flex gap-1 text-sm">

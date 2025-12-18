@@ -109,7 +109,7 @@ export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps)
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
-                <TableCell className="text-left font-medium">#{note.id}</TableCell>
+                <TableCell className="text-left font-medium">{note.id}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.date}</TableCell>
                 <TableCell className="font-semibold">{note.score}</TableCell>

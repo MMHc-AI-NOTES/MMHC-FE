@@ -157,6 +157,43 @@
     @apply bg-background text-foreground;
     font-family: 'Archivo', sans-serif;
   }
+
+  /* Apply pointer cursor to all clickable elements */
+  button,
+  a,
+  select,
+  summary,
+  label[for],
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='submit'],
+  input[type='button'],
+  input[type='reset'],
+  input[type='file'],
+  [role='button'],
+  [role='link'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='option'],
+  [tabindex]:not([tabindex='-1']),
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  /* Apply green focus ring to all form inputs */
+  input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']),
+  select,
+  textarea {
+    @apply transition-colors duration-200;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']):focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--primary-light) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 0.5px var(--primary-light) !important;
+  }
 }
 
 @layer utilities {

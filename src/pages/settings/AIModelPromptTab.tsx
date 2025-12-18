@@ -120,17 +120,18 @@ const AIModelPromptTab: React.FC = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
-        <DialogContent aria-describedby="" className="max-h-[90vh] overflow-y-auto p-0 md:min-w-2xl">
+        <DialogContent aria-describedby="" className="max-h-[90vh] overflow-x-hidden overflow-y-auto p-0 md:min-w-2xl">
           <DialogHeader className="border-b p-6">
             <DialogTitle className="text-primary">{editingAgent ? 'Edit Agent' : 'Create New Agent'}</DialogTitle>
           </DialogHeader>
-
-          <AgentForm
-            agent={editingAgent}
-            onSubmit={editingAgent ? handleUpdateAgent : handleCreateAgent}
-            onCancel={handleCloseDialog}
-            isSubmitting={isSubmitting}
-          />
+          <div className="max-w-2xl">
+            <AgentForm
+              agent={editingAgent}
+              onSubmit={editingAgent ? handleUpdateAgent : handleCreateAgent}
+              onCancel={handleCloseDialog}
+              isSubmitting={isSubmitting}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

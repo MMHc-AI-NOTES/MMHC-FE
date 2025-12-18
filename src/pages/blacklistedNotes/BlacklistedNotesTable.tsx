@@ -6,7 +6,11 @@ import { AlertTriangle, OctagonAlert, Square, SquareCheckBig, ArrowRight } from 
 import { ChatSeverityLabels, BlacklistStatusLabels } from '@/constants/common';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getStatusBadgeStyles, getStatusIcon, getStatusIconColor } from './SharedComponents';
+import {
+  getStatusBadgeStyles,
+  getStatusIcon,
+  // getStatusIconColor
+} from './SharedComponents';
 
 interface BlacklistedNotesTableProps {
   notes: BlacklistedNote[];
@@ -50,7 +54,7 @@ export const BlacklistedNotesTable = ({
                     <Square className="ml-[7px] h-4 w-4" onClick={onToggleAll} />
                   )}
                 </TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[100px] text-left font-semibold">NOTE ID</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">PRACTITIONER</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">NOTE TYPE</TableHead>
@@ -89,7 +93,7 @@ export const BlacklistedNotesTable = ({
                   <Square className="ml-[7px] h-4 w-4" onClick={onToggleAll} />
                 )}
               </TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[100px] text-left font-semibold">NOTE ID</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">PRACTITIONER</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">NOTE TYPE</TableHead>
@@ -117,8 +121,8 @@ export const BlacklistedNotesTable = ({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
-                      <span className={getStatusIconColor(note.status.id)}>{getStatusIcon(note.status.id)}</span>
-                      <span className="text-primary font-semibold">#{note.noteId}</span>
+                      {/* <span className={getStatusIconColor(note.status.id)}>{getStatusIcon(note.status.id)}</span> */}
+                      <span className="text-primary font-semibold">{note.noteId}</span>
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{note.practitioner.name}</TableCell>

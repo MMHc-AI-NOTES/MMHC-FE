@@ -44,7 +44,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
                 <Hash className="h-4 w-4" />
                 <span className="text-sm">Log ID:</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">LOG-{log.id}</span>
+              <span className="text-sm font-medium text-gray-900">{log.id}</span>
             </div>
 
             {/* Note ID */}

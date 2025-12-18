@@ -49,6 +49,7 @@ export interface AILogBedrockResponse {
   'gm4p-1_progress': string;
   'kxgx-7_&_kxgx-8_suicidality/homicidality': string;
   raw_response: string;
+  user_input: string;
 }
 
 export interface AILog {

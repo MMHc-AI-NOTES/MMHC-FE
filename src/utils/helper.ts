@@ -129,3 +129,14 @@ export const mapCategoryToSectionId = (category: string): string => {
   };
   return categoryMap[category] || 'subjective';
 };
+
+// Clean and structure the summary
+export const cleanSummary = (text: string) => {
+  // Remove the JSON structure markers
+  let cleaned = text.replace(/\\n/g, '\n').replace(/ {2}\n\n/g, '\n\n');
+
+  // Remove any remaining quotes and braces
+  cleaned = cleaned.replace(/["{}]/g, '');
+
+  return cleaned.trim();
+};

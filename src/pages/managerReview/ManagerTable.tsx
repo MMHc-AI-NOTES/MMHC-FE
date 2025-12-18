@@ -5,8 +5,8 @@ import { ManagerNote } from './managerReviewTypes';
 import {
   DisagreementLevelEnum,
   DisagreementLevelLabels,
-  ManagerDecisionEnum,
-  ManagerDecisionLabels,
+  HumanReviewDecisionEnum,
+  HumanReviewDecisionLabels,
   PriorityEnum,
   PriorityLabels,
 } from '@/constants/common';
@@ -15,29 +15,25 @@ import { GradientBadge } from '@/shared/GradientBadge';
 interface ManagerTableProps {
   notes: ManagerNote[];
   loading?: boolean;
-  onReview: (id: string) => void;
+  onReview: (id: string, noteId: string) => void;
   selectedIds: string[];
   onToggleRow: (id: string) => void;
   onToggleAll: () => void;
 }
 
 export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onToggleAll }: ManagerTableProps) => {
-  if (notes.length === 0) {
-    return (
-      <div className="border-y">
-        <div className="text-muted-foreground p-6 text-center">No manager reviews found.</div>
-      </div>
-    );
-  }
-
   const getManagerGradientDecision = (manager: number): string => {
     switch (manager) {
-      case ManagerDecisionEnum.approve_with_edits:
+      case HumanReviewDecisionEnum.accept_ai_evaluation:
         return 'bg-gradient-workflow-completed';
-      case ManagerDecisionEnum.return_to_practitioner:
+      case HumanReviewDecisionEnum.ai_incorrect_override_score:
         return 'bg-gradient-workflow-returned';
-      case ManagerDecisionEnum.escalate:
+      case HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues:
         return 'bg-gradient-priority-medium';
+      case HumanReviewDecisionEnum.needs_practitioner_correction:
+        return 'bg-gradient-priority-low';
+      case HumanReviewDecisionEnum.escalate_to_office_manager:
+        return 'bg-gradient-neutral';
       default:
         return 'bg-gradient-neutral';
     }
@@ -136,33 +132,41 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
           </TableHeader>
           <TableBody>
             {notes.map(note => {
-              const isSelected = selectedIds.includes(note.id);
+              const isSelected = selectedIds.includes(note.id.toString());
               return (
                 <TableRow key={note.id} className={`${isSelected ? 'bg-highlighted-row' : ''}`}>
                   <TableCell>
                     {isSelected ? (
-                      <SquareCheckBig className="text-primary h-4 w-4" onClick={() => onToggleRow(note.id)} />
+                      <SquareCheckBig className="text-primary h-4 w-4" onClick={() => onToggleRow(note.id.toString())} />
                     ) : (
-                      <Square className="h-4 w-4 text-gray-500" onClick={() => onToggleRow(note.id)} />
+                      <Square className="h-4 w-4 text-gray-500" onClick={() => onToggleRow(note.id.toString())} />
                     )}
                   </TableCell>
-                  <TableCell className="text-primary font-semibold">#{note.id}</TableCell>
+                  <TableCell className="text-primary font-semibold">{note.noteId}</TableCell>
                   <TableCell className="font-medium">{note.practitioner}</TableCell>
                   <TableCell>{note.date}</TableCell>
                   <TableCell className="font-semibold">{note.aiScore}</TableCell>
                   <TableCell className="font-semibold">{note.humanScore ?? '—'}</TableCell>
                   <TableCell>{note.reviewer}</TableCell>
                   <TableCell>
-                    <GradientBadge
-                      label={ManagerDecisionLabels[note.humanDecision]}
-                      gradient={getManagerGradientDecision(note.humanDecision)}
-                    />
+                    {note.humanDecision ? (
+                      <GradientBadge
+                        label={HumanReviewDecisionLabels[note.humanDecision] || 'Unknown'}
+                        gradient={getManagerGradientDecision(note.humanDecision)}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <GradientBadge
-                      label={DisagreementLevelLabels[note.disagreement]}
-                      gradient={getDisagreementLevelGradient(note.disagreement)}
-                    />
+                    {note.disagreement ? (
+                      <GradientBadge
+                        label={DisagreementLevelLabels[note.disagreement]}
+                        gradient={getDisagreementLevelGradient(note.disagreement)}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
@@ -173,7 +177,7 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                         size="lg"
                         variant="outline"
                         className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
-                        onClick={() => onReview(note.id)}
+                        onClick={() => onReview(note.id.toString(), note.noteId)}
                       >
                         Review
                       </Button>

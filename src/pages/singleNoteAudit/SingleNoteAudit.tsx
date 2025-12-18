@@ -24,6 +24,7 @@ import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
 import ModelInformation from './ModelInformation';
 import { mapCategoryToSectionId } from '@/utils/helper';
+import { SessionTypeLabels } from '@/constants/common';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -70,8 +71,8 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     practitioner: apiData.practitioner.fullName,
     cptCode: apiData.cptCodeId,
     clientId: apiData.patient?.clientId || '-',
-    noteType: 'Progress Note',
-    aiReviews: apiData.chats?.length || 0,
+    noteType: SessionTypeLabels[apiData.type.id],
+    aiReviews: apiData.chat_count || 0,
     auditScore: bedrockResponse?.score || 0,
     lastRun: formattedDateTime,
     humanReview: extractedHumanReviewChat?.humanReviews || null,
