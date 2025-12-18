@@ -138,7 +138,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">
-                  <div className="text-primary flex items-center gap-1">
+                  <div className="text-primary flex items-center justify-center gap-1">
                     WORKFLOW
                     <TooltipProvider>
                       <Tooltip>
@@ -153,7 +153,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                   </div>
                 </TableHead>
                 <TableHead className="min-w-[100px] font-semibold">
-                  <div className="text-primary flex items-center gap-1">
+                  <div className="text-primary flex items-center justify-center gap-1">
                     PRIORITY
                     <TooltipProvider>
                       <Tooltip>
@@ -169,7 +169,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 </TableHead>
                 {/* REVIEW CYCLE Column - Commented out for now */}
                 <TableHead className="text-primary min-w-[140px]">
-                  <div className="text-primary flex items-center gap-1">
+                  <div className="text-primary flex items-center justify-center gap-1">
                     REVIEW CYCLE
                     <TooltipProvider>
                       <Tooltip>
@@ -216,7 +216,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
               <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                   WORKFLOW
                   <TooltipProvider>
                     <Tooltip>
@@ -234,7 +234,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 </div>
               </TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                   PRIORITY
                   <TooltipProvider>
                     <Tooltip>
@@ -253,7 +253,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
               </TableHead>
               {/* REVIEW CYCLE Column - Commented out for now */}
               <TableHead className="text-primary min-w-[140px]">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                   REVIEW CYCLE
                   <TooltipProvider>
                     <Tooltip>

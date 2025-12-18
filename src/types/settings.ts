@@ -33,7 +33,7 @@ export interface AvailableVariable {
 }
 
 // User Management
-export type UserRole = 'Super Admin' | 'Practitioner' | 'Manager';
+export type UserRole = 1 | 2 | 3;
 
 export interface User {
   id: string;

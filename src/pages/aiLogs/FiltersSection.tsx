@@ -1,10 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
 import { Cpu, Code, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Agent } from '@/types/agent';
 import { ChatResultEnum, ChatResultLabels, ChatSeverityEnum, ChatSeverityLabels } from '@/constants/common';
-import { getEnumValues } from '@/utils/helper';
+import { getAgentModelOptions, getEnumValues } from '@/utils/helper';
 
 interface AILogsFilters {
   model: string;
@@ -22,12 +21,6 @@ interface FiltersSectionProps {
   onClearFilters: () => void;
 }
 
-const modelOptions = Object.entries(AGENT_MODEL_KEYS).map(([key, value]) => ({
-  key: key as keyof typeof AGENT_MODEL_KEYS,
-  value,
-  displayName: AGENT_MODEL_DISPLAY_NAMES[key as keyof typeof AGENT_MODEL_KEYS],
-}));
-
 export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
   return (
     <div className="flex flex-wrap justify-between gap-3 border-b px-4 pb-4">
@@ -44,7 +37,7 @@ export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApp
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Versions</SelectItem>
-              {modelOptions.map(model => (
+              {getAgentModelOptions().map(model => (
                 <SelectItem key={model.key} value={model.value}>
                   {model.displayName}
                 </SelectItem>

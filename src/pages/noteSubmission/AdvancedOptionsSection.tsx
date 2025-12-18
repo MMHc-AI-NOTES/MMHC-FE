@@ -13,6 +13,7 @@ import {
   AuditModeLabels,
 } from '@/constants/common';
 import { SessionMetadata, PractitionerDetails, AuditControls } from '@/types/noteSubmission';
+import { Separator } from '@/components/ui/separator';
 
 type AdvancedTab = 'session-metadata' | 'practitioner-details' | 'audit-controls';
 
@@ -44,33 +45,36 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
   setPractitionerDetails,
   auditControls,
   setAuditControls,
-  selectedModelLabel,
-  selectedAgentLabel,
+  selectedModelLabel = 'Claude 3.5 Haiku v1',
+  selectedAgentLabel = 'Prompt Agent',
 }) => {
   return (
-    <div className="rounded-lg border bg-gray-50 p-4">
-      <h3 className="mb-3 text-sm font-semibold text-gray-800">Advanced Options</h3>
+    <div className="rounded-xl bg-white py-6 shadow">
+      <div className="px-6">
+        <h3 className="text-primary mb-4 text-sm font-semibold">Advanced Options</h3>
 
-      {/* Tab Navigation */}
-      <div className="mb-4 flex gap-1">
-        {tabs.map(tab => (
-          <Button
-            key={tab.id}
-            variant={activeTab === tab.id ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab(tab.id)}
-            className={`text-xs ${activeTab === tab.id ? 'bg-gray-800 text-white hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-200'}`}
-          >
-            {tab.label}
-          </Button>
-        ))}
+        {/* Tab Navigation */}
+        <div className="flex gap-1">
+          {tabs.map(tab => (
+            <Button
+              key={tab.id}
+              variant={activeTab === tab.id ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab(tab.id)}
+              className={`text-xs ${activeTab === tab.id ? 'bg-primary hover:bg-primary font-semibold text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+            >
+              {tab.label}
+            </Button>
+          ))}
+        </div>
       </div>
+      <Separator className="mt-3 mb-4" />
 
       {/* Tab Content */}
-      <div className="space-y-4">
+      <div className="space-y-4 px-6">
         {activeTab === 'session-metadata' && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="sessionLength" className="text-xs text-gray-600">
                 Session Length (minutes)
               </Label>
@@ -82,7 +86,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
                 className="bg-white"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="clientInitials" className="text-xs text-gray-600">
                 Client Initials
               </Label>
@@ -94,24 +98,24 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
                 className="bg-white"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="modelVersionDisplay" className="text-xs text-gray-600">
                 Model Version
               </Label>
-              <Input id="modelVersionDisplay" value={selectedModelLabel} disabled className="bg-gray-100 text-gray-600" />
+              <Input id="modelVersionDisplay" value={selectedModelLabel} disabled />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="promptAgentDisplay" className="text-xs text-gray-600">
                 Prompt Agent
               </Label>
-              <Input id="promptAgentDisplay" value={selectedAgentLabel} disabled className="bg-gray-100 text-gray-600" />
+              <Input id="promptAgentDisplay" value={selectedAgentLabel} disabled />
             </div>
           </div>
         )}
 
         {activeTab === 'practitioner-details' && (
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="practitionerName" className="text-xs text-gray-600">
                 Practitioner Name
               </Label>
@@ -123,7 +127,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
                 className="bg-white"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="practitionerCredentials" className="text-xs text-gray-600">
                 Practitioner Credentials
               </Label>
@@ -135,7 +139,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
                 className="bg-white"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="practitionerRole" className="text-xs text-gray-600">
                 Practitioner Role
               </Label>
@@ -165,7 +169,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
 
         {activeTab === 'audit-controls' && (
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="auditMode" className="text-xs text-gray-600">
                 Audit Mode
               </Label>
@@ -190,7 +194,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center justify-between rounded-md border bg-white p-3">
+            <div className="flex items-center justify-between rounded-md border bg-white px-3 py-2">
               <Label htmlFor="debugMode" className="text-sm text-gray-700">
                 Enable Debug Mode
               </Label>
@@ -200,7 +204,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
                 onCheckedChange={checked => setAuditControls(prev => ({ ...prev, enableDebugMode: checked }))}
               />
             </div>
-            <div className="flex items-center justify-between rounded-md border bg-white p-3">
+            <div className="flex items-center justify-between rounded-md border bg-white px-3 py-2">
               <Label htmlFor="tokenReport" className="text-sm text-gray-700">
                 Include Token Usage Report
               </Label>

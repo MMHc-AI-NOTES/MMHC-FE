@@ -7,12 +7,12 @@ import { Agent, CreateAgentRequest } from '@/types/agent';
 import * as yup from 'yup';
 import InputField from '@/shared/InputField';
 import SliderField from '@/shared/SliderField';
-import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
-import { SLIDER_CONFIGS } from '@/constants/common';
+import { AgentModelKeys, SLIDER_CONFIGS } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { DialogFooter } from '@/components/ui/dialog';
+import { getAgentModelOptions } from '@/utils/helper';
 
 interface AgentFormProps {
   agent?: Agent;
@@ -45,13 +45,6 @@ interface AgentFormValues {
   description: string;
 }
 
-// Convert agentModelKeys to an array for easier iteration
-const modelOptions = Object.entries(AGENT_MODEL_KEYS).map(([key, value]) => ({
-  key: key as keyof typeof AGENT_MODEL_KEYS,
-  value,
-  displayName: AGENT_MODEL_DISPLAY_NAMES[key as keyof typeof AGENT_MODEL_KEYS],
-}));
-
 // Tooltip content for each parameter
 const TOOLTIP_CONTENT = {
   temperature: {
@@ -73,7 +66,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
   const formik = useFormik<AgentFormValues>({
     initialValues: {
       name: agent?.name || '',
-      model: agent?.model || AGENT_MODEL_KEYS.CLAUDE_3_5_HAIKU_V1,
+      model: agent?.model || AgentModelKeys.CLAUDE_3_5_HAIKU_V1,
       is_default: agent?.is_default ? 1 : 0,
       temperature: agent?.temperature || 0,
       top_k: agent?.top_k || 0,
@@ -152,7 +145,7 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {modelOptions.map(model => (
+                {getAgentModelOptions().map(model => (
                   <SelectItem key={model.key} value={model.value}>
                     {model.displayName}
                   </SelectItem>

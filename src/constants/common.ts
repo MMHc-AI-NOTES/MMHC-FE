@@ -20,13 +20,6 @@ export const HumanReviewDecisionLabels: Record<number, string> = {
   [HumanReviewDecisionEnum.escalate_to_office_manager]: 'Escalate to Office Manager',
 };
 
-// Helper function to get decision options for select/checkbox components
-export const getHumanReviewDecisionOptions = () =>
-  Object.values(HumanReviewDecisionEnum).map(value => ({
-    value,
-    label: HumanReviewDecisionLabels[value],
-  }));
-
 // Manager Decision Enum
 export const ManagerDecisionEnum = {
   approve_note_valid_and_compliant: 1,
@@ -332,30 +325,6 @@ export const NoteTypeLabels: Record<number, string> = {
   [NoteTypeEnum.termination_note]: 'Termination Note',
 };
 
-// Model Version Enum
-export const ModelVersionEnum = {
-  claude_3_5_haiku_v1: 1,
-  claude_3_haiku: 2,
-  claude_3_5_haiku_v2: 3,
-} as const;
-
-export const ModelVersionLabels: Record<number, string> = {
-  [ModelVersionEnum.claude_3_5_haiku_v1]: 'Claude 3.5 Haiku V1',
-  [ModelVersionEnum.claude_3_haiku]: 'Claude 3 Haiku',
-  [ModelVersionEnum.claude_3_5_haiku_v2]: 'Claude 3.5 Haiku V2',
-};
-
-// Prompt Agent Enum
-export const PromptAgentEnum = {
-  clinical_documentation_auditor: 1,
-  technical_support_agent: 2,
-} as const;
-
-export const PromptAgentLabels: Record<number, string> = {
-  [PromptAgentEnum.clinical_documentation_auditor]: 'Clinical Documentation Auditor',
-  [PromptAgentEnum.technical_support_agent]: 'Technical Support Agent',
-};
-
 // Practitioner Role Enum
 export const PractitionerRoleEnum = {
   therapist: 1,
@@ -410,4 +379,43 @@ export const StructureQualityLabels: Record<number, string> = {
   [StructureQualityEnum.strong]: 'Strong Structure',
   [StructureQualityEnum.moderate]: 'Moderate Structure',
   [StructureQualityEnum.weak]: 'Weak Structure',
+};
+
+export const AgentModelKeys = {
+  CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+
+  // CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
+  // CLAUDE_3_5_HAIKU_V2: 'anthropic.claude-3-5-haiku-20241022-v2:0',
+  // CLAUDE_3_5_HAIKU_V1: 'anthropic.claude-3-5-haiku-20241022-v1:0',
+
+  //   CLAUDE_3_5_SONNET_V2: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+  //   CLAUDE_3_5_SONNET_V1: 'anthropic.claude-3-5-sonnet-20241022-v1:0',
+  //   CLAUDE_3_OPUS: 'anthropic.claude-3-opus-20240229-v1:0',
+  //   CLAUDE_3_SONNET: 'anthropic.claude-3-sonnet-20240229-v1:0',
+  //   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
+  //   CLAUDE_3_5_HAIKU_V2: 'anthropic.claude-3-5-haiku-20241022-v2:0',
+  //   CLAUDE_3_5_HAIKU_V1: 'anthropic.claude-3-5-haiku-20241022-v1:0',
+} as const;
+
+export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
+  //   CLAUDE_3_5_SONNET_V2: 'Claude 3.5 Sonnet V2',
+  //   CLAUDE_3_5_SONNET_V1: 'Claude 3.5 Sonnet V1',
+  //   CLAUDE_3_OPUS: 'Claude 3 Opus',
+  //   CLAUDE_3_SONNET: 'Claude 3 Sonnet',
+  CLAUDE_3_HAIKU: 'Claude 3 Haiku',
+  // CLAUDE_3_5_HAIKU_V2: 'Claude 3.5 Haiku V2',
+  CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku V1',
+};
+
+export const AgentTypes = {
+  SYSTEM: 1,
+  SOAP: 2,
+  CUSTOM: 3,
+} as const;
+
+export const AgentTypeLabels: Record<number, string> = {
+  [AgentTypes.SYSTEM]: 'System',
+  [AgentTypes.SOAP]: 'SOAP',
+  [AgentTypes.CUSTOM]: 'Custom',
 };

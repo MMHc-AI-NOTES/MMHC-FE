@@ -51,21 +51,21 @@ const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
       <div className="flex flex-wrap gap-4">
         <Button
           onClick={() => setActiveTab('prompt')}
-          className={`hover:bg-gradient-light hover:text-primary h-12 min-w-[200px] flex-1 ${activeTab === 'prompt' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600'} `}
+          className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'prompt' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600'}`}
         >
           <Code className="h-4 w-4" />
           Prompt (Raw Input)
         </Button>
         <Button
           onClick={() => setActiveTab('prompt-history')}
-          className={`hover:bg-gradient-light hover:text-primary h-12 min-w-[200px] flex-1 ${activeTab === 'prompt-history' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600'} `}
+          className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'prompt-history' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600'}`}
         >
           <History className="h-4 w-4" />
           Prompt History (All Prompts)
         </Button>
         <Button
           onClick={() => setActiveTab('output')}
-          className={`hover:bg-gradient-light hover:text-primary h-12 min-w-[200px] flex-1 ${activeTab === 'output' ? 'bg-primary-light text-primary' : 'bg-gray-50 text-gray-600'} `}
+          className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'output' ? 'bg-primary-light text-primary' : 'bg-gray-50 text-gray-600'}`}
         >
           <Zap className="h-4 w-4" />
           AI Output (Raw Response)

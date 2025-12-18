@@ -1,12 +1,4 @@
-import {
-  NoteTypeEnum,
-  ModelVersionEnum,
-  PromptAgentEnum,
-  PractitionerRoleEnum,
-  AuditModeEnum,
-  PreAuditCheckStatusEnum,
-  StructureQualityEnum,
-} from '@/constants/common';
+import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, PreAuditCheckStatusEnum, StructureQualityEnum } from '@/constants/common';
 
 // Form Data Types
 export interface SessionMetadata {
@@ -30,8 +22,8 @@ export interface AuditControls {
 
 export interface NoteSubmissionFormData {
   noteType: (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum];
-  modelVersion: (typeof ModelVersionEnum)[keyof typeof ModelVersionEnum];
-  promptAgent: (typeof PromptAgentEnum)[keyof typeof PromptAgentEnum];
+  modelVersion: string;
+  promptAgent: number;
   sessionMetadata: SessionMetadata;
   practitionerDetails: PractitionerDetails;
   auditControls: AuditControls;

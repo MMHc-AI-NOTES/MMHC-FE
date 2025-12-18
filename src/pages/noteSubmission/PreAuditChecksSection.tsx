@@ -1,21 +1,19 @@
 import React from 'react';
-import { Check, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PreAuditCheckResult } from '@/types/noteSubmission';
 import { PreAuditCheckStatusEnum, StructureQualityLabels, StructureQualityEnum } from '@/constants/common';
 
 interface PreAuditChecksSectionProps {
-  isExpanded: boolean;
-  setIsExpanded: (expanded: boolean) => void;
   preAuditResults: PreAuditCheckResult | null;
 }
 
-const PreAuditChecksSection: React.FC<PreAuditChecksSectionProps> = ({ isExpanded, setIsExpanded, preAuditResults }) => {
+const PreAuditChecksSection: React.FC<PreAuditChecksSectionProps> = ({ preAuditResults }) => {
   const getStatusIcon = (status: number) => {
     if (status === PreAuditCheckStatusEnum.passed) {
-      return <Check className="h-4 w-4 text-green-600" />;
+      return <div className="text-green-600">✓</div>;
     }
-    return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+    return <div className="text-orange-500">!</div>;
   };
 
   const getStatusColor = (status: number) => {
@@ -32,33 +30,67 @@ const PreAuditChecksSection: React.FC<PreAuditChecksSectionProps> = ({ isExpande
     return 'warning';
   };
 
-  return (
-    <div className="rounded-lg border bg-white">
-      <button onClick={() => setIsExpanded(!isExpanded)} className="flex w-full items-center justify-between p-4 text-left">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-gray-800">Pre-Audit Checks</span>
-          {preAuditResults && (
-            <Badge variant={getOverallBadgeVariant(preAuditResults.overallStatus)}>
-              {StructureQualityLabels[preAuditResults.overallStatus]}
-            </Badge>
-          )}
-        </div>
-        {isExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-      </button>
+  // Dummy data when no results
+  const dummyResults: PreAuditCheckResult = {
+    overallStatus: StructureQualityEnum.moderate,
+    checks: [
+      {
+        id: 'phi-check',
+        name: 'No PHI Detected',
+        status: PreAuditCheckStatusEnum.passed,
+      },
+      {
+        id: 'length-check',
+        name: 'Length Check Warning',
+        status: PreAuditCheckStatusEnum.warning,
+        description: 'No content to analyze',
+      },
+      {
+        id: 'structure-check',
+        name: 'Structure Needs Improvement',
+        status: PreAuditCheckStatusEnum.warning,
+      },
+    ],
+  };
 
-      {isExpanded && preAuditResults && (
-        <div className="space-y-3 border-t px-4 pt-3 pb-4">
-          {preAuditResults.checks.map(check => (
-            <div key={check.id} className="flex items-start gap-2">
-              {getStatusIcon(check.status)}
-              <div>
-                <p className={`text-sm font-medium ${getStatusColor(check.status)}`}>{check.name}</p>
-                {check.description && <p className="text-xs text-gray-500">{check.description}</p>}
-              </div>
+  const displayResults =
+    !preAuditResults || !preAuditResults.checks || preAuditResults.checks.length === 0 ? dummyResults : preAuditResults;
+
+  return (
+    <div className="rounded-xl bg-white shadow">
+      <Accordion type="single" collapsible defaultValue="pre-audit-checks">
+        <AccordionItem value="pre-audit-checks" className="border-0">
+          <AccordionTrigger className="px-4 py-4 hover:no-underline">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-gray-800">Pre-Audit Checks</span>
+              {displayResults && (
+                <Badge variant={getOverallBadgeVariant(displayResults.overallStatus)}>
+                  {StructureQualityLabels[displayResults.overallStatus]}
+                </Badge>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          </AccordionTrigger>
+          <AccordionContent className="px-4">
+            <div className="space-y-3 pt-3 pb-4">
+              {displayResults?.checks.map(check => (
+                <div key={check.id} className="flex items-center gap-2">
+                  <div
+                    className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                      check.status === PreAuditCheckStatusEnum.passed ? 'bg-green-100' : 'bg-orange-100'
+                    }`}
+                  >
+                    {getStatusIcon(check.status)}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-medium ${getStatusColor(check.status)}`}>{check.name}</p>
+                    {check.description && <p className="text-xs text-gray-500">{check.description}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };
