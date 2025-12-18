@@ -11,7 +11,9 @@ export const ManagerColorKey = () => {
             <div className="space-y-2">
               <ColorKeyItem label="Approve with Edits" gradient="bg-gradient-workflow-completed" />
               <ColorKeyItem label="Return to Practitioner" gradient="bg-gradient-workflow-returned" />
-              <ColorKeyItem label="Escalate" gradient="bg-gradient-priority-medium" />
+              <ColorKeyItem label="Note is clinically acceptable despite AI issues" gradient="bg-gradient-priority-medium" />
+              <ColorKeyItem label="Note needs practitioner correction" gradient="bg-gradient-priority-low" />
+              <ColorKeyItem label="Escalate to Office Manager" gradient="bg-gradient-neutral" />
             </div>
           </div>
 

@@ -6,13 +6,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HumanReviewDecisionEnum, HumanReviewResultEnum } from '@/constants/common';
+import { getHumanReviewDecisionOptions, HumanReviewResultEnum } from '@/constants/common';
 import { submitHumanReview, updateHumanReview } from './singleNoteApiCalls';
 import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { cn } from '@/lib/utils';
 import { HumanReview } from '@/types/notes';
+import { Textarea } from '@/components/ui/textarea';
 
 interface HumanReviewSectionProps {
   noteId: string;
@@ -47,13 +48,7 @@ const HumanReviewSection = ({
 
   const isSubmitDisabled = !decision || reviewerName === 'none' || reviewerName === '' || isSubmitting;
 
-  const decisionOptions = [
-    { value: HumanReviewDecisionEnum.accept_ai_evaluation, label: 'Accept AI evaluation' },
-    { value: HumanReviewDecisionEnum.ai_incorrect_override_score, label: 'AI is incorrect — override score' },
-    { value: HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues, label: 'Note is clinically acceptable despite AI issues' },
-    { value: HumanReviewDecisionEnum.needs_practitioner_correction, label: 'Note needs practitioner correction' },
-    { value: HumanReviewDecisionEnum.escalate_to_office_manager, label: 'Escalate to Office Manager' },
-  ];
+  const decisionOptions = getHumanReviewDecisionOptions();
 
   const handleCheckboxChange = (itemValue: string, checked: boolean | string) => {
     if (checked) {
@@ -210,7 +205,10 @@ const HumanReviewSection = ({
                       </div>
                     )}
                   </div>
-                  <label htmlFor={item.value.toString()} className={cn('text-primary cursor-pointer text-sm leading-none font-medium')}>
+                  <label
+                    htmlFor={item.value.toString()}
+                    className={cn('text-primary mb-1 cursor-pointer text-sm leading-none font-medium')}
+                  >
                     {item.label}
                   </label>
                 </div>
@@ -319,7 +317,7 @@ const HumanReviewSection = ({
         {/* Reviewer Comments */}
         <div className="space-y-1">
           <p className="text-sm font-medium text-gray-700">Reviewer Comments</p>
-          <textarea
+          <Textarea
             value={comments}
             onChange={e => setComments(e.target.value)}
             placeholder="Add your review comments here..."
@@ -333,11 +331,7 @@ const HumanReviewSection = ({
             <Save />
             Save Draft
           </Button>
-          <Button
-            className="bg-gradient-light text-primary hover:bg-primary-light"
-            onClick={handleSubmitReview}
-            disabled={isSubmitDisabled}
-          >
+          <Button className="bg-gradient-light text-primary" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
             {isEditMode ? 'Update Human Review' : 'Submit Human Review'}
           </Button>

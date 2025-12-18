@@ -164,6 +164,8 @@ export interface Practitioner {
 
 export interface ApiNoteDetail {
   id: number;
+  chat_count: number;
+  type: { id: number; name: string };
   aiStatus: { id: number; name: string };
   priority: { id: number; name: string };
   noteId: string;
