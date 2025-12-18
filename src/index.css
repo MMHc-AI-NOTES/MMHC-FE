@@ -189,7 +189,8 @@
 
   input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']):focus,
   select:focus,
-  textarea:focus {
+  textarea:focus,
+  [data-slot='select-trigger']:focus-visible {
     border-color: var(--primary-light) !important;
     outline: none !important;
     box-shadow: 0 0 0 0.5px var(--primary-light) !important;

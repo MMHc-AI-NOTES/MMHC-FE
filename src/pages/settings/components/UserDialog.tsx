@@ -37,7 +37,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, editingUser, o
     initialValues: {
       fullName: editingUser?.fullName || '',
       email: editingUser?.email || '',
-      role: editingUser?.role || 'Practitioner',
+      role: editingUser?.role || 1,
       status: editingUser?.status || 'active',
     },
     validationSchema: userValidationSchema,
@@ -57,7 +57,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, editingUser, o
       });
     } else {
       formik.resetForm({
-        values: { fullName: '', email: '', role: 'Practitioner', status: 'active' },
+        values: { fullName: '', email: '', role: 1, status: 'active' },
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,14 +77,17 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, editingUser, o
 
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={formik.values.role} onValueChange={(value: UserRole) => formik.setFieldValue('role', value)}>
+              <Select
+                value={formik.values.role.toString()}
+                onValueChange={(value: string) => formik.setFieldValue('role', Number(value) as UserRole)}
+              >
                 <SelectTrigger className="mt-1 h-11! w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Super Admin">Super Admin</SelectItem>
-                  <SelectItem value="Practitioner">Practitioner</SelectItem>
-                  <SelectItem value="Manager">Manager</SelectItem>
+                  <SelectItem value="1">Super Admin</SelectItem>
+                  <SelectItem value="2">Practitioner</SelectItem>
+                  <SelectItem value="3">Manager</SelectItem>
                 </SelectContent>
               </Select>
               {formik.touched.role && formik.errors.role && <div className="mt-1 text-sm text-red-500">{formik.errors.role}</div>}

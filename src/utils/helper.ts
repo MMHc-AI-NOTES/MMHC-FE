@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { showToast } from '@/lib/toast';
-import { AGENT_MODEL_DISPLAY_NAMES, AGENT_MODEL_KEYS } from '@/constants';
 import moment from 'moment';
+import { AgentModelDisplayNames, AgentModelKeys, HumanReviewDecisionEnum, HumanReviewDecisionLabels } from '@/constants/common';
 
 export interface ErrorMessage {
   message: string;
@@ -105,8 +105,8 @@ export const getEnumValues = (enumObj: Record<string, number>): number[] => {
 };
 
 export const getModelDisplayName = (modelId: string): string => {
-  const modelEntry = Object.entries(AGENT_MODEL_KEYS).find(([, value]) => value === modelId);
-  return modelEntry ? AGENT_MODEL_DISPLAY_NAMES[modelEntry[0] as keyof typeof AGENT_MODEL_KEYS] : modelId;
+  const modelEntry = Object.entries(AgentModelKeys).find(([, value]) => value === modelId);
+  return modelEntry ? AgentModelDisplayNames[modelEntry[0] as keyof typeof AgentModelKeys] : modelId;
 };
 
 // Utility function to get default date range
@@ -140,3 +140,17 @@ export const cleanSummary = (text: string) => {
 
   return cleaned.trim();
 };
+
+// Convert agentModelKeys to an array for easier iteration
+export const getAgentModelOptions = () =>
+  Object.entries(AgentModelKeys).map(([key, value]) => ({
+    key: key as keyof typeof AgentModelKeys,
+    value,
+    displayName: AgentModelDisplayNames[key as keyof typeof AgentModelKeys],
+  }));
+
+export const getHumanReviewDecisionOptions = () =>
+  Object.values(HumanReviewDecisionEnum).map(value => ({
+    value,
+    label: HumanReviewDecisionLabels[value],
+  }));

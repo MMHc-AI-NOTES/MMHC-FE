@@ -30,7 +30,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
       <TableCell className="text-left">{user.fullName}</TableCell>
       <TableCell className="text-left">{user.email}</TableCell>
       <TableCell className="text-left">
-        <Select value={user.role} onValueChange={(value: UserRole) => onRoleChange(user.id, value)}>
+        <Select value={user.role.toString()} onValueChange={(value: string) => onRoleChange(user.id, Number(value) as UserRole)}>
           <SelectTrigger size="sm" className="rounded-full">
             <SelectValue />
           </SelectTrigger>

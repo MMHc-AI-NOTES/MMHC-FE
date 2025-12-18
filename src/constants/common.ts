@@ -20,13 +20,6 @@ export const HumanReviewDecisionLabels: Record<number, string> = {
   [HumanReviewDecisionEnum.escalate_to_office_manager]: 'Escalate to Office Manager',
 };
 
-// Helper function to get decision options for select/checkbox components
-export const getHumanReviewDecisionOptions = () =>
-  Object.values(HumanReviewDecisionEnum).map(value => ({
-    value,
-    label: HumanReviewDecisionLabels[value],
-  }));
-
 // Manager Decision Enum
 export const ManagerDecisionEnum = {
   approve_note_valid_and_compliant: 1,
@@ -313,4 +306,116 @@ export const UserRoleLabels: Record<string, string> = {
   [UserRoleEnum.super_admin]: 'Super Admin',
   [UserRoleEnum.practitioner]: 'Practitioner',
   [UserRoleEnum.manager]: 'Manager',
+};
+
+// Note Submission Enums
+
+// Note Type Enum (for submission form)
+export const NoteTypeEnum = {
+  progress_note: 1,
+  intake_note: 2,
+  treatment_plan: 3,
+  termination_note: 4,
+} as const;
+
+export const NoteTypeLabels: Record<number, string> = {
+  [NoteTypeEnum.progress_note]: 'Progress Note',
+  [NoteTypeEnum.intake_note]: 'Intake Note',
+  [NoteTypeEnum.treatment_plan]: 'Treatment Plan',
+  [NoteTypeEnum.termination_note]: 'Termination Note',
+};
+
+// Practitioner Role Enum
+export const PractitionerRoleEnum = {
+  therapist: 1,
+  psychologist: 2,
+  psychiatrist: 3,
+  counselor: 4,
+  social_worker: 5,
+} as const;
+
+export const PractitionerRoleLabels: Record<number, string> = {
+  [PractitionerRoleEnum.therapist]: 'Therapist',
+  [PractitionerRoleEnum.psychologist]: 'Psychologist',
+  [PractitionerRoleEnum.psychiatrist]: 'Psychiatrist',
+  [PractitionerRoleEnum.counselor]: 'Counselor',
+  [PractitionerRoleEnum.social_worker]: 'Social Worker',
+};
+
+// Audit Mode Enum
+export const AuditModeEnum = {
+  default: 1,
+  strict: 2,
+  experimental: 3,
+} as const;
+
+export const AuditModeLabels: Record<number, string> = {
+  [AuditModeEnum.default]: 'Default',
+  [AuditModeEnum.strict]: 'Strict',
+  [AuditModeEnum.experimental]: 'Experimental',
+};
+
+// Pre-Audit Check Status Enum
+export const PreAuditCheckStatusEnum = {
+  passed: 1,
+  warning: 2,
+  failed: 3,
+} as const;
+
+export const PreAuditCheckStatusLabels: Record<number, string> = {
+  [PreAuditCheckStatusEnum.passed]: 'Passed',
+  [PreAuditCheckStatusEnum.warning]: 'Warning',
+  [PreAuditCheckStatusEnum.failed]: 'Needs Improvement',
+};
+
+// Structure Quality Enum
+export const StructureQualityEnum = {
+  strong: 1,
+  moderate: 2,
+  weak: 3,
+} as const;
+
+export const StructureQualityLabels: Record<number, string> = {
+  [StructureQualityEnum.strong]: 'Strong Structure',
+  [StructureQualityEnum.moderate]: 'Moderate Structure',
+  [StructureQualityEnum.weak]: 'Weak Structure',
+};
+
+export const AgentModelKeys = {
+  CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+
+  // CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
+  // CLAUDE_3_5_HAIKU_V2: 'anthropic.claude-3-5-haiku-20241022-v2:0',
+  // CLAUDE_3_5_HAIKU_V1: 'anthropic.claude-3-5-haiku-20241022-v1:0',
+
+  //   CLAUDE_3_5_SONNET_V2: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+  //   CLAUDE_3_5_SONNET_V1: 'anthropic.claude-3-5-sonnet-20241022-v1:0',
+  //   CLAUDE_3_OPUS: 'anthropic.claude-3-opus-20240229-v1:0',
+  //   CLAUDE_3_SONNET: 'anthropic.claude-3-sonnet-20240229-v1:0',
+  //   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
+  //   CLAUDE_3_5_HAIKU_V2: 'anthropic.claude-3-5-haiku-20241022-v2:0',
+  //   CLAUDE_3_5_HAIKU_V1: 'anthropic.claude-3-5-haiku-20241022-v1:0',
+} as const;
+
+export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
+  //   CLAUDE_3_5_SONNET_V2: 'Claude 3.5 Sonnet V2',
+  //   CLAUDE_3_5_SONNET_V1: 'Claude 3.5 Sonnet V1',
+  //   CLAUDE_3_OPUS: 'Claude 3 Opus',
+  //   CLAUDE_3_SONNET: 'Claude 3 Sonnet',
+  CLAUDE_3_HAIKU: 'Claude 3 Haiku',
+  // CLAUDE_3_5_HAIKU_V2: 'Claude 3.5 Haiku V2',
+  CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku V1',
+};
+
+export const AgentTypes = {
+  SYSTEM: 1,
+  SOAP: 2,
+  CUSTOM: 3,
+} as const;
+
+export const AgentTypeLabels: Record<number, string> = {
+  [AgentTypes.SYSTEM]: 'System',
+  [AgentTypes.SOAP]: 'SOAP',
+  [AgentTypes.CUSTOM]: 'Custom',
 };

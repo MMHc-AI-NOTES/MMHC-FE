@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getHumanReviewDecisionOptions, HumanReviewResultEnum } from '@/constants/common';
 import { submitHumanReview, updateHumanReview } from './singleNoteApiCalls';
 import { useDispatch } from 'react-redux';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
@@ -14,6 +13,8 @@ import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { cn } from '@/lib/utils';
 import { HumanReview } from '@/types/notes';
 import { Textarea } from '@/components/ui/textarea';
+import { getHumanReviewDecisionOptions } from '@/utils/helper';
+import { HumanReviewResultEnum } from '@/constants/common';
 
 interface HumanReviewSectionProps {
   noteId: string;
