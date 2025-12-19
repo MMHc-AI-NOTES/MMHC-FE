@@ -54,7 +54,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
         <h3 className="text-primary mb-4 text-sm font-semibold">Advanced Options</h3>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto">
           {tabs.map(tab => (
             <Button
               key={tab.id}
@@ -73,7 +73,7 @@ const AdvancedOptionsSection: React.FC<AdvancedOptionsSectionProps> = ({
       {/* Tab Content */}
       <div className="space-y-4 px-6">
         {activeTab === 'session-metadata' && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="sessionLength" className="text-xs text-gray-600">
                 Session Length (minutes)
