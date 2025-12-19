@@ -13,7 +13,7 @@ const SidebarHeaderSection = () => {
           <SidebarTrigger />
         </div>
       ) : (
-        <SidebarTrigger className="mt-3 ml-4" />
+        <SidebarTrigger className="ml-4" />
       )}
     </SidebarHeader>
   );

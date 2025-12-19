@@ -187,13 +187,41 @@
     @apply transition-colors duration-200;
   }
 
-  input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']):focus,
+  /* Ensure select and select-trigger have transition for smooth hover */
+  select,
+  [data-slot='select-trigger'] {
+    @apply transition-colors duration-200;
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='reset']):not(
+      [data-slot='command-input']
+    ):focus,
   select:focus,
   textarea:focus,
+  [data-slot='select-trigger']:focus,
   [data-slot='select-trigger']:focus-visible {
     border-color: var(--primary-light) !important;
     outline: none !important;
     box-shadow: 0 0 0 0.5px var(--primary-light) !important;
+    --tw-ring-color: var(--primary-light) !important;
+  }
+
+  /* Apply border on hover for select only */
+  select:hover,
+  [data-slot='select-trigger']:hover {
+    border-color: var(--primary-light) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 0.5px var(--primary-light) !important;
+    --tw-ring-color: var(--primary-light) !important;
+  }
+
+  /* Remove focus ring from CommandInput */
+  [data-slot='command-input']:focus,
+  [data-slot='command-input']:focus-visible {
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-width: 0 !important;
   }
 }
 

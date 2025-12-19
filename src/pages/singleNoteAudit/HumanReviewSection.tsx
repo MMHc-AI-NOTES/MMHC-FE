@@ -275,7 +275,7 @@ const HumanReviewSection = ({
             </TooltipProvider>
           </div>
           <p className="text-xs text-gray-500">PASS = score ≥ 95 • FAIL = score {'<'} 95</p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -284,29 +284,22 @@ const HumanReviewSection = ({
                 value={manualScore === 'PASS' || manualScore === 'FAIL' ? '' : manualScore}
                 onChange={e => handleManualScoreChange(e.target.value)}
                 placeholder="0-100"
-                className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="h-12 w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
               />
-              <span className="text-sm text-gray-500">Score</span>
             </div>
             <div className="flex gap-2">
               <Button
-                size="lg"
                 onClick={() => setHumanResult(HumanReviewResultEnum.pass)}
-                className={`rounded-full px-4 py-2.5 text-sm font-medium shadow-sm transition-all ${
-                  humanResult === HumanReviewResultEnum.pass
-                    ? 'bg-gradient-ai-passed text-white'
-                    : 'border bg-transparent text-gray-600 hover:bg-gray-50'
+                className={`rounded-full px-4 text-sm font-medium transition-all ${
+                  humanResult === HumanReviewResultEnum.pass ? 'bg-gradient-ai-passed text-white' : 'border bg-white text-green-500'
                 }`}
               >
                 PASS
               </Button>
               <Button
-                size="lg"
                 onClick={() => setHumanResult(HumanReviewResultEnum.fail)}
-                className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                  humanResult === HumanReviewResultEnum.fail
-                    ? 'bg-gradient-ai-failed text-white'
-                    : 'border bg-transparent text-red-600 hover:bg-gray-50'
+                className={`rounded-full px-4 text-sm font-medium transition-all ${
+                  humanResult === HumanReviewResultEnum.fail ? 'bg-gradient-ai-failed text-white' : 'border bg-white text-red-600'
                 }`}
               >
                 FAIL
@@ -328,11 +321,11 @@ const HumanReviewSection = ({
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-2">
-          <Button onClick={onSaveDraft} variant="outline" className="min-w-44" disabled={isSubmitting}>
+          <Button onClick={onSaveDraft} variant="outline" className="h-12 min-w-44" disabled={isSubmitting}>
             <Save />
             Save Draft
           </Button>
-          <Button className="bg-gradient-light text-primary" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
+          <Button className="bg-gradient-light text-primary h-12" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
             {isEditMode ? 'Update Human Review' : 'Submit Human Review'}
           </Button>
