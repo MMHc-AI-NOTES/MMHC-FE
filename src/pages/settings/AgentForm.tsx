@@ -30,7 +30,6 @@ const agentValidationSchema = yup.object({
   top_p: yup.number().min(0).max(1).required('Presence penalty is required'),
   previous_section: yup.array().of(yup.number()).required(),
   prompt: yup.string().required('Prompt is required'),
-  description: yup.string().required('Description is required'),
 });
 
 interface AgentFormValues {
