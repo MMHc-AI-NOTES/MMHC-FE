@@ -76,7 +76,11 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
     },
     validationSchema: agentValidationSchema,
     onSubmit: async values => {
-      await onSubmit(values);
+      const submitData = {
+        ...values,
+        description: values.description.trim() === '' ? null : values.description,
+      };
+      await onSubmit(submitData);
     },
   });
 

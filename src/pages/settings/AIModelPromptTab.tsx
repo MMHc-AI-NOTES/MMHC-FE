@@ -10,7 +10,7 @@ import { createAgent, deleteAgent, fetchAgents, updateAgent } from './settingsAp
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
-import { addAgent, deleteAgentFromStore, setAgents, setLoading, updateAgentInStore } from '@/store/slices/agentsSlice';
+import { deleteAgentFromStore, setAgents, setLoading, updateAgentInStore } from '@/store/slices/agentsSlice';
 
 const AIModelPromptTab: React.FC = () => {
   const dispatch = useDispatch();
@@ -40,11 +40,13 @@ const AIModelPromptTab: React.FC = () => {
           ...agent,
           is_default: 0,
         }));
-        // Add the new agent to the updated list
-        const finalAgents = [...updatedAgents, newAgent];
+        // Add the new agent at the top of the updated list
+        const finalAgents = [newAgent, ...updatedAgents];
         dispatch(setAgents(finalAgents));
       } else {
-        dispatch(addAgent(newAgent));
+        // Add the new agent at the top
+        const finalAgents = [newAgent, ...agents];
+        dispatch(setAgents(finalAgents));
       }
 
       setIsDialogOpen(false);

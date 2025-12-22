@@ -37,7 +37,7 @@ export interface CreateAgentRequest {
   top_p: number;
   previous_section: number[];
   prompt: string;
-  description: string;
+  description: string | null;
   is_default: number;
 }
 
