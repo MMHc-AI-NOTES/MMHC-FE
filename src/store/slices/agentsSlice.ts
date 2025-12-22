@@ -23,7 +23,7 @@ const agentsSlice = createSlice({
       state.agents = action.payload;
     },
     addAgent: (state, action: PayloadAction<Agent>) => {
-      state.agents.push(action.payload);
+      state.agents.unshift(action.payload);
     },
     updateAgentInStore: (state, action: PayloadAction<Agent>) => {
       const index = state.agents.findIndex(agent => agent.id === action.payload.id);
