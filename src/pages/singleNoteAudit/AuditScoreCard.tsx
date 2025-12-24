@@ -26,7 +26,7 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
                   <TooltipContent className="max-w-xs">
                     <p>
                       The audit score is calculated based on four categories: Diagnostic Specificity (25 pts), Treatment Measurability (20
-                      pts), Clinical Coherence (15 pts), and Safety Documentation (10 pts). A score of 95 or higher is required to PASS.
+                      pts), Clinical Coherence (15 pts), and Safety Documentation (10 pts). A score of 75 or higher is required to PASS.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -36,7 +36,7 @@ const AuditScoreCard = ({ noteDetail }: AuditScoreCardProps) => {
               <span>{noteDetail.auditScore}</span>
               <span>/ 100</span>
             </div>
-            <p className="text-muted-foreground mt-1 text-sm font-medium">Passing Threshold: ≥95</p>
+            <p className="text-muted-foreground mt-1 text-sm font-medium">Passing Threshold: {'>'}75</p>
             <p className="text-muted-foreground text-sm">Goal: 100</p>
             <p className="mt-3 text-sm">Last AI Run: {noteDetail.lastRun}</p>
           </div>

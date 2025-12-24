@@ -51,7 +51,7 @@ const AuditHistoryCard = ({ chats }: AuditHistoryCardProps) => {
                       <h3 className="text-sm font-semibold text-gray-900">AI Audit Run</h3>
                       <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                         <span>Score: {score}/100</span>
-                        <span>({scoreStatus.label})</span>
+                        <span className={` ${scoreStatus.label === 'PASS' ? 'text-cycle-1' : 'text-cycle-3'} `}>({scoreStatus.label})</span>
                       </div>
                     </div>
                   </div>
