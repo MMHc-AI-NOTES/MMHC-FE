@@ -29,7 +29,7 @@ export const DataTablePagination = ({
   onPageChange,
   onItemsPerPageChange,
   itemsPerPageOptions = [5, 10, 20, 50],
-  showItemsPerPage = true,
+  showItemsPerPage = false,
   showPageNumbers = true,
   showFirstLastButtons = false,
   className = '',
@@ -135,7 +135,7 @@ export const DataTablePagination = ({
                 size="sm"
                 onClick={() => typeof page === 'number' && onPageChange(page)}
                 disabled={page === '...'}
-                className={`h-8 w-8 p-0 ${page === '...' ? 'cursor-default' : ''}`}
+                className={`h-8 w-8 p-0 ${page === '...' ? 'cursor-default' : ''} ${page === currentPage ? 'bg-primary text-primary-light' : 'bg-white'}`}
               >
                 {page}
               </Button>

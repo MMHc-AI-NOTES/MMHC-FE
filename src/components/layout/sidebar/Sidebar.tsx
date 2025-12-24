@@ -29,10 +29,10 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="px-2 pb-2">
+    <Sidebar collapsible="icon">
       <SidebarHeaderSection />
 
-      <SidebarContent className="mx-2 overflow-x-hidden pt-3">
+      <SidebarContent>
         <SidebarMenuSection items={navItems} label="" isActive={isActive} hasActiveChild={hasActiveChild} onItemClick={handleItemClick} />
         {/* <SidebarFooterSection items={bottomNavItems} isActive={isActive} onItemClick={handleItemClick} /> */}
       </SidebarContent>

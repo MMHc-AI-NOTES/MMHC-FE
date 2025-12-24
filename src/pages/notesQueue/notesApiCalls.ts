@@ -1,47 +1,196 @@
 // @/services/notesService.ts
-import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
-import { formatApiData } from '@/utils/notesDataFormatter';
+import { getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
-import { FormattedNote, RawApiNote } from '@/types/notes';
+import { RawApiNote, FormattedNote, DataFormatterProps, QueueOverview, Workload, PractitionerOption, CptCodeOption } from '@/types/notes';
+import moment from 'moment';
 
-interface NotesListingApiResponse {
+interface ApiResponse<T> {
   status: boolean;
   message?: string;
-  data?: {
-    count: number;
-    total_count: number;
-    total_page_count: number;
-    page: number;
-    page_size: number;
-    data: RawApiNote[];
-  };
+  data?: T;
+  total_count?: number;
+  page?: number;
+  page_size?: number;
   errors?: any;
 }
 
-export const fetchNotes = async (): Promise<FormattedNote[]> => {
-  try {
-    const response = await axios.post<NotesListingApiResponse>('/notes/listing');
-    // Use the API's response body (response.data) rather than the Axios response object
-    if (response?.status) {
-      // The API payload nests the notes array under data.data
-      const notesArray = response.data?.data;
+interface FilterItem {
+  columnName: string;
+  type: 'exact' | 'like' | 'date_range';
+  value?: any;
+  startDate?: string;
+  endDate?: string;
+}
 
+interface NotesPayload {
+  page: number;
+  pageSize: number;
+  filters: FilterItem[];
+}
+
+interface NotesResponse {
+  data: any[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+// Helper function to get date range
+export const getDateRange = (range: string): { startDate: string; endDate: string } | null => {
+  const today = moment();
+
+  switch (range) {
+    case 'today':
+      return {
+        startDate: today.format('YYYY-MM-DD'),
+        endDate: today.format('YYYY-MM-DD'),
+      };
+    case 'last_7_days':
+      return {
+        startDate: today.clone().subtract(6, 'days').format('YYYY-MM-DD'),
+        endDate: today.format('YYYY-MM-DD'),
+      };
+    case 'last_30_days':
+      return {
+        startDate: today.clone().subtract(29, 'days').format('YYYY-MM-DD'),
+        endDate: today.format('YYYY-MM-DD'),
+      };
+    case 'this_month':
+      return {
+        startDate: today.startOf('month').format('YYYY-MM-DD'),
+        endDate: today.endOf('month').format('YYYY-MM-DD'),
+      };
+    case 'last_month':
+      return {
+        startDate: today.clone().subtract(1, 'month').startOf('month').format('YYYY-MM-DD'),
+        endDate: today.clone().subtract(1, 'month').endOf('month').format('YYYY-MM-DD'),
+      };
+    case 'all':
+    default:
+      return null;
+  }
+};
+
+const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
+  return data.map((item: RawApiNote) => {
+    return {
+      id: item.noteId,
+      cptCode: item.cptCodeId,
+      reviewCycle: item.reviewCycle,
+      practitioner: item.practitioner.fullName,
+      client: item.patient.clientId || '-',
+      date: moment(item.sessionTime).format('MMM D, YYYY'),
+      type: item.noteType?.id || 'Progress Note',
+      aiScore: item.aiScore || 0,
+      aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
+      humanReview: item.humanReview?.id || 1, // Default to not_needed
+      manager: item.manager?.id || 1, // Default to not_needed
+      workflow: item.workflow?.id || 1, // Default to in_queue
+      priority: item.priority?.id || 1, // Default to low
+      sessionTime: moment(item.sessionTime).format('MMM D, YYYY h:mm A'),
+      rawData: item,
+    } as FormattedNote;
+  });
+};
+
+export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> => {
+  try {
+    const response = await axios.post<ApiResponse<any>>('/notes/listing', payload);
+
+    if (response?.status) {
+      const notesArray = response.data?.data || [];
+      const totalCount = response.data?.total_count || 0;
+      const page = response.data?.page || 1;
+      const pageSize = response.data?.page_size || 20;
+
+      let formattedNotes: FormattedNote[] = [];
       if (Array.isArray(notesArray) && notesArray.length > 0) {
-        const formattedNotes = formatApiData({ data: notesArray });
-        return formattedNotes;
+        formattedNotes = formatApiData({ data: notesArray });
       }
 
-      return [];
+      return { data: formattedNotes, totalCount, page, pageSize };
     } else {
-      // Handle API errors but still return empty array
-      // Some code paths attach `errors` directly on the Axios response object
-      const respAny = response as unknown as { errors?: any };
-      const apiErrors = respAny.errors ?? response.data?.errors ?? { message: 'API request failed' };
-      handleErrorMessages(apiErrors);
+      handleErrorMessages(response);
+      return { data: [], totalCount: 0, page: 1, pageSize: 20 };
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return { data: [], totalCount: 0, page: 1, pageSize: 20 };
+  }
+};
+export const fetchQueueOverview = async (startDate?: string, endDate?: string): Promise<QueueOverview | null> => {
+  try {
+    // Use provided dates or default to last 30 days
+    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+    const finalStartDate = startDate || defaultStart;
+    const finalEndDate = endDate || defaultEnd;
+
+    const response = await axios.get<QueueOverview>('/notes/queue-statistics', {
+      params: { start_date: finalStartDate, end_date: finalEndDate },
+    });
+
+    if (response?.status && response.data) {
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const fetchWorkload = async (startDate?: string, endDate?: string): Promise<Workload | null> => {
+  try {
+    // Use provided dates or default to last 30 days
+    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+    const finalStartDate = startDate || defaultStart;
+    const finalEndDate = endDate || defaultEnd;
+
+    const response = await axios.get<Workload>('/notes/workload-statistics', {
+      params: { start_date: finalStartDate, end_date: finalEndDate },
+    });
+
+    if (response?.status && response.data) {
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+export const fetchPractitioners = async (): Promise<PractitionerOption[]> => {
+  try {
+    const response = await axios.post<ApiResponse<PractitionerOption[]>>('practitioners/listing');
+
+    if (response?.status && response.data.data) {
+      return response.data.data;
+    } else {
+      handleErrorMessages(response);
       return [];
     }
   } catch (error: any) {
     handleCatchMessages(error);
-    return []; // Return empty array on error
+    return [];
+  }
+};
+
+export const fetchCptCodes = async (): Promise<CptCodeOption[]> => {
+  try {
+    const response = await axios.get<ApiResponse<CptCodeOption[]>>('/cpt-codes');
+
+    if (response?.status && response.data.data) {
+      return response.data.data;
+    } else {
+      handleErrorMessages(response.data);
+      return [];
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return [];
   }
 };
