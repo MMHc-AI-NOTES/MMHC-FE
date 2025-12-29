@@ -30,30 +30,54 @@ const SliderField: React.FC<SliderFieldProps> = ({
   const value = formik.values[id] as number;
   const errorMessage = formik.errors[id];
 
-  // Format number to one decimal place
-  const formatToOneDecimal = (num: number): string => {
-    return Number(num.toFixed(1)).toString();
+  // Determine decimals based on step (e.g., step=0.01 -> 2 decimals)
+  const getDecimalPlaces = (s: number) => {
+    if (s <= 0) return 2;
+    const places = Math.max(0, Math.ceil(-Math.log10(s)));
+    return places;
   };
 
-  // Generate step markers
+  const formatNumber = (num: number) => {
+    if (valueFormatter) return valueFormatter(num);
+    const decimals = getDecimalPlaces(step);
+    return Number(num.toFixed(decimals)).toString();
+  };
+
+  // Generate a compact set of tick markers (max 5) to avoid overlap
   const generateSteps = () => {
     if (!showSteps) return null;
 
-    const steps = [];
-    for (let i = min; i <= max; i += step) {
-      steps.push(i);
+    const maxTicks = 5;
+    const range = max - min;
+    const possibleSteps = Math.floor(range / step) + 1;
+
+    const ticks: number[] = [];
+    if (possibleSteps <= maxTicks) {
+      // show all discrete steps
+      for (let i = min; i <= max; i += step) {
+        // avoid floating point accumulation errors
+        ticks.push(Number(i.toFixed(8)));
+      }
+    } else {
+      // show evenly spaced ticks (min, 25%, 50%, 75%, max)
+      for (let i = 0; i < maxTicks; i++) {
+        const ratio = i / (maxTicks - 1);
+        ticks.push(Number((min + ratio * range).toFixed(8)));
+      }
     }
 
     return (
       <div className="mt-2 flex justify-between text-xs text-gray-500">
-        {steps.map(stepValue => (
-          <span key={stepValue}>{formatToOneDecimal(stepValue)}</span>
+        {ticks.map(t => (
+          <span key={t} className="whitespace-nowrap">
+            {formatNumber(t)}
+          </span>
         ))}
       </div>
     );
   };
 
-  const displayValue = valueFormatter ? valueFormatter(value) : formatToOneDecimal(value);
+  const displayValue = formatNumber(value as number);
 
   return (
     <div className={cn('space-y-2', className)}>
