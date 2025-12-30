@@ -1,0 +1,52 @@
+name: Deploy to S3+Cloudfront (stag)
+
+on:
+  push:
+    branches:
+      - stag # Deploy when pushing to the stag branch
+  workflow_dispatch: # manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # Required for OIDC
+      contents: read
+
+    env:
+      VITE_FRONTEND_URL: https://mmh-stag.manhattanmentalhealthcounseling.com
+      VITE_BACKEND_URL: https://mmh-stag-backend.manhattanmentalhealthcounseling.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React.js app
+        run: npm run build
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_GITHUB }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Sync static assets with long cache
+        run: |
+          aws s3 sync ./build s3://${{ secrets.STAG_S3_BUCKET }} \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --acl public-read
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.STAG_AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
