@@ -34,7 +34,7 @@ const NotesQueue = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20; // Fixed at 20 as per requirement
+  const itemsPerPage = 60; // Fixed at 60 as per requirement
 
   // Filter states with persistence
   const defaultFilters = {
