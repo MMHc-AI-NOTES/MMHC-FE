@@ -101,7 +101,7 @@ export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> 
       const notesArray = response.data?.data || [];
       const totalCount = response.data?.total_count || 0;
       const page = response.data?.page || 1;
-      const pageSize = response.data?.page_size || 20;
+      const pageSize = response.data?.page_size || 60;
 
       let formattedNotes: FormattedNote[] = [];
       if (Array.isArray(notesArray) && notesArray.length > 0) {
@@ -111,11 +111,11 @@ export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> 
       return { data: formattedNotes, totalCount, page, pageSize };
     } else {
       handleErrorMessages(response);
-      return { data: [], totalCount: 0, page: 1, pageSize: 20 };
+      return { data: [], totalCount: 0, page: 1, pageSize: 60 };
     }
   } catch (error: any) {
     handleCatchMessages(error);
-    return { data: [], totalCount: 0, page: 1, pageSize: 20 };
+    return { data: [], totalCount: 0, page: 1, pageSize: 60 };
   }
 };
 export const fetchQueueOverview = async (startDate?: string, endDate?: string): Promise<QueueOverview | null> => {
