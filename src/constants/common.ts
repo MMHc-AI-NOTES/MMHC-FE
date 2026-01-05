@@ -404,3 +404,33 @@ export const AgentTypeLabels: Record<number, string> = {
   [AgentTypes.SOAP]: 'SOAP',
   [AgentTypes.CUSTOM]: 'Custom',
 };
+
+export const PromptKeyEnum = {
+  mental_status: 'mental_status',
+  suicidality: 'suicidality',
+  homicidality: 'homicidality',
+  subjective: 'subjective',
+  objective: 'objective',
+  assessment_therapeutic_intervention: 'assessment_therapeutic_intervention',
+  reaction_to_intervention: 'reaction_to_intervention',
+  plan_and_collaboration: 'plan_and_collaboration',
+  therapist_reflection: 'therapist_reflection',
+  progress: 'progress',
+  aggregator: 'aggregator',
+  // risk_assessment: 'risk_assessment',
+} as const;
+
+export const PromptKeyLabels: Record<keyof typeof PromptKeyEnum, string> = {
+  [PromptKeyEnum.mental_status]: 'Mental Status',
+  [PromptKeyEnum.suicidality]: 'Suicidality',
+  [PromptKeyEnum.homicidality]: 'Homicidality',
+  [PromptKeyEnum.subjective]: 'Subjective',
+  [PromptKeyEnum.objective]: 'Objective',
+  [PromptKeyEnum.assessment_therapeutic_intervention]: 'Assessment & Therapeutic Intervention',
+  [PromptKeyEnum.reaction_to_intervention]: 'Reaction to Intervention',
+  [PromptKeyEnum.plan_and_collaboration]: 'Plan & Collaboration',
+  [PromptKeyEnum.therapist_reflection]: 'Therapist Reflection',
+  [PromptKeyEnum.progress]: 'Progress',
+  [PromptKeyEnum.aggregator]: 'Aggregator',
+  // [PromptKeyEnum.risk_assessment]: 'Risk Assessment',
+};

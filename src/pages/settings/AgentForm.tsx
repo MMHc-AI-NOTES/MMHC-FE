@@ -8,7 +8,7 @@ import { Agent, CreateAgentRequest } from '@/types/agent';
 import * as yup from 'yup';
 import InputField from '@/shared/InputField';
 import SliderField from '@/shared/SliderField';
-import { AgentModelKeys, SLIDER_CONFIGS } from '@/constants/common';
+import { AgentModelKeys, PromptKeyEnum, PromptKeyLabels, SLIDER_CONFIGS } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -47,6 +47,9 @@ interface AgentFormValues {
   description: string;
 
   // Section-specific prompts (UI only)
+  mental_status_prompt: string;
+  suicidality_prompt: string;
+  homicidality_prompt: string;
   subjective_prompt: string;
   objective_prompt: string;
   assessment_prompt: string;
@@ -54,7 +57,18 @@ interface AgentFormValues {
   plan_prompt: string;
   reflection_prompt: string;
   progress_prompt: string;
+  aggregator_prompt: string;
+
   // Section-specific sliders (UI-only; keep backend sliders unchanged)
+  temperature_mental_status: number;
+  top_p_mental_status: number;
+  top_k_mental_status: number;
+  temperature_suicidality: number;
+  top_p_suicidality: number;
+  top_k_suicidality: number;
+  temperature_homicidality: number;
+  top_p_homicidality: number;
+  top_k_homicidality: number;
   temperature_subjective: number;
   top_p_subjective: number;
   top_k_subjective: number;
@@ -76,11 +90,15 @@ interface AgentFormValues {
   temperature_progress: number;
   top_p_progress: number;
   top_k_progress: number;
-  temperature_risk: number;
-  top_p_risk: number;
-  top_k_risk: number;
+  temperature_aggregator: number;
+  top_p_aggregator: number;
+  top_k_aggregator: number;
+
+  // temperature_risk: number;
+  // top_p_risk: number;
+  // top_k_risk: number;
   // Risk assessment
-  risk_prompt: string;
+  // risk_prompt: string;
 }
 
 // Tooltip content for each parameter
@@ -100,6 +118,82 @@ const TOOLTIP_CONTENT = {
   },
 };
 
+// Section descriptors to drive the accordion rendering (keeps UI DRY)
+const SECTIONS: { key: string; title: string; description: string; promptField: keyof AgentFormValues }[] = [
+  {
+    key: PromptKeyEnum.mental_status,
+    title: PromptKeyLabels[PromptKeyEnum.mental_status],
+    description: 'Instructions for generating the Mental Status section',
+    promptField: 'mental_status_prompt',
+  },
+  {
+    key: PromptKeyEnum.suicidality,
+    title: PromptKeyLabels[PromptKeyEnum.suicidality],
+    description: 'Instructions for generating the Suicidality section',
+    promptField: 'suicidality_prompt',
+  },
+  {
+    key: PromptKeyEnum.homicidality,
+    title: PromptKeyLabels[PromptKeyEnum.homicidality],
+    description: 'Instructions for generating the Homicidality section',
+    promptField: 'homicidality_prompt',
+  },
+  {
+    key: PromptKeyEnum.subjective,
+    title: PromptKeyLabels[PromptKeyEnum.subjective],
+    description: 'Instructions for generating the Subjective section',
+    promptField: 'subjective_prompt',
+  },
+  {
+    key: PromptKeyEnum.objective,
+    title: PromptKeyLabels[PromptKeyEnum.objective],
+    description: 'Instructions for generating the Objective section',
+    promptField: 'objective_prompt',
+  },
+  {
+    key: PromptKeyEnum.assessment_therapeutic_intervention,
+    title: PromptKeyLabels[PromptKeyEnum.assessment_therapeutic_intervention],
+    description: 'Assessment, clinical reasoning, and interventions applied',
+    promptField: 'assessment_prompt',
+  },
+  {
+    key: PromptKeyEnum.reaction_to_intervention,
+    title: PromptKeyLabels[PromptKeyEnum.reaction_to_intervention],
+    description: 'Client response to interventions',
+    promptField: 'reaction_prompt',
+  },
+  {
+    key: PromptKeyEnum.plan_and_collaboration,
+    title: PromptKeyLabels[PromptKeyEnum.plan_and_collaboration],
+    description: 'Next steps, goals, referrals, and shared decisions',
+    promptField: 'plan_prompt',
+  },
+  {
+    key: PromptKeyEnum.therapist_reflection,
+    title: PromptKeyLabels[PromptKeyEnum.therapist_reflection],
+    description: 'Therapist insights, reflections, and clinical notes',
+    promptField: 'reflection_prompt',
+  },
+  {
+    key: PromptKeyEnum.progress,
+    title: PromptKeyLabels[PromptKeyEnum.progress],
+    description: 'Changes since the previous session',
+    promptField: 'progress_prompt',
+  },
+  {
+    key: PromptKeyEnum.aggregator,
+    title: PromptKeyLabels[PromptKeyEnum.aggregator],
+    description: 'Instructions for generating the Aggregate section',
+    promptField: 'aggregator_prompt',
+  },
+  // {r
+  //   key: PromptKeyEnum.risk_assessment,
+  //   title: PromptKeyLabels[PromptKeyEnum.risk_assessment],
+  //   description: 'Instructions for generating the Risk Assessment section',
+  //   promptField: 'risk_prompt',
+  // },
+];
+
 const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubmitting }) => {
   const formik = useFormik<AgentFormValues>({
     initialValues: {
@@ -114,6 +208,9 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
       description: agent?.description || '',
 
       // UI-only section prompts default to empty or fall back to main prompt
+      mental_status_prompt: agent?.prompt || '',
+      suicidality_prompt: agent?.prompt || '',
+      homicidality_prompt: agent?.prompt || '',
       subjective_prompt: agent?.prompt || '',
       objective_prompt: agent?.prompt || '',
       assessment_prompt: '',
@@ -121,8 +218,18 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
       plan_prompt: '',
       reflection_prompt: '',
       progress_prompt: '',
+      aggregator_prompt: '',
 
       // per-section slider defaults (use agent defaults if present)
+      temperature_mental_status: agent?.temperature ?? 0,
+      top_p_mental_status: agent?.top_p ?? 0,
+      top_k_mental_status: agent?.top_k ?? 0,
+      temperature_suicidality: agent?.temperature ?? 0,
+      top_p_suicidality: agent?.top_p ?? 0,
+      top_k_suicidality: agent?.top_k ?? 0,
+      temperature_homicidality: agent?.temperature ?? 0,
+      top_p_homicidality: agent?.top_p ?? 0,
+      top_k_homicidality: agent?.top_k ?? 0,
       temperature_subjective: agent?.temperature ?? 0,
       top_p_subjective: agent?.top_p ?? 0,
       top_k_subjective: agent?.top_k ?? 0,
@@ -144,24 +251,29 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
       temperature_progress: agent?.temperature ?? 0,
       top_p_progress: agent?.top_p ?? 0,
       top_k_progress: agent?.top_k ?? 0,
-      temperature_risk: agent?.temperature ?? 0,
-      top_p_risk: agent?.top_p ?? 0,
-      top_k_risk: agent?.top_k ?? 0,
-
-      risk_prompt: '',
+      temperature_aggregator: agent?.temperature ?? 0,
+      top_p_aggregator: agent?.top_p ?? 0,
+      top_k_aggregator: agent?.top_k ?? 0,
+      // temperature_risk: agent?.temperature ?? 0,
+      // top_p_risk: agent?.top_p ?? 0,
+      // top_k_risk: agent?.top_k ?? 0,
+      // risk_prompt: '',
     },
     validationSchema: agentValidationSchema,
     onSubmit: async values => {
       // Compose a single backend prompt from the section prompts in the required order
       const sections: { title: string; text?: string }[] = [
-        { title: 'Subjective', text: values.subjective_prompt },
-        { title: 'Objective', text: values.objective_prompt },
-        { title: 'Assessment & Therapeutic Intervention', text: values.assessment_prompt },
-        { title: 'Reaction to Intervention', text: values.reaction_prompt },
-        { title: 'Plan and Collaboration', text: values.plan_prompt },
-        { title: 'Therapist Reflection and Insight', text: values.reflection_prompt },
-        { title: 'Progress', text: values.progress_prompt },
-        { title: 'Risk Assessment', text: values.risk_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.mental_status], text: values.mental_status_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.suicidality], text: values.suicidality_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.homicidality], text: values.homicidality_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.subjective], text: values.subjective_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.objective], text: values.objective_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.assessment_therapeutic_intervention], text: values.assessment_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.reaction_to_intervention], text: values.reaction_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.plan_and_collaboration], text: values.plan_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.therapist_reflection], text: values.reflection_prompt },
+        { title: PromptKeyLabels[PromptKeyEnum.progress], text: values.progress_prompt },
+        // { title: PromptKeyLabels[PromptKeyEnum.risk_assessment], text: values.risk_prompt },
       ];
 
       const composedPrompt = sections
@@ -193,48 +305,6 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
       </TooltipContent>
     </Tooltip>
   );
-
-  // Section descriptors to drive the accordion rendering (keeps UI DRY)
-  const SECTIONS: { key: string; title: string; description: string; promptField: keyof AgentFormValues }[] = [
-    {
-      key: 'subjective',
-      title: 'Subjective',
-      description: 'Instructions for generating the Subjective section',
-      promptField: 'subjective_prompt',
-    },
-    {
-      key: 'objective',
-      title: 'Objective',
-      description: 'Instructions for generating the Objective section',
-      promptField: 'objective_prompt',
-    },
-    {
-      key: 'assessment',
-      title: 'Assessment & Therapeutic Intervention',
-      description: 'Assessment, clinical reasoning, and interventions applied',
-      promptField: 'assessment_prompt',
-    },
-    { key: 'reaction', title: 'Reaction to Intervention', description: 'Client response to interventions', promptField: 'reaction_prompt' },
-    {
-      key: 'plan',
-      title: 'Plan and Collaboration',
-      description: 'Next steps, goals, referrals, and shared decisions',
-      promptField: 'plan_prompt',
-    },
-    {
-      key: 'reflection',
-      title: 'Therapist Reflection and Insight',
-      description: 'Therapist insights, reflections, and clinical notes',
-      promptField: 'reflection_prompt',
-    },
-    { key: 'progress', title: 'Progress', description: 'Changes since the previous session', promptField: 'progress_prompt' },
-    {
-      key: 'risk',
-      title: 'Risk Assessment',
-      description: 'Instructions for generating the Risk Assessment section',
-      promptField: 'risk_prompt',
-    },
-  ];
 
   return (
     <TooltipProvider>
