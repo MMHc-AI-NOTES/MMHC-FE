@@ -105,3 +105,30 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
 
   return noteDetail;
 };
+
+export interface SMEIssuePayload {
+  note_id: string;
+  error_type: string;
+  issue_related_to: string;
+  issue_description: string;
+  points: number;
+}
+
+/**
+ * Submit SME issue for a note
+ */
+export const submitSMEIssue = async (payload: SMEIssuePayload): Promise<any> => {
+  try {
+    const response = await axios.post('/sme-issues', payload);
+
+    if (response?.status) {
+      showToast.success('SME issue saved successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};

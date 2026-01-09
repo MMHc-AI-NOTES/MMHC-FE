@@ -10,6 +10,7 @@ import NoteInformation from './NoteInformation';
 import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
+import SMEManagement from './SMEManagement';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
@@ -25,6 +26,8 @@ import SummaryCard from './SummaryCard';
 import ModelInformation from './ModelInformation';
 import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -97,6 +100,7 @@ const SingleNoteAudit = () => {
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useAppSelector(state => state.agents);
+  const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
   const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
 
   // Create a ref to store the latest selectedAgentId
@@ -185,6 +189,19 @@ const SingleNoteAudit = () => {
     }
   }, [agentsLoaded, selectedAgentId, noteId, noteDetail, loadNoteDetail]);
 
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
+
   // Cleanup ref on unmount
   useEffect(() => {
     return () => {
@@ -241,6 +258,7 @@ const SingleNoteAudit = () => {
                 setOpenSectionId(sectionId);
               }}
             />
+            <SMEManagement />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (
               <HumanReviewSection

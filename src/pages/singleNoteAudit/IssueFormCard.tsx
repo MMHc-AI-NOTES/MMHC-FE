@@ -1,0 +1,250 @@
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { X, Save, CircleHelp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppSelector } from '@/store/store';
+import { ERROR_TYPES, ISSUE_DESCRIPTIONS, ISSUE_RELATED_TO_OPTIONS } from '@/constants/common';
+
+const getIssueDescriptionOptions = (errorType: string) => {
+  if (!errorType) return [];
+  return ISSUE_DESCRIPTIONS[errorType as keyof typeof ISSUE_DESCRIPTIONS] || [];
+};
+
+export interface IssueFormValues {
+  issueName: string;
+  reviewerName: string;
+  errorType: string;
+  issueRelatedTo: string;
+  issueDescription: string;
+}
+
+// Validation schema
+const issueValidationSchema = yup.object({
+  issueName: yup.string().required('Issue name is required').min(2, 'Issue name must be at least 2 characters'),
+  reviewerName: yup.string().required('Reviewer name is required').notOneOf(['none', ''], 'Please select a reviewer'),
+  errorType: yup.string().required('Error type is required'),
+  issueRelatedTo: yup.string().required('Issue related to is required'),
+  issueDescription: yup.string().required('Issue description is required'),
+});
+
+interface IssueFormCardProps {
+  issue: {
+    id: string;
+    issueName: string;
+    reviewerName: string;
+    errorType: string;
+    issueRelatedTo: string;
+    issueDescription: string;
+  };
+  index: number;
+  onSave: (values: IssueFormValues) => void;
+  onRemove: () => void;
+  isSaving?: boolean;
+  isEditMode?: boolean;
+}
+
+const IssueFormCard = ({ issue, index, onSave, onRemove, isSaving = false, isEditMode = false }: IssueFormCardProps) => {
+  const { practitioners } = useAppSelector(state => state.filterOptions);
+
+  const formik = useFormik<IssueFormValues>({
+    initialValues: {
+      issueName: issue.issueName || '',
+      reviewerName: issue.reviewerName || '',
+      errorType: issue.errorType || '',
+      issueRelatedTo: issue.issueRelatedTo || '',
+      issueDescription: issue.issueDescription || '',
+    },
+    validationSchema: issueValidationSchema,
+    enableReinitialize: true,
+    onSubmit: async values => {
+      await onSave(values);
+    },
+  });
+
+  const errorTypeLabel = ERROR_TYPES.find(type => type.value === formik.values.errorType)?.label || '';
+  const issueRelatedToLabel = ISSUE_RELATED_TO_OPTIONS.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
+
+  return (
+    <Card className="shadow-none">
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">
+              {isEditMode ? `Editing: ${issue.issueName || 'Issue'}` : `Issue${index + 1}`}
+            </span>
+            {formik.values.errorType && (
+              <Badge
+                className={`px-2 py-0.5 text-xs font-semibold text-white ${
+                  formik.values.errorType === 'critical'
+                    ? 'bg-gradient-red'
+                    : formik.values.errorType === 'moderate'
+                      ? 'bg-gradient-severity-moderate'
+                      : 'bg-gradient-severity-minor'
+                }`}
+              >
+                {errorTypeLabel}
+              </Badge>
+            )}
+            {formik.values.issueRelatedTo && (
+              <Badge className="bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700">{issueRelatedToLabel}</Badge>
+            )}
+          </div>
+          <Button variant="ghost" size="sm" onClick={onRemove} className="h-8 w-8 p-0">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <form onSubmit={formik.handleSubmit} className="space-y-4">
+          {/* Issue Name Field */}
+          <div className="space-y-2">
+            <Label htmlFor={`issueName-${issue.id}`} className="text-sm font-medium">
+              Issue name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id={`issueName-${issue.id}`}
+              name="issueName"
+              value={formik.values.issueName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              placeholder="Enter issue name"
+              className="w-full"
+            />
+            {formik.touched.issueName && formik.errors.issueName && <p className="text-xs text-red-600">{formik.errors.issueName}</p>}
+          </div>
+
+          {/* Reviewer Name Field */}
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-gray-700">
+                Reviewer Name <span className="text-red-500">*</span>
+              </p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>
+                      Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
+                      accountability.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Select value={formik.values.reviewerName} onValueChange={value => formik.setFieldValue('reviewerName', value)}>
+              <SelectTrigger className="mt-2 w-full">
+                <SelectValue placeholder="Select a reviewer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select a reviewer</SelectItem>
+                {practitioners.map(p => (
+                  <SelectItem key={p.id} value={p.id.toString()}>
+                    {p.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formik.touched.reviewerName && formik.errors.reviewerName && (
+              <p className="mt-1 text-xs text-red-600">{formik.errors.reviewerName}</p>
+            )}
+          </div>
+
+          {/* Error Type Field */}
+          <div className="space-y-2">
+            <Label htmlFor={`errorType-${issue.id}`} className="text-sm font-medium">
+              Error type <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formik.values.errorType}
+              onValueChange={value => {
+                formik.setFieldValue('errorType', value);
+                formik.setFieldValue('issueDescription', ''); // Reset issue description when error type changes
+              }}
+            >
+              <SelectTrigger className="w-full" id={`errorType-${issue.id}`}>
+                <SelectValue placeholder="Select error type" />
+              </SelectTrigger>
+              <SelectContent>
+                {ERROR_TYPES.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formik.touched.errorType && formik.errors.errorType && <p className="text-xs text-red-600">{formik.errors.errorType}</p>}
+          </div>
+
+          {/* Issue Related To Field */}
+          <div className="space-y-2">
+            <Label htmlFor={`issueRelatedTo-${issue.id}`} className="text-sm font-medium">
+              Issue related to <span className="text-red-500">*</span>
+            </Label>
+            <Select value={formik.values.issueRelatedTo} onValueChange={value => formik.setFieldValue('issueRelatedTo', value)}>
+              <SelectTrigger className="w-full" id={`issueRelatedTo-${issue.id}`}>
+                <SelectValue placeholder="Find an option" />
+              </SelectTrigger>
+              <SelectContent>
+                {ISSUE_RELATED_TO_OPTIONS.map(option => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.id}: {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formik.touched.issueRelatedTo && formik.errors.issueRelatedTo && (
+              <p className="text-xs text-red-600">{formik.errors.issueRelatedTo}</p>
+            )}
+          </div>
+
+          {/* Issue Description Field */}
+          <div className="space-y-2">
+            <Label htmlFor={`issueDescription-${issue.id}`} className="text-sm font-medium">
+              Issue description <span className="text-red-500">*</span>
+            </Label>
+            {formik.values.errorType ? (
+              <Select value={formik.values.issueDescription} onValueChange={value => formik.setFieldValue('issueDescription', value)}>
+                <SelectTrigger className="w-full" id={`issueDescription-${issue.id}`}>
+                  <SelectValue placeholder="Select issue description" className="line-clamp-2" />
+                </SelectTrigger>
+                <SelectContent className="max-w-lg">
+                  {getIssueDescriptionOptions(formik.values.errorType).map((description, idx) => (
+                    <SelectItem
+                      key={idx}
+                      value={description}
+                      className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
+                    >
+                      {description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input id={`issueDescription-${issue.id}`} placeholder="Select error type first" disabled className="w-full" />
+            )}
+            {formik.touched.issueDescription && formik.errors.issueDescription && (
+              <p className="text-xs text-red-600">{formik.errors.issueDescription}</p>
+            )}
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end pt-2">
+            <Button type="submit" className="bg-gradient-light text-primary border-0 shadow-sm" disabled={isSaving}>
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default IssueFormCard;

@@ -404,3 +404,59 @@ export const AgentTypeLabels: Record<number, string> = {
   [AgentTypes.SOAP]: 'SOAP',
   [AgentTypes.CUSTOM]: 'Custom',
 };
+
+// Error type options
+export const ERROR_TYPES = [
+  { value: 'critical', label: 'Critical (-25 pts)', points: -25 },
+  { value: 'moderate', label: 'Moderate (-15 pts)', points: -15 },
+  { value: 'minor', label: 'Minor (-5 pts)', points: -5 },
+] as const;
+
+// Issue related to options (section IDs with names)
+export const ISSUE_RELATED_TO_OPTIONS = [
+  { id: 'zad8-1', name: 'Assessment & Therapeutic Intervention' },
+  { id: 'ugq6-1', name: 'Reaction to Intervention' },
+  { id: 'hnfi-1', name: 'Plan and Collaboration' },
+  { id: '9z5t-1', name: 'Therapist Reflection and Insight' },
+  { id: 'gm4p-1', name: 'Progress' },
+  { id: 'kxgx-7', name: 'Suicidality' },
+  { id: 'kxgx-8', name: 'Homicidality' },
+  { id: '4lbp-1', name: 'Therapist Initials' },
+  { id: 'p9m9-1', name: 'Session Duration' },
+  { id: '1hye-1', name: 'Mental Status' },
+  { id: '6tx9-1', name: 'Subjective' },
+  { id: 'rb2f-1', name: 'Objective' },
+  { id: 'general', name: 'General' },
+];
+
+// Issue description options based on error type
+export const ISSUE_DESCRIPTIONS = {
+  critical: [
+    'Missing required field',
+    'Transcription-style note (dialogue or step-by-step)',
+    'Note lacks medical necessity',
+    "SI/HI marked as 'Present' but no safety plan included",
+    'Duration mismatch with CPT code',
+    'Therapist initials missing',
+    'Identical or duplicate content from previous notes (over 80% identical overall)',
+    'If one field is 100% copied from previous notes among Subjective, Objective, Assessment & Therapeutic Intervention, Reaction to Intervention',
+    'If the CURRENT field text is an exact match OR is fully contained verbatim within the corresponding PREVIOUS field text (even if the previous field is longer), this MUST be treated as a Critical duplication violation',
+  ],
+  moderate: [
+    "Overly definitive language (e.g., 'Client is depressed') without attribution",
+    'No clinical interpretation or modality in Assessment & Therapeutic Intervention',
+    'Plan and Collaboration lacks plan AND relevance to session',
+    'Mental Status filled but does not describe observable behavior',
+    'On fields Reaction to Intervention, Objective, Therapist Reflection and Insight, Subjective, Plan and Collaboration, Assessment & Therapeutic Intervention: not specific to that date of service',
+    'If one field is copied from previous notes among Plan and Collaboration, Reaction to Intervention',
+    'Inconsistencies between 2 or more fields',
+  ],
+  minor: [
+    'Vague or templated language',
+    'Progress marked but the content of the note does not go in that direction',
+    'Casual or disjointed tone',
+    'Therapist Reflection and Insight: Irrelevant, long, or copied from previous note',
+    'Slightly too definitive wording without legal risk',
+    'Repetitive content (excluding time, risk flags, or initials)',
+  ],
+};
