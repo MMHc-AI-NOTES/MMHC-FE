@@ -18,6 +18,23 @@ interface SummaryCardProps {
 const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, className }: SummaryCardProps) => {
   const [copied, setCopied] = useState(false);
 
+  // Check if summary is a JSON object
+  const parseSummary = () => {
+    try {
+      // Try to parse as JSON
+      const parsed = JSON.parse(summary);
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // Not JSON, continue with normal processing
+    }
+    return null;
+  };
+
+  const jsonData = parseSummary();
+  const isJsonFormat = jsonData !== null;
+
   const displayText = cleanSummary(summary);
   const lines = displayText.split('\n').filter(line => line.trim());
 
@@ -38,7 +55,12 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(displayText);
+      const textToCopy = isJsonFormat
+        ? Object.entries(jsonData!)
+            .map(([key, value]) => `${key}: ${value || '-'}`)
+            .join('\n')
+        : displayText;
+      await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -65,39 +87,56 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
       <CardContent>
         <div className="rounded-lg bg-[#F0F0F0] p-4">
           <div className="space-y-2 text-sm leading-relaxed text-gray-700">
-            {lines.map((line, index) => {
-              if (!line.trim()) return null;
+            {isJsonFormat
+              ? // Render JSON format
+                Object.entries(jsonData!).map(([key, value]) => {
+                  const displayValue = value === '' || value === null || value === undefined ? '-' : String(value);
+                  const highlightedKey = highlightPromptKeys(key);
+                  const highlightedValue = highlightPromptKeys(displayValue);
 
-              // Check if line is a section header (ends with colon or contains specific headers)
-              const isSectionHeader =
-                line.includes(':') &&
-                (line.includes('Session Duration') ||
-                  line.includes('Suicidality') ||
-                  line.includes('Homicidality') ||
-                  line.includes('Subjective') ||
-                  line.includes('Objective') ||
-                  line.includes('Assessment') ||
-                  line.includes('Reaction') ||
-                  line.includes('Plan') ||
-                  line.includes('Progress') ||
-                  line.includes('Therapist'));
+                  return (
+                    <div key={key} className="mb-2">
+                      <h4 className="font-semibold text-gray-800" dangerouslySetInnerHTML={{ __html: `${highlightedKey}:` }} />
+                      <p className="ml-4 text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedValue }} />
+                    </div>
+                  );
+                })
+              : // Render normal text format
+                lines.map((line, index) => {
+                  if (!line.trim()) return null;
 
-              if (isSectionHeader) {
-                const [header, ...content] = line.split(':');
-                const highlightedHeader = highlightPromptKeys(header);
-                const highlightedContent = content.length > 0 ? highlightPromptKeys(content.join(':').trim()) : '';
-                return (
-                  <div key={index} className="mb-2">
-                    <h4 className="font-semibold text-gray-800" dangerouslySetInnerHTML={{ __html: `${highlightedHeader}:` }} />
-                    {content.length > 0 && <p className="ml-4 text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedContent }} />}
-                  </div>
-                );
-              }
+                  // Check if line is a section header (ends with colon or contains specific headers)
+                  const isSectionHeader =
+                    line.includes(':') &&
+                    (line.includes('Session Duration') ||
+                      line.includes('Suicidality') ||
+                      line.includes('Homicidality') ||
+                      line.includes('Subjective') ||
+                      line.includes('Objective') ||
+                      line.includes('Assessment') ||
+                      line.includes('Reaction') ||
+                      line.includes('Plan') ||
+                      line.includes('Progress') ||
+                      line.includes('Therapist'));
 
-              const highlightedLine = highlightPromptKeys(line);
+                  if (isSectionHeader) {
+                    const [header, ...content] = line.split(':');
+                    const highlightedHeader = highlightPromptKeys(header);
+                    const highlightedContent = content.length > 0 ? highlightPromptKeys(content.join(':').trim()) : '';
+                    return (
+                      <div key={index} className="mb-2">
+                        <h4 className="font-semibold text-gray-800" dangerouslySetInnerHTML={{ __html: `${highlightedHeader}:` }} />
+                        {content.length > 0 && (
+                          <p className="ml-4 text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedContent }} />
+                        )}
+                      </div>
+                    );
+                  }
 
-              return <p key={index} className="text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedLine }} />;
-            })}
+                  const highlightedLine = highlightPromptKeys(line);
+
+                  return <p key={index} className="text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedLine }} />;
+                })}
           </div>
         </div>
       </CardContent>
