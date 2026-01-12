@@ -460,3 +460,6 @@ export const ISSUE_DESCRIPTIONS = {
     'Repetitive content (excluding time, risk flags, or initials)',
   ],
 };
+
+// Export merged data functions (combines default constants with localStorage customizations)
+export { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/types/smeConfig';

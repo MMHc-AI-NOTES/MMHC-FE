@@ -9,15 +9,15 @@ import { X, Save, CircleHelp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppSelector } from '@/store/store';
-import { ERROR_TYPES, ISSUE_DESCRIPTIONS, ISSUE_RELATED_TO_OPTIONS } from '@/constants/common';
+import { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/constants/common';
 
 const getIssueDescriptionOptions = (errorType: string) => {
   if (!errorType) return [];
-  return ISSUE_DESCRIPTIONS[errorType as keyof typeof ISSUE_DESCRIPTIONS] || [];
+  const mergedDescriptions = getMergedIssueDescriptions();
+  return mergedDescriptions[errorType as keyof typeof mergedDescriptions] || [];
 };
 
 export interface IssueFormValues {
-  issueName: string;
   reviewerName: string;
   errorType: string;
   issueRelatedTo: string;
@@ -26,7 +26,6 @@ export interface IssueFormValues {
 
 // Validation schema
 const issueValidationSchema = yup.object({
-  issueName: yup.string().required('Issue name is required').min(2, 'Issue name must be at least 2 characters'),
   reviewerName: yup.string().required('Reviewer name is required').notOneOf(['none', ''], 'Please select a reviewer'),
   errorType: yup.string().required('Error type is required'),
   issueRelatedTo: yup.string().required('Issue related to is required'),
@@ -36,7 +35,6 @@ const issueValidationSchema = yup.object({
 interface IssueFormCardProps {
   issue: {
     id: string;
-    issueName: string;
     reviewerName: string;
     errorType: string;
     issueRelatedTo: string;
@@ -49,12 +47,11 @@ interface IssueFormCardProps {
   isEditMode?: boolean;
 }
 
-const IssueFormCard = ({ issue, index, onSave, onRemove, isSaving = false, isEditMode = false }: IssueFormCardProps) => {
+const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false }: IssueFormCardProps) => {
   const { practitioners } = useAppSelector(state => state.filterOptions);
 
   const formik = useFormik<IssueFormValues>({
     initialValues: {
-      issueName: issue.issueName || '',
       reviewerName: issue.reviewerName || '',
       errorType: issue.errorType || '',
       issueRelatedTo: issue.issueRelatedTo || '',
@@ -67,17 +64,16 @@ const IssueFormCard = ({ issue, index, onSave, onRemove, isSaving = false, isEdi
     },
   });
 
-  const errorTypeLabel = ERROR_TYPES.find(type => type.value === formik.values.errorType)?.label || '';
-  const issueRelatedToLabel = ISSUE_RELATED_TO_OPTIONS.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
+  const mergedErrorTypes = getMergedErrorTypes();
+  const mergedIssueRelatedTo = getMergedIssueRelatedTo();
+  const errorTypeLabel = mergedErrorTypes.find(type => type.value === formik.values.errorType)?.label || '';
+  const issueRelatedToLabel = mergedIssueRelatedTo.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
 
   return (
     <Card className="shadow-none">
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-700">
-              {isEditMode ? `Editing: ${issue.issueName || 'Issue'}` : `Issue${index + 1}`}
-            </span>
             {formik.values.errorType && (
               <Badge
                 className={`px-2 py-0.5 text-xs font-semibold text-white ${
@@ -101,23 +97,6 @@ const IssueFormCard = ({ issue, index, onSave, onRemove, isSaving = false, isEdi
         </div>
 
         <form onSubmit={formik.handleSubmit} className="space-y-4">
-          {/* Issue Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor={`issueName-${issue.id}`} className="text-sm font-medium">
-              Issue name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id={`issueName-${issue.id}`}
-              name="issueName"
-              value={formik.values.issueName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              placeholder="Enter issue name"
-              className="w-full"
-            />
-            {formik.touched.issueName && formik.errors.issueName && <p className="text-xs text-red-600">{formik.errors.issueName}</p>}
-          </div>
-
           {/* Reviewer Name Field */}
           <div className="w-full">
             <div className="flex items-center gap-2">
@@ -172,7 +151,7 @@ const IssueFormCard = ({ issue, index, onSave, onRemove, isSaving = false, isEdi
                 <SelectValue placeholder="Select error type" />
               </SelectTrigger>
               <SelectContent>
-                {ERROR_TYPES.map(type => (
+                {mergedErrorTypes.map(type => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
@@ -192,7 +171,7 @@ const IssueFormCard = ({ issue, index, onSave, onRemove, isSaving = false, isEdi
                 <SelectValue placeholder="Find an option" />
               </SelectTrigger>
               <SelectContent>
-                {ISSUE_RELATED_TO_OPTIONS.map(option => (
+                {mergedIssueRelatedTo.map(option => (
                   <SelectItem key={option.id} value={option.id}>
                     {option.id}: {option.name}
                   </SelectItem>

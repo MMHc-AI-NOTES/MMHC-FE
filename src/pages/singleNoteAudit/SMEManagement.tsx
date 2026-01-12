@@ -9,7 +9,7 @@ import IssueFormCard, { IssueFormValues } from './IssueFormCard';
 import { useParams } from 'react-router-dom';
 import { showToast } from '@/lib/toast';
 import { useAppSelector } from '@/store/store';
-import { ERROR_TYPES, ISSUE_RELATED_TO_OPTIONS } from '@/constants/common';
+import { getMergedErrorTypes, getMergedIssueRelatedTo } from '@/constants/common';
 
 interface IssueForm extends IssueFormValues {
   id: string;
@@ -26,7 +26,7 @@ const SMEManagement = () => {
   const addIssue = () => {
     const newIssue: IssueForm = {
       id: `issue-${Date.now()}`,
-      issueName: '',
+
       reviewerName: '',
       errorType: '',
       issueRelatedTo: '',
@@ -59,11 +59,12 @@ const SMEManagement = () => {
     try {
       setSavingIssueId(issueId);
 
+      const mergedErrorTypes = getMergedErrorTypes();
       // Prepare data to send to backend
       const issueData = {
         id: issueId,
         ...values,
-        points: ERROR_TYPES.find(type => type.value === values.errorType)?.points || 0,
+        points: mergedErrorTypes.find(type => type.value === values.errorType)?.points || 0,
       };
 
       // TODO: Uncomment when API is ready
@@ -125,70 +126,73 @@ const SMEManagement = () => {
         {savedIssues.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-700">Saved Issues</h3>
-            {savedIssues.map((savedIssue, index) => {
-              const errorTypeLabel = ERROR_TYPES.find(type => type.value === savedIssue.errorType)?.label || '';
-              const issueRelatedToLabel = ISSUE_RELATED_TO_OPTIONS.find(opt => opt.id === savedIssue.issueRelatedTo)?.name || '';
-              const reviewer = practitioners.find(p => p.id.toString() === savedIssue.reviewerName);
+            {(() => {
+              const mergedErrorTypes = getMergedErrorTypes();
+              const mergedIssueRelatedTo = getMergedIssueRelatedTo();
+              return savedIssues.map((savedIssue, index) => {
+                const errorTypeLabel = mergedErrorTypes.find(type => type.value === savedIssue.errorType)?.label || '';
+                const issueRelatedToLabel = mergedIssueRelatedTo.find(opt => opt.id === savedIssue.issueRelatedTo)?.name || '';
+                const reviewer = practitioners.find(p => p.id.toString() === savedIssue.reviewerName);
 
-              // Check if this issue is currently being edited
-              const isEditing = issues.some(issue => issue.id === savedIssue.id);
+                // Check if this issue is currently being edited
+                const isEditing = issues.some(issue => issue.id === savedIssue.id);
 
-              return (
-                <div key={savedIssue.id}>
-                  <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={`px-3 py-1 text-xs font-semibold text-white uppercase ${
-                            savedIssue.errorType === 'critical'
-                              ? 'bg-gradient-red'
-                              : savedIssue.errorType === 'moderate'
-                                ? 'bg-gradient-severity-moderate'
-                                : 'bg-gradient-severity-minor'
-                          }`}
-                        >
-                          {errorTypeLabel}
-                        </Badge>
-                        <Badge className="bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">SME</Badge>
-                        {reviewer && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <User className="h-3 w-3" />
-                            <span>{reviewer.fullName}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500">{savedIssue.issueRelatedTo}</span>
-                        {!isEditing && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditIssue(savedIssue)}
-                            className="h-8 w-8 p-0 hover:bg-gray-100"
-                            title="Edit issue"
+                return (
+                  <div key={savedIssue.id}>
+                    <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={`px-3 py-1 text-xs font-semibold text-white uppercase ${
+                              savedIssue.errorType === 'critical'
+                                ? 'bg-gradient-red'
+                                : savedIssue.errorType === 'moderate'
+                                  ? 'bg-gradient-severity-moderate'
+                                  : 'bg-gradient-severity-minor'
+                            }`}
                           >
-                            <Pencil className="h-4 w-4 text-gray-600" />
-                          </Button>
-                        )}
+                            {errorTypeLabel}
+                          </Badge>
+                          <Badge className="bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">SME</Badge>
+                          {reviewer && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <User className="h-3 w-3" />
+                              <span>{reviewer.fullName}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500">{savedIssue.issueRelatedTo}</span>
+                          {!isEditing && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditIssue(savedIssue)}
+                              className="h-8 w-8 p-0 hover:bg-gray-100"
+                              title="Edit issue"
+                            >
+                              <Pencil className="h-4 w-4 text-gray-600" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mt-1 text-sm font-bold text-red-600">
+                          {mergedErrorTypes.find(type => type.value === savedIssue.errorType)?.points || 0} pts
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                          <span className="font-medium">Related to:</span> {issueRelatedToLabel}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                          <span className="font-medium">Description:</span> {savedIssue.issueDescription}
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900">{savedIssue.issueName}</h3>
-                      <p className="mt-1 text-sm font-bold text-red-600">
-                        {ERROR_TYPES.find(type => type.value === savedIssue.errorType)?.points || 0} pts
-                      </p>
-                      <p className="mt-2 text-xs leading-relaxed text-gray-600">
-                        <span className="font-medium">Related to:</span> {issueRelatedToLabel}
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                        <span className="font-medium">Description:</span> {savedIssue.issueDescription}
-                      </p>
-                    </div>
+                    {index < savedIssues.length - 1 && <Separator />}
                   </div>
-                  {index < savedIssues.length - 1 && <Separator />}
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
 
