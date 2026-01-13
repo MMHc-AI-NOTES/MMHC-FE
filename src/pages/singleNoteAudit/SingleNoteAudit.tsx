@@ -258,7 +258,7 @@ const SingleNoteAudit = () => {
                 setOpenSectionId(sectionId);
               }}
             />
-            <SMEReview />
+            <SMEReview auditScore={noteDetail?.auditScore || 0} />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (
               <HumanReviewSection

@@ -3,19 +3,12 @@ import * as yup from 'yup';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X, Save, CircleHelp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppSelector } from '@/store/store';
 import { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/constants/common';
-
-const getIssueDescriptionOptions = (errorType: string) => {
-  if (!errorType) return [];
-  // Now issue descriptions is a simple array, return all descriptions
-  return getMergedIssueDescriptions();
-};
 
 export interface IssueFormValues {
   reviewerName: string;
@@ -74,8 +67,8 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewer
   const issueRelatedToLabel = mergedIssueRelatedTo.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
 
   return (
-    <Card className="shadow-none">
-      <CardContent className="space-y-4">
+    <Card className="p-0 shadow-none">
+      <CardContent className="space-y-4 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {formik.values.errorType && (
@@ -95,8 +88,8 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewer
               <Badge className="bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700">{issueRelatedToLabel}</Badge>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={onRemove} className="h-8 w-8 p-0">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="sm" onClick={onRemove}>
+            <X />
           </Button>
         </div>
 
@@ -146,13 +139,7 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewer
             <Label htmlFor={`errorType-${issue.id}`} className="text-sm font-medium">
               Error type <span className="text-red-500">*</span>
             </Label>
-            <Select
-              value={formik.values.errorType}
-              onValueChange={value => {
-                formik.setFieldValue('errorType', value);
-                formik.setFieldValue('issueDescription', ''); // Reset issue description when error type changes
-              }}
-            >
+            <Select value={formik.values.errorType} onValueChange={value => formik.setFieldValue('errorType', value)}>
               <SelectTrigger className="w-full" id={`errorType-${issue.id}`}>
                 <SelectValue placeholder="Select error type" />
               </SelectTrigger>
@@ -194,26 +181,22 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewer
             <Label htmlFor={`issueDescription-${issue.id}`} className="text-sm font-medium">
               Issue description <span className="text-red-500">*</span>
             </Label>
-            {formik.values.errorType ? (
-              <Select value={formik.values.issueDescription} onValueChange={value => formik.setFieldValue('issueDescription', value)}>
-                <SelectTrigger className="w-full" id={`issueDescription-${issue.id}`}>
-                  <SelectValue placeholder="Select issue description" className="line-clamp-2" />
-                </SelectTrigger>
-                <SelectContent className="max-w-lg">
-                  {getIssueDescriptionOptions(formik.values.errorType).map((description, idx) => (
-                    <SelectItem
-                      key={idx}
-                      value={description}
-                      className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
-                    >
-                      {description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input id={`issueDescription-${issue.id}`} placeholder="Select error type first" disabled className="w-full" />
-            )}
+            <Select value={formik.values.issueDescription} onValueChange={value => formik.setFieldValue('issueDescription', value)}>
+              <SelectTrigger className="w-full" id={`issueDescription-${issue.id}`}>
+                <SelectValue placeholder="Select issue description" className="line-clamp-2" />
+              </SelectTrigger>
+              <SelectContent className="max-w-lg">
+                {getMergedIssueDescriptions().map((description, idx) => (
+                  <SelectItem
+                    key={idx}
+                    value={description}
+                    className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
+                  >
+                    {description}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {formik.touched.issueDescription && formik.errors.issueDescription && (
               <p className="text-xs text-red-600">{formik.errors.issueDescription}</p>
             )}

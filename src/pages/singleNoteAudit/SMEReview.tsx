@@ -25,7 +25,11 @@ interface Review {
   issues: IssueForm[];
 }
 
-const SMEReview = () => {
+interface SMEReviewProps {
+  auditScore: number;
+}
+
+const SMEReview = ({ auditScore }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const { practitioners } = useAppSelector(state => state.filterOptions);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -354,9 +358,9 @@ const SMEReview = () => {
                   </Select>
                 </div>
 
-                {/* Add Issue Button */}
+                {/* Add Issue Button and Score Comparison */}
                 {review.reviewerId && (
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-end">
                     <Button onClick={() => addIssue(review.id)} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
                       <Plus className="h-4 w-4" />
                       Add Issue
@@ -367,6 +371,42 @@ const SMEReview = () => {
                 {/* Saved Issues List */}
                 {savedIssues.length > 0 && (
                   <div className="space-y-3">
+                    {(() => {
+                      // Calculate total SME score from ALL reviews
+                      const mergedErrorTypes = getMergedErrorTypes();
+                      const allSavedIssues = reviews.flatMap(r =>
+                        r.issues.filter(issue => !activeIssueForms.some(form => form.reviewId === r.id && form.issueId === issue.id)),
+                      );
+                      const totalPoints = allSavedIssues.reduce((sum, issue) => {
+                        const issuePoints = mergedErrorTypes.find(type => type.value === issue.errorType)?.points || 0;
+                        return sum + issuePoints;
+                      }, 0);
+                      const smeScore = 100 + totalPoints; // Points are negative, so we add them
+                      const difference = smeScore - auditScore;
+
+                      return (
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">SME Score:</span>
+                            <span className={`font-semibold ${smeScore < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                              {smeScore.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">AI Score:</span>
+                            <span className="font-semibold text-gray-900">{auditScore.toFixed(1)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">Difference:</span>
+                            <span
+                              className={`font-semibold ${difference <= 5 ? 'text-green-600' : difference <= 10 ? 'text-yellow-600' : 'text-red-600'}`}
+                            >
+                              {difference}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <h3 className="text-sm font-semibold text-gray-700">Issues</h3>
                     {(() => {
                       const mergedErrorTypes = getMergedErrorTypes();

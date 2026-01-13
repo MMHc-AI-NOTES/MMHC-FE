@@ -447,5 +447,44 @@ export const ISSUE_DESCRIPTIONS = [
   'Plan is generic or continuity-only',
 ];
 
+// Display name mappings for numeric IDs (for API responses)
+export const ErrorTypeDisplayNames: Record<number, string> = {
+  1: 'Minor (-5 pts)',
+  2: 'Moderate (-15 pts)',
+  3: 'Critical (-25 pts)',
+};
+
+export const IssuesRelatedToDisplayName: Record<number, string> = {
+  1: 'Session Duration',
+  2: 'Mental Status',
+  3: 'Subjective',
+  4: 'Objective',
+  5: 'Assessment & Therapeutic Intervention',
+  6: 'Reaction to Intervention',
+  7: 'Plan and Collaboration',
+  8: 'Therapist Reflection and Insight',
+  9: 'Progress',
+  10: 'Suicidality',
+  11: 'Homicidality',
+  12: 'Therapist Initials',
+  13: 'General',
+};
+
+export const IssueDescriptionDisplayNames: Record<number, string> = {
+  1: 'No clinical interpretation',
+  2: 'No modality or intervention explanation',
+  3: 'Vague or non-specific language',
+  4: 'Templated or boilerplate language',
+  5: 'Repetitive content within the note',
+  6: 'Not specific to date of service',
+  7: 'Progress marked but not supported by note content',
+  8: 'Transcription-style documentation',
+  9: 'Missing required field',
+  10: 'Identical or duplicate content from previous note',
+  11: 'One field copied from previous note',
+  12: 'Repetitive field across multiple notes',
+  13: 'Plan is generic or continuity-only',
+};
+
 // Export merged data functions (combines default constants with localStorage customizations)
 export { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/types/smeConfig';
