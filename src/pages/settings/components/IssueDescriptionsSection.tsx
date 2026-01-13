@@ -111,67 +111,48 @@ const IssueDescriptionsSection: React.FC<IssueDescriptionsSectionProps> = ({ iss
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Default Descriptions Table */}
-            <div>
-              <p className="mb-2 text-sm font-semibold text-gray-700">Default Issue Descriptions:</p>
+        <CardContent className="p-0">
+          <div className="border-y">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Description</TableHead>
+                    <TableHead className="pl-3 text-left">Description</TableHead>
+                    {issueDescriptions.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {/* Default Descriptions */}
                   {ISSUE_DESCRIPTIONS.map((desc, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="text-sm text-gray-700">{desc}</TableCell>
+                      <TableCell className="text-left">{desc}</TableCell>
+                      {issueDescriptions.length > 0 && <TableCell></TableCell>}
+                    </TableRow>
+                  ))}
+                  {/* Custom Descriptions */}
+                  {issueDescriptions.map((desc, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="text-left">{desc}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(desc, idx)} className="h-8 w-8 p-0">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(idx)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-
-            {/* Custom Descriptions Table */}
-            {issueDescriptions.length > 0 && (
-              <div>
-                <p className="mb-2 text-sm font-semibold text-gray-700">Custom Issue Descriptions:</p>
-                <div className="border-y">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {issueDescriptions.map((desc, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell className="text-sm text-gray-700">{desc}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => handleEdit(desc, idx)} className="h-8 w-8 p-0">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteClick(idx)}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
