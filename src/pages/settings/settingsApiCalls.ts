@@ -240,23 +240,20 @@ export const deleteAgent = async (agentId: number): Promise<boolean> => {
 //   try {
 //     const response = await axios.get<{ data: IssueDescriptions }>('/sme-config/issue-descriptions');
 //     if (response.status) {
-//       return response.data.data || { critical: [], moderate: [], minor: [] };
+//       return response.data.data || [];
 //     } else {
 //       handleErrorMessages(response);
-//       return { critical: [], moderate: [], minor: [] };
+//       return [];
 //     }
 //   } catch (error: any) {
 //     handleCatchMessages(error);
-//     return { critical: [], moderate: [], minor: [] };
+//     return [];
 //   }
 // };
 
-// export const createSMEIssueDescription = async (
-//   type: 'critical' | 'moderate' | 'minor',
-//   description: string,
-// ): Promise<string | null> => {
+// export const createSMEIssueDescription = async (description: string): Promise<string | null> => {
 //   try {
-//     const response = await axios.post<{ data: string }>('/sme-config/issue-descriptions', { type, description });
+//     const response = await axios.post<{ data: string }>('/sme-config/issue-descriptions', { description });
 //     if (response.status) {
 //       showToast.success('Issue description created successfully!');
 //       return response.data.data;
@@ -270,15 +267,9 @@ export const deleteAgent = async (agentId: number): Promise<boolean> => {
 //   }
 // };
 
-// export const updateSMEIssueDescription = async (
-//   type: 'critical' | 'moderate' | 'minor',
-//   index: number,
-//   description: string,
-// ): Promise<string | null> => {
+// export const updateSMEIssueDescription = async (index: number, description: string): Promise<string | null> => {
 //   try {
-//     const response = await axios.patch<{ data: string }>(`/sme-config/issue-descriptions/${type}/${index}`, {
-//       description,
-//     });
+//     const response = await axios.patch<{ data: string }>(`/sme-config/issue-descriptions/${index}`, { description });
 //     if (response.status) {
 //       showToast.success('Issue description updated successfully!');
 //       return response.data.data;
@@ -292,9 +283,9 @@ export const deleteAgent = async (agentId: number): Promise<boolean> => {
 //   }
 // };
 
-// export const deleteSMEIssueDescription = async (type: 'critical' | 'moderate' | 'minor', index: number): Promise<boolean> => {
+// export const deleteSMEIssueDescription = async (index: number): Promise<boolean> => {
 //   try {
-//     const response = await axios.delete(`/sme-config/issue-descriptions/${type}/${index}`);
+//     const response = await axios.delete(`/sme-config/issue-descriptions/${index}`);
 //     if (response.status) {
 //       showToast.success('Issue description deleted successfully!');
 //       return true;

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { ISSUE_DESCRIPTIONS } from '@/constants/common';
 import { IssueDescriptions, saveIssueDescriptions } from '@/types/smeConfig';
 import { showToast } from '@/lib/toast';
 import IssueDescriptionDialog from './IssueDescriptionDialog';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // import { createSMEIssueDescription, updateSMEIssueDescription, deleteSMEIssueDescription } from '../settingsApiCalls';
 
 interface IssueDescriptionsSectionProps {
@@ -19,48 +19,40 @@ const IssueDescriptionsSection: React.FC<IssueDescriptionsSectionProps> = ({ iss
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [editingDescription, setEditingDescription] = useState<{
-    type: 'critical' | 'moderate' | 'minor';
-    text: string;
-    index?: number;
-  } | null>(null);
-  const [selectedToDelete, setSelectedToDelete] = useState<{
-    type: 'critical' | 'moderate' | 'minor';
-    index: number;
-    text: string;
-  } | null>(null);
+  const [editingDescription, setEditingDescription] = useState<{ text: string; index?: number } | null>(null);
+  const [selectedToDelete, setSelectedToDelete] = useState<{ index: number; text: string } | null>(null);
 
   const handleAdd = () => {
     setEditingDescription(null);
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (type: 'critical' | 'moderate' | 'minor', text: string, index: number) => {
-    setEditingDescription({ type, text, index });
+  const handleEdit = (text: string, index: number) => {
+    setEditingDescription({ text, index });
     setIsDialogOpen(true);
   };
 
-  const handleSave = async (type: 'critical' | 'moderate' | 'minor', text: string) => {
+  const handleSave = async (text: string) => {
     try {
       // TODO: Uncomment when APIs are ready
-      // const updated = { ...issueDescriptions };
       // if (editingDescription) {
-      //   const result = await updateSMEIssueDescription(editingDescription.type, editingDescription.index!, text);
+      //   const result = await updateSMEIssueDescription(editingDescription.index!, text);
       //   if (!result) return;
-      //   updated[editingDescription.type][editingDescription.index!] = result;
+      //   const updated = [...issueDescriptions];
+      //   updated[editingDescription.index!] = result;
+      //   onUpdate(updated);
       // } else {
-      //   const result = await createSMEIssueDescription(type, text);
+      //   const result = await createSMEIssueDescription(text);
       //   if (!result) return;
-      //   updated[type] = [...updated[type], result];
+      //   onUpdate([...issueDescriptions, result]);
       // }
-      // onUpdate(updated);
 
       // Using localStorage for now
-      const updated = { ...issueDescriptions };
+      const updated = [...issueDescriptions];
       if (editingDescription) {
-        updated[editingDescription.type][editingDescription.index!] = text;
+        updated[editingDescription.index!] = text;
       } else {
-        updated[type] = [...updated[type], text];
+        updated.push(text);
       }
       saveIssueDescriptions(updated);
       onUpdate(updated);
@@ -73,9 +65,9 @@ const IssueDescriptionsSection: React.FC<IssueDescriptionsSectionProps> = ({ iss
     }
   };
 
-  const handleDeleteClick = (type: 'critical' | 'moderate' | 'minor', index: number) => {
-    const text = issueDescriptions[type][index];
-    setSelectedToDelete({ type, index, text });
+  const handleDeleteClick = (index: number) => {
+    const text = issueDescriptions[index];
+    setSelectedToDelete({ index, text });
     setIsDeleteDialogOpen(true);
   };
 
@@ -85,18 +77,15 @@ const IssueDescriptionsSection: React.FC<IssueDescriptionsSectionProps> = ({ iss
     setIsDeleting(true);
     try {
       // TODO: Uncomment when APIs are ready
-      // const success = await deleteSMEIssueDescription(selectedToDelete.type, selectedToDelete.index);
+      // const success = await deleteSMEIssueDescription(selectedToDelete.index);
       // if (!success) {
       //   setIsDeleting(false);
       //   return;
       // }
-      // const updated = { ...issueDescriptions };
-      // updated[selectedToDelete.type] = updated[selectedToDelete.type].filter((_, i) => i !== selectedToDelete.index);
-      // onUpdate(updated);
+      // onUpdate(issueDescriptions.filter((_, i) => i !== selectedToDelete.index));
 
       // Using localStorage for now
-      const updated = { ...issueDescriptions };
-      updated[selectedToDelete.type] = updated[selectedToDelete.type].filter((_, i) => i !== selectedToDelete.index);
+      const updated = issueDescriptions.filter((_, i) => i !== selectedToDelete.index);
       saveIssueDescriptions(updated);
       onUpdate(updated);
       setIsDeleting(false);
@@ -122,66 +111,67 @@ const IssueDescriptionsSection: React.FC<IssueDescriptionsSectionProps> = ({ iss
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent>
           <div className="space-y-6">
-            {(['critical', 'moderate', 'minor'] as const).map(type => (
-              <div key={type}>
-                <div className="mx-4 mb-2 flex items-center justify-between">
-                  <h4 className="text-primary font-semibold capitalize">{type} Descriptions</h4>
-                </div>
-                <Card className="mx-4 gap-4 px-4 text-sm text-gray-600">
-                  <p className="font-semibold">Default {type} descriptions:</p>
-                  <ul className="ml-4 list-disc space-y-1">
-                    {ISSUE_DESCRIPTIONS[type].map((desc, idx) => (
-                      <li key={idx} className="text-xs">
-                        {desc}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-                {issueDescriptions[type].length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-primary mb-2 px-4 text-sm font-semibold">Custom {type} descriptions:</p>
-                    <div className="border-y">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Description</TableHead>
-                              <TableHead>Type</TableHead>
-                              <TableHead>Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {issueDescriptions[type].map((desc, idx) => (
-                              <TableRow key={idx}>
-                                <TableCell>{desc}</TableCell>
-                                <TableCell>{type}</TableCell>
-                                <TableCell>
-                                  <div className="flex items-center justify-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => handleEdit(type, desc, idx)} className="h-8 w-8 p-0">
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleDeleteClick(type, idx)}
-                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
+            {/* Default Descriptions Table */}
+            <div>
+              <p className="mb-2 text-sm font-semibold text-gray-700">Default Issue Descriptions:</p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ISSUE_DESCRIPTIONS.map((desc, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="text-sm text-gray-700">{desc}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Custom Descriptions Table */}
+            {issueDescriptions.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold text-gray-700">Custom Issue Descriptions:</p>
+                <div className="border-y">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {issueDescriptions.map((desc, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="text-sm text-gray-700">{desc}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => handleEdit(desc, idx)} className="h-8 w-8 p-0">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteClick(idx)}
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                )}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
@@ -206,7 +196,7 @@ const IssueDescriptionsSection: React.FC<IssueDescriptionsSectionProps> = ({ iss
         title="Delete Issue Description"
         description={
           selectedToDelete
-            ? `Are you sure you want to delete this ${selectedToDelete.type} issue description? This action cannot be undone.\n\n"${selectedToDelete.text.substring(0, 100)}${selectedToDelete.text.length > 100 ? '...' : ''}"`
+            ? `Are you sure you want to delete this issue description? This action cannot be undone.\n\n"${selectedToDelete.text.substring(0, 100)}${selectedToDelete.text.length > 100 ? '...' : ''}"`
             : 'Are you sure you want to delete this issue description? This action cannot be undone.'
         }
         confirmButtonText="Delete"

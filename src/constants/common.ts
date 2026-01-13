@@ -383,14 +383,16 @@ export const StructureQualityLabels: Record<number, string> = {
 
 export const AgentModelKeys = {
   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
-  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
-  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0', // Inference profile format
+  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0', // Inference profile format
+  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', // Claude Sonnet 4.5 (inference profile format)
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
   CLAUDE_3_HAIKU: 'Claude 3 Haiku',
   CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku',
   CLAUDE_4_5_HAIKU_V1: 'Claude 4.5 Haiku',
+  CLAUDE_4_5_SONNET_V1: 'Claude 4.5 Sonnet',
 };
 
 export const AgentTypes = {
@@ -414,6 +416,10 @@ export const ERROR_TYPES = [
 
 // Issue related to options (section IDs with names)
 export const ISSUE_RELATED_TO_OPTIONS = [
+  { id: 'p9m9-1', name: 'Session Duration' },
+  { id: '1hye-1', name: 'Mental Status' },
+  { id: '6tx9-1', name: 'Subjective' },
+  { id: 'rb2f-1', name: 'Objective' },
   { id: 'zad8-1', name: 'Assessment & Therapeutic Intervention' },
   { id: 'ugq6-1', name: 'Reaction to Intervention' },
   { id: 'hnfi-1', name: 'Plan and Collaboration' },
@@ -422,44 +428,24 @@ export const ISSUE_RELATED_TO_OPTIONS = [
   { id: 'kxgx-7', name: 'Suicidality' },
   { id: 'kxgx-8', name: 'Homicidality' },
   { id: '4lbp-1', name: 'Therapist Initials' },
-  { id: 'p9m9-1', name: 'Session Duration' },
-  { id: '1hye-1', name: 'Mental Status' },
-  { id: '6tx9-1', name: 'Subjective' },
-  { id: 'rb2f-1', name: 'Objective' },
-  { id: 'general', name: 'General' },
 ];
 
-// Issue description options based on error type
-export const ISSUE_DESCRIPTIONS = {
-  critical: [
-    'Missing required field',
-    'Transcription-style note (dialogue or step-by-step)',
-    'Note lacks medical necessity',
-    "SI/HI marked as 'Present' but no safety plan included",
-    'Duration mismatch with CPT code',
-    'Therapist initials missing',
-    'Identical or duplicate content from previous notes (over 80% identical overall)',
-    'If one field is 100% copied from previous notes among Subjective, Objective, Assessment & Therapeutic Intervention, Reaction to Intervention',
-    'If the CURRENT field text is an exact match OR is fully contained verbatim within the corresponding PREVIOUS field text (even if the previous field is longer), this MUST be treated as a Critical duplication violation',
-  ],
-  moderate: [
-    "Overly definitive language (e.g., 'Client is depressed') without attribution",
-    'No clinical interpretation or modality in Assessment & Therapeutic Intervention',
-    'Plan and Collaboration lacks plan AND relevance to session',
-    'Mental Status filled but does not describe observable behavior',
-    'On fields Reaction to Intervention, Objective, Therapist Reflection and Insight, Subjective, Plan and Collaboration, Assessment & Therapeutic Intervention: not specific to that date of service',
-    'If one field is copied from previous notes among Plan and Collaboration, Reaction to Intervention',
-    'Inconsistencies between 2 or more fields',
-  ],
-  minor: [
-    'Vague or templated language',
-    'Progress marked but the content of the note does not go in that direction',
-    'Casual or disjointed tone',
-    'Therapist Reflection and Insight: Irrelevant, long, or copied from previous note',
-    'Slightly too definitive wording without legal risk',
-    'Repetitive content (excluding time, risk flags, or initials)',
-  ],
-};
+// Issue description options (simplified - no categories)
+export const ISSUE_DESCRIPTIONS = [
+  'No clinical interpretation',
+  'No modality or intervention explanation',
+  'Vague or non-specific language',
+  'Templated or boilerplate language',
+  'Repetitive content within the note',
+  'Not specific to date of service',
+  'Progress marked but not supported by note content',
+  'Transcription-style documentation',
+  'Missing required field',
+  'Identical or duplicate content from previous note',
+  'One field copied from previous note',
+  'Repetitive field across multiple notes',
+  'Plan is generic or continuity-only',
+];
 
 // Export merged data functions (combines default constants with localStorage customizations)
 export { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/types/smeConfig';

@@ -10,7 +10,7 @@ import NoteInformation from './NoteInformation';
 import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
-import SMEManagement from './SMEManagement';
+import SMEReview from './SMEReview';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
@@ -258,7 +258,7 @@ const SingleNoteAudit = () => {
                 setOpenSectionId(sectionId);
               }}
             />
-            <SMEManagement />
+            <SMEReview />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (
               <HumanReviewSection

@@ -19,18 +19,21 @@ export type IssueRelatedTo = {
   name: string;
 };
 
-// Issue Descriptions type
-export type IssueDescriptions = {
-  critical: string[];
-  moderate: string[];
-  minor: string[];
-};
+// Issue Descriptions type (simplified - just an array)
+export type IssueDescriptions = string[];
 
 // Get error types from localStorage
 export const getStoredErrorTypes = (): ErrorType[] => {
   if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem(STORAGE_KEYS.ERROR_TYPES);
-  return stored ? JSON.parse(stored) : [];
+  if (!stored) return [];
+  try {
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Error parsing stored error types:', error);
+    return [];
+  }
 };
 
 // Get issues related to from localStorage
@@ -42,9 +45,24 @@ export const getStoredIssueRelatedTo = (): IssueRelatedTo[] => {
 
 // Get issue descriptions from localStorage
 export const getStoredIssueDescriptions = (): IssueDescriptions => {
-  if (typeof window === 'undefined') return { critical: [], moderate: [], minor: [] };
+  if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem(STORAGE_KEYS.ISSUE_DESCRIPTIONS);
-  return stored ? JSON.parse(stored) : { critical: [], moderate: [], minor: [] };
+  if (!stored) return [];
+  try {
+    const parsed = JSON.parse(stored);
+    // Handle migration from old object format to new array format
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    // If it's the old object format, return empty array (migration)
+    if (typeof parsed === 'object' && parsed !== null) {
+      return [];
+    }
+    return [];
+  } catch (error) {
+    console.error('Error parsing stored issue descriptions:', error);
+    return [];
+  }
 };
 
 // Save error types to localStorage
@@ -73,16 +91,34 @@ export const getMergedErrorTypes = (): ErrorType[] => {
     points: type.points,
   }));
   const storedTypes = getStoredErrorTypes();
-  // Merge: stored types override defaults if same value, otherwise append
+
+  // Ensure storedTypes is an array
+  const storedArray = Array.isArray(storedTypes) ? storedTypes : [];
+
+  // Start with all default types
   const merged: ErrorType[] = [...defaultTypes];
-  storedTypes.forEach(stored => {
-    const existingIndex = merged.findIndex(t => t.value === stored.value);
-    if (existingIndex >= 0) {
-      merged[existingIndex] = stored;
-    } else {
-      merged.push(stored);
+
+  // Add stored types: override defaults if same value, otherwise append
+  storedArray.forEach(stored => {
+    if (stored && typeof stored === 'object' && stored.value) {
+      // Ensure required fields have defaults if missing
+      const validStored: ErrorType = {
+        value: stored.value,
+        label: stored.label || stored.value,
+        points: typeof stored.points === 'number' ? stored.points : 0,
+      };
+
+      const existingIndex = merged.findIndex(t => t.value === validStored.value);
+      if (existingIndex >= 0) {
+        // Override default with stored version (allows customization of default types)
+        merged[existingIndex] = validStored;
+      } else {
+        // Append new stored type (adds new error types)
+        merged.push(validStored);
+      }
     }
   });
+
   return merged;
 };
 
@@ -105,11 +141,16 @@ export const getMergedIssueRelatedTo = (): IssueRelatedTo[] => {
 
 // Get merged issue descriptions (default + stored)
 export const getMergedIssueDescriptions = (): IssueDescriptions => {
-  const defaultDescriptions = { ...ISSUE_DESCRIPTIONS };
+  const defaultDescriptions = [...ISSUE_DESCRIPTIONS];
   const storedDescriptions = getStoredIssueDescriptions();
-  return {
-    critical: [...defaultDescriptions.critical, ...(storedDescriptions.critical || [])],
-    moderate: [...defaultDescriptions.moderate, ...(storedDescriptions.moderate || [])],
-    minor: [...defaultDescriptions.minor, ...(storedDescriptions.minor || [])],
-  };
+  // Ensure storedDescriptions is an array (handle migration from old object format)
+  const storedArray = Array.isArray(storedDescriptions) ? storedDescriptions : [];
+  // Merge: stored descriptions override defaults if same text, otherwise append
+  const merged: IssueDescriptions = [...defaultDescriptions];
+  storedArray.forEach(stored => {
+    if (typeof stored === 'string' && !merged.includes(stored)) {
+      merged.push(stored);
+    }
+  });
+  return merged;
 };

@@ -117,61 +117,50 @@ const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRela
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="space-y-4">
-            <Card className="mx-4 gap-4 px-4 text-sm text-gray-600">
-              <p className="font-semibold">Default Options:</p>
-              <div className="space-y-1">
-                {ISSUE_RELATED_TO_OPTIONS.map(option => (
-                  <div key={option.id} className="text-xs">
-                    <span className="font-medium">{option.id}:</span> {option.name}
-                  </div>
-                ))}
-              </div>
-            </Card>
-            {issueRelatedTo.length > 0 && (
-              <div>
-                <p className="mb-2 px-4 text-sm font-semibold">Custom Options:</p>
-                <div className="border-y">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {issueRelatedTo.map(issue => (
-                          <TableRow key={issue.id}>
-                            <TableCell>{issue.id}</TableCell>
-                            <TableCell>{issue.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => handleEdit(issue)} className="h-8 w-8 p-0">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteClick(issue.id)}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </div>
-            )}
-            {issueRelatedTo.length === 0 && (
-              <p className="py-4 text-center text-sm text-gray-500">No custom issues related to added yet.</p>
-            )}
+          <div className="border-y">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-3 text-left">ID</TableHead>
+                    <TableHead className="pl-3 text-left">Name</TableHead>
+                    {issueRelatedTo.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {/* Default Options */}
+                  {ISSUE_RELATED_TO_OPTIONS.map(option => (
+                    <TableRow key={option.id}>
+                      <TableCell className="text-left">{option.id}</TableCell>
+                      <TableCell className="text-left">{option.name}</TableCell>
+                      {issueRelatedTo.length > 0 && <TableCell></TableCell>}
+                    </TableRow>
+                  ))}
+                  {/* Custom Options */}
+                  {issueRelatedTo.map(issue => (
+                    <TableRow key={issue.id}>
+                      <TableCell className="text-left">{issue.id}</TableCell>
+                      <TableCell className="text-left">{issue.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(issue)} className="h-8 w-8 p-0">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(issue.id)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

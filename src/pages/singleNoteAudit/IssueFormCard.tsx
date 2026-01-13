@@ -13,8 +13,8 @@ import { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescription
 
 const getIssueDescriptionOptions = (errorType: string) => {
   if (!errorType) return [];
-  const mergedDescriptions = getMergedIssueDescriptions();
-  return mergedDescriptions[errorType as keyof typeof mergedDescriptions] || [];
+  // Now issue descriptions is a simple array, return all descriptions
+  return getMergedIssueDescriptions();
 };
 
 export interface IssueFormValues {
@@ -24,13 +24,16 @@ export interface IssueFormValues {
   issueDescription: string;
 }
 
-// Validation schema
-const issueValidationSchema = yup.object({
-  reviewerName: yup.string().required('Reviewer name is required').notOneOf(['none', ''], 'Please select a reviewer'),
-  errorType: yup.string().required('Error type is required'),
-  issueRelatedTo: yup.string().required('Issue related to is required'),
-  issueDescription: yup.string().required('Issue description is required'),
-});
+// Validation schema factory (reviewerName is optional if hidden)
+const createIssueValidationSchema = (requireReviewer: boolean) =>
+  yup.object({
+    reviewerName: requireReviewer
+      ? yup.string().required('Reviewer name is required').notOneOf(['none', ''], 'Please select a reviewer')
+      : yup.string(),
+    errorType: yup.string().required('Error type is required'),
+    issueRelatedTo: yup.string().required('Issue related to is required'),
+    issueDescription: yup.string().required('Issue description is required'),
+  });
 
 interface IssueFormCardProps {
   issue: {
@@ -45,9 +48,10 @@ interface IssueFormCardProps {
   onRemove: () => void;
   isSaving?: boolean;
   isEditMode?: boolean;
+  hideReviewerField?: boolean;
 }
 
-const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false }: IssueFormCardProps) => {
+const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewerField = false }: IssueFormCardProps) => {
   const { practitioners } = useAppSelector(state => state.filterOptions);
 
   const formik = useFormik<IssueFormValues>({
@@ -57,7 +61,7 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false }: IssueFormC
       issueRelatedTo: issue.issueRelatedTo || '',
       issueDescription: issue.issueDescription || '',
     },
-    validationSchema: issueValidationSchema,
+    validationSchema: createIssueValidationSchema(!hideReviewerField),
     enableReinitialize: true,
     onSubmit: async values => {
       await onSave(values);
@@ -97,43 +101,45 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false }: IssueFormC
         </div>
 
         <form onSubmit={formik.handleSubmit} className="space-y-4">
-          {/* Reviewer Name Field */}
-          <div className="w-full">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-gray-700">
-                Reviewer Name <span className="text-red-500">*</span>
-              </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p>
-                      Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
-                      accountability.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          {/* Reviewer Name Field - Hidden if hideReviewerField is true */}
+          {!hideReviewerField && (
+            <div className="w-full">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-gray-700">
+                  Reviewer Name <span className="text-red-500">*</span>
+                </p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CircleHelp className="h-4 w-4 cursor-help text-gray-500" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>
+                        Your name is required when overriding or escalating an AI decision. This will be logged in the audit history for
+                        accountability.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Select value={formik.values.reviewerName} onValueChange={value => formik.setFieldValue('reviewerName', value)}>
+                <SelectTrigger className="mt-2 w-full">
+                  <SelectValue placeholder="Select a reviewer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Select a reviewer</SelectItem>
+                  {practitioners.map(p => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.fullName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formik.touched.reviewerName && formik.errors.reviewerName && (
+                <p className="mt-1 text-xs text-red-600">{formik.errors.reviewerName}</p>
+              )}
             </div>
-            <Select value={formik.values.reviewerName} onValueChange={value => formik.setFieldValue('reviewerName', value)}>
-              <SelectTrigger className="mt-2 w-full">
-                <SelectValue placeholder="Select a reviewer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Select a reviewer</SelectItem>
-                {practitioners.map(p => (
-                  <SelectItem key={p.id} value={p.id.toString()}>
-                    {p.fullName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formik.touched.reviewerName && formik.errors.reviewerName && (
-              <p className="mt-1 text-xs text-red-600">{formik.errors.reviewerName}</p>
-            )}
-          </div>
+          )}
 
           {/* Error Type Field */}
           <div className="space-y-2">
@@ -214,7 +220,10 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false }: IssueFormC
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end gap-4 pt-2">
+            <Button variant="outline" onClick={onRemove}>
+              Cancel
+            </Button>
             <Button type="submit" className="bg-gradient-light text-primary border-0 shadow-sm" disabled={isSaving}>
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save'}

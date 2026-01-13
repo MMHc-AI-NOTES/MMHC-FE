@@ -18,16 +18,18 @@ interface ErrorTypeDialogProps {
 const validationSchema = yup.object({
   value: yup.string().required('Value is required'),
   label: yup.string().required('Label is required'),
-  points: yup.number().required('Points is required'),
+  points: yup.number().required('Points is required').negative('Points must be negative').max(-1, 'Points must be negative'),
 });
 
 const ErrorTypeDialog: React.FC<ErrorTypeDialogProps> = ({ isOpen, onClose, onSave, editingErrorType }) => {
   const formik = useFormik<ErrorType>({
-    initialValues: editingErrorType || { value: '', label: '', points: 0 },
+    initialValues: editingErrorType || { value: '', label: '', points: -5 },
     validationSchema,
     enableReinitialize: true,
     onSubmit: values => {
-      onSave(values);
+      // Ensure points are always negative
+      const points = values.points > 0 ? -values.points : values.points;
+      onSave({ ...values, points });
       formik.resetForm();
     },
   });
@@ -69,14 +71,40 @@ const ErrorTypeDialog: React.FC<ErrorTypeDialogProps> = ({ isOpen, onClose, onSa
             {formik.touched.label && formik.errors.label && <p className="mt-1 text-xs text-red-600">{formik.errors.label}</p>}
           </div>
           <div>
-            <Label htmlFor="error-type-points">Points</Label>
+            <Label htmlFor="error-type-points">Points *</Label>
             <Input
               id="error-type-points"
               name="points"
               type="number"
               value={formik.values.points}
-              onChange={e => formik.setFieldValue('points', parseInt(e.target.value) || 0)}
-              onBlur={formik.handleBlur}
+              onChange={e => {
+                const inputValue = e.target.value;
+                // Allow empty string or just minus sign for user input
+                if (inputValue === '' || inputValue === '-') {
+                  formik.setFieldValue('points', inputValue);
+                  return;
+                }
+                const numValue = parseFloat(inputValue);
+                if (!isNaN(numValue)) {
+                  // Automatically convert positive numbers to negative
+                  const points = numValue > 0 ? -numValue : numValue;
+                  formik.setFieldValue('points', points);
+                }
+              }}
+              onBlur={e => {
+                // Ensure points are negative on blur
+                const inputValue = e.target.value;
+                if (inputValue === '' || inputValue === '-') {
+                  formik.setFieldValue('points', -5);
+                } else {
+                  const numValue = parseFloat(inputValue);
+                  if (!isNaN(numValue)) {
+                    const points = numValue > 0 ? -numValue : numValue === 0 ? -5 : numValue;
+                    formik.setFieldValue('points', points);
+                  }
+                }
+                formik.handleBlur(e);
+              }}
               placeholder="e.g., -25"
             />
             {formik.touched.points && formik.errors.points && <p className="mt-1 text-xs text-red-600">{formik.errors.points}</p>}

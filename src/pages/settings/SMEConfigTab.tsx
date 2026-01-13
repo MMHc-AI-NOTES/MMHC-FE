@@ -38,11 +38,7 @@ const SMEConfigTab: React.FC = () => {
 
   const [errorTypes, setErrorTypes] = useState<ErrorType[]>([]);
   const [issueRelatedTo, setIssueRelatedTo] = useState<IssueRelatedTo[]>([]);
-  const [issueDescriptions, setIssueDescriptions] = useState<IssueDescriptions>({
-    critical: [],
-    moderate: [],
-    minor: [],
-  });
+  const [issueDescriptions, setIssueDescriptions] = useState<IssueDescriptions>([]);
   const [loading, setLoading] = useState(true);
 
   // Persist tab changes to localStorage

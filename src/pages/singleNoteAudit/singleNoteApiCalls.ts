@@ -132,3 +132,42 @@ export const submitSMEIssue = async (payload: SMEIssuePayload): Promise<any> => 
     throw error;
   }
 };
+
+export interface SMEIssue {
+  error_type: string;
+  issue_related_to: string;
+  issue_description: string;
+  points: number;
+}
+
+export interface SMEReviewPayload {
+  note_id: string;
+  reviewer_id: string;
+  reviewer_name: string;
+  issues: SMEIssue[];
+}
+
+export interface SMEReviewsPayload {
+  note_id: string;
+  reviews: SMEReviewPayload[];
+}
+
+/**
+ * Submit all SME reviews with their issues for a note
+ * TODO: Uncomment when API is ready
+ */
+// export const submitSMEReviews = async (payload: SMEReviewsPayload): Promise<any> => {
+//   try {
+//     const response = await axios.post('/sme-reviews', payload);
+//
+//     if (response?.status) {
+//       showToast.success('SME reviews saved successfully');
+//       return response.data;
+//     } else {
+//       handleErrorMessages(response);
+//     }
+//   } catch (error: any) {
+//     handleCatchMessages(error);
+//     throw error;
+//   }
+// };

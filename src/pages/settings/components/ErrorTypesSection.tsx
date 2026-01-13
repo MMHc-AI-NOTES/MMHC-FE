@@ -117,63 +117,53 @@ const ErrorTypesSection: React.FC<ErrorTypesSectionProps> = ({ errorTypes, onUpd
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div>
-            <Card className="mx-4 gap-4 px-4 text-sm text-gray-600">
-              <p className="font-semibold">Default Error Types:</p>
-              <div className="space-y-2">
-                {ERROR_TYPES.map(type => (
-                  <div key={type.value} className="flex items-center gap-2 text-xs">
-                    <span className="font-medium">{type.label}</span>
-                    <span className="text-gray-500">({type.points} pts)</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {errorTypes.length > 0 && (
-              <div>
-                <p className="my-2 px-4 text-sm font-semibold">Custom Error Types:</p>
-                <div className="border-y">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Value</TableHead>
-                          <TableHead>Label</TableHead>
-                          <TableHead>Points</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {errorTypes.map(errorType => (
-                          <TableRow key={errorType.value}>
-                            <TableCell>{errorType.value}</TableCell>
-                            <TableCell>{errorType.label}</TableCell>
-                            <TableCell>{errorType.points}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => handleEdit(errorType)} className="h-8 w-8 p-0">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteClick(errorType.value)}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </div>
-            )}
-            {errorTypes.length === 0 && <p className="py-4 text-center text-sm text-gray-500">No custom error types added yet.</p>}
+          <div className="border-y">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Label</TableHead>
+                    <TableHead>Points</TableHead>
+                    {errorTypes.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {/* Default Error Types */}
+                  {ERROR_TYPES.map(type => (
+                    <TableRow key={type.value}>
+                      <TableCell>{type.value}</TableCell>
+                      <TableCell>{type.label}</TableCell>
+                      <TableCell>{type.points}</TableCell>
+                      {errorTypes.length > 0 && <TableCell></TableCell>}
+                    </TableRow>
+                  ))}
+                  {/* Custom Error Types */}
+                  {errorTypes.map(errorType => (
+                    <TableRow key={errorType.value}>
+                      <TableCell>{errorType.value}</TableCell>
+                      <TableCell>{errorType.label}</TableCell>
+                      <TableCell>{errorType.points}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(errorType)} className="h-8 w-8 p-0">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(errorType.value)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>
