@@ -15,8 +15,8 @@ jobs:
       contents: read
 
     env:
-      VITE_FRONTEND_URL: https://mmh-stag.manhattanmentalhealthcounseling.com
-      VITE_BACKEND_URL: https://mmh-stag-backend.manhattanmentalhealthcounseling.com
+      VITE_FRONTEND_URL: https://mmh-stag.lilyinsight.ai
+      VITE_BACKEND_URL: https://mmh-stag-backend.lilyinsight.ai/api
 
     steps:
       - name: Checkout repository
@@ -45,6 +45,12 @@ jobs:
           aws s3 sync ./build s3://${{ secrets.STAG_S3_BUCKET }} \
             --delete \
             --cache-control "public,max-age=31536000,immutable" \
+            --acl public-read
+
+      - name: Upload index.html with no-cache
+        run: |
+          aws s3 cp ./build/index.html s3://${{ secrets.STAG_S3_BUCKET }}/index.html \
+            --cache-control "no-cache,no-store,must-revalidate" \
             --acl public-read
 
       - name: Invalidate CloudFront
