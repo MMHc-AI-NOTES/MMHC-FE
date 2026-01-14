@@ -15,8 +15,8 @@ jobs:
       contents: read
 
     env:
-      VITE_FRONTEND_URL: https://mmh-stag.manhattanmentalhealthcounseling.com
-      VITE_BACKEND_URL: https://mmh-stag-backend.manhattanmentalhealthcounseling.com
+      VITE_FRONTEND_URL: https://mmh-stag.lilyinsight.ai
+      VITE_BACKEND_URL: https://mmh-stag-backend.lilyinsight.ai/api
 
     steps:
       - name: Checkout repository
