@@ -100,6 +100,7 @@ export interface NoteDetail {
     description: string;
     sectionId: string;
   }[];
+  webhookVersions: WebhookVersion[];
 }
 
 export interface NoteSection {
@@ -162,6 +163,43 @@ export interface Practitioner {
   updatedAt: string;
 }
 
+export interface SMEIssue {
+  id: number;
+  reviewerId: number;
+  versionId: number;
+  errorType: {
+    id: number;
+    name: string;
+    points: number;
+  };
+  issuesRelatedTo: {
+    id: number;
+    name: string;
+  };
+  description:
+    | string
+    | {
+        id: string;
+        name: string;
+      };
+  noteId: string;
+  status: {
+    id: number;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookVersion {
+  id: number;
+  noteId: string;
+  sessionJson: string;
+  createdAt: string;
+  updatedAt: string;
+  smeIssues: SMEIssue[];
+}
+
 export interface ApiNoteDetail {
   id: number;
   chat_count: number;
@@ -182,6 +220,7 @@ export interface ApiNoteDetail {
   practitioner: Practitioner; // Object type
   chats: Chat[];
   humanReview: HumanReview[] | null;
+  webhookVersions: WebhookVersion[];
 }
 
 // Queue Overview Data

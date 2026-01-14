@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundCog, UserRoundPen } from 'lucide-react';
+import { ArrowLeft, MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen } from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
@@ -23,6 +23,7 @@ import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
+import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import ModelInformation from './ModelInformation';
 import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
@@ -90,6 +91,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     aiStatus: apiData.aiStatus,
     priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
+    webhookVersions: apiData.webhookVersions || [],
   };
 };
 
@@ -109,6 +111,7 @@ const SingleNoteAudit = () => {
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
 
   // Check if coming from human-review-queue
   const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
@@ -242,7 +245,7 @@ const SingleNoteAudit = () => {
           {/* Left Sidebar */}
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} />
-            <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
+            <TherapySessionSummaryCard webhookVersions={noteDetail.webhookVersions} onVersionChange={setSelectedVersionId} />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
           </div>
 
@@ -258,7 +261,11 @@ const SingleNoteAudit = () => {
                 setOpenSectionId(sectionId);
               }}
             />
-            <SMEReview auditScore={noteDetail?.auditScore || 0} />
+            <SMEReview
+              auditScore={noteDetail?.auditScore || 0}
+              versionId={selectedVersionId}
+              webhookVersions={noteDetail.webhookVersions || []}
+            />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (
               <HumanReviewSection

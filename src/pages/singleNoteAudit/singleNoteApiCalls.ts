@@ -108,21 +108,22 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
 
 export interface SMEIssuePayload {
   note_id: string;
-  error_type: string;
-  issue_related_to: string;
-  issue_description: string;
-  points: number;
+  reviewer_id: number;
+  error_type: number;
+  issues_related_to: number;
+  version_id: number;
+  description: number;
 }
 
 /**
- * Submit SME issue for a note
+ * Create SME issue for a note
  */
-export const submitSMEIssue = async (payload: SMEIssuePayload): Promise<any> => {
+export const createSMEIssue = async (payload: SMEIssuePayload): Promise<any> => {
   try {
     const response = await axios.post('/sme-issues', payload);
 
     if (response?.status) {
-      showToast.success('SME issue saved successfully');
+      showToast.success('SME issue created successfully');
       return response.data;
     } else {
       handleErrorMessages(response);
@@ -133,41 +134,40 @@ export const submitSMEIssue = async (payload: SMEIssuePayload): Promise<any> => 
   }
 };
 
-export interface SMEIssue {
-  error_type: string;
-  issue_related_to: string;
-  issue_description: string;
-  points: number;
-}
+/**
+ * Update SME issue
+ */
+export const updateSMEIssue = async (issueId: number, payload: SMEIssuePayload): Promise<any> => {
+  try {
+    const response = await axios.patch(`/sme-issues/${issueId}`, payload);
 
-export interface SMEReviewPayload {
-  note_id: string;
-  reviewer_id: string;
-  reviewer_name: string;
-  issues: SMEIssue[];
-}
-
-export interface SMEReviewsPayload {
-  note_id: string;
-  reviews: SMEReviewPayload[];
-}
+    if (response?.status) {
+      showToast.success('SME issue updated successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
 
 /**
- * Submit all SME reviews with their issues for a note
- * TODO: Uncomment when API is ready
+ * Delete SME issue
  */
-// export const submitSMEReviews = async (payload: SMEReviewsPayload): Promise<any> => {
-//   try {
-//     const response = await axios.post('/sme-reviews', payload);
-//
-//     if (response?.status) {
-//       showToast.success('SME reviews saved successfully');
-//       return response.data;
-//     } else {
-//       handleErrorMessages(response);
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     throw error;
-//   }
-// };
+export const deleteSMEIssue = async (issueId: number): Promise<any> => {
+  try {
+    const response = await axios.delete(`/sme-issues/${issueId}`);
+
+    if (response?.status) {
+      showToast.success('SME issue deleted successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};

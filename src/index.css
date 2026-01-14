@@ -21,12 +21,14 @@
   --color-orange: var(--orange);
   --color-orange-light: var(--orange-light);
   --color-gray: var(--gray);
+  --color-green-dark-light: var(--green-dark-light);
   --color-gray-light: var(--gray-light);
   --color-header-bg: var(--header-bg);
   --color-gradient-primary: var(--gradient-primary);
   --color-gradient-light: var(--gradient-light);
   --color-orange-dark: var(--orange-dark);
   --color-orange-dark-light: var(--orange-dark-light);
+  --color-red-dark: var(--red-dark);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -81,7 +83,9 @@
   --gradient-light: linear-gradient(to right, #a1e681, #8fd86f);
   --orange-dark: #d97706;
   --orange-dark-light: #f59e0b;
+  --red-dark: #e53e3e;
   --green-dark: #059669;
+  --green-dark-light: #10b981;
   --active-accordion: #e8dcc8;
   --highlighted-row: #a1e6811a;
   --card-foreground: oklch(0.145 0 0);
