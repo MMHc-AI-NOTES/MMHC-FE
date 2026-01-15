@@ -88,24 +88,22 @@ export const useReviews = ({
 
         const issue = review?.issues?.find(i => i.id === issueId);
         const smeIssueId = issue?._smeIssueId;
+        const errorTypeId = getErrorTypeId(values.errorType);
+        const issuesRelatedToId = getIssuesRelatedToId(values.issueRelatedTo);
+        const descriptionId = getDescriptionId(values.issueDescription);
 
+        const payload: SMEIssuePayload = {
+          note_id: noteId,
+          reviewer_id: Number(review?.reviewerId || ''),
+          error_type_id: errorTypeId,
+          issues_related_to_id: issuesRelatedToId,
+          version_id: versionId || null,
+          issue_description_id: descriptionId,
+        };
         // If versionId exists, treat as version issue (create/update via API)
         if (versionId && smeIssueId) {
-          // Update existing version issue
-          const errorTypeId = getErrorTypeId(values.errorType);
-          const issuesRelatedToId = getIssuesRelatedToId(values.issueRelatedTo);
-          const descriptionId = getDescriptionId(values.issueDescription);
-
-          const payload: SMEIssuePayload = {
-            note_id: noteId,
-            reviewer_id: Number(review?.reviewerId || ''),
-            error_type: errorTypeId,
-            issues_related_to: issuesRelatedToId,
-            version_id: versionId,
-            description: descriptionId,
-          };
-
-          await updateSMEIssue(smeIssueId, payload);
+          const response = await updateSMEIssue(smeIssueId, payload);
+          if (!response?.id) return;
 
           const issueData: IssueForm = {
             id: issueId,
@@ -126,21 +124,8 @@ export const useReviews = ({
           );
           setActiveIssueForms(prev => prev.filter(form => !(form.reviewId === reviewId && form.issueId === issueId)));
         } else if (versionId && !smeIssueId) {
-          // Create new version issue (when versionId exists and no smeIssueId)
-          const errorTypeId = getErrorTypeId(values.errorType);
-          const issuesRelatedToId = getIssuesRelatedToId(values.issueRelatedTo);
-          const descriptionId = getDescriptionId(values.issueDescription);
-
-          const payload: SMEIssuePayload = {
-            note_id: noteId,
-            reviewer_id: Number(review?.reviewerId || ''),
-            error_type: errorTypeId,
-            issues_related_to: issuesRelatedToId,
-            version_id: versionId ?? 0,
-            description: descriptionId,
-          };
-
           const response = await createSMEIssue(payload);
+          if (!response?.id) return;
 
           const issueData: IssueForm = {
             id: issueId,

@@ -11,6 +11,7 @@ import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm } from './components/types';
+import { deleteSMEReview } from './singleNoteApiCalls';
 
 interface SMEReviewProps {
   auditScore: number;
@@ -84,14 +85,40 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
     setIsDeleteReviewDialogOpen(true);
   };
 
-  const handleConfirmDeleteReview = () => {
-    if (!reviewToDelete) return;
+  const handleConfirmDeleteReview = async () => {
+    if (!reviewToDelete || !noteId) return;
+
+    const review = reviews.find(r => r.id === reviewToDelete);
+    if (!review || !review.reviewerId) {
+      setIsDeleteReviewDialogOpen(false);
+      setReviewToDelete(null);
+      return;
+    }
+
     setIsDeletingReview(true);
-    setReviews(prev => prev.filter(review => review.id !== reviewToDelete));
-    setActiveIssueForms(prev => prev.filter(form => form.reviewId !== reviewToDelete));
-    setIsDeletingReview(false);
-    setIsDeleteReviewDialogOpen(false);
-    setReviewToDelete(null);
+
+    try {
+      const reviewerIdNum = review.reviewerId ? Number(review.reviewerId) : null;
+      const response = await deleteSMEReview(noteId, versionId ?? null, reviewerIdNum);
+      if (!response) return;
+
+      // Remove from local state on success
+      setReviews(prev => prev.filter(r => r.id !== reviewToDelete));
+      setActiveIssueForms(prev => prev.filter(form => form.reviewId !== reviewToDelete));
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      // Error is already handled by the API function (toast message)
+    } finally {
+      setIsDeletingReview(false);
+      setIsDeleteReviewDialogOpen(false);
+      setReviewToDelete(null);
+    }
+  };
+
+  const handleRemoveReview = (reviewId: string) => {
+    // Just remove from local state for new reviews (no API call needed)
+    setReviews(prev => prev.filter(r => r.id !== reviewId));
+    setActiveIssueForms(prev => prev.filter(form => form.reviewId !== reviewId));
   };
 
   const handleDeleteIssueClick = (reviewId: string, issueId: string) => {
@@ -152,6 +179,7 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
             onSaveIssue={handleSaveIssue}
             onCancelEdit={handleCancelEdit}
             onDeleteReview={handleDeleteReviewClick}
+            onRemoveReview={handleRemoveReview}
           />
         ))}
       </CardContent>

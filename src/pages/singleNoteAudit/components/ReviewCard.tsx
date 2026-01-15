@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 import { getMergedErrorTypes, getMergedIssueRelatedTo } from '@/constants/common';
 import { Review, IssueForm, ActiveIssueForm } from './types';
@@ -23,6 +23,7 @@ interface ReviewCardProps {
   onSaveIssue: (reviewId: string, issueId: string, values: Omit<LocalIssueFormValues, 'reviewerName'>) => void;
   onCancelEdit: (reviewId: string, issueId: string) => void;
   onDeleteReview: (reviewId: string) => void;
+  onRemoveReview?: (reviewId: string) => void;
 }
 
 const ReviewCard = ({
@@ -38,6 +39,7 @@ const ReviewCard = ({
   onSaveIssue,
   onCancelEdit,
   onDeleteReview,
+  onRemoveReview,
 }: ReviewCardProps) => {
   const savedIssues = review.issues.filter(
     issue => !activeIssueForms.some(form => form.reviewId === review.id && form.issueId === issue.id),
@@ -49,21 +51,29 @@ const ReviewCard = ({
   const mergedErrorTypes = getMergedErrorTypes();
   const mergedIssueRelatedTo = getMergedIssueRelatedTo();
 
+  // Check if review is from backend (version review) or new
+  const isVersionReview = review.id.startsWith('version-review-');
+  const handleRemoveOrDelete = () => {
+    if (isVersionReview) {
+      onDeleteReview(review.id);
+    } else if (onRemoveReview) {
+      onRemoveReview(review.id);
+    }
+  };
+
   return (
-    <Card className="gap-0 py-2">
-      <CardHeader>
-        <div className="flex items-center justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDeleteReview(review.id)}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className="gap-0 pt-1 pb-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleRemoveOrDelete}
+        className={`mr-2 self-end ${isVersionReview ? 'text-red-600' : 'text-gray-600'}`}
+        title={isVersionReview ? 'Delete review' : 'Remove review'}
+      >
+        {isVersionReview ? <Trash2 /> : <X />}
+      </Button>
+
+      <CardContent className="space-y-3">
         {/* Reviewer Selection */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
@@ -95,9 +105,11 @@ const ReviewCard = ({
 
         {/* Saved Issues List */}
         {savedIssues.length > 0 && (
-          <div className="space-y-3">
-            <ScoreComparison issues={savedIssues} auditScore={auditScore} />
-            <h3 className="text-sm font-semibold text-gray-700">Issues</h3>
+          <div className="space-y-1">
+            <div className="rounded-lg bg-gray-100 px-4 py-2">
+              <ScoreComparison issues={savedIssues} auditScore={auditScore} />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
             {savedIssues.map((savedIssue, index) => {
               const errorTypeLabel = mergedErrorTypes.find(type => type.value === savedIssue.errorType)?.label || '';
               const issueRelatedToLabel = mergedIssueRelatedTo.find(opt => opt.id === savedIssue.issueRelatedTo)?.name || '';

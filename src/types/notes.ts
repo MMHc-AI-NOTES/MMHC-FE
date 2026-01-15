@@ -169,19 +169,17 @@ export interface SMEIssue {
   versionId: number;
   errorType: {
     id: number;
-    name: string;
+    displayName: string;
     points: number;
   };
   issuesRelatedTo: {
     id: number;
-    name: string;
+    displayName: string;
   };
-  description:
-    | string
-    | {
-        id: string;
-        name: string;
-      };
+  issueDescription: {
+    id: number;
+    description: string;
+  };
   noteId: string;
   status: {
     id: number;
