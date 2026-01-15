@@ -105,3 +105,69 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
 
   return noteDetail;
 };
+
+export interface SMEIssuePayload {
+  note_id: string;
+  reviewer_id: number;
+  error_type: number;
+  issues_related_to: number;
+  version_id: number;
+  description: number;
+}
+
+/**
+ * Create SME issue for a note
+ */
+export const createSMEIssue = async (payload: SMEIssuePayload): Promise<any> => {
+  try {
+    const response = await axios.post('/sme-issues', payload);
+
+    if (response?.status) {
+      showToast.success('SME issue created successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+/**
+ * Update SME issue
+ */
+export const updateSMEIssue = async (issueId: number, payload: SMEIssuePayload): Promise<any> => {
+  try {
+    const response = await axios.patch(`/sme-issues/${issueId}`, payload);
+
+    if (response?.status) {
+      showToast.success('SME issue updated successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+/**
+ * Delete SME issue
+ */
+export const deleteSMEIssue = async (issueId: number): Promise<any> => {
+  try {
+    const response = await axios.delete(`/sme-issues/${issueId}`);
+
+    if (response?.status) {
+      showToast.success('SME issue deleted successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};

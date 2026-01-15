@@ -3,13 +3,14 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundCog, UserRoundPen } from 'lucide-react';
+import { ArrowLeft, MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen } from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
 import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
+import SMEReview from './SMEReview';
 import ActionButtons from './ActionButtons';
 import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
@@ -22,9 +23,12 @@ import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
+import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import ModelInformation from './ModelInformation';
 import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -87,6 +91,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     aiStatus: apiData.aiStatus,
     priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
+    webhookVersions: apiData.webhookVersions || [],
   };
 };
 
@@ -97,6 +102,7 @@ const SingleNoteAudit = () => {
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useAppSelector(state => state.agents);
+  const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
   const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
 
   // Create a ref to store the latest selectedAgentId
@@ -105,6 +111,7 @@ const SingleNoteAudit = () => {
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
 
   // Check if coming from human-review-queue
   const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
@@ -185,6 +192,19 @@ const SingleNoteAudit = () => {
     }
   }, [agentsLoaded, selectedAgentId, noteId, noteDetail, loadNoteDetail]);
 
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
+
   // Cleanup ref on unmount
   useEffect(() => {
     return () => {
@@ -225,7 +245,7 @@ const SingleNoteAudit = () => {
           {/* Left Sidebar */}
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} />
-            <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
+            <TherapySessionSummaryCard webhookVersions={noteDetail.webhookVersions} onVersionChange={setSelectedVersionId} />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
           </div>
 
@@ -240,6 +260,11 @@ const SingleNoteAudit = () => {
                 const sectionId = mapCategoryToSectionId(category);
                 setOpenSectionId(sectionId);
               }}
+            />
+            <SMEReview
+              auditScore={noteDetail?.auditScore || 0}
+              versionId={selectedVersionId}
+              webhookVersions={noteDetail.webhookVersions || []}
             />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (

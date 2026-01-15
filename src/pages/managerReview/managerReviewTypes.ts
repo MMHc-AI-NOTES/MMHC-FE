@@ -1,3 +1,5 @@
+import { WebhookVersion } from '@/types/notes';
+
 export interface ManagerNote {
   id: number;
   noteId: string;
@@ -112,6 +114,7 @@ export interface ManagerReviewApiItem {
   session: SessionInfo;
   chat: ChatInfo;
   practitioner: UserInfo;
+  webhookVersions: WebhookVersion[];
 }
 
 export interface ManagerReviewListingResponse {

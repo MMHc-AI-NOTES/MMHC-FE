@@ -1,6 +1,6 @@
 export const SLIDER_CONFIGS = {
   TEMPERATURE: { min: 0, max: 1, step: 0.1 },
-  TOP_P: { min: 0, max: 1, step: 0.2 },
+  TOP_P: { min: 0, max: 1, step: 0.1 },
   TOP_K: { min: 0, max: 1000, step: 100 },
 } as const;
 
@@ -383,14 +383,16 @@ export const StructureQualityLabels: Record<number, string> = {
 
 export const AgentModelKeys = {
   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
-  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
-  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0', // Inference profile format
+  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0', // Inference profile format
+  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', // Claude Sonnet 4.5 (inference profile format)
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
   CLAUDE_3_HAIKU: 'Claude 3 Haiku',
   CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku',
   CLAUDE_4_5_HAIKU_V1: 'Claude 4.5 Haiku',
+  CLAUDE_4_5_SONNET_V1: 'Claude 4.5 Sonnet',
 };
 
 export const AgentTypes = {
@@ -404,3 +406,101 @@ export const AgentTypeLabels: Record<number, string> = {
   [AgentTypes.SOAP]: 'SOAP',
   [AgentTypes.CUSTOM]: 'Custom',
 };
+
+// Error type options
+export const ERROR_TYPES = [
+  { value: 'critical', label: 'Critical (-25 pts)', points: -25 },
+  { value: 'moderate', label: 'Moderate (-15 pts)', points: -15 },
+  { value: 'minor', label: 'Minor (-5 pts)', points: -5 },
+] as const;
+
+// Issue related to options (section IDs with names)
+export const ISSUE_RELATED_TO_OPTIONS = [
+  { id: 'p9m9-1', name: 'Session Duration' },
+  { id: '1hye-1', name: 'Mental Status' },
+  { id: '6tx9-1', name: 'Subjective' },
+  { id: 'rb2f-1', name: 'Objective' },
+  { id: 'zad8-1', name: 'Assessment & Therapeutic Intervention' },
+  { id: 'ugq6-1', name: 'Reaction to Intervention' },
+  { id: 'hnfi-1', name: 'Plan and Collaboration' },
+  { id: '9z5t-1', name: 'Therapist Reflection and Insight' },
+  { id: 'gm4p-1', name: 'Progress' },
+  { id: 'kxgx-7', name: 'Suicidality' },
+  { id: 'kxgx-8', name: 'Homicidality' },
+  { id: '4lbp-1', name: 'Therapist Initials' },
+];
+
+// Issue description options (simplified - no categories)
+export const ISSUE_DESCRIPTIONS = [
+  'No clinical interpretation',
+  'No modality or intervention explanation',
+  'Vague or non-specific language',
+  'Templated or boilerplate language',
+  'Repetitive content within the note',
+  'Not specific to date of service',
+  'Progress marked but not supported by note content',
+  'Transcription-style documentation',
+  'Missing required field',
+  'Identical or duplicate content from previous note',
+  'One field copied from previous note',
+  'Repetitive field across multiple notes',
+  'Plan is generic or continuity-only',
+];
+
+// Display name mappings for numeric IDs (for API responses)
+export const ErrorTypeDisplayNames: Record<number, string> = {
+  1: 'Minor (-5 pts)',
+  2: 'Moderate (-15 pts)',
+  3: 'Critical (-25 pts)',
+};
+
+export const IssuesRelatedToDisplayName: Record<number, string> = {
+  1: 'Session Duration',
+  2: 'Mental Status',
+  3: 'Subjective',
+  4: 'Objective',
+  5: 'Assessment & Therapeutic Intervention',
+  6: 'Reaction to Intervention',
+  7: 'Plan and Collaboration',
+  8: 'Therapist Reflection and Insight',
+  9: 'Progress',
+  10: 'Suicidality',
+  11: 'Homicidality',
+  12: 'Therapist Initials',
+  13: 'General',
+};
+
+export const IssueDescriptionDisplayNames: Record<number, string> = {
+  1: 'No clinical interpretation',
+  2: 'No modality or intervention explanation',
+  3: 'Vague or non-specific language',
+  4: 'Templated or boilerplate language',
+  5: 'Repetitive content within the note',
+  6: 'Not specific to date of service',
+  7: 'Progress marked but not supported by note content',
+  8: 'Transcription-style documentation',
+  9: 'Missing required field',
+  10: 'Identical or duplicate content from previous note',
+  11: 'One field copied from previous note',
+  12: 'Repetitive field across multiple notes',
+  13: 'Plan is generic or continuity-only',
+};
+
+// Session JSON field display names mapping
+export const SessionJsonFieldDisplayNames: Record<string, string> = {
+  'Session Duration': 'Session Duration',
+  'Mental Status (optional)': 'Mental Status',
+  Suicidality: 'Suicidality',
+  Homicidality: 'Homicidality',
+  Subjective: 'Subjective',
+  Objective: 'Objective',
+  'Assessment & Therapeutic Intervention': 'Assessment & Therapeutic Intervention',
+  'Reaction to Intervention': 'Reaction to Intervention',
+  'Plan and Collaboration': 'Plan and Collaboration',
+  'Therapist Reflection and Insight (optional)': 'Therapist Reflection and Insight',
+  Progress: 'Progress',
+  'Therapist Initials': 'Therapist Initials',
+};
+
+// Export merged data functions (combines default constants with localStorage customizations)
+export { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/types/smeConfig';
