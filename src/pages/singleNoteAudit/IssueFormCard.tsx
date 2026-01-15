@@ -38,13 +38,13 @@ interface IssueFormCardProps {
   };
   index: number;
   onSave: (values: IssueFormValues) => void;
-  onRemove: () => void;
+  onCancelEdit?: () => void;
   isSaving?: boolean;
   isEditMode?: boolean;
   hideReviewerField?: boolean;
 }
 
-const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewerField = false }: IssueFormCardProps) => {
+const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideReviewerField = false }: IssueFormCardProps) => {
   const { practitioners } = useAppSelector(state => state.filterOptions);
 
   const formik = useFormik<IssueFormValues>({
@@ -88,7 +88,7 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewer
               <Badge className="bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700">{issueRelatedToLabel}</Badge>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={onRemove}>
+          <Button variant="ghost" size="sm" onClick={onCancelEdit}>
             <X />
           </Button>
         </div>
@@ -204,7 +204,7 @@ const IssueFormCard = ({ issue, onSave, onRemove, isSaving = false, hideReviewer
 
           {/* Save Button */}
           <div className="flex justify-end gap-4 pt-2">
-            <Button variant="outline" onClick={onRemove}>
+            <Button variant="outline" onClick={onCancelEdit}>
               Cancel
             </Button>
             <Button type="submit" className="bg-gradient-light text-primary border-0 shadow-sm" disabled={isSaving}>

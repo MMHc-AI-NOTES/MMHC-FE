@@ -486,5 +486,21 @@ export const IssueDescriptionDisplayNames: Record<number, string> = {
   13: 'Plan is generic or continuity-only',
 };
 
+// Session JSON field display names mapping
+export const SessionJsonFieldDisplayNames: Record<string, string> = {
+  'Session Duration': 'Session Duration',
+  'Mental Status (optional)': 'Mental Status',
+  Suicidality: 'Suicidality',
+  Homicidality: 'Homicidality',
+  Subjective: 'Subjective',
+  Objective: 'Objective',
+  'Assessment & Therapeutic Intervention': 'Assessment & Therapeutic Intervention',
+  'Reaction to Intervention': 'Reaction to Intervention',
+  'Plan and Collaboration': 'Plan and Collaboration',
+  'Therapist Reflection and Insight (optional)': 'Therapist Reflection and Insight',
+  Progress: 'Progress',
+  'Therapist Initials': 'Therapist Initials',
+};
+
 // Export merged data functions (combines default constants with localStorage customizations)
 export { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/types/smeConfig';

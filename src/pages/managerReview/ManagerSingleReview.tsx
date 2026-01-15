@@ -70,6 +70,7 @@ const transformToNoteDetail = (data: ManagerReviewApiItem): NoteDetail => {
       description: issue.justification || '',
       sectionId: issue.section_id || '',
     })),
+    webhookVersions: data.webhookVersions || [],
   };
 };
 

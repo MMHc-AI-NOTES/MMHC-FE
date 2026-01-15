@@ -10,6 +10,7 @@ import {
   DeleteAgentResponse,
 } from '@/types/agent';
 import { showToast } from '@/lib/toast';
+import { getState } from '@/store/store';
 // import { ErrorType, IssueRelatedTo, IssueDescriptions } from '@/utils/smeConfig';
 
 const transformApiAgentToAgent = (apiAgent: ApiAgent): Agent => {
@@ -48,6 +49,8 @@ export const createAgent = async (agentData: CreateAgentRequest): Promise<Agent 
 
 export const fetchAgents = async (): Promise<Agent[]> => {
   try {
+    const previousAgents = getState().agents.agents;
+    if (previousAgents.length) return previousAgents;
     const response = await axios.post<AgentListingApiResponse>('/agents/listing');
 
     if (response.status) {
