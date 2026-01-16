@@ -6,31 +6,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Save } from 'lucide-react';
-import { ErrorType } from '@/types/smeConfig';
+import { ErrorType } from '@/store/slices/smeConfigSlice';
 
 interface ErrorTypeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (errorType: ErrorType) => void;
+  onSave: (errorType: { name: string; display_name: string; points: number }) => void;
   editingErrorType: ErrorType | null;
 }
 
+interface ErrorTypeFormValues {
+  name: string;
+  display_name: string;
+  points: number;
+}
+
 const validationSchema = yup.object({
-  value: yup.string().required('Value is required'),
-  label: yup.string().required('Label is required'),
-  points: yup.number().required('Points is required').negative('Points must be negative').max(-1, 'Points must be negative'),
+  name: yup.string().required('Name is required'),
+  display_name: yup.string().required('Display name is required'),
+  points: yup.number().required('Points is required').positive('Points must be positive').min(1, 'Points must be at least 1'),
 });
 
 const ErrorTypeDialog: React.FC<ErrorTypeDialogProps> = ({ isOpen, onClose, onSave, editingErrorType }) => {
-  const formik = useFormik<ErrorType>({
-    initialValues: editingErrorType || { value: '', label: '', points: -5 },
+  const formik = useFormik<ErrorTypeFormValues>({
+    initialValues: editingErrorType
+      ? {
+          name: editingErrorType.name,
+          display_name: editingErrorType.displayName,
+          // Convert negative display value to positive for form (backend expects positive)
+          points: editingErrorType.points < 0 ? Math.abs(editingErrorType.points) : editingErrorType.points,
+        }
+      : { name: '', display_name: '', points: 5 },
     validationSchema,
     enableReinitialize: true,
     onSubmit: values => {
-      // Ensure points are always negative
-      const points = values.points > 0 ? -values.points : values.points;
-      onSave({ ...values, points });
-      formik.resetForm();
+      // Send positive value to backend (onSave will handle conversion if needed)
+      onSave({ ...values, points: values.points });
     },
   });
 
@@ -41,34 +52,36 @@ const ErrorTypeDialog: React.FC<ErrorTypeDialogProps> = ({ isOpen, onClose, onSa
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent aria-describedby="">
         <DialogHeader>
           <DialogTitle>{editingErrorType ? 'Edit Error Type' : 'Add Error Type'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit} className="space-y-4 py-4">
           <div>
-            <Label htmlFor="error-type-value">Value *</Label>
+            <Label htmlFor="error-type-name">Name *</Label>
             <Input
-              id="error-type-value"
-              name="value"
-              value={formik.values.value}
+              id="error-type-name"
+              name="name"
+              value={formik.values.name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              placeholder="e.g., critical"
+              placeholder="e.g., critical pro"
             />
-            {formik.touched.value && formik.errors.value && <p className="mt-1 text-xs text-red-600">{formik.errors.value}</p>}
+            {formik.touched.name && formik.errors.name && <p className="mt-1 text-xs text-red-600">{formik.errors.name}</p>}
           </div>
           <div>
-            <Label htmlFor="error-type-label">Label *</Label>
+            <Label htmlFor="error-type-display-name">Display Name *</Label>
             <Input
-              id="error-type-label"
-              name="label"
-              value={formik.values.label}
+              id="error-type-display-name"
+              name="display_name"
+              value={formik.values.display_name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               placeholder="e.g., Critical (-25 pts)"
             />
-            {formik.touched.label && formik.errors.label && <p className="mt-1 text-xs text-red-600">{formik.errors.label}</p>}
+            {formik.touched.display_name && formik.errors.display_name && (
+              <p className="mt-1 text-xs text-red-600">{formik.errors.display_name}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="error-type-points">Points *</Label>
@@ -76,36 +89,17 @@ const ErrorTypeDialog: React.FC<ErrorTypeDialogProps> = ({ isOpen, onClose, onSa
               id="error-type-points"
               name="points"
               type="number"
+              min="1"
               value={formik.values.points}
-              onChange={e => {
-                const inputValue = e.target.value;
-                // Allow empty string or just minus sign for user input
-                if (inputValue === '' || inputValue === '-') {
-                  formik.setFieldValue('points', inputValue);
-                  return;
-                }
-                const numValue = parseFloat(inputValue);
-                if (!isNaN(numValue)) {
-                  // Automatically convert positive numbers to negative
-                  const points = numValue > 0 ? -numValue : numValue;
-                  formik.setFieldValue('points', points);
-                }
-              }}
+              onChange={formik.handleChange}
               onBlur={e => {
-                // Ensure points are negative on blur
                 const inputValue = e.target.value;
-                if (inputValue === '' || inputValue === '-') {
-                  formik.setFieldValue('points', -5);
-                } else {
-                  const numValue = parseFloat(inputValue);
-                  if (!isNaN(numValue)) {
-                    const points = numValue > 0 ? -numValue : numValue === 0 ? -5 : numValue;
-                    formik.setFieldValue('points', points);
-                  }
+                if (inputValue === '' || parseFloat(inputValue) < 1) {
+                  formik.setFieldValue('points', 5);
                 }
                 formik.handleBlur(e);
               }}
-              placeholder="e.g., -25"
+              placeholder="e.g., 25 (will display as -25)"
             />
             {formik.touched.points && formik.errors.points && <p className="mt-1 text-xs text-red-600">{formik.errors.points}</p>}
           </div>
@@ -113,9 +107,9 @@ const ErrorTypeDialog: React.FC<ErrorTypeDialogProps> = ({ isOpen, onClose, onSa
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-light text-primary border-0">
+            <Button type="submit" className="bg-gradient-light text-primary border-0" disabled={formik.isSubmitting}>
               <Save className="h-4 w-4" />
-              Save
+              {formik.isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </form>

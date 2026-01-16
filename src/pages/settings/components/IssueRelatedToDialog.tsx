@@ -6,28 +6,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Save } from 'lucide-react';
-import { IssueRelatedTo } from '@/types/smeConfig';
+import { IssueRelatedTo } from '@/store/slices/smeConfigSlice';
 
 interface IssueRelatedToDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (issue: IssueRelatedTo) => void;
+  onSave: (issue: { field_id: string; display_name: string }) => void;
   editingIssue: IssueRelatedTo | null;
 }
 
+interface IssueRelatedToFormValues {
+  field_id: string;
+  display_name: string;
+}
+
 const validationSchema = yup.object({
-  id: yup.string().required('ID is required'),
-  name: yup.string().required('Name is required'),
+  field_id: yup.string().required('Field ID is required'),
+  display_name: yup.string().required('Display name is required'),
 });
 
 const IssueRelatedToDialog: React.FC<IssueRelatedToDialogProps> = ({ isOpen, onClose, onSave, editingIssue }) => {
-  const formik = useFormik<IssueRelatedTo>({
-    initialValues: editingIssue || { id: '', name: '' },
+  const formik = useFormik<IssueRelatedToFormValues>({
+    initialValues: editingIssue
+      ? { field_id: editingIssue.fieldId, display_name: editingIssue.displayName }
+      : { field_id: '', display_name: '' },
     validationSchema,
     enableReinitialize: true,
     onSubmit: values => {
       onSave(values);
-      formik.resetForm();
     },
   });
 
@@ -38,42 +44,44 @@ const IssueRelatedToDialog: React.FC<IssueRelatedToDialogProps> = ({ isOpen, onC
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent aria-describedby="">
         <DialogHeader>
           <DialogTitle>{editingIssue ? 'Edit Issue Related To' : 'Add Issue Related To'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={formik.handleSubmit} className="space-y-4 py-4">
           <div>
-            <Label htmlFor="issue-related-id">ID *</Label>
+            <Label htmlFor="issue-related-field-id">Field ID *</Label>
             <Input
-              id="issue-related-id"
-              name="id"
-              value={formik.values.id}
+              id="issue-related-field-id"
+              name="field_id"
+              value={formik.values.field_id}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              placeholder="e.g., xyz-1"
+              placeholder="e.g., general purpose"
             />
-            {formik.touched.id && formik.errors.id && <p className="mt-1 text-xs text-red-600">{formik.errors.id}</p>}
+            {formik.touched.field_id && formik.errors.field_id && <p className="mt-1 text-xs text-red-600">{formik.errors.field_id}</p>}
           </div>
           <div>
-            <Label htmlFor="issue-related-name">Name *</Label>
+            <Label htmlFor="issue-related-display-name">Display Name *</Label>
             <Input
-              id="issue-related-name"
-              name="name"
-              value={formik.values.name}
+              id="issue-related-display-name"
+              name="display_name"
+              value={formik.values.display_name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              placeholder="e.g., Assessment & Therapeutic Intervention"
+              placeholder="e.g., General"
             />
-            {formik.touched.name && formik.errors.name && <p className="mt-1 text-xs text-red-600">{formik.errors.name}</p>}
+            {formik.touched.display_name && formik.errors.display_name && (
+              <p className="mt-1 text-xs text-red-600">{formik.errors.display_name}</p>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-light text-primary border-0">
+            <Button type="submit" className="bg-gradient-light text-primary border-0" disabled={formik.isSubmitting}>
               <Save className="h-4 w-4" />
-              Save
+              {formik.isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </form>

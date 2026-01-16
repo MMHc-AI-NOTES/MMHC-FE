@@ -1,8 +1,6 @@
 import { useMemo, useRef, useEffect } from 'react';
 import { WebhookVersion, SMEIssue } from '@/types/notes';
-import { getMergedIssueRelatedTo } from '@/constants/common';
-import { ErrorTypeDisplayNames } from '@/constants/common';
-import { errorTypeValueToId } from './reviewUtils';
+import { useAppSelector } from '@/store/store';
 import { IssueForm, Review } from './types';
 
 interface UseVersionIssuesProps {
@@ -13,12 +11,25 @@ interface UseVersionIssuesProps {
 }
 
 export const useVersionIssues = ({ currentVersion, practitioners, setReviews }: UseVersionIssuesProps) => {
+  const { errorTypes, issueRelatedTo } = useAppSelector(state => state.smeConfig);
+
   // Convert version issues to review format and group by reviewer
   const versionIssuesByReviewer = useMemo(() => {
     if (!currentVersion?.smeIssues || currentVersion.smeIssues.length === 0) return {};
 
+    const errorTypeIdToValue: Record<number, string> = {
+      1: 'minor',
+      2: 'moderate',
+      3: 'critical',
+    };
+
     const grouped: Record<number, IssueForm[]> = {};
-    const mergedIssueRelatedTo = getMergedIssueRelatedTo();
+
+    // Convert Redux data to format expected by components
+    const issueRelatedToOptions = issueRelatedTo.map(opt => ({
+      id: opt.fieldId,
+      name: opt.displayName,
+    }));
 
     currentVersion.smeIssues.forEach((issue: SMEIssue) => {
       const reviewerId = issue.reviewerId;
@@ -27,14 +38,18 @@ export const useVersionIssues = ({ currentVersion, practitioners, setReviews }: 
       }
 
       // Convert SMEIssue to IssueForm format
-      const errorTypeValue =
-        Object.keys(errorTypeValueToId).find(key => ErrorTypeDisplayNames[errorTypeValueToId[key]] === issue.errorType?.displayName) || '';
+      // Match error type by backend `errorType.name` OR by id fallback (1/2/3 -> minor/moderate/critical)
+      const backendErrorTypeName = (issue as any)?.errorType?.name || (issue as any)?.errorType?.displayName || '';
+      const errorTypeOption = errorTypes.find(type => type.displayName === backendErrorTypeName || type.id === issue.errorType?.id);
+      const errorTypeValue = errorTypeOption?.name || errorTypeIdToValue[issue.errorType?.id || 0] || '';
 
-      const issuesRelatedToName = issue.issuesRelatedTo?.displayName;
-      const issuesRelatedToOption = mergedIssueRelatedTo.find(opt => opt.name === issuesRelatedToName);
+      const issuesRelatedToName = (issue as any)?.issuesRelatedTo?.name || (issue as any)?.issuesRelatedTo?.displayName || '';
+      const issuesRelatedToOption = issueRelatedToOptions.find(opt => opt.name === issuesRelatedToName);
       const issuesRelatedToId = issuesRelatedToOption?.id || '';
 
-      const descriptionText = issue.issueDescription?.description;
+      const rawDescription = (issue as any)?.description ?? (issue as any)?.issueDescription?.description ?? '';
+      const descriptionText =
+        typeof rawDescription === 'string' ? rawDescription : (rawDescription as { id: string; name: string })?.name || '';
 
       grouped[reviewerId].push({
         id: `version-issue-${issue.id}`,
@@ -47,7 +62,7 @@ export const useVersionIssues = ({ currentVersion, practitioners, setReviews }: 
     });
 
     return grouped;
-  }, [currentVersion]);
+  }, [currentVersion, errorTypes, issueRelatedTo]);
 
   // Use ref to track previous versionIssuesByReviewer to prevent infinite loops
   const prevVersionIssuesRef = useRef<string>('');

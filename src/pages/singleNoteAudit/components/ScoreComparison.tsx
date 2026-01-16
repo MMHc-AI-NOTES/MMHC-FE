@@ -1,5 +1,6 @@
 import { calculateSMEScore, calculatePercentageMatch } from './reviewUtils';
 import { IssueForm } from './types';
+import { useAppSelector } from '@/store/store';
 
 interface ScoreComparisonProps {
   issues: IssueForm[];
@@ -7,7 +8,8 @@ interface ScoreComparisonProps {
 }
 
 const ScoreComparison = ({ issues, auditScore }: ScoreComparisonProps) => {
-  const smeScore = calculateSMEScore(issues);
+  const { errorTypes } = useAppSelector(state => state.smeConfig);
+  const smeScore = calculateSMEScore(issues, errorTypes);
   const percentage = calculatePercentageMatch(smeScore, auditScore);
 
   const getPercentageColor = () => {

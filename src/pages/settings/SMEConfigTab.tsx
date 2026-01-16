@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Link2, FileText } from 'lucide-react';
-import {
-  getStoredErrorTypes,
-  getStoredIssueRelatedTo,
-  getStoredIssueDescriptions,
-  type ErrorType,
-  type IssueRelatedTo,
-  type IssueDescriptions,
-} from '@/types/smeConfig';
-import { showToast } from '@/lib/toast';
+import { useAppSelector } from '@/store/store';
+import { useDispatch } from 'react-redux';
+import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
+import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from './settingsApiCalls';
 import ErrorTypesSection from './components/ErrorTypesSection';
 import IssueRelatedToSection from './components/IssueRelatedToSection';
 import IssueDescriptionsSection from './components/IssueDescriptionsSection';
-// import { fetchSMEErrorTypes, fetchSMEIssueRelatedTo, fetchSMEIssueDescriptions } from './settingsApiCalls';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type SMETabType = 'error-types' | 'issue-related-to' | 'issue-descriptions';
 
@@ -25,7 +20,34 @@ const smeTabs = [
   { id: 'issue-descriptions' as SMETabType, label: 'Issue Descriptions', icon: FileText },
 ];
 
+const SMEConfigTabSkeleton = () => {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Skeleton className="h-[56px] w-full rounded-md" />
+        <Skeleton className="h-[56px] w-full rounded-md" />
+        <Skeleton className="h-[56px] w-full rounded-md" />
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-9 w-48 rounded-md" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SMEConfigTab: React.FC = () => {
+  const dispatch = useDispatch();
+  const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded } = useAppSelector(state => state.smeConfig);
   const [activeTab, setActiveTab] = useState<SMETabType>(() => {
     if (typeof window !== 'undefined') {
       const persistedTab = localStorage.getItem(SME_TAB_STORAGE_KEY) as SMETabType | null;
@@ -35,10 +57,6 @@ const SMEConfigTab: React.FC = () => {
     }
     return 'error-types';
   });
-
-  const [errorTypes, setErrorTypes] = useState<ErrorType[]>([]);
-  const [issueRelatedTo, setIssueRelatedTo] = useState<IssueRelatedTo[]>([]);
-  const [issueDescriptions, setIssueDescriptions] = useState<IssueDescriptions>([]);
   const [loading, setLoading] = useState(true);
 
   // Persist tab changes to localStorage
@@ -51,33 +69,27 @@ const SMEConfigTab: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        // TODO: Uncomment when APIs are ready
-        // const [errorTypesData, issueRelatedToData, issueDescriptionsData] = await Promise.all([
-        //   fetchSMEErrorTypes(),
-        //   fetchSMEIssueRelatedTo(),
-        //   fetchSMEIssueDescriptions(),
-        // ]);
-        // setErrorTypes(errorTypesData);
-        // setIssueRelatedTo(issueRelatedToData);
-        // setIssueDescriptions(issueDescriptionsData);
+        const [errorTypes, issueRelatedTo, issueDescriptions] = await Promise.all([
+          fetchErrorTypes(),
+          fetchIssueRelatedTo(),
+          fetchIssueDescriptions(),
+        ]);
 
-        // Using localStorage for now
-        setErrorTypes(getStoredErrorTypes());
-        setIssueRelatedTo(getStoredIssueRelatedTo());
-        setIssueDescriptions(getStoredIssueDescriptions());
+        dispatch(setErrorTypes(errorTypes));
+        dispatch(setIssueRelatedTo(issueRelatedTo));
+        dispatch(setIssueDescriptions(issueDescriptions));
       } catch (error) {
         console.error('Error loading SME config:', error);
-        showToast.error('Failed to load SME configuration');
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [dispatch]);
 
-  if (loading) {
-    return <div className="py-8 text-center text-gray-500">Loading...</div>;
+  if (loading && (!errorTypesLoaded || !issueRelatedToLoaded || !issueDescriptionsLoaded)) {
+    return <SMEConfigTabSkeleton />;
   }
 
   return (
@@ -103,11 +115,9 @@ const SMEConfigTab: React.FC = () => {
 
       {/* Content */}
       <div>
-        {activeTab === 'error-types' && <ErrorTypesSection errorTypes={errorTypes} onUpdate={setErrorTypes} />}
-        {activeTab === 'issue-related-to' && <IssueRelatedToSection issueRelatedTo={issueRelatedTo} onUpdate={setIssueRelatedTo} />}
-        {activeTab === 'issue-descriptions' && (
-          <IssueDescriptionsSection issueDescriptions={issueDescriptions} onUpdate={setIssueDescriptions} />
-        )}
+        {activeTab === 'error-types' && <ErrorTypesSection />}
+        {activeTab === 'issue-related-to' && <IssueRelatedToSection />}
+        {activeTab === 'issue-descriptions' && <IssueDescriptionsSection />}
       </div>
     </div>
   );

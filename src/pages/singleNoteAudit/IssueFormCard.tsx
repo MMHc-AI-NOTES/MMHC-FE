@@ -8,7 +8,6 @@ import { X, Save, CircleHelp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppSelector } from '@/store/store';
-import { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions } from '@/constants/common';
 
 export interface IssueFormValues {
   reviewerName: string;
@@ -46,6 +45,7 @@ interface IssueFormCardProps {
 
 const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideReviewerField = false }: IssueFormCardProps) => {
   const { practitioners } = useAppSelector(state => state.filterOptions);
+  const { errorTypes, issueRelatedTo, issueDescriptions } = useAppSelector(state => state.smeConfig);
 
   const formik = useFormik<IssueFormValues>({
     initialValues: {
@@ -61,10 +61,20 @@ const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideRevi
     },
   });
 
-  const mergedErrorTypes = getMergedErrorTypes();
-  const mergedIssueRelatedTo = getMergedIssueRelatedTo();
-  const errorTypeLabel = mergedErrorTypes.find(type => type.value === formik.values.errorType)?.label || '';
-  const issueRelatedToLabel = mergedIssueRelatedTo.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
+  // Convert Redux data to format expected by components
+  const errorTypeOptions = errorTypes.map(type => ({
+    value: type.name,
+    label: type.displayName,
+    points: type.points,
+  }));
+  const issueRelatedToOptions = issueRelatedTo.map(opt => ({
+    id: opt.fieldId,
+    name: opt.displayName,
+  }));
+  const issueDescriptionOptions = issueDescriptions.map(desc => desc.description);
+
+  const errorTypeLabel = errorTypeOptions.find(type => type.value === formik.values.errorType)?.label || '';
+  const issueRelatedToLabel = issueRelatedToOptions.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
 
   return (
     <Card className="p-0 shadow-none">
@@ -144,7 +154,7 @@ const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideRevi
                 <SelectValue placeholder="Select error type" />
               </SelectTrigger>
               <SelectContent>
-                {mergedErrorTypes.map(type => (
+                {errorTypeOptions.map(type => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
@@ -164,7 +174,7 @@ const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideRevi
                 <SelectValue placeholder="Find an option" />
               </SelectTrigger>
               <SelectContent>
-                {mergedIssueRelatedTo.map(option => (
+                {issueRelatedToOptions.map(option => (
                   <SelectItem key={option.id} value={option.id}>
                     {option.id}: {option.name}
                   </SelectItem>
@@ -186,7 +196,7 @@ const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideRevi
                 <SelectValue placeholder="Select issue description" className="line-clamp-2" />
               </SelectTrigger>
               <SelectContent className="max-w-lg">
-                {getMergedIssueDescriptions().map((description, idx) => (
+                {issueDescriptionOptions.map((description, idx) => (
                   <SelectItem
                     key={idx}
                     value={description}

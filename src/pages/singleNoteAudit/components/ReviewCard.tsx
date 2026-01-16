@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
-import { getMergedErrorTypes, getMergedIssueRelatedTo } from '@/constants/common';
+import { useAppSelector } from '@/store/store';
 import { Review, IssueForm, ActiveIssueForm } from './types';
 import ScoreComparison from './ScoreComparison';
 
@@ -41,6 +41,8 @@ const ReviewCard = ({
   onDeleteReview,
   onRemoveReview,
 }: ReviewCardProps) => {
+  const { errorTypes, issueRelatedTo } = useAppSelector(state => state.smeConfig);
+
   const savedIssues = review.issues.filter(
     issue => !activeIssueForms.some(form => form.reviewId === review.id && form.issueId === issue.id),
   );
@@ -48,8 +50,16 @@ const ReviewCard = ({
     activeIssueForms.some(form => form.reviewId === review.id && form.issueId === issue.id),
   );
 
-  const mergedErrorTypes = getMergedErrorTypes();
-  const mergedIssueRelatedTo = getMergedIssueRelatedTo();
+  // Convert Redux data to format expected by components
+  const errorTypeOptions = errorTypes.map(type => ({
+    value: type.name,
+    label: type.displayName,
+    points: type.points,
+  }));
+  const issueRelatedToOptions = issueRelatedTo.map(opt => ({
+    id: opt.fieldId,
+    name: opt.displayName,
+  }));
 
   // Check if review is from backend (version review) or new
   const isVersionReview = review.id.startsWith('version-review-');
@@ -111,8 +121,8 @@ const ReviewCard = ({
             </div>
             <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
             {savedIssues.map((savedIssue, index) => {
-              const errorTypeLabel = mergedErrorTypes.find(type => type.value === savedIssue.errorType)?.label || '';
-              const issueRelatedToLabel = mergedIssueRelatedTo.find(opt => opt.id === savedIssue.issueRelatedTo)?.name || '';
+              const errorTypeLabel = errorTypeOptions.find(type => type.value === savedIssue.errorType)?.label || '';
+              const issueRelatedToLabel = issueRelatedToOptions.find(opt => opt.id === savedIssue.issueRelatedTo)?.name || '';
 
               return (
                 <div key={savedIssue.id}>
@@ -148,7 +158,7 @@ const ReviewCard = ({
                     </div>
                     <div>
                       <p className="mt-1 text-sm font-bold text-red-600">
-                        {mergedErrorTypes.find(type => type.value === savedIssue.errorType)?.points || 0} points
+                        {errorTypeOptions.find(type => type.value === savedIssue.errorType)?.points || 0} points
                       </p>
                       <p className="mt-2 text-xs leading-relaxed text-gray-600">
                         <span className="font-medium">Related to:</span> {issueRelatedToLabel}

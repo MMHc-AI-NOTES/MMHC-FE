@@ -3,24 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { ISSUE_RELATED_TO_OPTIONS } from '@/constants/common';
-import { IssueRelatedTo, saveIssueRelatedTo } from '@/types/smeConfig';
-import { showToast } from '@/lib/toast';
+import { IssueRelatedTo } from '@/store/slices/smeConfigSlice';
+import { useAppSelector } from '@/store/store';
+import { useDispatch } from 'react-redux';
+import { addIssueRelatedTo, updateIssueRelatedTo, deleteIssueRelatedTo } from '@/store/slices/smeConfigSlice';
+import {
+  createIssueRelatedTo,
+  updateIssueRelatedTo as updateIssueRelatedToAPI,
+  deleteIssueRelatedTo as deleteIssueRelatedToAPI,
+} from '../settingsApiCalls';
 import IssueRelatedToDialog from './IssueRelatedToDialog';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-// import { createSMEIssueRelatedTo, updateSMEIssueRelatedTo, deleteSMEIssueRelatedTo } from '../settingsApiCalls';
 
-interface IssueRelatedToSectionProps {
-  issueRelatedTo: IssueRelatedTo[];
-  onUpdate: (issueRelatedTo: IssueRelatedTo[]) => void;
-}
-
-const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRelatedTo, onUpdate }) => {
+const IssueRelatedToSection: React.FC = () => {
+  const dispatch = useDispatch();
+  const issueRelatedTo = useAppSelector(state => state.smeConfig.issueRelatedTo);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingIssue, setEditingIssue] = useState<IssueRelatedTo | null>(null);
-  const [selectedIdToDelete, setSelectedIdToDelete] = useState<string | null>(null);
+  const [selectedIdToDelete, setSelectedIdToDelete] = useState<number | null>(null);
 
   const handleAdd = () => {
     setEditingIssue(null);
@@ -32,46 +34,24 @@ const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRela
     setIsDialogOpen(true);
   };
 
-  const handleSave = async (formData: IssueRelatedTo) => {
-    // Check if id already exists (for new items)
-    if (!editingIssue && issueRelatedTo.some(ir => ir.id === formData.id)) {
-      showToast.error('Issue related to with this ID already exists');
-      return;
-    }
-
+  const handleSave = async (formData: { field_id: string; display_name: string }) => {
     try {
-      // TODO: Uncomment when APIs are ready
-      // let updated: IssueRelatedTo[];
-      // if (editingIssue) {
-      //   const result = await updateSMEIssueRelatedTo(editingIssue.id, formData);
-      //   if (!result) return;
-      //   updated = issueRelatedTo.map(ir => (ir.id === editingIssue.id ? result : ir));
-      // } else {
-      //   const result = await createSMEIssueRelatedTo(formData);
-      //   if (!result) return;
-      //   updated = [...issueRelatedTo, result];
-      // }
-      // onUpdate(updated);
-
-      // Using localStorage for now
-      let updated: IssueRelatedTo[];
-      if (editingIssue) {
-        updated = issueRelatedTo.map(ir => (ir.id === editingIssue.id ? formData : ir));
+      if (editingIssue && editingIssue.id) {
+        const result = await updateIssueRelatedToAPI(editingIssue.id, formData);
+        if (!result) return;
+        dispatch(updateIssueRelatedTo(result));
       } else {
-        updated = [...issueRelatedTo, formData];
+        const result = await createIssueRelatedTo(formData);
+        if (!result) return;
+        dispatch(addIssueRelatedTo(result));
       }
-      saveIssueRelatedTo(updated);
-      onUpdate(updated);
       setIsDialogOpen(false);
-      setEditingIssue(null);
-      showToast.success(editingIssue ? 'Issue related to updated successfully' : 'Issue related to added successfully');
     } catch (error) {
       console.error('Error saving issue related to:', error);
-      showToast.error('Failed to save issue related to');
     }
   };
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = (id: number) => {
     setSelectedIdToDelete(id);
     setIsDeleteDialogOpen(true);
   };
@@ -81,25 +61,17 @@ const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRela
 
     setIsDeleting(true);
     try {
-      // TODO: Uncomment when APIs are ready
-      // const success = await deleteSMEIssueRelatedTo(selectedIdToDelete);
-      // if (!success) {
-      //   setIsDeleting(false);
-      //   return;
-      // }
-      // onUpdate(issueRelatedTo.filter(ir => ir.id !== selectedIdToDelete));
-
-      // Using localStorage for now
-      const updated = issueRelatedTo.filter(ir => ir.id !== selectedIdToDelete);
-      saveIssueRelatedTo(updated);
-      onUpdate(updated);
+      const success = await deleteIssueRelatedToAPI(selectedIdToDelete);
+      if (!success) {
+        setIsDeleting(false);
+        return;
+      }
+      dispatch(deleteIssueRelatedTo(selectedIdToDelete));
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setSelectedIdToDelete(null);
-      showToast.success('Issue related to deleted successfully');
     } catch (error) {
       console.error('Error deleting issue related to:', error);
-      showToast.error('Failed to delete issue related to');
       setIsDeleting(false);
     }
   };
@@ -122,25 +94,17 @@ const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRela
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-3 text-left">ID</TableHead>
-                    <TableHead className="pl-3 text-left">Name</TableHead>
+                    <TableHead className="pl-3 text-left">Field ID</TableHead>
+                    <TableHead className="pl-3 text-left">Display Name</TableHead>
                     {issueRelatedTo.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* Default Options */}
-                  {ISSUE_RELATED_TO_OPTIONS.map(option => (
-                    <TableRow key={option.id}>
-                      <TableCell className="text-left">{option.id}</TableCell>
-                      <TableCell className="text-left">{option.name}</TableCell>
-                      {issueRelatedTo.length > 0 && <TableCell></TableCell>}
-                    </TableRow>
-                  ))}
                   {/* Custom Options */}
                   {issueRelatedTo.map(issue => (
                     <TableRow key={issue.id}>
-                      <TableCell className="text-left">{issue.id}</TableCell>
-                      <TableCell className="text-left">{issue.name}</TableCell>
+                      <TableCell className="text-left">{issue.fieldId}</TableCell>
+                      <TableCell className="text-left">{issue.displayName}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-2">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(issue)} className="h-8 w-8 p-0">
@@ -149,7 +113,7 @@ const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRela
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteClick(issue.id)}
+                            onClick={() => issue.id && handleDeleteClick(issue.id)}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -180,7 +144,7 @@ const IssueRelatedToSection: React.FC<IssueRelatedToSectionProps> = ({ issueRela
         title="Delete Issue Related To"
         description={
           selectedIdToDelete
-            ? `Are you sure you want to delete "${issueRelatedTo.find(ir => ir.id === selectedIdToDelete)?.name || selectedIdToDelete}"? This action cannot be undone.`
+            ? `Are you sure you want to delete "${issueRelatedTo.find(ir => ir.id === selectedIdToDelete)?.displayName || selectedIdToDelete}"? This action cannot be undone.`
             : 'Are you sure you want to delete this issue related to option? This action cannot be undone.'
         }
         confirmButtonText="Delete"

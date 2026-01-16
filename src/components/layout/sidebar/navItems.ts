@@ -4,7 +4,7 @@ export const navItems: NavItem[] = [
   { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
   { path: '/notes-queue', name: 'Notes Queue', icon: FileText },
   // { path: '/single-note-audit', name: 'Single Note Audit', icon: FileSearch },
-  { path: '/human-review-queue', name: 'Human Review Queue', icon: UserCheck },
+  { path: '/admin-review-queue', name: 'Admin Review Queue', icon: UserCheck },
   { path: '/blacklisted-notes', name: 'Blacklisted Notes', icon: Ban },
   { path: '/manager-review', name: 'Manager Review', icon: ShieldCheck },
   { path: '/ai-logs', name: 'AI Logs', icon: ScrollText },

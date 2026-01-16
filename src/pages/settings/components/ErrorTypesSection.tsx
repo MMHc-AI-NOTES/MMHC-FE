@@ -3,24 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { ERROR_TYPES } from '@/constants/common';
-import { ErrorType, saveErrorTypes } from '@/types/smeConfig';
-import { showToast } from '@/lib/toast';
+import { ErrorType } from '@/store/slices/smeConfigSlice';
+import { useAppSelector } from '@/store/store';
+import { useDispatch } from 'react-redux';
+import { addErrorType, updateErrorType, deleteErrorType } from '@/store/slices/smeConfigSlice';
+import { createErrorType, updateErrorType as updateErrorTypeAPI, deleteErrorType as deleteErrorTypeAPI } from '../settingsApiCalls';
 import ErrorTypeDialog from './ErrorTypeDialog';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-// import { createSMEErrorType, updateSMEErrorType, deleteSMEErrorType } from '../settingsApiCalls';
 
-interface ErrorTypesSectionProps {
-  errorTypes: ErrorType[];
-  onUpdate: (errorTypes: ErrorType[]) => void;
-}
-
-const ErrorTypesSection: React.FC<ErrorTypesSectionProps> = ({ errorTypes, onUpdate }) => {
+const ErrorTypesSection: React.FC = () => {
+  const dispatch = useDispatch();
+  const errorTypes = useAppSelector(state => state.smeConfig.errorTypes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingErrorType, setEditingErrorType] = useState<ErrorType | null>(null);
-  const [selectedValueToDelete, setSelectedValueToDelete] = useState<string | null>(null);
+  const [selectedIdToDelete, setSelectedIdToDelete] = useState<number | null>(null);
 
   const handleAdd = () => {
     setEditingErrorType(null);
@@ -32,74 +30,44 @@ const ErrorTypesSection: React.FC<ErrorTypesSectionProps> = ({ errorTypes, onUpd
     setIsDialogOpen(true);
   };
 
-  const handleSave = async (formData: ErrorType) => {
-    // Check if value already exists (for new items)
-    if (!editingErrorType && errorTypes.some(et => et.value === formData.value)) {
-      showToast.error('Error type with this value already exists');
-      return;
-    }
-
+  const handleSave = async (formData: { name: string; display_name: string; points: number }) => {
     try {
-      // TODO: Uncomment when APIs are ready
-      // let updated: ErrorType[];
-      // if (editingErrorType) {
-      //   const result = await updateSMEErrorType(editingErrorType.value, formData);
-      //   if (!result) return;
-      //   updated = errorTypes.map(et => (et.value === editingErrorType.value ? result : et));
-      // } else {
-      //   const result = await createSMEErrorType(formData);
-      //   if (!result) return;
-      //   updated = [...errorTypes, result];
-      // }
-      // onUpdate(updated);
-
-      // Using localStorage for now
-      let updated: ErrorType[];
-      if (editingErrorType) {
-        updated = errorTypes.map(et => (et.value === editingErrorType.value ? formData : et));
+      if (editingErrorType && editingErrorType.id) {
+        const result = await updateErrorTypeAPI(editingErrorType.id, formData);
+        if (!result) return;
+        dispatch(updateErrorType(result));
       } else {
-        updated = [...errorTypes, formData];
+        const result = await createErrorType(formData);
+        if (!result) return;
+        dispatch(addErrorType(result));
       }
-      saveErrorTypes(updated);
-      onUpdate(updated);
       setIsDialogOpen(false);
-      setEditingErrorType(null);
-      showToast.success(editingErrorType ? 'Error type updated successfully' : 'Error type added successfully');
     } catch (error) {
       console.error('Error saving error type:', error);
-      showToast.error('Failed to save error type');
     }
   };
 
-  const handleDeleteClick = (value: string) => {
-    setSelectedValueToDelete(value);
+  const handleDeleteClick = (id: number) => {
+    setSelectedIdToDelete(id);
     setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedValueToDelete) return;
+    if (!selectedIdToDelete) return;
 
     setIsDeleting(true);
     try {
-      // TODO: Uncomment when APIs are ready
-      // const success = await deleteSMEErrorType(selectedValueToDelete);
-      // if (!success) {
-      //   setIsDeleting(false);
-      //   return;
-      // }
-      // onUpdate(errorTypes.filter(et => et.value !== selectedValueToDelete));
-
-      // Using localStorage for now
-      const updated = errorTypes.filter(et => et.value !== selectedValueToDelete);
-      saveErrorTypes(updated);
-      onUpdate(updated);
+      const success = await deleteErrorTypeAPI(selectedIdToDelete);
+      if (!success) {
+        setIsDeleting(false);
+        return;
+      }
+      dispatch(deleteErrorType(selectedIdToDelete));
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
-      setSelectedValueToDelete(null);
-      showToast.success('Error type deleted successfully');
+      setSelectedIdToDelete(null);
     } catch (error) {
       console.error('Error deleting error type:', error);
-      showToast.error('Failed to delete error type');
       setIsDeleting(false);
     }
   };
@@ -122,28 +90,19 @@ const ErrorTypesSection: React.FC<ErrorTypesSectionProps> = ({ errorTypes, onUpd
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Label</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Display Name</TableHead>
                     <TableHead>Points</TableHead>
                     {errorTypes.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* Default Error Types */}
-                  {ERROR_TYPES.map(type => (
-                    <TableRow key={type.value}>
-                      <TableCell>{type.value}</TableCell>
-                      <TableCell>{type.label}</TableCell>
-                      <TableCell>{type.points}</TableCell>
-                      {errorTypes.length > 0 && <TableCell></TableCell>}
-                    </TableRow>
-                  ))}
                   {/* Custom Error Types */}
                   {errorTypes.map(errorType => (
-                    <TableRow key={errorType.value}>
-                      <TableCell>{errorType.value}</TableCell>
-                      <TableCell>{errorType.label}</TableCell>
-                      <TableCell>{errorType.points}</TableCell>
+                    <TableRow key={errorType.id}>
+                      <TableCell>{errorType.name}</TableCell>
+                      <TableCell>{errorType.displayName}</TableCell>
+                      <TableCell>{errorType.points < 0 ? errorType.points : -errorType.points}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-2">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(errorType)} className="h-8 w-8 p-0">
@@ -152,7 +111,7 @@ const ErrorTypesSection: React.FC<ErrorTypesSectionProps> = ({ errorTypes, onUpd
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteClick(errorType.value)}
+                            onClick={() => errorType.id && handleDeleteClick(errorType.id)}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -181,14 +140,14 @@ const ErrorTypesSection: React.FC<ErrorTypesSectionProps> = ({ errorTypes, onUpd
         onOpenChange={open => {
           setIsDeleteDialogOpen(open);
           if (!open) {
-            setSelectedValueToDelete(null);
+            setSelectedIdToDelete(null);
           }
         }}
         onConfirm={handleConfirmDelete}
         title="Delete Error Type"
         description={
-          selectedValueToDelete
-            ? `Are you sure you want to delete the error type "${errorTypes.find(et => et.value === selectedValueToDelete)?.label || selectedValueToDelete}"? This action cannot be undone.`
+          selectedIdToDelete
+            ? `Are you sure you want to delete the error type "${errorTypes.find(et => et.id === selectedIdToDelete)?.displayName || selectedIdToDelete}"? This action cannot be undone.`
             : 'Are you sure you want to delete this error type? This action cannot be undone.'
         }
         confirmButtonText="Delete"

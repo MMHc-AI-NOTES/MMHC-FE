@@ -1,19 +1,12 @@
-import { getMergedErrorTypes, getMergedIssueRelatedTo, getMergedIssueDescriptions, IssuesRelatedToDisplayName } from '@/constants/common';
 import { IssueForm } from './types';
-
-export const errorTypeValueToId: Record<string, number> = {
-  minor: 1,
-  moderate: 2,
-  critical: 3,
-};
 
 /**
  * Calculate SME score from issues
+ * Note: This function should receive errorTypes from Redux state
  */
-export const calculateSMEScore = (issues: IssueForm[]): number => {
-  const mergedErrorTypes = getMergedErrorTypes();
+export const calculateSMEScore = (issues: IssueForm[], errorTypes: Array<{ name: string; points: number }>): number => {
   const totalPoints = issues.reduce((sum, issue) => {
-    const issuePoints = mergedErrorTypes.find(type => type.value === issue.errorType)?.points || 0;
+    const issuePoints = errorTypes.find(type => type.name === issue.errorType)?.points || 0;
     return sum + issuePoints;
   }, 0);
   return 100 + totalPoints; // Points are negative, so we add them
@@ -31,31 +24,28 @@ export const calculatePercentageMatch = (smeScore: number, auditScore: number, m
 };
 
 /**
- * Map error type value to numeric ID
+ * Map error type value to backend ID
+ * Note: This function should receive errorTypes from Redux state
  */
-export const getErrorTypeId = (errorTypeValue: string): number => {
-  return errorTypeValueToId[errorTypeValue] || 0;
+export const getErrorTypeId = (errorTypeValue: string, errorTypes: Array<{ name: string; id?: number }>): number => {
+  const option = errorTypes.find(type => type.name === errorTypeValue);
+  return option?.id || 0;
 };
 
 /**
- * Map issues related to name to numeric ID
+ * Map issues related to ID to backend ID
+ * Note: This function should receive issueRelatedTo from Redux state
  */
-export const getIssuesRelatedToId = (issueRelatedToId: string): number => {
-  const mergedIssueRelatedTo = getMergedIssueRelatedTo();
-  const option = mergedIssueRelatedTo.find(opt => opt.id === issueRelatedToId);
-  if (!option) return 0;
-
-  const nameToNumericId: Record<string, number> = {};
-  Object.entries(IssuesRelatedToDisplayName).forEach(([id, name]) => {
-    nameToNumericId[name] = Number(id);
-  });
-  return nameToNumericId[option.name] || 0;
+export const getIssuesRelatedToId = (issueRelatedToId: string, issueRelatedTo: Array<{ fieldId: string; id?: number }>): number => {
+  const option = issueRelatedTo.find(opt => opt.fieldId === issueRelatedToId);
+  return option?.id || 0;
 };
 
 /**
- * Map issue description to numeric ID
+ * Map issue description to backend ID
+ * Note: This function should receive issueDescriptions from Redux state
  */
-export const getDescriptionId = (description: string): number => {
-  const mergedIssueDescriptions = getMergedIssueDescriptions();
-  return mergedIssueDescriptions.findIndex(desc => desc === description) + 1;
+export const getDescriptionId = (description: string, issueDescriptions: Array<{ description: string; id?: number }>): number => {
+  const option = issueDescriptions.find(desc => desc.description === description);
+  return option?.id || 0;
 };
