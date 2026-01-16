@@ -136,7 +136,7 @@ const TherapySessionSummaryCard = ({ webhookVersions, onVersionChange }: Therapy
                 History
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="h-[300px] w-[250px] overflow-y-auto border-0 p-0" align="end">
+            <PopoverContent className="h-[350px] w-[250px] border-0 p-0" align="end">
               <div>
                 <div className="flex items-center justify-between py-2 pl-4">
                   <h3 className="text-primary font-semibold">Version History</h3>
@@ -145,7 +145,7 @@ const TherapySessionSummaryCard = ({ webhookVersions, onVersionChange }: Therapy
                   </Button>
                 </div>
                 <Separator className="mb-4" />
-                <div className="space-y-0 px-2 pb-2">
+                <div className="h-[270px] space-y-0 overflow-y-auto px-2 pb-2">
                   {sortedVersions.map((version, index) => {
                     const isCurrent = index === selectedVersionIndex;
                     const isCurrentVersion = index === 0;

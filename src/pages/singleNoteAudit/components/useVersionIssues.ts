@@ -28,14 +28,13 @@ export const useVersionIssues = ({ currentVersion, practitioners, setReviews }: 
 
       // Convert SMEIssue to IssueForm format
       const errorTypeValue =
-        Object.keys(errorTypeValueToId).find(key => ErrorTypeDisplayNames[errorTypeValueToId[key]] === issue.errorType.name) || '';
+        Object.keys(errorTypeValueToId).find(key => ErrorTypeDisplayNames[errorTypeValueToId[key]] === issue.errorType?.displayName) || '';
 
-      const issuesRelatedToName = issue.issuesRelatedTo.name;
+      const issuesRelatedToName = issue.issuesRelatedTo?.displayName;
       const issuesRelatedToOption = mergedIssueRelatedTo.find(opt => opt.name === issuesRelatedToName);
       const issuesRelatedToId = issuesRelatedToOption?.id || '';
 
-      const descriptionText =
-        typeof issue.description === 'string' ? issue.description : (issue.description as { id: string; name: string })?.name || '';
+      const descriptionText = issue.issueDescription?.description;
 
       grouped[reviewerId].push({
         id: `version-issue-${issue.id}`,

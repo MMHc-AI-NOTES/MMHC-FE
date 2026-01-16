@@ -109,10 +109,10 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
 export interface SMEIssuePayload {
   note_id: string;
   reviewer_id: number;
-  error_type: number;
-  issues_related_to: number;
-  version_id: number;
-  description: number;
+  error_type_id: number;
+  issues_related_to_id: number;
+  version_id: number | null;
+  issue_description_id: number;
 }
 
 /**
@@ -162,6 +162,25 @@ export const deleteSMEIssue = async (issueId: number): Promise<any> => {
 
     if (response?.status) {
       showToast.success('SME issue deleted successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+/**
+ * Delete SME review (all issues for a reviewer)
+ */
+export const deleteSMEReview = async (noteId: string, versionId: number | null, reviewerId: number | null): Promise<any> => {
+  try {
+    const response = await axios.delete(`/sme-issues/${noteId}/${versionId}/${reviewerId}`);
+
+    if (response?.status) {
+      showToast.success('Review deleted successfully');
       return response.data;
     } else {
       handleErrorMessages(response);
