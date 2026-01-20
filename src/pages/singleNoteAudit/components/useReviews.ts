@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Review, IssueForm, ActiveIssueForm } from './types';
 import { createSMEIssue, updateSMEIssue, deleteSMEIssue, SMEIssuePayload } from '../singleNoteApiCalls';
 import { getErrorTypeId, getIssuesRelatedToId, getDescriptionId } from './reviewUtils';
+import { getState } from '@/store/store';
 
 interface UseReviewsProps {
   noteId: string | undefined;
@@ -88,9 +89,10 @@ export const useReviews = ({
 
         const issue = review?.issues?.find(i => i.id === issueId);
         const smeIssueId = issue?._smeIssueId;
-        const errorTypeId = getErrorTypeId(values.errorType);
-        const issuesRelatedToId = getIssuesRelatedToId(values.issueRelatedTo);
-        const descriptionId = getDescriptionId(values.issueDescription);
+        const { errorTypes, issueRelatedTo, issueDescriptions } = getState().smeConfig;
+        const errorTypeId = getErrorTypeId(values.errorType, errorTypes);
+        const issuesRelatedToId = getIssuesRelatedToId(values.issueRelatedTo, issueRelatedTo);
+        const descriptionId = getDescriptionId(values.issueDescription, issueDescriptions);
 
         const payload: SMEIssuePayload = {
           note_id: noteId,

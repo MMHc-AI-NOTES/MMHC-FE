@@ -20,7 +20,7 @@ const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionBu
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
   const [open, setOpen] = useState(false);
 
-  const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
+  const selectedAgent = agents?.find(agent => agent.id === selectedAgentId);
 
   const handleSelectAgent = (agentId: number) => {
     dispatch(setSelectedAgentId(agentId));
@@ -50,7 +50,7 @@ const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionBu
               <CommandList>
                 <CommandEmpty>No agent found.</CommandEmpty>
                 <CommandGroup>
-                  {agents.map(agent => (
+                  {agents?.map(agent => (
                     <CommandItem key={agent.id} value={agent.name} onSelect={() => handleSelectAgent(agent.id)}>
                       <Check className={cn('mr-2 h-4 w-4', selectedAgentId === agent.id ? 'opacity-100' : 'opacity-0')} />
                       {agent.name}

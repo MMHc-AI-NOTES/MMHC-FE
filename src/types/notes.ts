@@ -169,17 +169,18 @@ export interface SMEIssue {
   versionId: number;
   errorType: {
     id: number;
-    displayName: string;
+    name?: string;
+    displayName?: string;
     points: number;
   };
   issuesRelatedTo: {
     id: number;
-    displayName: string;
+    name?: string;
+    displayName?: string;
   };
-  issueDescription: {
-    id: number;
-    description: string;
-  };
+  // Backend may send `description` as string or { id, name }, older responses used `issueDescription.description`
+  description?: string | { id: string; name: string };
+  issueDescription?: { id: number; description: string };
   noteId: string;
   status: {
     id: number;

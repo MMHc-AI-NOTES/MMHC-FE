@@ -203,8 +203,8 @@ const HumanReviewQueue = () => {
   };
 
   const handleReviewNote = (noteId: string) => {
-    navigate(`/human-review-queue/single-note-audit/${noteId}`, {
-      state: { from: 'human-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
+    navigate(`/admin-review-queue/single-note-audit/${noteId}`, {
+      state: { from: 'admin-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
     });
   };
 

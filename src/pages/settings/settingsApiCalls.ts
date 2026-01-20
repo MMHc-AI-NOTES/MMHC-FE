@@ -11,7 +11,27 @@ import {
 } from '@/types/agent';
 import { showToast } from '@/lib/toast';
 import { getState } from '@/store/store';
-// import { ErrorType, IssueRelatedTo, IssueDescriptions } from '@/utils/smeConfig';
+import { ErrorType, IssueRelatedTo, IssueDescription } from '@/store/slices/smeConfigSlice';
+
+// Normalize SME Config API payloads (backend uses snake_case; FE uses camelCase in Redux)
+const normalizeErrorType = (api: any): ErrorType => ({
+  id: api?.id,
+  name: api?.name ?? '',
+  displayName: api?.display_name ?? api?.displayName ?? '',
+  points: (api?.points ?? 0) > 0 ? -(api?.points ?? 0) : (api?.points ?? 0),
+});
+
+const normalizeIssueRelatedTo = (api: any): IssueRelatedTo => ({
+  id: api?.id,
+  fieldId: api?.field_id ?? api?.fieldId ?? '',
+  displayName: api?.display_name ?? api?.displayName ?? '',
+});
+
+const normalizeIssueDescription = (api: any): IssueDescription => ({
+  id: api?.id,
+  key: api?.key ?? '',
+  description: api?.description ?? '',
+});
 
 const transformApiAgentToAgent = (apiAgent: ApiAgent): Agent => {
   return {
@@ -108,196 +128,261 @@ export const deleteAgent = async (agentId: number): Promise<boolean> => {
 // ============================================================================
 // SME Config API Functions
 // ============================================================================
-// TODO: Uncomment when APIs are ready
 
 // Error Types API
-// export const fetchSMEErrorTypes = async (): Promise<ErrorType[]> => {
-//   try {
-//     const response = await axios.get<{ data: ErrorType[] }>('/sme-config/error-types');
-//     if (response.status) {
-//       return response.data.data || [];
-//     } else {
-//       handleErrorMessages(response);
-//       return [];
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return [];
-//   }
-// };
+export interface ErrorTypeListingResponse {
+  data: ErrorType[];
+}
 
-// export const createSMEErrorType = async (errorType: ErrorType): Promise<ErrorType | null> => {
-//   try {
-//     const response = await axios.post<{ data: ErrorType }>('/sme-config/error-types', errorType);
-//     if (response.status) {
-//       showToast.success('Error type created successfully!');
-//       return response.data.data;
-//     } else {
-//       handleErrorMessages(response);
-//       return null;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return null;
-//   }
-// };
+export interface ErrorTypeResponse {
+  data: ErrorType;
+}
 
-// export const updateSMEErrorType = async (value: string, errorType: ErrorType): Promise<ErrorType | null> => {
-//   try {
-//     const response = await axios.patch<{ data: ErrorType }>(`/sme-config/error-types/${value}`, errorType);
-//     if (response.status) {
-//       showToast.success('Error type updated successfully!');
-//       return response.data.data;
-//     } else {
-//       handleErrorMessages(response);
-//       return null;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return null;
-//   }
-// };
+export const fetchErrorTypes = async (): Promise<ErrorType[]> => {
+  const previousErrorTypes = getState().smeConfig.errorTypes;
+  if (previousErrorTypes.length) return previousErrorTypes;
+  try {
+    const response = await axios.post<ErrorTypeListingResponse>('/error-types/listing');
 
-// export const deleteSMEErrorType = async (value: string): Promise<boolean> => {
-//   try {
-//     const response = await axios.delete(`/sme-config/error-types/${value}`);
-//     if (response.status) {
-//       showToast.success('Error type deleted successfully!');
-//       return true;
-//     } else {
-//       handleErrorMessages(response);
-//       return false;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return false;
-//   }
-// };
+    if (response.status) {
+      const data = response.data.data || [];
+      return data.map(item => normalizeErrorType(item));
+    } else {
+      handleErrorMessages(response);
+      return [];
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return [];
+  }
+};
+
+export const createErrorType = async (payload: { name: string; display_name: string; points: number }): Promise<ErrorType | null> => {
+  try {
+    // Convert negative points to positive for backend
+    const backendPayload = {
+      ...payload,
+      points: payload.points < 0 ? Math.abs(payload.points) : payload.points,
+    };
+
+    const response = await axios.post<ErrorTypeResponse>('/error-types', backendPayload);
+
+    if (response.status) {
+      showToast.success('Error type created successfully!');
+      return normalizeErrorType(response.data);
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const updateErrorType = async (
+  id: number,
+  payload: { name: string; display_name: string; points: number },
+): Promise<ErrorType | null> => {
+  try {
+    // Convert negative points to positive for backend
+    const backendPayload = {
+      ...payload,
+      points: payload.points < 0 ? Math.abs(payload.points) : payload.points,
+    };
+
+    const response = await axios.patch<ErrorTypeResponse>(`/error-types/${id}`, backendPayload);
+
+    if (response.status) {
+      showToast.success('Error type updated successfully!');
+      return normalizeErrorType(response.data);
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const deleteErrorType = async (id: number): Promise<boolean> => {
+  try {
+    const response = await axios.delete(`/error-types/${id}`);
+
+    if (response.status) {
+      showToast.success('Error type deleted successfully!');
+      return true;
+    } else {
+      handleErrorMessages(response);
+      return false;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
 
 // Issue Related To API
-// export const fetchSMEIssueRelatedTo = async (): Promise<IssueRelatedTo[]> => {
-//   try {
-//     const response = await axios.get<{ data: IssueRelatedTo[] }>('/sme-config/issue-related-to');
-//     if (response.status) {
-//       return response.data.data || [];
-//     } else {
-//       handleErrorMessages(response);
-//       return [];
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return [];
-//   }
-// };
+export interface IssueRelatedToListingResponse {
+  data: IssueRelatedTo[];
+}
 
-// export const createSMEIssueRelatedTo = async (issue: IssueRelatedTo): Promise<IssueRelatedTo | null> => {
-//   try {
-//     const response = await axios.post<{ data: IssueRelatedTo }>('/sme-config/issue-related-to', issue);
-//     if (response.status) {
-//       showToast.success('Issue related to created successfully!');
-//       return response.data.data;
-//     } else {
-//       handleErrorMessages(response);
-//       return null;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return null;
-//   }
-// };
+export interface IssueRelatedToResponse {
+  data: IssueRelatedTo;
+}
 
-// export const updateSMEIssueRelatedTo = async (id: string, issue: IssueRelatedTo): Promise<IssueRelatedTo | null> => {
-//   try {
-//     const response = await axios.patch<{ data: IssueRelatedTo }>(`/sme-config/issue-related-to/${id}`, issue);
-//     if (response.status) {
-//       showToast.success('Issue related to updated successfully!');
-//       return response.data.data;
-//     } else {
-//       handleErrorMessages(response);
-//       return null;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return null;
-//   }
-// };
+export const fetchIssueRelatedTo = async (): Promise<IssueRelatedTo[]> => {
+  const previousIssueRelatedTo = getState().smeConfig.issueRelatedTo;
+  if (previousIssueRelatedTo.length) return previousIssueRelatedTo;
+  try {
+    const response = await axios.post<IssueRelatedToListingResponse>('/issues-related-to/listing');
 
-// export const deleteSMEIssueRelatedTo = async (id: string): Promise<boolean> => {
-//   try {
-//     const response = await axios.delete(`/sme-config/issue-related-to/${id}`);
-//     if (response.status) {
-//       showToast.success('Issue related to deleted successfully!');
-//       return true;
-//     } else {
-//       handleErrorMessages(response);
-//       return false;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return false;
-//   }
-// };
+    if (response.status) {
+      const data = response.data.data || [];
+      return data.map(item => normalizeIssueRelatedTo(item));
+    } else {
+      handleErrorMessages(response);
+      return [];
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return [];
+  }
+};
+
+export const createIssueRelatedTo = async (payload: { field_id: string; display_name: string }): Promise<IssueRelatedTo | null> => {
+  try {
+    const response = await axios.post<IssueRelatedToResponse>('/issues-related-to', payload);
+
+    if (response.status) {
+      showToast.success('Issue related to created successfully!');
+      return normalizeIssueRelatedTo(response.data);
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const updateIssueRelatedTo = async (
+  id: number,
+  payload: { field_id: string; display_name: string },
+): Promise<IssueRelatedTo | null> => {
+  try {
+    const response = await axios.patch<IssueRelatedToResponse>(`/issues-related-to/${id}`, payload);
+
+    if (response.status) {
+      showToast.success('Issue related to updated successfully!');
+      return normalizeIssueRelatedTo(response.data);
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const deleteIssueRelatedTo = async (id: number): Promise<boolean> => {
+  try {
+    const response = await axios.delete(`/issues-related-to/${id}`);
+
+    if (response.status) {
+      showToast.success('Issue related to deleted successfully!');
+      return true;
+    } else {
+      handleErrorMessages(response);
+      return false;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
 
 // Issue Descriptions API
-// export const fetchSMEIssueDescriptions = async (): Promise<IssueDescriptions> => {
-//   try {
-//     const response = await axios.get<{ data: IssueDescriptions }>('/sme-config/issue-descriptions');
-//     if (response.status) {
-//       return response.data.data || [];
-//     } else {
-//       handleErrorMessages(response);
-//       return [];
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return [];
-//   }
-// };
+export interface IssueDescriptionListingResponse {
+  data: IssueDescription[];
+}
 
-// export const createSMEIssueDescription = async (description: string): Promise<string | null> => {
-//   try {
-//     const response = await axios.post<{ data: string }>('/sme-config/issue-descriptions', { description });
-//     if (response.status) {
-//       showToast.success('Issue description created successfully!');
-//       return response.data.data;
-//     } else {
-//       handleErrorMessages(response);
-//       return null;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return null;
-//   }
-// };
+export interface IssueDescriptionResponse {
+  data: IssueDescription;
+}
 
-// export const updateSMEIssueDescription = async (index: number, description: string): Promise<string | null> => {
-//   try {
-//     const response = await axios.patch<{ data: string }>(`/sme-config/issue-descriptions/${index}`, { description });
-//     if (response.status) {
-//       showToast.success('Issue description updated successfully!');
-//       return response.data.data;
-//     } else {
-//       handleErrorMessages(response);
-//       return null;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return null;
-//   }
-// };
+export const fetchIssueDescriptions = async (): Promise<IssueDescription[]> => {
+  const previousIssueDescriptions = getState().smeConfig.issueDescriptions;
+  if (previousIssueDescriptions.length) return previousIssueDescriptions;
+  try {
+    const response = await axios.post<IssueDescriptionListingResponse>('/issue-descriptions/listing');
 
-// export const deleteSMEIssueDescription = async (index: number): Promise<boolean> => {
-//   try {
-//     const response = await axios.delete(`/sme-config/issue-descriptions/${index}`);
-//     if (response.status) {
-//       showToast.success('Issue description deleted successfully!');
-//       return true;
-//     } else {
-//       handleErrorMessages(response);
-//       return false;
-//     }
-//   } catch (error: any) {
-//     handleCatchMessages(error);
-//     return false;
-//   }
-// };
+    if (response.status) {
+      const data = response.data.data || [];
+      return data.map(item => normalizeIssueDescription(item));
+    } else {
+      handleErrorMessages(response);
+      return [];
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return [];
+  }
+};
+
+export const createIssueDescription = async (payload: { key: string; description: string }): Promise<IssueDescription | null> => {
+  try {
+    const response = await axios.post<IssueDescriptionResponse>('/issue-descriptions', payload);
+
+    if (response.status) {
+      showToast.success('Issue description created successfully!');
+      return normalizeIssueDescription(response.data);
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const updateIssueDescription = async (
+  id: number,
+  payload: { key: string; description: string },
+): Promise<IssueDescription | null> => {
+  try {
+    const response = await axios.patch<IssueDescriptionResponse>(`/issue-descriptions/${id}`, payload);
+
+    if (response.status) {
+      showToast.success('Issue description updated successfully!');
+      return normalizeIssueDescription(response.data);
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const deleteIssueDescription = async (id: number): Promise<boolean> => {
+  try {
+    const response = await axios.delete(`/issue-descriptions/${id}`);
+
+    if (response.status) {
+      showToast.success('Issue description deleted successfully!');
+      return true;
+    } else {
+      handleErrorMessages(response);
+      return false;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};

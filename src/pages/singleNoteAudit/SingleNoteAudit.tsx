@@ -29,6 +29,8 @@ import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
+import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -103,6 +105,7 @@ const SingleNoteAudit = () => {
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useAppSelector(state => state.agents);
   const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded } = useAppSelector(state => state.smeConfig);
   const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
 
   // Create a ref to store the latest selectedAgentId
@@ -113,8 +116,8 @@ const SingleNoteAudit = () => {
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
 
-  // Check if coming from human-review-queue
-  const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
+  // Check if coming from admin-review-queue
+  const isFromHumanReviewQueue = location.state?.from === 'admin-review-queue';
   const chatId = location.state?.chatId;
   const [showHumanReview, setShowHumanReview] = useState(isFromHumanReviewQueue);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
@@ -204,6 +207,40 @@ const SingleNoteAudit = () => {
     };
     loadPractitioners();
   }, [practitionersLoaded, dispatch]);
+
+  // Load SME config data if needed
+  useEffect(() => {
+    const loadSMEData = async () => {
+      const promises: Promise<any>[] = [];
+
+      if (!errorTypesLoaded) {
+        promises.push(
+          fetchErrorTypes().then(data => {
+            dispatch(setErrorTypes(data));
+          }),
+        );
+      }
+
+      if (!issueRelatedToLoaded) {
+        promises.push(
+          fetchIssueRelatedTo().then(data => {
+            dispatch(setIssueRelatedTo(data));
+          }),
+        );
+      }
+
+      if (!issueDescriptionsLoaded) {
+        promises.push(
+          fetchIssueDescriptions().then(data => {
+            dispatch(setIssueDescriptions(data));
+          }),
+        );
+      }
+
+      await Promise.all(promises);
+    };
+    loadSMEData();
+  }, [dispatch, errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded]);
 
   // Cleanup ref on unmount
   useEffect(() => {
