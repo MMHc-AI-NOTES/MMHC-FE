@@ -9,22 +9,27 @@ interface UserActionsDropdownProps {
   onEditUser: (user: User) => void;
   onResetPassword: (userId: string) => void;
   onResendInvite: (userId: string) => void;
-  onDeactivate: (userId: string) => void;
+  disabled?: boolean;
 }
 
-const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({ user, onEditUser, onResetPassword, onResendInvite, onDeactivate }) => {
+const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({ user, onEditUser, onResetPassword, onResendInvite, disabled }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" disabled={disabled}>
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44 space-y-3">
-        <DropdownMenuItem onClick={() => onEditUser(user)}>Edit User</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onResetPassword(user.id)}>Reset Password</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onResendInvite(user.id)}>Resend Invite</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDeactivate(user.id)}>Deactivate</DropdownMenuItem>
+        <DropdownMenuItem disabled={disabled} onClick={() => onEditUser(user)}>
+          Edit User
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={disabled} onClick={() => onResetPassword(String(user.id))}>
+          Reset Password
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={disabled} onClick={() => onResendInvite(String(user.id))}>
+          Resend Invite
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -51,7 +51,7 @@ const Routes = () => {
       ),
       children: [
         { path: 'login', element: <Login /> },
-        { path: 'signup', element: <Signup /> },
+        { path: 'create-invited-user', element: <Signup /> },
       ],
     },
     { path: '*', element: <Navigate to="/dashboard" replace /> },

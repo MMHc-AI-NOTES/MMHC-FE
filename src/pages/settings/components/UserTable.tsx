@@ -1,26 +1,27 @@
 import React from 'react';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { User, UserRole } from '@/types/settings';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { User } from '@/types/settings';
 import UserTableRow from './UserTableRow';
 
 interface UserTableProps {
   users: User[];
-  onRoleChange: (userId: string, newRole: UserRole) => void;
-  onToggleStatus: (userId: string) => void;
+  loading?: boolean;
+  loggedInUserId: number | null;
+  onRequestUpdate: (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => Promise<void>;
   onEditUser: (user: User) => void;
   onResetPassword: (userId: string) => void;
   onResendInvite: (userId: string) => void;
-  onDeactivate: (userId: string) => void;
 }
 
 const UserTable: React.FC<UserTableProps> = ({
   users,
-  onRoleChange,
-  onToggleStatus,
+  loading,
+  loggedInUserId,
+  onRequestUpdate,
   onEditUser,
   onResetPassword,
   onResendInvite,
-  onDeactivate,
 }) => {
   return (
     <div className="overflow-x-auto rounded-lg border-2 border-gray-200">
@@ -35,18 +36,45 @@ const UserTable: React.FC<UserTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map(user => (
-            <UserTableRow
-              key={user.id}
-              user={user}
-              onRoleChange={onRoleChange}
-              onToggleStatus={onToggleStatus}
-              onEditUser={onEditUser}
-              onResetPassword={onResetPassword}
-              onResendInvite={onResendInvite}
-              onDeactivate={onDeactivate}
-            />
-          ))}
+          {loading ? (
+            Array.from({ length: 8 }).map((_, idx) => (
+              <TableRow key={idx}>
+                <TableCell className="text-left">
+                  <Skeleton className="h-5 w-40" />
+                </TableCell>
+                <TableCell className="text-left">
+                  <Skeleton className="h-5 w-56" />
+                </TableCell>
+                <TableCell className="text-left">
+                  <Skeleton className="h-9 w-32 rounded-full" />
+                </TableCell>
+                <TableCell className="text-left">
+                  <Skeleton className="h-6 w-10 rounded-full" />
+                </TableCell>
+                <TableCell className="flex justify-center">
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : users.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-muted-foreground py-10 text-center">
+                No users found
+              </TableCell>
+            </TableRow>
+          ) : (
+            users.map(user => (
+              <UserTableRow
+                key={user.id}
+                user={user}
+                loggedInUserId={loggedInUserId}
+                onRequestUpdate={onRequestUpdate}
+                onEditUser={onEditUser}
+                onResetPassword={onResetPassword}
+                onResendInvite={onResendInvite}
+              />
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

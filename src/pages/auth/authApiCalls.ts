@@ -1,8 +1,11 @@
 import axios, { AxiosError } from 'axios';
-import { handleCatchMessages, handleErrorMessages, setLocalStorageItem } from '@/utils/helper';
+import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { setLocalStorageItem } from '@/utils/storage';
 import { showToast } from '../../lib/toast';
 import { setHideBeatLoader, setShowBeatLoader } from '@/store/slices/alertsSlice';
 import { dispatch } from '@/store/store';
+import { setAuthUser } from '@/store/slices/authSlice';
+import type { User } from '@/types/settings';
 
 export const API_ENDPOINTS = {
   LOGOUT: '/auth/logout',
@@ -42,8 +45,13 @@ export const handleSignIn = async (email: string, password: string): Promise<boo
   try {
     const response = await axios.post('/login', { email, password });
 
-    if (response.status && response.data?.token?.token) {
-      setLocalStorageItem('authentication_token', response.data.token.token);
+    // Axios interceptor returns `response.data` already
+    const token = response?.data?.token?.token;
+    const user = response?.data?.user as User | undefined;
+
+    if (response?.status && token && user) {
+      setLocalStorageItem('authentication_token', token);
+      dispatch(setAuthUser(user));
       return true;
     } else {
       handleErrorMessages(response);

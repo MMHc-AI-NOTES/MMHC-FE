@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosHeaders, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { getLocalStorageItem, handleLogout } from '@/utils/helper';
+import { handleLogout } from '@/utils/helper';
+import { getLocalStorageItem } from '@/utils/storage';
 import { config } from '@/config/config';
 
 const AxiosInterceptor = {
