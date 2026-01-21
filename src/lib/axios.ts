@@ -13,7 +13,7 @@ const AxiosInterceptor = {
     axios.defaults.baseURL = config.backendUrl;
     axios.defaults.timeout = 50000;
     axios.defaults.headers['Content-Type'] = 'application/json';
-
+    axios.defaults.headers['ngrok-skip-browser-warning'] = 'true';
     axios.interceptors.request.use(
       (axiosConfig: InternalAxiosRequestConfig) => {
         const token = getLocalStorageItem('authentication_token');

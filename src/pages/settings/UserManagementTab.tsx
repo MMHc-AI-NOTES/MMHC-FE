@@ -10,6 +10,7 @@ import UserDialog from './components/UserDialog';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { UserRoleEnum, UserRoleLabels } from '@/constants/common';
 import { useAppDispatch, useAppSelector } from '@/store/store';
+import { resendOnboardingInvite } from '@/pages/settings/settingsApiCalls';
 import {
   createUserThunk,
   fetchUsersListingThunk,
@@ -209,7 +210,9 @@ const UserManagementTab: React.FC = () => {
             onRequestUpdate={handleRequestUpdate}
             onEditUser={handleEditUser}
             onResetPassword={userId => console.log('Reset password for user:', userId)}
-            onResendInvite={userId => console.log('Resend invite for user:', userId)}
+            onResendInvite={async userId => {
+              await resendOnboardingInvite(Number(userId));
+            }}
           />
 
           {listingEntry?.meta && (

@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Eye, EyeOff } from 'lucide-react';
 import SharedButton from '@/shared/GenericButton';
 import InputField from '@/shared/InputField';
 import Logo from '@/images/logo.svg';
+import { fetchMe, onboardInvitedUser } from './authApiCalls';
+import { setLocalStorageItem } from '@/utils/storage';
 
 interface SignupFormValues {
   name: string;
@@ -16,6 +19,11 @@ interface SignupFormValues {
 }
 
 const Signup = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [inviteToken, setInviteToken] = useState<string>('');
+  const [prefillLoading, setPrefillLoading] = useState(true);
+
   const formik = useFormik<SignupFormValues>({
     initialValues: {
       name: '',
@@ -28,19 +36,43 @@ const Signup = () => {
     validationSchema: Yup.object({
       name: Yup.string().min(2, 'Name must be at least 2 characters').required('Full name is required'),
       email: Yup.string().email('Invalid email address').required('Email is required'),
-      password: Yup.string()
-        .min(8, 'Password must be at least 8 characters')
-        .matches(
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-          'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-        )
-        .required('Password is required'),
+      password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
       confirmPassword: Yup.string()
         .oneOf([Yup.ref('password')], 'Passwords must match')
         .required('Please confirm your password'),
     }),
-    onSubmit: async () => {},
+    onSubmit: async values => {
+      const isSuccess = await onboardInvitedUser({
+        email: values.email,
+        password: values.password,
+        password_confirmation: values.confirmPassword,
+        token: inviteToken,
+      });
+      if (isSuccess) navigate('/dashboard');
+    },
   });
+
+  // Extract token from URL, store it, then prefill user via /me
+  useEffect(() => {
+    const run = async () => {
+      const token = new URLSearchParams(location.search).get('token') || '';
+      setInviteToken(token);
+
+      if (token) {
+        setLocalStorageItem('authentication_token', token);
+        const me = await fetchMe();
+        if (me) {
+          formik.setFieldValue('name', me.fullName, false);
+          formik.setFieldValue('email', me.email, false);
+        }
+      }
+
+      setPrefillLoading(false);
+    };
+
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
@@ -55,9 +87,25 @@ const Signup = () => {
 
         <form onSubmit={formik.handleSubmit} className="mt-8 space-y-6">
           <div className="bg-card space-y-4 rounded-lg border p-8 shadow-sm">
-            <InputField id="name" type="text" label="Full name" placeholder="John Doe" formik={formik} />
+            <InputField
+              id="name"
+              type="text"
+              label="Full name"
+              placeholder="John Doe"
+              formik={formik}
+              readOnly={true}
+              disabled={prefillLoading}
+            />
 
-            <InputField id="email" type="email" label="Email address" placeholder="john@example.com" formik={formik} />
+            <InputField
+              id="email"
+              type="email"
+              label="Email address"
+              placeholder="john@example.com"
+              formik={formik}
+              readOnly={true}
+              disabled={prefillLoading}
+            />
 
             <div>
               <InputField

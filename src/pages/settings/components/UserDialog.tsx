@@ -137,7 +137,7 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, editingUser, o
                 disabled={formik.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {editingUser ? 'Save Changes' : 'Create User'}
+                {editingUser ? 'Save Changes' : formik.isSubmitting ? 'Creating...' : 'Create User'}
               </Button>
             </DialogFooter>
           </form>

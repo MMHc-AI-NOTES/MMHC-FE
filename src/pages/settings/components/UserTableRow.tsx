@@ -15,7 +15,7 @@ interface UserTableRowProps {
   onRequestUpdate: (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => Promise<void>;
   onEditUser: (user: User) => void;
   onResetPassword: (userId: string) => void;
-  onResendInvite: (userId: string) => void;
+  onResendInvite: (userId: string) => Promise<void>;
 }
 
 const UserTableRow: React.FC<UserTableRowProps> = ({

@@ -17,6 +17,36 @@ interface ApiResponse {
   errors?: Record<string, string[]>;
 }
 
+interface LoginResponseBody {
+  status: boolean;
+  message?: string;
+  data?: {
+    token?: {
+      token?: string;
+    };
+    user?: User;
+  };
+}
+
+interface MeResponseBody {
+  status: boolean;
+  message?: string;
+  data?: User;
+}
+
+interface OnboardingPayload {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  token: string;
+}
+
+interface OnboardingResponseBody {
+  status: boolean;
+  message?: string;
+  data?: any;
+}
+
 const delay = (ms: number) =>
   new Promise(resolve => {
     setTimeout(resolve, ms);
@@ -43,11 +73,11 @@ export const handleSignIn = async (email: string, password: string): Promise<boo
   dispatch(setShowBeatLoader());
 
   try {
-    const response = await axios.post('/login', { email, password });
+    const response = (await axios.post('/login', { email, password })) as unknown as LoginResponseBody;
 
-    // Axios interceptor returns `response.data` already
+    // Axios interceptor returns response body (not AxiosResponse)
     const token = response?.data?.token?.token;
-    const user = response?.data?.user as User | undefined;
+    const user = response?.data?.user;
 
     if (response?.status && token && user) {
       setLocalStorageItem('authentication_token', token);
@@ -57,6 +87,48 @@ export const handleSignIn = async (email: string, password: string): Promise<boo
       handleErrorMessages(response);
       return false;
     }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  } finally {
+    dispatch(setHideBeatLoader());
+  }
+};
+
+export const fetchMe = async (): Promise<User | null> => {
+  dispatch(setShowBeatLoader());
+  try {
+    const response = (await axios.get('/me')) as unknown as MeResponseBody;
+
+    if (response?.status && response.data) {
+      dispatch(setAuthUser(response.data));
+      return response.data;
+    }
+    handleErrorMessages(response);
+    return null;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  } finally {
+    dispatch(setHideBeatLoader());
+  }
+};
+
+export const onboardInvitedUser = async (payload: OnboardingPayload): Promise<boolean> => {
+  dispatch(setShowBeatLoader());
+  try {
+    const response = (await axios.post('/users/onboarding', payload)) as unknown as OnboardingResponseBody;
+    const token = response?.data?.token?.token;
+    if (response?.status) {
+      showToast.success(response?.message || 'Account created successfully!');
+      setLocalStorageItem('authentication_token', token);
+
+      // Refresh auth user from backend
+      await fetchMe();
+      return true;
+    }
+    handleErrorMessages(response);
+    return false;
   } catch (error: any) {
     handleCatchMessages(error);
     return false;

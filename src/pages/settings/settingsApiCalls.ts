@@ -539,3 +539,20 @@ export const updateUserApi = async (id: number, payload: Partial<CreateOrUpdateU
     return null;
   }
 };
+
+export const resendOnboardingInvite = async (userId: number): Promise<boolean> => {
+  try {
+    const response = (await axios.get(`/users/resend-onboarding/${userId}`)) as unknown as { status: boolean; message?: string };
+
+    if (response?.status) {
+      showToast.success(response?.message || 'Invite sent successfully!');
+      return true;
+    }
+
+    handleErrorMessages(response);
+    return false;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
