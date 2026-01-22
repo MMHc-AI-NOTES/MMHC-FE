@@ -1,4 +1,4 @@
-// @/pages/humanReviewQueue/QueueStatusCard.tsx
+// @/pages/adminReviewQueue/QueueStatusCard.tsx
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueStatus } from '@/types/notes';

@@ -11,7 +11,7 @@ export interface ErrorMessage {
 
 export const handleLogout = (): void => {
   localStorage.clear();
-  window.location.reload();
+  window.location.href = '/login';
 };
 
 export const getLocalStorageItem = <T>(key: string, defaultValue: T | null = null): T | string | null => {

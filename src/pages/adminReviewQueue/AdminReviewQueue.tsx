@@ -1,10 +1,10 @@
-// @/pages/humanReviewQueue/HumanReviewQueue.tsx
+// @/pages/adminReviewQueue/AdminReviewQueue.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HumanReviewTable } from './HumanReviewTable';
+import { AdminReviewTable } from './AdminReviewTable';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
-import { fetchHumanReviewNotes, fetchReviewerOverview, fetchQueueStatus } from './humanReviewApiCalls';
+import { fetchHumanReviewNotes, fetchReviewerOverview, fetchQueueStatus } from './adminReviewApiCalls';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReviewerOverviewCard } from './ReviewerOverviewCard';
@@ -12,11 +12,11 @@ import { QueueStatusCard } from './QueueStatusCard';
 import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { HumanReviewColorKey } from './HumanReviewColorKey';
+import { AdminReviewColorKey } from './AdminReviewColorKey';
 import { FiltersSection } from './FiltersSection';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 
-const HumanReviewQueue = () => {
+const AdminReviewQueue = () => {
   const [notes, setNotes] = useState<HumanReviewNote[]>([]);
   const [notesLoading, setNotesLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);
@@ -31,7 +31,7 @@ const HumanReviewQueue = () => {
 
   // Filter states with persistence
   const defaultFilters = { status: 'all', priority: 'all', reviewer: 'all', search: '' };
-  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('humanReviewQueueFilters', defaultFilters);
+  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('adminReviewQueueFilters', defaultFilters);
 
   const navigate = useNavigate();
 
@@ -227,7 +227,7 @@ const HumanReviewQueue = () => {
           <div>
             <div className="mb-4 flex items-center justify-between px-6">
               <div>
-                <h3 className="text-primary text-lg font-semibold">Pending Human Reviews</h3>
+                <h3 className="text-primary text-lg font-semibold">Pending Admin Reviews</h3>
                 <p className="text-muted-foreground text-sm">{notes.length} notes requiring review</p>
               </div>
               <Popover>
@@ -238,7 +238,7 @@ const HumanReviewQueue = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
-                  <HumanReviewColorKey />
+                  <AdminReviewColorKey />
                 </PopoverContent>
               </Popover>
             </div>
@@ -255,7 +255,7 @@ const HumanReviewQueue = () => {
               </div>
             ) : (
               <>
-                <HumanReviewTable notes={notes} onReviewNote={handleReviewNote} />
+                <AdminReviewTable notes={notes} onReviewNote={handleReviewNote} />
 
                 {/* Pagination */}
                 {notes.length > 0 && (
@@ -289,4 +289,4 @@ const HumanReviewQueue = () => {
   );
 };
 
-export default HumanReviewQueue;
+export default AdminReviewQueue;

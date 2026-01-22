@@ -22,7 +22,6 @@ const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [inviteToken, setInviteToken] = useState<string>('');
-  const [prefillLoading, setPrefillLoading] = useState(true);
 
   const formik = useFormik<SignupFormValues>({
     initialValues: {
@@ -54,7 +53,7 @@ const Signup = () => {
 
   // Extract token from URL, store it, then prefill user via /me
   useEffect(() => {
-    const run = async () => {
+    const fetchMeData = async () => {
       const token = new URLSearchParams(location.search).get('token') || '';
       setInviteToken(token);
 
@@ -66,11 +65,9 @@ const Signup = () => {
           formik.setFieldValue('email', me.email, false);
         }
       }
-
-      setPrefillLoading(false);
     };
 
-    run();
+    fetchMeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -87,15 +84,7 @@ const Signup = () => {
 
         <form onSubmit={formik.handleSubmit} className="mt-8 space-y-6">
           <div className="bg-card space-y-4 rounded-lg border p-8 shadow-sm">
-            <InputField
-              id="name"
-              type="text"
-              label="Full name"
-              placeholder="John Doe"
-              formik={formik}
-              readOnly={true}
-              disabled={prefillLoading}
-            />
+            <InputField id="name" type="text" label="Full name" placeholder="John Doe" formik={formik} readOnly={true} disabled />
 
             <InputField
               id="email"
@@ -104,7 +93,7 @@ const Signup = () => {
               placeholder="john@example.com"
               formik={formik}
               readOnly={true}
-              disabled={prefillLoading}
+              disabled
             />
 
             <div>

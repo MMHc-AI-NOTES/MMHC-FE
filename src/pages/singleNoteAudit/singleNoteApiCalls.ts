@@ -113,6 +113,10 @@ export interface SMEIssuePayload {
   issues_related_to_id: number;
   version_id: number | null;
   issue_description_id: number;
+  ai_status: number;
+  priority: number;
+  practitioner_id: number;
+  is_current_version: boolean;
 }
 
 /**

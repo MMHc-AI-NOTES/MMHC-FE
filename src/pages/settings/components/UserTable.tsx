@@ -10,19 +10,10 @@ interface UserTableProps {
   loggedInUserId: number | null;
   onRequestUpdate: (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => Promise<void>;
   onEditUser: (user: User) => void;
-  onResetPassword: (userId: string) => void;
   onResendInvite: (userId: string) => Promise<void>;
 }
 
-const UserTable: React.FC<UserTableProps> = ({
-  users,
-  loading,
-  loggedInUserId,
-  onRequestUpdate,
-  onEditUser,
-  onResetPassword,
-  onResendInvite,
-}) => {
+const UserTable: React.FC<UserTableProps> = ({ users, loading, loggedInUserId, onRequestUpdate, onEditUser, onResendInvite }) => {
   return (
     <div className="overflow-x-auto rounded-lg border-2 border-gray-200">
       <Table>
@@ -70,7 +61,6 @@ const UserTable: React.FC<UserTableProps> = ({
                 loggedInUserId={loggedInUserId}
                 onRequestUpdate={onRequestUpdate}
                 onEditUser={onEditUser}
-                onResetPassword={onResetPassword}
                 onResendInvite={onResendInvite}
               />
             ))

@@ -209,7 +209,6 @@ const UserManagementTab: React.FC = () => {
             loggedInUserId={loggedInUserId}
             onRequestUpdate={handleRequestUpdate}
             onEditUser={handleEditUser}
-            onResetPassword={userId => console.log('Reset password for user:', userId)}
             onResendInvite={async userId => {
               await resendOnboardingInvite(Number(userId));
             }}

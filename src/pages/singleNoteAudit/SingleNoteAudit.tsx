@@ -115,6 +115,7 @@ const SingleNoteAudit = () => {
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
+  const [practitionerId, setPractitionerId] = useState<number | null>(null);
 
   // Check if coming from admin-review-queue
   const isFromHumanReviewQueue = location.state?.from === 'admin-review-queue';
@@ -142,6 +143,7 @@ const SingleNoteAudit = () => {
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);
+        setPractitionerId(apiNoteDetail.practitionerId);
         // Store all chats for audit history
         setAuditHistory(apiNoteDetail.chats || []);
       } finally {
@@ -302,6 +304,9 @@ const SingleNoteAudit = () => {
               auditScore={noteDetail?.auditScore || 0}
               versionId={selectedVersionId}
               webhookVersions={noteDetail.webhookVersions || []}
+              aiStatusId={noteDetail.aiStatus?.id || 1}
+              priorityId={noteDetail.priority?.id || 1}
+              practitionerId={practitionerId || 0}
             />
             {/* Conditionally render Human Review or Action Buttons */}
             {showHumanReview && noteId ? (

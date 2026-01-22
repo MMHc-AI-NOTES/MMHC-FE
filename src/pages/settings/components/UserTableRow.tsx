@@ -14,18 +14,10 @@ interface UserTableRowProps {
   loggedInUserId: number | null;
   onRequestUpdate: (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => Promise<void>;
   onEditUser: (user: User) => void;
-  onResetPassword: (userId: string) => void;
   onResendInvite: (userId: string) => Promise<void>;
 }
 
-const UserTableRow: React.FC<UserTableRowProps> = ({
-  user,
-  loggedInUserId,
-  onRequestUpdate,
-  onEditUser,
-  onResetPassword,
-  onResendInvite,
-}) => {
+const UserTableRow: React.FC<UserTableRowProps> = ({ user, loggedInUserId, onRequestUpdate, onEditUser, onResendInvite }) => {
   const isSelf = useMemo(() => (loggedInUserId != null ? user.id === loggedInUserId : false), [loggedInUserId, user.id]);
   const isUpdating = useAppSelector(state => selectUsersUpdateLoading(state, user.id));
 
@@ -71,13 +63,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
           <Switch checked={user.isActive} disabled={isSelf || isUpdating} onCheckedChange={requestStatusChange} />
         </TableCell>
         <TableCell>
-          <UserActionsDropdown
-            user={user}
-            onEditUser={onEditUser}
-            onResetPassword={onResetPassword}
-            onResendInvite={onResendInvite}
-            disabled={isSelf || isUpdating}
-          />
+          <UserActionsDropdown user={user} onEditUser={onEditUser} onResendInvite={onResendInvite} disabled={isSelf || isUpdating} />
         </TableCell>
       </TableRow>
 

@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { logoutUser } from '@/pages/auth/authApiCalls';
 import { handleLogout } from '@/utils/helper';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
@@ -37,10 +37,6 @@ const UserDropdown = () => {
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setIsDialogOpen(true)} className="text-red-600">

@@ -11,6 +11,7 @@ export interface Review {
   reviewerId: string;
   reviewerName: string;
   issues: IssueForm[];
+  _versionId?: number | null; // Track which version this review belongs to
 }
 
 export interface ActiveIssueForm {

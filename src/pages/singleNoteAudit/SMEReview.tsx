@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Bug } from 'lucide-react';
@@ -12,16 +12,22 @@ import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm } from './components/types';
 import { deleteSMEReview } from './singleNoteApiCalls';
+import { UserRoleEnum } from '@/constants/common';
 
 interface SMEReviewProps {
   auditScore: number;
   versionId?: number | null;
   webhookVersions?: WebhookVersion[];
+  aiStatusId: number;
+  priorityId: number;
+  practitionerId: number;
 }
 
-const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewProps) => {
+const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, priorityId, practitionerId }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
-  const { practitioners } = useAppSelector(state => state.filterOptions);
+  const user = useAppSelector(state => state.auth.user);
+  const loggedInUserId = user?.id ?? null;
+  const isSuperAdmin = user?.type === UserRoleEnum.superAdmin;
 
   // Get current version
   const currentVersion = useMemo(() => {
@@ -47,25 +53,43 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
   const [isDeleteIssueDialogOpen, setIsDeleteIssueDialogOpen] = useState(false);
   const [isDeletingIssue, setIsDeletingIssue] = useState(false);
   const [issueToDelete, setIssueToDelete] = useState<{ reviewId: string; issueId: string } | null>(null);
+  const [deletedReviewIds, setDeletedReviewIds] = useState<Set<string>>(new Set());
+
+  // Filter reviews by current version when versionId changes
+  // Note: We preserve all new reviews in state, only filter version reviews
+  useEffect(() => {
+    if (versionId !== undefined) {
+      setReviews(prev => {
+        // Keep all new reviews (they'll be filtered when displaying)
+        // Only filter version reviews (they're managed by useVersionIssues)
+        const filtered = prev.filter(review => {
+          // Keep all new reviews - don't filter them out
+          if (review.id.startsWith('new-review-')) {
+            return true;
+          }
+          // Version reviews are managed by useVersionIssues, so keep them
+          if (review.id.startsWith('version-review-')) {
+            return true;
+          }
+          return true;
+        });
+
+        return filtered;
+      });
+    }
+  }, [versionId]);
 
   // Convert version issues to reviews
   useVersionIssues({
     currentVersion,
-    practitioners,
     reviews,
     setReviews,
+    deletedReviewIds,
+    versionId,
   });
 
   // Review management hooks
-  const {
-    addReview,
-    handleReviewerChange: handleReviewerChangeBase,
-    addIssue,
-    handleSaveIssue,
-    handleDeleteIssue,
-    handleEditIssue,
-    handleCancelEdit,
-  } = useReviews({
+  const { addReview, addIssue, handleSaveIssue, handleDeleteIssue, handleEditIssue, handleCancelEdit } = useReviews({
     noteId,
     versionId,
     reviews,
@@ -73,11 +97,31 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
     activeIssueForms,
     setActiveIssueForms,
     setSavingIssueId,
+    aiStatusId,
+    priorityId,
+    practitionerId,
+    webhookVersions,
   });
 
-  const handleReviewerChange = (reviewId: string, reviewerId: string) => {
-    handleReviewerChangeBase(reviewId, reviewerId, practitioners);
-  };
+  // Check if user already has a review in the current selected version
+  // Only check when versionId exists (for version-specific reviews)
+  const hasUserReviewInVersion = useMemo(() => {
+    if (!loggedInUserId || !versionId) return false;
+    // Filter reviews to only check those belonging to current version
+    const filteredReviews = reviews.filter(review => {
+      if (review.id.startsWith('version-review-')) {
+        return true;
+      }
+      if (review.id.startsWith('new-review-')) {
+        return review._versionId === versionId;
+      }
+      return true;
+    });
+    return filteredReviews.some(review => {
+      const reviewerIdNum = review.reviewerId ? Number(review.reviewerId) : null;
+      return reviewerIdNum === loggedInUserId;
+    });
+  }, [reviews, loggedInUserId, versionId]);
 
   // Delete handlers
   const handleDeleteReviewClick = (reviewId: string) => {
@@ -86,10 +130,17 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
   };
 
   const handleConfirmDeleteReview = async () => {
-    if (!reviewToDelete || !noteId) return;
+    if (!reviewToDelete || !noteId || !loggedInUserId) return;
 
     const review = reviews.find(r => r.id === reviewToDelete);
     if (!review || !review.reviewerId) {
+      setIsDeleteReviewDialogOpen(false);
+      setReviewToDelete(null);
+      return;
+    }
+
+    // Check ownership - only allow deleting if it's the user's own review
+    if (Number(review.reviewerId) !== loggedInUserId) {
       setIsDeleteReviewDialogOpen(false);
       setReviewToDelete(null);
       return;
@@ -101,6 +152,11 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
       const reviewerIdNum = review.reviewerId ? Number(review.reviewerId) : null;
       const response = await deleteSMEReview(noteId, versionId ?? null, reviewerIdNum);
       if (!response) return;
+
+      // Track deleted review ID with version to prevent it from reappearing
+      // Use a version-specific key to avoid affecting other versions
+      const deletedKey = versionId ? `version-review-${review.reviewerId}-v${versionId}` : reviewToDelete;
+      setDeletedReviewIds(prev => new Set([...prev, deletedKey]));
 
       // Remove from local state on success
       setReviews(prev => prev.filter(r => r.id !== reviewToDelete));
@@ -143,12 +199,14 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
             <Bug />
             SME Review
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={addReview} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
-              <Plus className="h-4 w-4" />
-              Add Review
-            </Button>
-          </div>
+          {!isSuperAdmin && !hasUserReviewInVersion && (
+            <div className="flex items-center gap-2">
+              <Button onClick={addReview} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
+                <Plus className="h-4 w-4" />
+                Add Review
+              </Button>
+            </div>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -160,28 +218,41 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [] }: SMEReviewPro
             </Badge>
           </div>
         )}
-        {reviews.length === 0 && (
-          <p className="py-4 text-center text-sm text-gray-500">No reviews added yet. Click "Add Review" to create one.</p>
-        )}
+        {(() => {
+          // Filter reviews to only show those belonging to current version
+          const filteredReviews = reviews.filter(review => {
+            // Always show version reviews (they're already filtered by useVersionIssues)
+            if (review.id.startsWith('version-review-')) {
+              return true;
+            }
+            // For new reviews, only show if they belong to current version
+            if (review.id.startsWith('new-review-')) {
+              return review._versionId === versionId;
+            }
+            return true;
+          });
 
-        {reviews.map(review => (
-          <ReviewCard
-            key={review.id}
-            review={review}
-            auditScore={auditScore}
-            practitioners={practitioners}
-            activeIssueForms={activeIssueForms}
-            savingIssueId={savingIssueId}
-            onReviewerChange={handleReviewerChange}
-            onAddIssue={addIssue}
-            onEditIssue={handleEditIssue}
-            onDeleteIssue={handleDeleteIssueClick}
-            onSaveIssue={handleSaveIssue}
-            onCancelEdit={handleCancelEdit}
-            onDeleteReview={handleDeleteReviewClick}
-            onRemoveReview={handleRemoveReview}
-          />
-        ))}
+          if (filteredReviews.length === 0) {
+            return <p className="py-4 text-center text-sm text-gray-500">No reviews added yet. Click "Add Review" to create one.</p>;
+          }
+
+          return filteredReviews.map(review => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              auditScore={auditScore}
+              activeIssueForms={activeIssueForms}
+              savingIssueId={savingIssueId}
+              onAddIssue={addIssue}
+              onEditIssue={handleEditIssue}
+              onDeleteIssue={handleDeleteIssueClick}
+              onSaveIssue={handleSaveIssue}
+              onCancelEdit={handleCancelEdit}
+              onDeleteReview={handleDeleteReviewClick}
+              onRemoveReview={handleRemoveReview}
+            />
+          ));
+        })()}
       </CardContent>
 
       {/* Delete Review Confirmation Dialog */}

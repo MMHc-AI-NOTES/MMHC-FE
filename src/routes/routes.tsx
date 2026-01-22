@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { Navigate, useRoutes } from 'react-router-dom';
 import AuthGuard from './AuthGuard';
 import PublicGuard from './PublicGuard';
+import RoleGuard from './RoleGuard';
 
 const MainLayout = lazy(() => import('@/components/layout/MainLayout'));
 const SimpleLayout = lazy(() => import('@/theme/simpleLayout/SimpleLayout'));
@@ -10,7 +11,7 @@ const Signup = lazy(() => import('@/pages/auth/Signup'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const NotesQueue = lazy(() => import('@/pages/notesQueue/NotesQueue'));
 const SingleNoteAudit = lazy(() => import('@/pages/singleNoteAudit/SingleNoteAudit'));
-const HumanReviewQueue = lazy(() => import('@/pages/humanReviewQueue/HumanReviewQueue'));
+const AdminReviewQueue = lazy(() => import('@/pages/adminReviewQueue/AdminReviewQueue'));
 const Settings = lazy(() => import('@/pages/settings/Settings'));
 const AILogs = lazy(() => import('@/pages/aiLogs/AILogs'));
 const ManagerReviewQueue = lazy(() => import('@/pages/managerReview/ManagerReviewQueue'));
@@ -29,17 +30,94 @@ const Routes = () => {
       ),
       children: [
         { index: true, element: <Navigate to="/dashboard" replace /> },
-        { path: 'dashboard', element: <Dashboard /> },
-        { path: 'notes-queue', element: <NotesQueue /> },
-        { path: 'notes-queue/single-note-audit/:id', element: <SingleNoteAudit /> },
-        { path: 'admin-review-queue', element: <HumanReviewQueue /> },
-        { path: 'admin-review-queue/single-note-audit/:id', element: <SingleNoteAudit /> },
-        { path: 'blacklisted-notes', element: <BlacklistedNotes /> },
-        { path: 'manager-review', element: <ManagerReviewQueue /> },
-        { path: 'manager-review/single-review/:id', element: <ManagerSingleReview /> },
-        { path: 'ai-logs', element: <AILogs /> },
-        { path: 'settings', element: <Settings /> },
-        { path: 'note-submission', element: <NoteSubmission /> },
+        {
+          path: 'dashboard',
+          element: (
+            <RoleGuard>
+              <Dashboard />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'notes-queue',
+          element: (
+            <RoleGuard>
+              <NotesQueue />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'notes-queue/single-note-audit/:id',
+          element: (
+            <RoleGuard>
+              <SingleNoteAudit />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'admin-review-queue',
+          element: (
+            <RoleGuard>
+              <AdminReviewQueue />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'admin-review-queue/single-note-audit/:id',
+          element: (
+            <RoleGuard>
+              <SingleNoteAudit />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'blacklisted-notes',
+          element: (
+            <RoleGuard>
+              <BlacklistedNotes />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'manager-review',
+          element: (
+            <RoleGuard>
+              <ManagerReviewQueue />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'manager-review/single-review/:id',
+          element: (
+            <RoleGuard>
+              <ManagerSingleReview />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'ai-logs',
+          element: (
+            <RoleGuard>
+              <AILogs />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'settings',
+          element: (
+            <RoleGuard>
+              <Settings />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'note-submission',
+          element: (
+            <RoleGuard>
+              <NoteSubmission />
+            </RoleGuard>
+          ),
+        },
       ],
     },
     {

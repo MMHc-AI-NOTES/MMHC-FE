@@ -556,3 +556,24 @@ export const resendOnboardingInvite = async (userId: number): Promise<boolean> =
     return false;
   }
 };
+
+export const updateUserPassword = async (payload: {
+  user_id: number;
+  password: string;
+  password_confirmation: string;
+}): Promise<boolean> => {
+  try {
+    const response = (await axios.patch('/users/update-password', payload)) as unknown as { status: boolean; message?: string };
+
+    if (response?.status) {
+      showToast.success(response?.message || 'Password updated successfully!');
+      return true;
+    }
+
+    handleErrorMessages(response);
+    return false;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
