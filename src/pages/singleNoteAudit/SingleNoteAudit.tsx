@@ -12,7 +12,7 @@ import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import SMEReview from './SMEReview';
 import ActionButtons from './ActionButtons';
-import HumanReviewSection from './HumanReviewSection';
+// import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
 import AuditHistoryCard from './AuditHistoryCard';
 
@@ -117,10 +117,7 @@ const SingleNoteAudit = () => {
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
 
-  // Check if coming from admin-review-queue
-  const isFromHumanReviewQueue = location.state?.from === 'admin-review-queue';
   const chatId = location.state?.chatId;
-  const [showHumanReview, setShowHumanReview] = useState(isFromHumanReviewQueue);
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -253,14 +250,10 @@ const SingleNoteAudit = () => {
     };
   }, []);
 
-  const handleSaveDraft = () => {
-    console.log('Saving draft...');
-    setShowHumanReview(false);
-  };
-
-  const handleFlagReview = () => {
-    setShowHumanReview(true);
-  };
+  // const handleSaveDraft = () => {
+  //   console.log('Saving draft...');
+  //   setShowHumanReview(false);
+  // };
 
   if (loading) {
     return (
@@ -268,7 +261,7 @@ const SingleNoteAudit = () => {
         <LoadingSkeleton />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
-          <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} isReRun={loading} />
+          <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />
         </div>
       </div>
     );
@@ -309,7 +302,7 @@ const SingleNoteAudit = () => {
               practitionerId={practitionerId || 0}
             />
             {/* Conditionally render Human Review or Action Buttons */}
-            {showHumanReview && noteId ? (
+            {/* {showHumanReview && noteId ? (
               <HumanReviewSection
                 noteId={noteId}
                 priority={noteDetail.priority?.id || 0}
@@ -320,8 +313,8 @@ const SingleNoteAudit = () => {
                 humanReview={isFromHumanReviewQueue ? noteDetail.humanReview : null}
                 isEditMode={isFromHumanReviewQueue}
               />
-            ) : null}
-            <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
+            ) : null} */}
+            <ActionButtons onReRunAudit={loadNoteDetail} />
             <AuditHistoryCard chats={auditHistory} />
             <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />

@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCcw, Send, Flag, Check, ChevronsUpDown } from 'lucide-react';
+import { RefreshCcw, Check, ChevronsUpDown } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { useState } from 'react';
@@ -10,12 +10,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 interface ActionButtonsProps {
-  onFlagReview: () => void;
+  // onFlagReview: () => void;
   onReRunAudit: (isRerun: boolean) => void;
   isReRun?: boolean;
 }
 
-const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionButtonsProps) => {
+const ActionButtons = ({ onReRunAudit, isReRun = false }: ActionButtonsProps) => {
   const dispatch = useDispatch();
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
   const [open, setOpen] = useState(false);
@@ -76,7 +76,7 @@ const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionBu
           <RefreshCcw className="mr-2" />
           Re-Run Audit
         </Button>
-        <Button
+        {/* <Button
           variant="outline"
           className="border-orange-dark text-orange-dark h-12 w-full border-2 bg-transparent"
           disabled={!selectedAgentId}
@@ -92,7 +92,7 @@ const ActionButtons = ({ onFlagReview, onReRunAudit, isReRun = false }: ActionBu
         >
           <Flag className="mr-2" />
           Flag for Manager Review
-        </Button>
+        </Button> */}
       </div>
     </Card>
   );

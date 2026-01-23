@@ -194,3 +194,33 @@ export const deleteSMEReview = async (noteId: string, versionId: number | null, 
     throw error;
   }
 };
+
+export interface AssignToManagerPayload {
+  note_id: string;
+  version_id: number;
+  practitioner_id: number;
+  ai_score: number;
+  reviewer_id: number;
+  human_decision?: number;
+  disagreement?: number;
+  priority: number;
+}
+
+/**
+ * Assign review to manager
+ */
+export const assignToManager = async (payload: AssignToManagerPayload): Promise<any> => {
+  try {
+    const response = await axios.post('/sme-issues/assign-to-manager', payload);
+
+    if (response?.status) {
+      showToast.success('Assigned to manager successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};

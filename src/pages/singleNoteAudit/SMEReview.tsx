@@ -27,7 +27,7 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, pr
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
-  const isSuperAdmin = user?.type === UserRoleEnum.superAdmin;
+  const isSMEReviewer = user?.type === UserRoleEnum.sme_reviewer;
 
   // Get current version
   const currentVersion = useMemo(() => {
@@ -199,7 +199,7 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, pr
             <Bug />
             SME Review
           </div>
-          {!isSuperAdmin && !hasUserReviewInVersion && (
+          {isSMEReviewer && !hasUserReviewInVersion && (
             <div className="flex items-center gap-2">
               <Button onClick={addReview} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
                 <Plus className="h-4 w-4" />
@@ -243,6 +243,10 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, pr
               auditScore={auditScore}
               activeIssueForms={activeIssueForms}
               savingIssueId={savingIssueId}
+              noteId={noteId}
+              versionId={versionId}
+              practitionerId={practitionerId}
+              priorityId={priorityId}
               onAddIssue={addIssue}
               onEditIssue={handleEditIssue}
               onDeleteIssue={handleDeleteIssueClick}
