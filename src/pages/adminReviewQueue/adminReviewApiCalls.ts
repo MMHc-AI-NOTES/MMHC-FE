@@ -1,4 +1,4 @@
-// @/pages/humanReviewQueue/humanReviewApiCalls.ts
+// @/pages/adminReviewQueue/adminReviewApiCalls.ts
 import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
 import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
@@ -43,7 +43,7 @@ const formatHumanReviewData = (data: any[]): HumanReviewNote[] => {
     score: item.note?.aiScore || 0,
     aiStatus: item.aiStatus?.id || 1,
     reviewStatus: item.note?.humanReview?.id || 1,
-    reviewer: item.practitioner?.fullName || undefined,
+    reviewer: item.reviewer?.fullName || undefined,
     priority: item.priority?.id || 1,
     rawData: item,
   }));

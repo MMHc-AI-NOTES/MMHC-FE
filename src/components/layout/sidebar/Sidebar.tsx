@@ -1,14 +1,17 @@
 import { Sidebar, SidebarContent } from '@/components/ui/sidebar';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { NavItem, navItems } from './navItems';
+import { NavItem, getFilteredNavItems } from './navItems';
 import { handleLogout } from '@/utils/helper';
 import SidebarHeaderSection from './SidebarHeaderSection';
 import SidebarMenuSection from './SidebarMenuSection';
+import { useAppSelector } from '@/store/store';
 // import SidebarFooterSection from './SidebarFooterSection';
 
 const AppSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const userRole = useAppSelector(state => state.auth.user?.type);
+  const filteredNavItems = getFilteredNavItems(userRole);
 
   const handleItemClick = (item: NavItem) => {
     if (item.actionType === 'logout') {
@@ -33,7 +36,13 @@ const AppSidebar = () => {
       <SidebarHeaderSection />
 
       <SidebarContent>
-        <SidebarMenuSection items={navItems} label="" isActive={isActive} hasActiveChild={hasActiveChild} onItemClick={handleItemClick} />
+        <SidebarMenuSection
+          items={filteredNavItems}
+          label=""
+          isActive={isActive}
+          hasActiveChild={hasActiveChild}
+          onItemClick={handleItemClick}
+        />
         {/* <SidebarFooterSection items={bottomNavItems} isActive={isActive} onItemClick={handleItemClick} /> */}
       </SidebarContent>
     </Sidebar>

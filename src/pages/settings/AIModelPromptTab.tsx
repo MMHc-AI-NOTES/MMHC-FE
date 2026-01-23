@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { deleteAgentFromStore, setAgents, setLoading, updateAgentInStore } from '@/store/slices/agentsSlice';
+import { Separator } from '@/components/ui/separator';
 
 const AIModelPromptTab: React.FC = () => {
   const dispatch = useDispatch();
@@ -97,16 +98,14 @@ const AIModelPromptTab: React.FC = () => {
     <div>
       <Card className="p-2">
         <CardContent className="p-6">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <h3 className="text-primary text-lg font-semibold">Manage Agents</h3>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="bg-gradient-light text-primary w-32 rounded-full border-0 font-semibold shadow-sm"
-            >
+            <Button onClick={() => setIsDialogOpen(true)} className="bg-gradient-light text-primary w-32 border-0 font-semibold shadow-sm">
               <Plus />
               Add Agent
             </Button>
           </div>
+          <Separator className="my-4" />
           {loading ? (
             <div className="space-y-4">
               <Skeleton className="h-12 w-full" />

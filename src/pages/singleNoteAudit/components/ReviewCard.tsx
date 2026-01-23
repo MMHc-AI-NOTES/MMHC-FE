@@ -1,7 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
@@ -13,10 +11,8 @@ import ScoreComparison from './ScoreComparison';
 interface ReviewCardProps {
   review: Review;
   auditScore: number;
-  practitioners: Array<{ id: number; fullName: string }>;
   activeIssueForms: ActiveIssueForm[];
   savingIssueId: string | null;
-  onReviewerChange: (reviewId: string, reviewerId: string) => void;
   onAddIssue: (reviewId: string) => void;
   onEditIssue: (reviewId: string, issue: IssueForm) => void;
   onDeleteIssue: (reviewId: string, issueId: string) => void;
@@ -29,10 +25,8 @@ interface ReviewCardProps {
 const ReviewCard = ({
   review,
   auditScore,
-  practitioners,
   activeIssueForms,
   savingIssueId,
-  onReviewerChange,
   onAddIssue,
   onEditIssue,
   onDeleteIssue,
@@ -42,13 +36,35 @@ const ReviewCard = ({
   onRemoveReview,
 }: ReviewCardProps) => {
   const { errorTypes, issueRelatedTo } = useAppSelector(state => state.smeConfig);
+  const user = useAppSelector(state => state.auth.user);
+  const loggedInUserId = user?.id ?? null;
+  // Helper to check if review is from backend (saved) or new (unsaved)
+  const isSavedReview = review.id.startsWith('version-review-');
+  const isNewReview = review.id.startsWith('new-review-');
 
+  // Check if review has any saved issues (issues with _smeIssueId means they're saved to backend)
+  const hasSavedIssues = review.issues.some(issue => issue._smeIssueId);
+
+  // A review is considered "saved" if:
+  // 1. It's from backend (version-review-), OR
+  // 2. It's a new review but has at least one saved issue
+  const isReviewSaved = isSavedReview || (isNewReview && hasSavedIssues);
+
+  // Check if the logged-in user owns this review
+  const reviewerIdNum = review.reviewerId ? Number(review.reviewerId) : null;
+  const isOwnReview = loggedInUserId !== null && (reviewerIdNum === loggedInUserId || (isNewReview && reviewerIdNum === null));
+
+  // Separate saved issues from editing issues
   const savedIssues = review.issues.filter(
     issue => !activeIssueForms.some(form => form.reviewId === review.id && form.issueId === issue.id),
   );
   const editingIssues = review.issues.filter(issue =>
     activeIssueForms.some(form => form.reviewId === review.id && form.issueId === issue.id),
   );
+
+  // For score calculation, include all issues (use original values for editing issues)
+  // This ensures the score doesn't change until after saving
+  const issuesForScore = review.issues;
 
   // Convert Redux data to format expected by components
   const errorTypeOptions = errorTypes.map(type => ({
@@ -61,64 +77,61 @@ const ReviewCard = ({
     name: opt.displayName,
   }));
 
-  // Check if review is from backend (version review) or new
-  const isVersionReview = review.id.startsWith('version-review-');
-  const handleRemoveOrDelete = () => {
-    if (isVersionReview) {
+  const handleRemoveOrDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isOwnReview) return;
+
+    // If it's a saved review (from backend or has saved issues), delete it via API
+    if (isReviewSaved) {
       onDeleteReview(review.id);
-    } else if (onRemoveReview) {
+    }
+    // If it's a new review with no saved issues, just remove it from local state
+    else if (isNewReview && onRemoveReview) {
       onRemoveReview(review.id);
     }
   };
 
   return (
-    <Card className="gap-0 pt-1 pb-4">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleRemoveOrDelete}
-        className={`mr-2 self-end ${isVersionReview ? 'text-red-600' : 'text-gray-600'}`}
-        title={isVersionReview ? 'Delete review' : 'Remove review'}
-      >
-        {isVersionReview ? <Trash2 /> : <X />}
-      </Button>
-
-      <CardContent className="space-y-3">
-        {/* Reviewer Selection */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            Select a reviewer <span className="text-red-500">*</span>
-          </Label>
-          <Select value={review.reviewerId} onValueChange={value => onReviewerChange(review.id, value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a reviewer" />
-            </SelectTrigger>
-            <SelectContent>
-              {practitioners.map(p => (
-                <SelectItem key={p.id} value={p.id.toString()}>
-                  {p.fullName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <Card className="relative gap-0 pt-1 pb-4">
+      {isOwnReview && (
+        <div className="flex items-center justify-end gap-2">
+          <Button onClick={() => onAddIssue(review.id)} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
+            <Plus className="h-4 w-4" />
+            Add Issue
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemoveOrDelete}
+            className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
+            title={isReviewSaved ? 'Delete review' : 'Remove review'}
+            type="button"
+          >
+            {isReviewSaved ? <Trash2 /> : <X />}
+          </Button>
         </div>
+      )}
+      <CardContent className="space-y-3">
+        {/* Reviewer Info */}
+        {review.reviewerName && (
+          <div className="my-2 text-sm text-gray-600">
+            <span className="font-medium">Reviewer:</span>
+            <span className="text-primary ml-1 font-semibold">{review.reviewerName}</span>
+          </div>
+        )}
 
-        {/* Add Issue Button */}
-        {review.reviewerId && (
-          <div className="flex items-center justify-end">
-            <Button onClick={() => onAddIssue(review.id)} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
-              <Plus className="h-4 w-4" />
-              Add Issue
-            </Button>
+        {/* Score Display - Show if there are any issues (saved or being edited) */}
+        {issuesForScore.length > 0 && (
+          <div className="mt-2 rounded-lg bg-gray-100 px-4 py-2">
+            <ScoreComparison issues={issuesForScore} auditScore={auditScore} />
           </div>
         )}
 
         {/* Saved Issues List */}
         {savedIssues.length > 0 && (
           <div className="space-y-1">
-            <div className="rounded-lg bg-gray-100 px-4 py-2">
-              <ScoreComparison issues={savedIssues} auditScore={auditScore} />
-            </div>
             <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
             {savedIssues.map((savedIssue, index) => {
               const errorTypeLabel = errorTypeOptions.find(type => type.value === savedIssue.errorType)?.label || '';
@@ -141,20 +154,22 @@ const ReviewCard = ({
                           {errorTypeLabel}
                         </Badge>
                       </div>
-                      <div className="flex items-center">
-                        <Button variant="ghost" size="icon" onClick={() => onEditIssue(review.id, savedIssue)} title="Edit issue">
-                          <Pencil className="text-gray-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDeleteIssue(review.id, savedIssue.id)}
-                          className="text-red-600"
-                          title="Delete issue"
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                      {isOwnReview && (
+                        <div className="flex items-center">
+                          <Button variant="ghost" size="icon" onClick={() => onEditIssue(review.id, savedIssue)} title="Edit issue">
+                            <Pencil className="text-gray-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDeleteIssue(review.id, savedIssue.id)}
+                            className="text-red-600"
+                            title="Delete issue"
+                          >
+                            <Trash2 />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="mt-1 text-sm font-bold text-red-600">
@@ -208,7 +223,7 @@ const ReviewCard = ({
           </div>
         )}
 
-        {savedIssues.length === 0 && editingIssues.length === 0 && review.reviewerId && (
+        {savedIssues.length === 0 && editingIssues.length === 0 && (
           <p className="py-4 text-center text-sm text-gray-500">No issues added yet. Click "Add Issue" to create one.</p>
         )}
       </CardContent>

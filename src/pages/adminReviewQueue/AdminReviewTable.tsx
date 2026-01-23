@@ -1,12 +1,12 @@
-// @/pages/humanReviewQueue/HumanReviewTable.tsx
+// @/pages/adminReviewQueue/AdminReviewTable.tsx
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { HumanReviewNote } from '@/types/notes';
-import { AiStatusLabels, ReviewStatusLabels, PriorityLabels, AiStatusEnum, ReviewStatusEnum, PriorityEnum } from '@/constants/common';
+import { AiStatusLabels, PriorityLabels, AiStatusEnum, ReviewStatusEnum, PriorityEnum } from '@/constants/common';
 import { GradientBadge } from '@/shared/GradientBadge';
 
-interface HumanReviewTableProps {
+interface AdminReviewTableProps {
   notes: HumanReviewNote[];
   onReviewNote: (noteId: string) => void;
 }
@@ -55,7 +55,7 @@ const getPriorityGradient = (priority: number): string => {
   }
 };
 
-export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps) => {
+export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps) => {
   const columnCount = 9;
 
   if (notes.length === 0) {
@@ -117,7 +117,7 @@ export const HumanReviewTable = ({ notes, onReviewNote }: HumanReviewTableProps)
                   <GradientBadge label={AiStatusLabels[note.aiStatus]} gradient={getAiStatusGradient(note.aiStatus)} />
                 </TableCell>
                 <TableCell>
-                  <GradientBadge label={ReviewStatusLabels[note.reviewStatus]} gradient={getReviewStatusGradient(note.reviewStatus)} />
+                  <GradientBadge label={'Pending'} gradient={getReviewStatusGradient(note.reviewStatus)} />
                 </TableCell>
                 <TableCell>{note.reviewer || 'Unassigned'}</TableCell>
                 <TableCell>

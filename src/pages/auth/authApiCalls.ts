@@ -1,8 +1,11 @@
 import axios, { AxiosError } from 'axios';
-import { handleCatchMessages, handleErrorMessages, setLocalStorageItem } from '@/utils/helper';
+import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { setLocalStorageItem } from '@/utils/storage';
 import { showToast } from '../../lib/toast';
 import { setHideBeatLoader, setShowBeatLoader } from '@/store/slices/alertsSlice';
 import { dispatch } from '@/store/store';
+import { setAuthUser } from '@/store/slices/authSlice';
+import type { User } from '@/types/settings';
 
 export const API_ENDPOINTS = {
   LOGOUT: '/auth/logout',
@@ -12,6 +15,36 @@ interface ApiResponse {
   status: boolean;
   message?: string;
   errors?: Record<string, string[]>;
+}
+
+interface LoginResponseBody {
+  status: boolean;
+  message?: string;
+  data?: {
+    token?: {
+      token?: string;
+    };
+    user?: User;
+  };
+}
+
+interface MeResponseBody {
+  status: boolean;
+  message?: string;
+  data?: User;
+}
+
+interface OnboardingPayload {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  token: string;
+}
+
+interface OnboardingResponseBody {
+  status: boolean;
+  message?: string;
+  data?: any;
 }
 
 const delay = (ms: number) =>
@@ -40,15 +73,62 @@ export const handleSignIn = async (email: string, password: string): Promise<boo
   dispatch(setShowBeatLoader());
 
   try {
-    const response = await axios.post('/login', { email, password });
+    const response = (await axios.post('/login', { email, password })) as unknown as LoginResponseBody;
 
-    if (response.status && response.data?.token?.token) {
-      setLocalStorageItem('authentication_token', response.data.token.token);
+    // Axios interceptor returns response body (not AxiosResponse)
+    const token = response?.data?.token?.token;
+    const user = response?.data?.user;
+
+    if (response?.status && token && user) {
+      setLocalStorageItem('authentication_token', token);
+      dispatch(setAuthUser(user));
       return true;
     } else {
       handleErrorMessages(response);
       return false;
     }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  } finally {
+    dispatch(setHideBeatLoader());
+  }
+};
+
+export const fetchMe = async (): Promise<User | null> => {
+  dispatch(setShowBeatLoader());
+  try {
+    const response = (await axios.get('/me')) as unknown as MeResponseBody;
+
+    if (response?.status && response.data) {
+      dispatch(setAuthUser(response.data));
+      return response.data;
+    }
+    handleErrorMessages(response);
+    return null;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  } finally {
+    dispatch(setHideBeatLoader());
+  }
+};
+
+export const onboardInvitedUser = async (payload: OnboardingPayload): Promise<boolean> => {
+  dispatch(setShowBeatLoader());
+  try {
+    const response = (await axios.post('/users/onboarding', payload)) as unknown as OnboardingResponseBody;
+    const token = response?.data?.token?.token;
+    if (response?.status) {
+      showToast.success(response?.message || 'Account created successfully!');
+      setLocalStorageItem('authentication_token', token);
+
+      // Refresh auth user from backend
+      await fetchMe();
+      return true;
+    }
+    handleErrorMessages(response);
+    return false;
   } catch (error: any) {
     handleCatchMessages(error);
     return false;

@@ -247,10 +247,10 @@ const TherapySessionSummaryCard = ({ webhookVersions, onVersionChange }: Therapy
             -<p className="text-gray-600">{formatDate(currentVersion.createdAt)}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={handleNext} disabled={isLastVersion}>
+            <Button variant="outline" size="icon" onClick={handlePrevious} disabled={isFirstVersion}>
               <ChevronLeft />
             </Button>
-            <Button variant="outline" size="icon" onClick={handlePrevious} disabled={isFirstVersion}>
+            <Button variant="outline" size="icon" onClick={handleNext} disabled={isLastVersion}>
               <ChevronRight />
             </Button>
           </div>

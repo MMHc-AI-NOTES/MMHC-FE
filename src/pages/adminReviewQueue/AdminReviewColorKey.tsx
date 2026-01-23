@@ -1,8 +1,8 @@
-// @/pages/humanReviewQueue/HumanReviewColorKey.tsx
+// @/pages/adminReviewQueue/AdminReviewColorKey.tsx
 
 import { ColorKeyItem } from '@/shared/ColorKeyItem';
 
-export const HumanReviewColorKey = () => {
+export const AdminReviewColorKey = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="space-y-4">

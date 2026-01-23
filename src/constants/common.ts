@@ -296,16 +296,18 @@ export const ResolutionActionLabels: Record<number, string> = {
 
 // User Role Enum
 export const UserRoleEnum = {
-  super_admin: 1,
-  practitioner: 2,
-  manager: 3,
+  superAdmin: 1,
+  user: 2,
+  practitioner: 3,
+  sme_reviewer: 4,
 } as const;
 
 // User Role Labels (for consistency, though values are the same as enum)
 export const UserRoleLabels: Record<string, string> = {
-  [UserRoleEnum.super_admin]: 'Super Admin',
+  [UserRoleEnum.superAdmin]: 'Super Admin',
+  [UserRoleEnum.user]: 'User',
   [UserRoleEnum.practitioner]: 'Practitioner',
-  [UserRoleEnum.manager]: 'Manager',
+  [UserRoleEnum.sme_reviewer]: 'SME Reviewer',
 };
 
 // Note Submission Enums

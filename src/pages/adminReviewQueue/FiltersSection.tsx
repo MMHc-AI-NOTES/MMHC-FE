@@ -2,13 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { PriorityEnum, PriorityLabels, AiStatusEnum, AiStatusLabels } from '@/constants/common';
+import { PriorityEnum, PriorityLabels, AiStatusEnum, AiStatusLabels, UserRoleEnum } from '@/constants/common';
 import { getEnumValues } from '@/utils/helper';
-import { useAppSelector } from '@/store/store';
-import { fetchPractitioners } from '../notesQueue/notesApiCalls';
-import { useEffect } from 'react';
-import { setPractitioners } from '@/store/slices/filterOptionsSlice';
-import { useDispatch } from 'react-redux';
+import { useAppSelector, useAppDispatch } from '@/store/store';
+import { useEffect, useMemo } from 'react';
+import { fetchUsersListingThunk, type UsersQuery } from '@/store/slices/usersSlice';
 
 interface FiltersSectionProps {
   filters: {
@@ -24,20 +22,31 @@ interface FiltersSectionProps {
 }
 
 export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
-  const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const userEntities = useAppSelector(state => state.users.entities);
+
+  // Get all users from entities
+  const users = useMemo(() => {
+    return Object.values(userEntities).filter(Boolean);
+  }, [userEntities]);
+
+  // Filter users to only include practitioner and sme_reviewer (exclude superAdmin and user)
+  const reviewers = useMemo(() => {
+    return users.filter(user => user.type === UserRoleEnum.practitioner || user.type === UserRoleEnum.sme_reviewer);
+  }, [users]);
+
+  // Fetch users listing when users array is empty (e.g., on mount or after reload)
   useEffect(() => {
-    const loadPractitioners = async () => {
-      if (practitionersLoaded) return; // Skip if already loaded
-      try {
-        const practitionersData = await fetchPractitioners();
-        dispatch(setPractitioners(practitionersData));
-      } catch (error) {
-        console.error('Error loading practitioners:', error);
-      }
-    };
-    loadPractitioners();
-  }, [practitionersLoaded, dispatch]);
+    if (users.length === 0) {
+      const query: UsersQuery = {
+        page: 1,
+        pageSize: 100,
+        search: '',
+        role: 'all',
+      };
+      dispatch(fetchUsersListingThunk(query));
+    }
+  }, [users.length, dispatch]);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
@@ -86,7 +95,7 @@ export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilter
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {practitioners.map(r => (
+              {reviewers.map(r => (
                 <SelectItem key={r.id} value={r.id.toString()}>
                   {r.fullName}
                 </SelectItem>

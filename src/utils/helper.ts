@@ -11,7 +11,7 @@ export interface ErrorMessage {
 
 export const handleLogout = (): void => {
   localStorage.clear();
-  window.location.reload();
+  window.location.href = '/login';
 };
 
 export const getLocalStorageItem = <T>(key: string, defaultValue: T | null = null): T | string | null => {
@@ -31,6 +31,31 @@ export const setLocalStorageItem = (key: string, value: unknown): void => {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error(`Error writing localStorage key "${key}":`, error);
+  }
+};
+
+const base64UrlDecode = (input: string): string => {
+  const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+  return atob(padded);
+};
+
+export const getLoggedInUserId = (): number | null => {
+  try {
+    const token = getLocalStorageItem<string>('authentication_token', null) as string | null;
+    if (!token || typeof token !== 'string') return null;
+
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+
+    const payloadRaw = base64UrlDecode(parts[1]);
+    const payload = JSON.parse(payloadRaw) as any;
+
+    const candidate = payload?.id ?? payload?.userId ?? payload?.user_id ?? payload?.sub;
+    const asNumber = typeof candidate === 'number' ? candidate : Number(candidate);
+    return Number.isFinite(asNumber) ? asNumber : null;
+  } catch {
+    return null;
   }
 };
 
