@@ -14,7 +14,7 @@ const reviewEvents = [
   },
   {
     id: 'human-review',
-    type: 'Human Review',
+    type: 'Admin Review',
     dotColor: 'bg-blue-dark',
     badgeClass: 'bg-blue-100 text-blue-dark border-blue-dark',
     title: 'Escalated to Manager',

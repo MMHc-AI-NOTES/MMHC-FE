@@ -65,7 +65,7 @@ export const AiStatusEnum = {
   needs_review: 5,
 } as const;
 
-// Human Review Enum
+// Admin Review Enum
 export const HumanReviewEnum = {
   not_needed: 1,
   completed: 2,
@@ -110,7 +110,7 @@ export const ReviewCycleEnum = {
   blacklisted: 4,
 } as const;
 
-// Review Status Enum (for Human Review Queue)
+// Review Status Enum (for Admin Review Queue)
 export const ReviewStatusEnum = {
   pending: 1,
   in_progress: 2,

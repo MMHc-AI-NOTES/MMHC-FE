@@ -256,7 +256,7 @@ export interface CptCodeOption {
   code: string;
 }
 
-// Human Review Queue Types
+// Admin Review Queue Types
 export interface HumanReviewNote {
   id: string;
   chatId: number;

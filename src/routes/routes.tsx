@@ -87,6 +87,14 @@ const Routes = () => {
           ),
         },
         {
+          path: 'manager-review/single-note-audit/:id',
+          element: (
+            <RoleGuard>
+              <SingleNoteAudit />
+            </RoleGuard>
+          ),
+        },
+        {
           path: 'manager-review/single-review/:id',
           element: (
             <RoleGuard>
