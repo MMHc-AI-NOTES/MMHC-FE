@@ -224,3 +224,30 @@ export const assignToManager = async (payload: AssignToManagerPayload): Promise<
     throw error;
   }
 };
+
+export interface NotifyPractitionerPayload {
+  practitioner_id: number;
+  note_id: string;
+  reviewer_id: number;
+  version_id: number;
+}
+
+/**
+ * Notify practitioner about review
+ */
+export const notifyPractitioner = async (payload: NotifyPractitionerPayload): Promise<any> => {
+  try {
+    const response = await axios.post('/manager-reviews/notify-practitioner', payload);
+
+    if (response?.status) {
+      showToast.success('Practitioner notified successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};

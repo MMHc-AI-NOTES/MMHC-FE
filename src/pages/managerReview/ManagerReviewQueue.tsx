@@ -6,10 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ManagerTable } from './ManagerTable';
 import { ManagerColorKey } from './ManagerColorKey';
-import { ManagerOverviewCard } from './ManagerOverviewCard';
-import { ManagerDecisionBreakdownCard } from './ManagerDecisionBreakdownCard';
-import { ManagerNote, ManagerOverview } from './managerReviewTypes';
-import { fetchManagerNotes, fetchManagerOverview } from './managerReviewApiCalls';
+// import { ManagerOverviewCard } from './ManagerOverviewCard';
+// import { ManagerDecisionBreakdownCard } from './ManagerDecisionBreakdownCard';
+import {
+  ManagerNote, // ManagerOverview
+} from './managerReviewTypes';
+import {
+  fetchManagerNotes, // fetchManagerOverview
+} from './managerReviewApiCalls';
 import { ManagerFiltersSection } from './ManagerFiltersSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTablePagination } from '@/shared/DataTablePagination';
@@ -19,6 +23,8 @@ const defaultFilters = {
   humanDecision: 'all',
   disagreement: 'all',
   priority: 'all',
+  practitioner: 'all',
+  reviewer: 'all',
   search: '',
 };
 
@@ -26,8 +32,8 @@ export const ManagerReviewQueue = () => {
   const navigate = useNavigate();
   const [notes, setNotes] = useState<ManagerNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<ManagerOverview | null>(null);
-  const [overviewLoading, setOverviewLoading] = useState(true);
+  // const [overview, setOverview] = useState<ManagerOverview | null>(null);
+  // const [overviewLoading, setOverviewLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Pagination (dummy for now - client-side only, same shape as NotesQueue)
@@ -55,6 +61,16 @@ export const ManagerReviewQueue = () => {
       filterArray.push({ columnName: 'priority', type: 'exact', value: filters.priority });
     }
 
+    // Practitioner ID filter
+    if (filters.practitioner && filters.practitioner !== 'all') {
+      filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.practitioner) });
+    }
+
+    // Reviewer ID filter
+    if (filters.reviewer && filters.reviewer !== 'all') {
+      filterArray.push({ columnName: 'reviewer_id', type: 'exact', value: parseInt(filters.reviewer) });
+    }
+
     // Search filter
     if (filters.search) {
       filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
@@ -67,12 +83,17 @@ export const ManagerReviewQueue = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        setOverviewLoading(true);
+        // setOverviewLoading(true);
         setCurrentPage(1);
 
         // Check if filters are active (not all defaults)
         const hasActiveFilters =
-          filters.humanDecision !== 'all' || filters.disagreement !== 'all' || filters.priority !== 'all' || filters.search !== '';
+          filters.humanDecision !== 'all' ||
+          filters.disagreement !== 'all' ||
+          filters.priority !== 'all' ||
+          filters.practitioner !== 'all' ||
+          filters.reviewer !== 'all' ||
+          filters.search !== '';
 
         let payload;
         if (hasActiveFilters) {
@@ -88,6 +109,12 @@ export const ManagerReviewQueue = () => {
           if (filters.priority && filters.priority !== 'all') {
             filterArray.push({ columnName: 'priority', type: 'exact', value: parseInt(filters.priority) });
           }
+          if (filters.practitioner && filters.practitioner !== 'all') {
+            filterArray.push({ columnName: 'practitioner_id', type: 'exact', value: parseInt(filters.practitioner) });
+          }
+          if (filters.reviewer && filters.reviewer !== 'all') {
+            filterArray.push({ columnName: 'reviewer_id', type: 'exact', value: parseInt(filters.reviewer) });
+          }
           if (filters.search) {
             filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
           }
@@ -97,17 +124,17 @@ export const ManagerReviewQueue = () => {
           payload = { page: 1, pageSize: itemsPerPage, filters: [] };
         }
 
-        const [notesResponse, overviewData] = await Promise.all([fetchManagerNotes(payload), fetchManagerOverview()]);
+        const [notesResponse] = await Promise.all([fetchManagerNotes(payload)]);
 
         setNotes(notesResponse.data);
         setTotalItems(notesResponse.totalCount);
 
-        setOverview(overviewData);
+        // setOverview(overviewData);
       } catch (error) {
         console.error('Error loading manager review data:', error);
       } finally {
         setLoading(false);
-        setOverviewLoading(false);
+        // setOverviewLoading(false);
       }
     };
 
@@ -115,8 +142,16 @@ export const ManagerReviewQueue = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
-  const handleReview = (_id: string) => {
-    navigate(`/manager-review/single-review/${_id}`);
+  const handleReview = (note: ManagerNote) => {
+    // Extract reviewer_id from smeIssues (get first reviewer_id if available)
+    const reviewerId = note.rawData?.smeIssues?.[0]?.reviewerId || note.rawData?.smeIssues?.[0]?.reviewer?.id || null;
+
+    navigate(`/manager-review/single-note-audit/${note.noteId}`, {
+      state: {
+        reviewerId,
+        isManagerReviewing: true,
+      },
+    });
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -173,7 +208,7 @@ export const ManagerReviewQueue = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="space-y-4 lg:col-span-9">
+        <div className="space-y-4 lg:col-span-12">
           <Card className="p-6">
             <ManagerFiltersSection
               filters={filters}
@@ -252,10 +287,10 @@ export const ManagerReviewQueue = () => {
           </Card>
         </div>
 
-        <div className="space-y-4 lg:col-span-3">
+        {/* <div className="space-y-4 lg:col-span-3">
           <ManagerOverviewCard data={overview} loading={overviewLoading} />
           <ManagerDecisionBreakdownCard data={overview} loading={overviewLoading} />
-        </div>
+        </div> */}
       </div>
     </div>
   );

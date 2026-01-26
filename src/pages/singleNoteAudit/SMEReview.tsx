@@ -21,9 +21,20 @@ interface SMEReviewProps {
   aiStatusId: number;
   priorityId: number;
   practitionerId: number;
+  reviewerId?: number | null;
+  isManagerReviewing?: boolean;
 }
 
-const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, priorityId, practitionerId }: SMEReviewProps) => {
+const SMEReview = ({
+  auditScore,
+  versionId,
+  webhookVersions = [],
+  aiStatusId,
+  priorityId,
+  practitionerId,
+  reviewerId,
+  isManagerReviewing = false,
+}: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
@@ -220,7 +231,7 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, pr
         )}
         {(() => {
           // Filter reviews to only show those belonging to current version
-          const filteredReviews = reviews.filter(review => {
+          let filteredReviews = reviews.filter(review => {
             // Always show version reviews (they're already filtered by useVersionIssues)
             if (review.id.startsWith('version-review-')) {
               return true;
@@ -231,6 +242,14 @@ const SMEReview = ({ auditScore, versionId, webhookVersions = [], aiStatusId, pr
             }
             return true;
           });
+
+          // If manager is reviewing, filter by reviewer_id
+          if (isManagerReviewing && reviewerId !== null && reviewerId !== undefined) {
+            filteredReviews = filteredReviews.filter(review => {
+              const reviewReviewerId = review.reviewerId ? Number(review.reviewerId) : null;
+              return reviewReviewerId === reviewerId;
+            });
+          }
 
           if (filteredReviews.length === 0) {
             return <p className="py-4 text-center text-sm text-gray-500">No reviews added yet. Click "Add Review" to create one.</p>;

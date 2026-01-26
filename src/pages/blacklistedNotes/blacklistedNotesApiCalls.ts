@@ -56,7 +56,7 @@ const DUMMY_NOTES: BlacklistedNote[] = [
       id: 1,
       name: 'Dr. Sarah Chen',
     },
-    originalReviewPath: 'AI Review -> Human Review -> Manager Review -> Blacklisted',
+    originalReviewPath: 'AI Review -> Admin Review -> Manager Review -> Blacklisted',
     currentStatus: 'Blacklisted',
     reasonDetails: {
       title: 'Repeated Critical Issues',
@@ -122,7 +122,7 @@ const DUMMY_NOTES: BlacklistedNote[] = [
       },
       {
         id: '3',
-        type: 'Human Review',
+        type: 'Admin Review',
         date: '2025-02-10T14:05:00',
         user: 'Mark Rodriguez',
         result: 'Rejected - Critical Issues',
@@ -370,7 +370,7 @@ const DUMMY_NOTES: BlacklistedNote[] = [
       id: 3,
       name: 'Mark Rodriguez',
     },
-    originalReviewPath: 'AI Review -> Human Review -> Blacklisted',
+    originalReviewPath: 'AI Review -> Admin Review -> Blacklisted',
     currentStatus: 'Blacklisted',
     reasonDetails: {
       title: 'Missing Required Fields',
@@ -424,7 +424,7 @@ const DUMMY_NOTES: BlacklistedNote[] = [
       },
       {
         id: '3',
-        type: 'Human Review',
+        type: 'Admin Review',
         date: '2025-02-07T14:30:00',
         user: 'Mark Rodriguez',
         result: 'Rejected - Missing Fields',

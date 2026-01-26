@@ -118,6 +118,8 @@ const SingleNoteAudit = () => {
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
 
   const chatId = location.state?.chatId;
+  const reviewerId = location.state?.reviewerId || null;
+  const isManagerReviewing = location.state?.isManagerReviewing || false;
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -300,8 +302,10 @@ const SingleNoteAudit = () => {
               aiStatusId={noteDetail.aiStatus?.id || 1}
               priorityId={noteDetail.priority?.id || 1}
               practitionerId={practitionerId || 0}
+              reviewerId={reviewerId}
+              isManagerReviewing={isManagerReviewing}
             />
-            {/* Conditionally render Human Review or Action Buttons */}
+            {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
               <HumanReviewSection
                 noteId={noteId}
@@ -314,7 +318,14 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            <ActionButtons onReRunAudit={loadNoteDetail} />
+            <ActionButtons
+              onReRunAudit={loadNoteDetail}
+              isManagerReviewing={isManagerReviewing}
+              reviewerId={reviewerId}
+              practitionerId={practitionerId}
+              noteId={noteId}
+              versionId={selectedVersionId}
+            />
             <AuditHistoryCard chats={auditHistory} />
             <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />

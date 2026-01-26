@@ -94,7 +94,7 @@ export const ManagerNoteInformation = ({ noteDetail, statusTags, humanReviewStat
           <div className="text-primary flex gap-1 text-sm">
             <ShieldCheck className="text-primary mt-0.5 h-4 w-4" />
             <div>
-              <p className="font-medium">Human Review Status</p>
+              <p className="font-medium">Admin Review Status</p>
               <p className="text-black">{humanReviewStatus}</p>
             </div>
           </div>

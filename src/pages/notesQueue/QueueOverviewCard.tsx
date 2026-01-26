@@ -15,7 +15,7 @@ export const QueueOverviewCard = ({ data, loading }: QueueOverviewCardProps) => 
     { icon: XCircle, label: 'AI Failed', value: data?.ai_failed || 0, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
     {
       icon: Clock,
-      label: 'Pending Human Review',
+      label: 'Pending Admin Review',
       value: data?.pending_human_review || 0,
       bgColor: 'bg-green-50',
       iconColor: 'text-primary',
