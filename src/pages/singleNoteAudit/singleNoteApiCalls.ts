@@ -240,7 +240,7 @@ export const notifyPractitioner = async (payload: NotifyPractitionerPayload): Pr
     const response = await axios.post('/manager-reviews/notify-practitioner', payload);
 
     if (response?.status) {
-      showToast.success('Practitioner notified successfully');
+      showToast.success('Email sent to practitioner successfully');
       return response.data;
     } else {
       handleErrorMessages(response);
