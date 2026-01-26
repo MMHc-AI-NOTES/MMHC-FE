@@ -28,7 +28,7 @@ export const ReviewHistoryCard = ({ reviewHistory }: ReviewHistoryCardProps) => 
     if (item.type === 'AI Audit' && item.score !== undefined) {
       return `${item.result || 'Failed'} (Score: ${item.score})`;
     }
-    if (item.type === 'Human Review' && item.result) {
+    if (item.type === 'Admin Review' && item.result) {
       return item.result;
     }
     if (item.type === 'Manager Escalation' && item.result) {

@@ -129,7 +129,7 @@ const HumanReviewSection = ({
           <div className="flex items-center gap-2">
             <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
               <UserCheck />
-              {isEditMode ? 'Edit Human Review' : 'Human Review'}
+              {isEditMode ? 'Edit Admin Review' : 'Admin Review'}
             </CardTitle>
             <TooltipProvider>
               <Tooltip>
@@ -310,7 +310,7 @@ const HumanReviewSection = ({
           </Button>
           <Button className="bg-gradient-light text-primary h-12" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
-            {isEditMode ? 'Update Human Review' : 'Submit Human Review'}
+            {isEditMode ? 'Update Admin Review' : 'Submit Admin Review'}
           </Button>
         </div>
       </CardContent>

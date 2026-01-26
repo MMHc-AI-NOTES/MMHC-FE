@@ -33,20 +33,36 @@ export interface ManagerNotesResponse {
 
 // Format raw API data to ManagerNote format
 const formatManagerReviewData = (data: ManagerReviewApiItem[]): ManagerNote[] => {
-  return data.map((item: ManagerReviewApiItem) => ({
-    id: item.id,
-    noteId: item.noteId,
-    practitioner: item.practitioner?.fullName || 'Unknown',
-    date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
-    aiScore: item.aiScore || item.session?.aiScore || 0,
-    humanScore: item.manualScore || item.review?.manualScore || null,
-    reviewer: item.manager?.fullName || 'Unknown',
-    humanDecision: item.humanDecision?.id || null,
-    disagreement: item.disagreement?.id || null,
-    priority: item.priority?.id || 1,
-    action: 'Review',
-    rawData: item,
-  }));
+  return data.map((item: ManagerReviewApiItem) => {
+    // Calculate humanScore from smeIssues: sum all errorType.points and subtract from 100
+    let humanScore: number | null = null;
+    if (item.smeIssues && Array.isArray(item.smeIssues) && item.smeIssues.length > 0) {
+      const totalPoints = item.smeIssues.reduce((sum, issue) => {
+        const points = issue?.errorType?.points || 0;
+        return sum + points;
+      }, 0);
+      humanScore = 100 - totalPoints;
+    } else {
+      // Fall back to manualScore if no smeIssues
+      humanScore = item.manualScore || item.review?.manualScore || null;
+    }
+
+    return {
+      id: item.id,
+      noteId: item.noteId,
+      practitioner: item.practitioner?.fullName || 'Unknown',
+      date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
+      aiScore: item.aiScore || item.session?.aiScore || 0,
+      humanScore,
+      reviewer: item.manager?.fullName || 'Unknown',
+      humanDecision: item.humanDecision?.id || null,
+      disagreement: item.disagreement?.id || null,
+      priority: item.priority?.id || 1,
+      action: 'Review',
+      rawData: item,
+      smeIssues: item.smeIssues || [],
+    };
+  });
 };
 
 const dummyOverview: ManagerOverview = {

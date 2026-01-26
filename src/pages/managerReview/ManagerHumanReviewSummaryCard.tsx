@@ -15,7 +15,7 @@ export const ManagerHumanReviewSummaryCard = ({ decision, reviewer, humanScore, 
       <CardContent className="space-y-4">
         <div className="text-primary flex items-center gap-2 text-base font-semibold">
           <UserRound className="h-5 w-5" />
-          <span>Human Review Summary</span>
+          <span>Admin Review Summary</span>
         </div>
 
         <div className="space-y-3 text-sm">

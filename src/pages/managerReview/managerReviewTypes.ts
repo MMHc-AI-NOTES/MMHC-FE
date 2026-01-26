@@ -115,6 +115,7 @@ export interface ManagerReviewApiItem {
   chat: ChatInfo;
   practitioner: UserInfo;
   webhookVersions: WebhookVersion[];
+  smeIssues: ManagerIssue[];
 }
 
 export interface ManagerReviewListingResponse {
@@ -152,10 +153,44 @@ export interface ManagerOverview {
 }
 
 export interface ManagerIssue {
-  severity: 'Critical' | 'Moderate' | 'Minor';
-  category: string;
-  description: string;
-  points: number;
+  id?: number;
+  reviewerId?: number;
+  versionId?: number;
+  errorTypeId?: number;
+  issuesRelatedToId?: number;
+  issueDescriptionId?: number;
+  noteId?: string;
+  errorType?: {
+    id: number;
+    name: string;
+    displayName: string;
+    points: number;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  issuesRelatedTo?: {
+    id: number;
+    fieldId: string;
+    displayName: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  issueDescription?: {
+    id: number;
+    key: string;
+    description: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  reviewer?: UserInfo;
+  status?: EnumField;
+  createdAt?: string;
+  updatedAt?: string;
+  // Legacy fields for backward compatibility
+  severity?: 'Critical' | 'Moderate' | 'Minor';
+  category?: string;
+  description?: string;
+  points?: number;
 }
 
 export interface ManagerNoteDetail {

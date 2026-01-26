@@ -1,18 +1,27 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Pencil, Trash2, X, User } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
-import { useAppSelector } from '@/store/store';
+import { useAppSelector, useAppDispatch } from '@/store/store';
 import { Review, IssueForm, ActiveIssueForm } from './types';
 import ScoreComparison from './ScoreComparison';
+import { UserRoleEnum } from '@/constants/common';
+import { fetchUsersListingThunk, type UsersQuery } from '@/store/slices/usersSlice';
+import { assignToManager } from '../singleNoteApiCalls';
 
 interface ReviewCardProps {
   review: Review;
   auditScore: number;
   activeIssueForms: ActiveIssueForm[];
   savingIssueId: string | null;
+  noteId?: string;
+  versionId?: number | null;
+  practitionerId?: number;
+  priorityId?: number;
   onAddIssue: (reviewId: string) => void;
   onEditIssue: (reviewId: string, issue: IssueForm) => void;
   onDeleteIssue: (reviewId: string, issueId: string) => void;
@@ -27,6 +36,10 @@ const ReviewCard = ({
   auditScore,
   activeIssueForms,
   savingIssueId,
+  noteId,
+  versionId,
+  practitionerId,
+  priorityId,
   onAddIssue,
   onEditIssue,
   onDeleteIssue,
@@ -35,9 +48,44 @@ const ReviewCard = ({
   onDeleteReview,
   onRemoveReview,
 }: ReviewCardProps) => {
+  const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo } = useAppSelector(state => state.smeConfig);
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
+  const userEntities = useAppSelector(state => state.users.entities);
+
+  // State for assign to manager form
+  const [showAssignManagerForm, setShowAssignManagerForm] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+  const [isAssigning, setIsAssigning] = useState(false);
+
+  // Get all users from entities
+  const users = useMemo(() => {
+    return Object.values(userEntities).filter(Boolean);
+  }, [userEntities]);
+
+  // Filter users to only include superAdmin
+  const managers = useMemo(() => {
+    return users.filter(user => user.type === UserRoleEnum.superAdmin);
+  }, [users]);
+
+  // Query for fetching users
+  const usersQuery: UsersQuery = useMemo(
+    () => ({
+      page: 1,
+      pageSize: 100,
+      search: '',
+      role: 'all',
+    }),
+    [],
+  );
+
+  // Fetch users listing when users array is empty (e.g., on mount or after reload)
+  useEffect(() => {
+    if (users.length === 0) {
+      dispatch(fetchUsersListingThunk(usersQuery));
+    }
+  }, [users.length, dispatch, usersQuery]);
   // Helper to check if review is from backend (saved) or new (unsaved)
   const isSavedReview = review.id.startsWith('version-review-');
   const isNewReview = review.id.startsWith('new-review-');
@@ -93,12 +141,59 @@ const ReviewCard = ({
     }
   };
 
+  const handleAssignToManager = () => {
+    setShowAssignManagerForm(true);
+  };
+
+  const handleCancelAssign = () => {
+    setShowAssignManagerForm(false);
+    setSelectedManagerId('');
+  };
+
+  const handleAssign = async () => {
+    if (!selectedManagerId || !noteId || versionId === null || versionId === undefined) {
+      return;
+    }
+
+    setIsAssigning(true);
+    try {
+      // Get reviewer_id from the review
+      const reviewerId = review.reviewerId ? Number(review.reviewerId) : null;
+
+      if (!reviewerId || !practitionerId || !priorityId) {
+        console.error('Missing required fields for assignment');
+        return;
+      }
+
+      await assignToManager({
+        note_id: noteId,
+        version_id: versionId,
+        practitioner_id: practitionerId,
+        ai_score: auditScore,
+        reviewer_id: reviewerId,
+        priority: priorityId,
+      });
+
+      // Reset form after successful assignment
+      setShowAssignManagerForm(false);
+      setSelectedManagerId('');
+    } catch (error) {
+      console.error('Error assigning to manager:', error);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   return (
     <Card className="relative gap-0 pt-1 pb-4">
       {isOwnReview && (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 p-2">
+          <Button onClick={handleAssignToManager} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
+            <User />
+            Assign to Manager
+          </Button>
           <Button onClick={() => onAddIssue(review.id)} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
-            <Plus className="h-4 w-4" />
+            <Plus />
             Add Issue
           </Button>
           <Button
@@ -114,6 +209,37 @@ const ReviewCard = ({
         </div>
       )}
       <CardContent className="space-y-3">
+        {/* Assign to Manager Form */}
+        {showAssignManagerForm && (
+          <div className="mb-4 rounded-lg border p-4">
+            <div className="space-y-3">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-600">Select Manager</label>
+                <Select value={selectedManagerId} onValueChange={setSelectedManagerId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managers.map(manager => (
+                      <SelectItem key={manager.id} value={manager.id.toString()}>
+                        {manager.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={handleCancelAssign} disabled={isAssigning}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAssign} disabled={!selectedManagerId || isAssigning}>
+                  {isAssigning ? 'Assigning...' : 'Assign'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Reviewer Info */}
         {review.reviewerName && (
           <div className="my-2 text-sm text-gray-600">

@@ -89,7 +89,7 @@ export const ManagerSingleReview = () => {
   const statusTags = rawData
     ? [
         rawData.session?.manager?.name === 'in_progress' ? 'Pending Manager Review' : '',
-        rawData.session?.humanReview?.name === 'completed' ? 'Human Review Completed' : '',
+        rawData.session?.humanReview?.name === 'completed' ? 'Admin Review Completed' : '',
       ].filter(Boolean)
     : [];
   const humanReviewStatus = rawData?.session?.humanReview?.id ? HumanReviewLabels[rawData.session.humanReview.id] : '-';

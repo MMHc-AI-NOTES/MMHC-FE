@@ -66,7 +66,7 @@ export interface BlacklistedNoteIssue {
 
 export interface ReviewHistoryItem {
   id: string;
-  type: 'AI Audit' | 'Human Review' | 'Manager Escalation' | 'Blacklisted';
+  type: 'AI Audit' | 'Admin Review' | 'Manager Escalation' | 'Blacklisted';
   date: string;
   user?: string;
   result?: string;
