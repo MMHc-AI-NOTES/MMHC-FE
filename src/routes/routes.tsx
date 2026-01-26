@@ -18,6 +18,7 @@ const ManagerReviewQueue = lazy(() => import('@/pages/managerReview/ManagerRevie
 const ManagerSingleReview = lazy(() => import('@/pages/managerReview/ManagerSingleReview'));
 const BlacklistedNotes = lazy(() => import('@/pages/blacklistedNotes/BlacklistedNotes'));
 const NoteSubmission = lazy(() => import('@/pages/noteSubmission/NoteSubmission'));
+const Profile = lazy(() => import('@/pages/profile/Profile'));
 
 const Routes = () => {
   const routes = useRoutes([
@@ -123,6 +124,14 @@ const Routes = () => {
           element: (
             <RoleGuard>
               <NoteSubmission />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'profile',
+          element: (
+            <RoleGuard>
+              <Profile />
             </RoleGuard>
           ),
         },
