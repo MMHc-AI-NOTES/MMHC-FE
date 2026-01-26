@@ -15,35 +15,28 @@ interface ApiResponse {
 
 interface UpdateProfilePayload {
   fullName: string;
-  profilePicture?: File;
+  email: string;
 }
 
 interface UpdatePasswordPayload {
-  currentPassword: string;
+  user_id: number;
+  current_password: string;
   password: string;
   password_confirmation: string;
 }
 
-export const updateProfile = async (payload: UpdateProfilePayload): Promise<boolean> => {
+export const updateProfile = async (payload: UpdateProfilePayload, userId: number): Promise<boolean> => {
   dispatch(setShowBeatLoader());
   try {
-    const formData = new FormData();
-    formData.append('fullName', payload.fullName);
-    if (payload.profilePicture) {
-      formData.append('profilePicture', payload.profilePicture);
-    }
-
-    const response = (await axios.put('/profile', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    const response = (await axios.patch(`/users/${userId}`, {
+      full_name: payload.fullName,
+      email: payload.email,
     })) as unknown as ApiResponse;
 
     if (response?.status) {
-      // Refresh user data
-      const meResponse = (await axios.get('/me')) as unknown as ApiResponse;
-      if (meResponse?.status && meResponse.data) {
-        dispatch(setAuthUser(meResponse.data as User));
+      // Update Redux state with response data
+      if (response.data) {
+        dispatch(setAuthUser(response.data as User));
       }
       showToast.success(response?.message || 'Profile updated successfully!');
       return true;
@@ -62,7 +55,12 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<bool
 export const updatePassword = async (payload: UpdatePasswordPayload): Promise<boolean> => {
   dispatch(setShowBeatLoader());
   try {
-    const response = (await axios.put('/profile/password', payload)) as unknown as ApiResponse;
+    const response = (await axios.patch('/users/update-password', {
+      user_id: payload.user_id,
+      current_password: payload.current_password,
+      password: payload.password,
+      password_confirmation: payload.password_confirmation,
+    })) as unknown as ApiResponse;
 
     if (response?.status) {
       showToast.success(response?.message || 'Password updated successfully!');
