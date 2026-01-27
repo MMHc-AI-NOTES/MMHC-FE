@@ -76,7 +76,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#374151' }} />
           {/* Left Y-axis for practitioners (70-100) */}
-          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: '#6b7280' }} domain={[70, 100]} ticks={[70, 78, 86, 94, 100]} />
+          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: '#6b7280' }} domain={[70, 100]} ticks={[20, 50, 70, 78, 86, 94, 100]} />
           {/* Right Y-axis for HITL Variance (0-20) */}
           <YAxis
             yAxisId="right"
@@ -89,7 +89,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
           <Legend formatter={value => <span className="text-sm">{value}</span>} />
 
           {/* HITL Variance Line - uses right Y-axis */}
-          <Line
+          {/* <Line
             yAxisId="right"
             type="monotone"
             dataKey="HITL Variance (%)"
@@ -99,7 +99,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
             dot={{ r: 8, strokeWidth: 2, stroke: HITL_VARIANCE_COLOR }}
             activeDot={{ r: 8, strokeWidth: 2, stroke: HITL_VARIANCE_COLOR }}
             name="HITL Variance (%)"
-          />
+          /> */}
 
           {/* Practitioner lines - uses left Y-axis */}
           {data.map(practitioner => {
