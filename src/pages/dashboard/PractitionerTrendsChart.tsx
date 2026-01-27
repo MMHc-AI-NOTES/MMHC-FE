@@ -18,13 +18,13 @@ const HITL_VARIANCE_COLOR = '#D97706';
 
 // Add HITL Variance data - scaled to 0-20 range for right Y-axis
 const hitlVarianceData = [
-  { day: 'Mon', variance: 15 },
-  { day: 'Tue', variance: 17 },
-  { day: 'Wed', variance: 19 },
-  { day: 'Thu', variance: 18 },
-  { day: 'Fri', variance: 20 },
-  { day: 'Sat', variance: 19 },
-  { day: 'Sun', variance: 17 },
+  { day: 'Mon', variance: 0 },
+  { day: 'Tue', variance: 0 },
+  { day: 'Wed', variance: 0 },
+  { day: 'Thu', variance: 0 },
+  { day: 'Fri', variance: 0 },
+  { day: 'Sat', variance: 0 },
+  { day: 'Sun', variance: 0 },
 ];
 
 const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
@@ -59,7 +59,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
     const entry: any = {
       day: dayData.day,
       // Add HITL Variance for this day (scaled to 0-20)
-      'HITL Variance (%)': hitlVarianceData[index]?.variance || 15,
+      'HITL Variance (%)': hitlVarianceData[index]?.variance || 0,
     };
 
     data.forEach(practitioner => {
@@ -76,7 +76,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#374151' }} />
           {/* Left Y-axis for practitioners (70-100) */}
-          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: '#6b7280' }} domain={[70, 100]} ticks={[70, 78, 86, 94, 100]} />
+          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: '#6b7280' }} domain={[70, 100]} ticks={[20, 50, 70, 78, 86, 94, 100]} />
           {/* Right Y-axis for HITL Variance (0-20) */}
           <YAxis
             yAxisId="right"

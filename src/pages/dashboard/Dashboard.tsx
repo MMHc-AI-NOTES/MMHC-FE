@@ -89,7 +89,7 @@ const Dashboard = () => {
 
         <Card className="gap-2">
           <CardHeader>
-            <DashboardCardHeader title="Model & Rules Version" icon={Settings} isIconBg />
+            <DashboardCardHeader title="Default Agent" icon={Settings} isIconBg />
           </CardHeader>
           <CardContent>
             {(() => {
@@ -98,7 +98,6 @@ const Dashboard = () => {
                 return (
                   <>
                     <p className="text-primary text-3xl font-semibold">{defaultAgent.name}</p>
-                    <p className="text-primary text-3xl font-semibold">{defaultAgent.model}</p>
                     <p className="mt-2 text-gray-400">
                       {defaultAgent.updated_at
                         ? `Last updated ${new Date(defaultAgent.updated_at).toLocaleDateString()}`

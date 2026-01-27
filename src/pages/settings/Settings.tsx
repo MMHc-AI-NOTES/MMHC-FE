@@ -26,7 +26,7 @@ const Settings: React.FC = () => {
         return persistedTab;
       }
     }
-    return 'notifications';
+    return 'user-management';
   });
 
   // Persist tab changes to localStorage
