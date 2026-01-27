@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Users, Zap, Columns3Cog } from 'lucide-react';
-import NotificationsTab from './NotificationsTab';
+import { Users, Zap, Columns3Cog } from 'lucide-react';
+// import NotificationsTab from './NotificationsTab';
 import UserManagementTab from './UserManagementTab';
 import AIModelPromptTab from './AIModelPromptTab';
 import SMEConfigTab from './SMEConfigTab';
@@ -11,7 +11,7 @@ type TabType = 'notifications' | 'user-management' | 'ai-model-prompt' | 'sme-co
 const SETTINGS_TAB_STORAGE_KEY = 'settings_active_tab';
 
 const tabs = [
-  { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
+  // { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
   { id: 'user-management' as TabType, label: 'User Management', icon: Users },
   { id: 'ai-model-prompt' as TabType, label: 'AI Model & Prompt', icon: Zap },
   { id: 'sme-config' as TabType, label: 'SME Config', icon: Columns3Cog },
@@ -61,7 +61,7 @@ const Settings: React.FC = () => {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'notifications' && <NotificationsTab />}
+        {/* {activeTab === 'notifications' && <NotificationsTab />} */}
         {activeTab === 'user-management' && <UserManagementTab />}
         {activeTab === 'ai-model-prompt' && <AIModelPromptTab />}
         {activeTab === 'sme-config' && <SMEConfigTab />}
