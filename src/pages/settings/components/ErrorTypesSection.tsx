@@ -93,33 +93,40 @@ const ErrorTypesSection: React.FC = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Display Name</TableHead>
                     <TableHead>Points</TableHead>
-                    {errorTypes.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
+                    <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* Custom Error Types */}
-                  {errorTypes.map(errorType => (
-                    <TableRow key={errorType.id}>
-                      <TableCell>{errorType.name}</TableCell>
-                      <TableCell>{errorType.displayName}</TableCell>
-                      <TableCell>{errorType.points < 0 ? errorType.points : -errorType.points}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(errorType)} className="h-8 w-8 p-0">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => errorType.id && handleDeleteClick(errorType.id)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {errorTypes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
+                        No data
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    errorTypes.map(errorType => (
+                      <TableRow key={errorType.id}>
+                        <TableCell>{errorType.name}</TableCell>
+                        <TableCell>{errorType.displayName}</TableCell>
+                        <TableCell>{errorType.points < 0 ? errorType.points : -errorType.points}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(errorType)} className="h-8 w-8 p-0">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => errorType.id && handleDeleteClick(errorType.id)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

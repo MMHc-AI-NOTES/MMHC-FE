@@ -24,22 +24,34 @@ export interface IssueDescription {
   description: string;
 }
 
+// SME Template (Description Mapping)
+export interface SMETemplate {
+  id: number;
+  error_type_id: number;
+  issues_related_to_id: number;
+  issue_description_id: number;
+}
+
 interface SMEConfigState {
   errorTypes: ErrorType[];
   issueRelatedTo: IssueRelatedTo[];
   issueDescriptions: IssueDescription[];
+  smeTemplates: SMETemplate[];
   errorTypesLoaded: boolean;
   issueRelatedToLoaded: boolean;
   issueDescriptionsLoaded: boolean;
+  smeTemplatesLoaded: boolean;
 }
 
 const initialState: SMEConfigState = {
   errorTypes: [],
   issueRelatedTo: [],
   issueDescriptions: [],
+  smeTemplates: [],
   errorTypesLoaded: false,
   issueRelatedToLoaded: false,
   issueDescriptionsLoaded: false,
+  smeTemplatesLoaded: false,
 };
 
 const smeConfigSlice = createSlice({
@@ -99,6 +111,22 @@ const smeConfigSlice = createSlice({
     deleteIssueDescription: (state, action: PayloadAction<number>) => {
       state.issueDescriptions = state.issueDescriptions.filter(id => id.id !== action.payload);
     },
+
+    // SME Templates (Description Mapping)
+    setSMETemplates: (state, action: PayloadAction<SMETemplate[]>) => {
+      state.smeTemplates = action.payload;
+      state.smeTemplatesLoaded = true;
+    },
+    addSMETemplate: (state, action: PayloadAction<SMETemplate>) => {
+      state.smeTemplates.push(action.payload);
+    },
+    updateSMETemplate: (state, action: PayloadAction<SMETemplate>) => {
+      const index = state.smeTemplates.findIndex(t => t.id === action.payload.id);
+      if (index !== -1) state.smeTemplates[index] = action.payload;
+    },
+    deleteSMETemplate: (state, action: PayloadAction<number>) => {
+      state.smeTemplates = state.smeTemplates.filter(t => t.id !== action.payload);
+    },
   },
 });
 
@@ -115,6 +143,10 @@ export const {
   addIssueDescription,
   updateIssueDescription,
   deleteIssueDescription,
+  setSMETemplates,
+  addSMETemplate,
+  updateSMETemplate,
+  deleteSMETemplate: deleteSMETemplateSlice,
 } = smeConfigSlice.actions;
 
 export default smeConfigSlice.reducer;

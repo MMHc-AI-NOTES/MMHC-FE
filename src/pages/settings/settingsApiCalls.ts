@@ -389,6 +389,107 @@ export const deleteIssueDescription = async (id: number): Promise<boolean> => {
 };
 
 // ============================================================================
+// SME Issue Template (Description Mapping) API
+// ============================================================================
+
+export interface SMETemplate {
+  id: number;
+  error_type_id: number;
+  issues_related_to_id: number;
+  issue_description_id: number;
+}
+
+export interface SMETemplateListingResponse {
+  data: SMETemplate[];
+}
+
+export interface SMETemplateResponse {
+  data?: SMETemplate;
+}
+
+const normalizeSMETemplate = (api: any): SMETemplate => ({
+  id: api?.id,
+  error_type_id: api?.error_type_id ?? api?.errorTypeId,
+  issues_related_to_id: api?.issues_related_to_id ?? api?.issuesRelatedToId,
+  issue_description_id: api?.issue_description_id ?? api?.issueDescriptionId,
+});
+
+export const fetchSMETemplates = async (): Promise<SMETemplate[]> => {
+  const previousSMETemplates = getState().smeConfig.smeTemplates;
+  if (previousSMETemplates.length) return previousSMETemplates;
+  try {
+    const response = await axios.post<SMETemplateListingResponse>('/sme-issues-templates/listing', {});
+
+    if (response.status) {
+      const data = response.data?.data ?? response.data ?? [];
+      const list = Array.isArray(data) ? data : [];
+      return list.map((item: any) => normalizeSMETemplate(item));
+    }
+    handleErrorMessages(response);
+    return [];
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return [];
+  }
+};
+
+export interface CreateSMETemplatePayload {
+  error_type_id: number;
+  issues_related_to_id: number;
+  issue_description_id: number;
+}
+
+export const createSMETemplate = async (payload: CreateSMETemplatePayload): Promise<SMETemplate | null> => {
+  try {
+    const response = await axios.post<SMETemplateResponse>('/sme-issues-templates', payload);
+
+    if (response.status) {
+      showToast.success('Description mapping created successfully!');
+      const raw = (response.data as any)?.data ?? response.data;
+      return raw ? normalizeSMETemplate(raw) : null;
+    }
+    handleErrorMessages(response);
+    return null;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const updateSMETemplate = async (id: number, payload: CreateSMETemplatePayload): Promise<SMETemplate | null> => {
+  try {
+    const response = await axios.patch<SMETemplateResponse>(`/sme-issues-templates/${id}`, payload);
+
+    if (response.status) {
+      showToast.success('Description mapping updated successfully!');
+      const raw = (response.data as any)?.data ?? response.data;
+      return raw ? normalizeSMETemplate(raw) : null;
+    }
+    handleErrorMessages(response);
+    return null;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
+
+export const deleteSMETemplate = async (id: number): Promise<boolean> => {
+  try {
+    const response = await axios.delete(`/sme-issues-templates/${id}`);
+
+    if (response.status) {
+      showToast.success('Description mapping deleted successfully!');
+      return true;
+    }
+    handleErrorMessages(response);
+    return false;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
+
+// ============================================================================
 // Users API Functions
 // ============================================================================
 
