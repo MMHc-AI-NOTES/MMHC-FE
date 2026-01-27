@@ -18,13 +18,13 @@ const HITL_VARIANCE_COLOR = '#D97706';
 
 // Add HITL Variance data - scaled to 0-20 range for right Y-axis
 const hitlVarianceData = [
-  { day: 'Mon', variance: 15 },
-  { day: 'Tue', variance: 17 },
-  { day: 'Wed', variance: 19 },
-  { day: 'Thu', variance: 18 },
-  { day: 'Fri', variance: 20 },
-  { day: 'Sat', variance: 19 },
-  { day: 'Sun', variance: 17 },
+  { day: 'Mon', variance: 0 },
+  { day: 'Tue', variance: 0 },
+  { day: 'Wed', variance: 0 },
+  { day: 'Thu', variance: 0 },
+  { day: 'Fri', variance: 0 },
+  { day: 'Sat', variance: 0 },
+  { day: 'Sun', variance: 0 },
 ];
 
 const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
@@ -59,7 +59,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
     const entry: any = {
       day: dayData.day,
       // Add HITL Variance for this day (scaled to 0-20)
-      'HITL Variance (%)': hitlVarianceData[index]?.variance || 15,
+      'HITL Variance (%)': hitlVarianceData[index]?.variance || 0,
     };
 
     data.forEach(practitioner => {
@@ -89,7 +89,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
           <Legend formatter={value => <span className="text-sm">{value}</span>} />
 
           {/* HITL Variance Line - uses right Y-axis */}
-          {/* <Line
+          <Line
             yAxisId="right"
             type="monotone"
             dataKey="HITL Variance (%)"
@@ -99,7 +99,7 @@ const PractitionerTrendsChart = ({ data }: PractitionerTrendsChartProps) => {
             dot={{ r: 8, strokeWidth: 2, stroke: HITL_VARIANCE_COLOR }}
             activeDot={{ r: 8, strokeWidth: 2, stroke: HITL_VARIANCE_COLOR }}
             name="HITL Variance (%)"
-          /> */}
+          />
 
           {/* Practitioner lines - uses left Y-axis */}
           {data.map(practitioner => {
