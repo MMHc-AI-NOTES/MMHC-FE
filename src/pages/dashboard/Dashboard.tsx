@@ -66,7 +66,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader count={2} />
+      <DashboardHeader count={0} />
       {/* Stats Card */}
       <StatsCard
         notesAuditedToday={dashboardData.notesAuditedToday}

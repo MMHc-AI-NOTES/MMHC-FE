@@ -72,7 +72,7 @@ const UserActionsDropdown: React.FC<UserActionsDropdownProps> = ({ user, onEditU
             Reset Password
           </DropdownMenuItem>
           <DropdownMenuItem
-            disabled={disabled || resendLoading}
+            disabled={disabled || resendLoading || user.hasCompletedOnboarding}
             onClick={async () => {
               try {
                 setResendLoading(true);

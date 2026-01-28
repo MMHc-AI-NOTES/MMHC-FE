@@ -99,31 +99,39 @@ const IssueDescriptionsSection: React.FC = () => {
                   <TableRow>
                     <TableHead className="pl-3 text-left">Key</TableHead>
                     <TableHead className="pl-3 text-left">Description</TableHead>
-                    {issueDescriptions.length > 0 && <TableHead className="w-[15%]">Actions</TableHead>}
+                    <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {issueDescriptions.map(desc => (
-                    <TableRow key={desc.id}>
-                      <TableCell className="text-left">{desc.key}</TableCell>
-                      <TableCell className="text-left">{desc.description}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(desc)} className="h-8 w-8 p-0">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => desc.id && handleDeleteClick(desc.id)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {issueDescriptions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-muted-foreground h-24 text-center">
+                        No data
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    issueDescriptions.map(desc => (
+                      <TableRow key={desc.id}>
+                        <TableCell className="text-left">{desc.key}</TableCell>
+                        <TableCell className="text-left">{desc.description}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(desc)} className="h-8 w-8 p-0">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => desc.id && handleDeleteClick(desc.id)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

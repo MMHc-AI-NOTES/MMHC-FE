@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, X, User } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Pencil, Trash2, X, User, Save } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { Review, IssueForm, ActiveIssueForm } from './types';
@@ -22,8 +23,6 @@ interface ReviewCardProps {
   versionId?: number | null;
   practitionerId?: number;
   priorityId?: number;
-  onAddIssue: (reviewId: string) => void;
-  onEditIssue: (reviewId: string, issue: IssueForm) => void;
   onDeleteIssue: (reviewId: string, issueId: string) => void;
   onSaveIssue: (reviewId: string, issueId: string, values: Omit<LocalIssueFormValues, 'reviewerName'>) => void;
   onCancelEdit: (reviewId: string, issueId: string) => void;
@@ -40,8 +39,6 @@ const ReviewCard = ({
   versionId,
   practitionerId,
   priorityId,
-  onAddIssue,
-  onEditIssue,
   onDeleteIssue,
   onSaveIssue,
   onCancelEdit,
@@ -49,7 +46,7 @@ const ReviewCard = ({
   onRemoveReview,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
-  const { errorTypes, issueRelatedTo } = useAppSelector(state => state.smeConfig);
+  const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
   const userEntities = useAppSelector(state => state.users.entities);
@@ -58,6 +55,11 @@ const ReviewCard = ({
   const [showAssignManagerForm, setShowAssignManagerForm] = useState(false);
   const [selectedManagerId, setSelectedManagerId] = useState<string>('');
   const [isAssigning, setIsAssigning] = useState(false);
+
+  // State for inline edit form
+  const [editingIssueId, setEditingIssueId] = useState<string | null>(null);
+  const [selectedDescriptionId, setSelectedDescriptionId] = useState<number | ''>('');
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
 
   // Get all users from entities
   const users = useMemo(() => {
@@ -124,6 +126,85 @@ const ReviewCard = ({
     id: opt.fieldId,
     name: opt.displayName,
   }));
+
+  // Get issueRelatedTo ID from fieldId
+  const getIssueRelatedToIdFromFieldId = (fieldId: string): number | null => {
+    const irt = issueRelatedTo.find(opt => opt.fieldId === fieldId);
+    return irt?.id ?? null;
+  };
+
+  // Get templates for a specific issueRelatedTo ID
+  const getTemplatesForIssueRelatedToId = (issueRelatedToId: number): typeof smeTemplates => {
+    if (!smeTemplates || !Array.isArray(smeTemplates)) return [];
+    return smeTemplates.filter(t => t.issues_related_to_id === issueRelatedToId);
+  };
+
+  // Get description options for an issue based on its issueRelatedTo
+  const getDescriptionOptionsForIssue = (issue: IssueForm) => {
+    const issueRelatedToId = getIssueRelatedToIdFromFieldId(issue.issueRelatedTo);
+    if (!issueRelatedToId) return [];
+
+    const templates = getTemplatesForIssueRelatedToId(issueRelatedToId);
+    if (!templates || templates.length === 0) return [];
+    if (!issueDescriptions || !Array.isArray(issueDescriptions)) return [];
+
+    // Get all unique issue_description_id from templates
+    const uniqueDescriptionIds = [...new Set(templates.map(t => t.issue_description_id).filter(id => id != null))];
+
+    // Find all descriptions matching those IDs
+    const matchingDescriptions = issueDescriptions.filter(desc => desc.id != null && uniqueDescriptionIds.includes(desc.id));
+
+    // Return descriptions as options
+    return matchingDescriptions.map(desc => ({
+      value: desc.id!,
+      label: desc.description ?? `Description ${desc.id}`,
+    }));
+  };
+
+  const handleEditIssueInline = (issue: IssueForm) => {
+    setEditingIssueId(issue.id);
+    // Find current description ID if it exists
+    const currentDesc = issueDescriptions.find(d => d.description === issue.issueDescription);
+    setSelectedDescriptionId(currentDesc?.id ?? '');
+  };
+
+  const handleCancelEditInline = () => {
+    setEditingIssueId(null);
+    setSelectedDescriptionId('');
+  };
+
+  const handleSaveDescription = async (issue: IssueForm) => {
+    if (!selectedDescriptionId || typeof selectedDescriptionId !== 'number') return;
+
+    setIsSavingDescription(true);
+    try {
+      const selectedDescription = issueDescriptions.find(d => d.id === selectedDescriptionId);
+      if (!selectedDescription) {
+        setIsSavingDescription(false);
+        return;
+      }
+
+      // Update the issue with new description
+      const updatedIssue: IssueForm = {
+        ...issue,
+        issueDescription: selectedDescription.description,
+      };
+
+      // Call onSaveIssue with updated values
+      onSaveIssue(review.id, issue.id, {
+        errorType: updatedIssue.errorType,
+        issueRelatedTo: updatedIssue.issueRelatedTo,
+        issueDescription: updatedIssue.issueDescription,
+      });
+
+      setEditingIssueId(null);
+      setSelectedDescriptionId('');
+    } catch (error) {
+      console.error('Error saving description:', error);
+    } finally {
+      setIsSavingDescription(false);
+    }
+  };
 
   const handleRemoveOrDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -192,10 +273,7 @@ const ReviewCard = ({
             <User />
             Assign to Manager
           </Button>
-          <Button onClick={() => onAddIssue(review.id)} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
-            <Plus />
-            Add Issue
-          </Button>
+
           <Button
             variant="ghost"
             size="icon"
@@ -282,7 +360,13 @@ const ReviewCard = ({
                       </div>
                       {isOwnReview && (
                         <div className="flex items-center">
-                          <Button variant="ghost" size="icon" onClick={() => onEditIssue(review.id, savedIssue)} title="Edit issue">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditIssueInline(savedIssue)}
+                            title="Edit issue description"
+                            disabled={editingIssueId === savedIssue.id}
+                          >
                             <Pencil className="text-gray-600" />
                           </Button>
                           <Button
@@ -308,6 +392,44 @@ const ReviewCard = ({
                         <span className="font-medium">Description:</span> {savedIssue.issueDescription}
                       </p>
                     </div>
+                    {/* Inline edit form for description */}
+                    {editingIssueId === savedIssue.id && isOwnReview && (
+                      <div className="mt-3 rounded-lg border bg-gray-50 p-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Issue Description</Label>
+                            <Select
+                              value={selectedDescriptionId === '' ? '' : String(selectedDescriptionId)}
+                              onValueChange={v => setSelectedDescriptionId(v ? parseInt(v, 10) : '')}
+                            >
+                              <SelectTrigger className="mt-1 w-full">
+                                <SelectValue placeholder="Select a description" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getDescriptionOptionsForIssue(savedIssue).map(opt => (
+                                  <SelectItem key={opt.value} value={String(opt.value)}>
+                                    {opt.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" onClick={handleCancelEditInline} disabled={isSavingDescription}>
+                              Cancel
+                            </Button>
+                            <Button
+                              className="bg-gradient-light text-primary border-0"
+                              disabled={isSavingDescription || selectedDescriptionId === ''}
+                              onClick={() => handleSaveDescription(savedIssue)}
+                            >
+                              <Save className="h-4 w-4" />
+                              {isSavingDescription ? 'Saving...' : 'Save'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {index < savedIssues.length - 1 && <Separator className="my-3" />}
                 </div>

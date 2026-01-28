@@ -79,7 +79,7 @@ export const useReviews = ({
       issues: [],
       _versionId: versionId || null, // Associate review with current version
     };
-    setReviews(prev => [...prev, newReview]);
+    setReviews(prev => [newReview, ...prev]);
   }, [setReviews, loggedInUserId, user, users, versionId]);
 
   const handleReviewerChange = useCallback(

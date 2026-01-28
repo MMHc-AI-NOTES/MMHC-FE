@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, Bug } from 'lucide-react';
+// import { Button } from '@/components/ui/button';
+import { Bug } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
@@ -12,9 +12,11 @@ import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm } from './components/types';
 import { deleteSMEReview } from './singleNoteApiCalls';
-import { UserRoleEnum } from '@/constants/common';
+// import { UserRoleEnum } from '@/constants/common';
 
 interface SMEReviewProps {
+  reviews: Review[];
+  setReviews: React.Dispatch<React.SetStateAction<Review[]>>;
   auditScore: number;
   versionId?: number | null;
   webhookVersions?: WebhookVersion[];
@@ -26,6 +28,8 @@ interface SMEReviewProps {
 }
 
 const SMEReview = ({
+  reviews,
+  setReviews,
   auditScore,
   versionId,
   webhookVersions = [],
@@ -38,7 +42,7 @@ const SMEReview = ({
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
-  const isSMEReviewer = user?.type === UserRoleEnum.sme_reviewer;
+  // const isSMEReviewer = user?.type === UserRoleEnum.sme_reviewer;
 
   // Get current version
   const currentVersion = useMemo(() => {
@@ -55,7 +59,6 @@ const SMEReview = ({
   }, [webhookVersions, versionId]);
 
   // State management
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [activeIssueForms, setActiveIssueForms] = useState<ActiveIssueForm[]>([]);
   const [savingIssueId, setSavingIssueId] = useState<string | null>(null);
   const [isDeleteReviewDialogOpen, setIsDeleteReviewDialogOpen] = useState(false);
@@ -88,7 +91,7 @@ const SMEReview = ({
         return filtered;
       });
     }
-  }, [versionId]);
+  }, [versionId, setReviews]);
 
   // Convert version issues to reviews
   useVersionIssues({
@@ -100,7 +103,7 @@ const SMEReview = ({
   });
 
   // Review management hooks
-  const { addReview, addIssue, handleSaveIssue, handleDeleteIssue, handleEditIssue, handleCancelEdit } = useReviews({
+  const { handleSaveIssue, handleDeleteIssue, handleCancelEdit } = useReviews({
     noteId,
     versionId,
     reviews,
@@ -116,23 +119,23 @@ const SMEReview = ({
 
   // Check if user already has a review in the current selected version
   // Only check when versionId exists (for version-specific reviews)
-  const hasUserReviewInVersion = useMemo(() => {
-    if (!loggedInUserId || !versionId) return false;
-    // Filter reviews to only check those belonging to current version
-    const filteredReviews = reviews.filter(review => {
-      if (review.id.startsWith('version-review-')) {
-        return true;
-      }
-      if (review.id.startsWith('new-review-')) {
-        return review._versionId === versionId;
-      }
-      return true;
-    });
-    return filteredReviews.some(review => {
-      const reviewerIdNum = review.reviewerId ? Number(review.reviewerId) : null;
-      return reviewerIdNum === loggedInUserId;
-    });
-  }, [reviews, loggedInUserId, versionId]);
+  // const hasUserReviewInVersion = useMemo(() => {
+  //   if (!loggedInUserId || !versionId) return false;
+  //   // Filter reviews to only check those belonging to current version
+  //   const filteredReviews = reviews.filter(review => {
+  //     if (review.id.startsWith('version-review-')) {
+  //       return true;
+  //     }
+  //     if (review.id.startsWith('new-review-')) {
+  //       return review._versionId === versionId;
+  //     }
+  //     return true;
+  //   });
+  //   return filteredReviews.some(review => {
+  //     const reviewerIdNum = review.reviewerId ? Number(review.reviewerId) : null;
+  //     return reviewerIdNum === loggedInUserId;
+  //   });
+  // }, [reviews, loggedInUserId, versionId]);
 
   // Delete handlers
   const handleDeleteReviewClick = (reviewId: string) => {
@@ -210,14 +213,14 @@ const SMEReview = ({
             <Bug />
             SME Review
           </div>
-          {isSMEReviewer && !hasUserReviewInVersion && (
+          {/* {isSMEReviewer && !hasUserReviewInVersion && (
             <div className="flex items-center gap-2">
               <Button onClick={addReview} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
                 <Plus className="h-4 w-4" />
                 Add Review
               </Button>
             </div>
-          )}
+          )} */}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -266,8 +269,6 @@ const SMEReview = ({
               versionId={versionId}
               practitionerId={practitionerId}
               priorityId={priorityId}
-              onAddIssue={addIssue}
-              onEditIssue={handleEditIssue}
               onDeleteIssue={handleDeleteIssueClick}
               onSaveIssue={handleSaveIssue}
               onCancelEdit={handleCancelEdit}

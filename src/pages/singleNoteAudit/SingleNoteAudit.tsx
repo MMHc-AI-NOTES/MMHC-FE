@@ -17,7 +17,7 @@ import LoadingSkeleton from './LoadingSkeleton';
 import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail, Chat } from '@/types/notes';
+import { NoteDetail, ApiNoteDetail, Chat, SMEIssue } from '@/types/notes';
 import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
@@ -31,6 +31,7 @@ import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
 import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
+import type { Review, IssueForm } from './components/types';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -105,8 +106,12 @@ const SingleNoteAudit = () => {
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useAppSelector(state => state.agents);
   const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
-  const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded } = useAppSelector(state => state.smeConfig);
+  const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded, errorTypes, issueRelatedTo } = useAppSelector(
+    state => state.smeConfig,
+  );
+  const user = useAppSelector(state => state.auth.user);
   const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
@@ -252,10 +257,86 @@ const SingleNoteAudit = () => {
     };
   }, []);
 
-  // const handleSaveDraft = () => {
-  //   console.log('Saving draft...');
-  //   setShowHumanReview(false);
-  // };
+  const loggedInUserId = user?.id ?? null;
+
+  const handleSMEIssueCreatedFromTemplate = useCallback(
+    (response: { id: number }, issueForm: IssueForm, versionId: number) => {
+      if (!loggedInUserId) return;
+      const reviewerName = user?.fullName?.trim() || user?.email || 'Unknown Reviewer';
+
+      // 1) Update local SME reviews panel
+      const newIssueForm: IssueForm = {
+        ...issueForm,
+        id: `version-issue-${response.id}`,
+        _smeIssueId: response.id,
+        _isVersionIssue: true,
+      };
+      setReviews(prev => {
+        const existing = prev.find(r => r.id === `new-review-${loggedInUserId}`);
+        if (existing) {
+          return prev.map(r => (r.id === existing.id ? { ...r, issues: [...r.issues, newIssueForm] } : r));
+        }
+        const newReview: Review = {
+          id: `new-review-${loggedInUserId}`,
+          reviewerId: String(loggedInUserId),
+          reviewerName,
+          issues: [newIssueForm],
+          _versionId: versionId,
+        };
+        return [newReview, ...prev];
+      });
+
+      // 2) Optimistically update noteDetail.webhookVersions.smeIssues
+      setNoteDetail(prev => {
+        if (!prev) return prev;
+
+        const errorTypeOption = errorTypes.find(type => type.name === issueForm.errorType || type.displayName === issueForm.errorType);
+        const issueRelatedToOption = issueRelatedTo.find(
+          opt => opt.fieldId === issueForm.issueRelatedTo || opt.displayName === issueForm.issueRelatedTo,
+        );
+
+        const newSmeIssue: SMEIssue = {
+          id: response.id,
+          reviewerId: loggedInUserId,
+          versionId,
+          errorType: {
+            id: errorTypeOption?.id ?? 0,
+            name: errorTypeOption?.name,
+            displayName: errorTypeOption?.displayName,
+            points: errorTypeOption?.points ?? 0,
+          },
+          issuesRelatedTo: {
+            id: issueRelatedToOption?.id ?? 0,
+            name: issueRelatedToOption?.displayName,
+            displayName: issueRelatedToOption?.displayName,
+          },
+          description: issueForm.issueDescription,
+          issueDescription: undefined,
+          noteId: prev.id,
+          status: {
+            id: 1,
+            name: 'Open',
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const updatedWebhookVersions = (prev.webhookVersions || []).map(version => {
+          if (version.id !== versionId) return version;
+          return {
+            ...version,
+            smeIssues: [...(version.smeIssues || []), newSmeIssue],
+          };
+        });
+
+        return {
+          ...prev,
+          webhookVersions: updatedWebhookVersions,
+        };
+      });
+    },
+    [errorTypes, issueRelatedTo, loggedInUserId, user],
+  );
 
   if (loading) {
     return (
@@ -279,7 +360,17 @@ const SingleNoteAudit = () => {
           {/* Left Sidebar */}
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} />
-            <TherapySessionSummaryCard webhookVersions={noteDetail.webhookVersions} onVersionChange={setSelectedVersionId} />
+            <TherapySessionSummaryCard
+              webhookVersions={noteDetail.webhookVersions}
+              onVersionChange={setSelectedVersionId}
+              noteId={noteId}
+              versionId={selectedVersionId}
+              reviewerId={reviewerId ?? loggedInUserId}
+              practitionerId={practitionerId ?? 0}
+              aiStatusId={noteDetail.aiStatus?.id ?? 1}
+              priorityId={noteDetail.priority?.id ?? 1}
+              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+            />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
           </div>
 
@@ -296,6 +387,8 @@ const SingleNoteAudit = () => {
               }}
             />
             <SMEReview
+              reviews={reviews}
+              setReviews={setReviews}
               auditScore={noteDetail?.auditScore || 0}
               versionId={selectedVersionId}
               webhookVersions={noteDetail.webhookVersions || []}

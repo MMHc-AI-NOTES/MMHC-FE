@@ -119,10 +119,41 @@ export interface SMEIssuePayload {
   is_current_version: boolean;
 }
 
+/** Create SME issue from a description-mapping template (no error_type_id, issues_related_to_id, issue_description_id) */
+export interface CreateSMEIssueFromTemplatePayload {
+  note_id: string;
+  reviewer_id: number;
+  practitioner_id: number;
+  is_current_version: number;
+  version_id: number;
+  template_id: number;
+  ai_status: number;
+  priority: number;
+}
+
 /**
  * Create SME issue for a note
  */
 export const createSMEIssue = async (payload: SMEIssuePayload): Promise<any> => {
+  try {
+    const response = await axios.post('/sme-issues', payload);
+
+    if (response?.status) {
+      showToast.success('SME issue created successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+/**
+ * Create SME issue from a description-mapping template (template_id only; no error_type_id, issues_related_to_id, issue_description_id)
+ */
+export const createSMEIssueFromTemplate = async (payload: CreateSMEIssueFromTemplatePayload): Promise<any> => {
   try {
     const response = await axios.post('/sme-issues', payload);
 
