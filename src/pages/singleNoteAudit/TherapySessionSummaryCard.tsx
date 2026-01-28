@@ -17,6 +17,7 @@ import { setSMETemplates, setIssueRelatedTo, setIssueDescriptions } from '@/stor
 import { createSMEIssueFromTemplate } from './singleNoteApiCalls';
 import type { IssueForm } from './components/types';
 import type { SMETemplate } from '@/pages/settings/settingsApiCalls';
+import { UserRoleEnum } from '@/constants/common';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
@@ -43,7 +44,7 @@ const TherapySessionSummaryCard = ({
 }: TherapySessionSummaryCardProps) => {
   const dispatch = useDispatch();
   const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes } = useAppSelector(state => state.smeConfig);
-
+  const user = useAppSelector(state => state.auth.user);
   // State
   const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>('');
@@ -196,12 +197,17 @@ const TherapySessionSummaryCard = ({
     return match?.displayName ?? normalizeFieldKey(key);
   };
 
-  // Count issues for a specific field
+  // Count issues for a specific field (only for the logged-in reviewer)
   const getIssueCountForField = (fieldKey: string): number => {
     if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues)) return 0;
     const issueRelatedToId = getIssueRelatedToId(fieldKey);
     if (!issueRelatedToId) return 0;
-    return currentVersion.smeIssues.filter(issue => issue.issuesRelatedTo?.id === issueRelatedToId).length;
+
+    const loggedInUserId = user?.id;
+    if (!loggedInUserId) return 0;
+
+    return currentVersion.smeIssues.filter(issue => issue.issuesRelatedTo?.id === issueRelatedToId && issue.reviewerId === loggedInUserId)
+      .length;
   };
 
   // Get templates for a field
@@ -436,18 +442,22 @@ const TherapySessionSummaryCard = ({
                     </div>
                     {onSMEIssueCreatedFromTemplate && versionId && noteId && (
                       <div className="flex items-center gap-2">
-                        {issueCount > 0 && (
-                          <Badge className="bg-primary/10 text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">{issueCount}</Badge>
+                        {issueCount > 0 && UserRoleEnum.superAdmin !== user?.type && (
+                          <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">
+                            {issueCount}
+                          </Badge>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-primary hover:bg-primary/10 h-7 w-7"
-                          onClick={() => toggleFieldForm(key)}
-                          title="Add SME issue from template"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                        {UserRoleEnum.sme_reviewer === user?.type && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-primary hover:bg-primary/10 h-7 w-7"
+                            onClick={() => toggleFieldForm(key)}
+                            title="Add SME issue from template"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>

@@ -528,6 +528,7 @@ interface UsersListingApiData extends UsersListingMeta {
     fullName: string;
     email: string;
     type: UserRole;
+    hasCompletedOnboarding?: boolean;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -544,6 +545,7 @@ const mapApiUserToUser = (u: UsersListingApiData['data'][number]): User => ({
   fullName: u.fullName,
   email: u.email,
   type: u.type,
+  hasCompletedOnboarding: u.hasCompletedOnboarding,
   isActive: u.isActive,
   createdAt: u.createdAt,
   updatedAt: u.updatedAt,

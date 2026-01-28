@@ -132,7 +132,6 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
           </TableHeader>
           <TableBody>
             {notes.map(note => {
-              console.log('🚀 ~ ManagerTable ~ note:', note);
               const isSelected = selectedIds.includes(note.id.toString());
               return (
                 <TableRow key={note.id} className={`${isSelected ? 'bg-highlighted-row' : ''}`}>
