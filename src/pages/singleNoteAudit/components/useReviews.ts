@@ -18,6 +18,11 @@ interface UseReviewsProps {
   priorityId: number;
   practitionerId: number;
   webhookVersions: WebhookVersion[];
+  onSMEIssueUpdated?: (
+    versionId: number,
+    smeIssueId: number,
+    payload: { issueDescriptionId?: number; issueDescriptionText?: string },
+  ) => void;
 }
 
 export const useReviews = ({
@@ -32,6 +37,7 @@ export const useReviews = ({
   priorityId,
   practitionerId,
   webhookVersions,
+  onSMEIssueUpdated,
 }: UseReviewsProps) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
@@ -191,6 +197,14 @@ export const useReviews = ({
             ),
           );
           setActiveIssueForms(prev => prev.filter(form => !(form.reviewId === reviewId && form.issueId === issueId)));
+
+          // Sync noteDetail so Therapy Session Summary dropdown disables the new option immediately
+          if (onSMEIssueUpdated && versionId) {
+            onSMEIssueUpdated(versionId, smeIssueId, {
+              issueDescriptionId: descriptionId ?? undefined,
+              issueDescriptionText: values.issueDescription,
+            });
+          }
         } else if (versionId && !smeIssueId) {
           const response = await createSMEIssue(payload);
           if (!response?.id) return;
@@ -243,15 +257,16 @@ export const useReviews = ({
     [
       reviews,
       noteId,
-      versionId,
-      setReviews,
-      setActiveIssueForms,
+      loggedInUserId,
       setSavingIssueId,
+      versionId,
       aiStatusId,
       priorityId,
-      loggedInUserId,
       practitionerId,
       webhookVersions,
+      setReviews,
+      setActiveIssueForms,
+      onSMEIssueUpdated,
     ],
   );
 

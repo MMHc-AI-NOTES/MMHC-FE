@@ -260,33 +260,9 @@ const SingleNoteAudit = () => {
   const loggedInUserId = user?.id ?? null;
 
   const handleSMEIssueCreatedFromTemplate = useCallback(
-    (response: { id: number }, issueForm: IssueForm, versionId: number) => {
+    (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => {
       if (!loggedInUserId) return;
-      const reviewerName = user?.fullName?.trim() || user?.email || 'Unknown Reviewer';
-
-      // 1) Update local SME reviews panel
-      const newIssueForm: IssueForm = {
-        ...issueForm,
-        id: `version-issue-${response.id}`,
-        _smeIssueId: response.id,
-        _isVersionIssue: true,
-      };
-      setReviews(prev => {
-        const existing = prev.find(r => r.id === `new-review-${loggedInUserId}`);
-        if (existing) {
-          return prev.map(r => (r.id === existing.id ? { ...r, issues: [...r.issues, newIssueForm] } : r));
-        }
-        const newReview: Review = {
-          id: `new-review-${loggedInUserId}`,
-          reviewerId: String(loggedInUserId),
-          reviewerName,
-          issues: [newIssueForm],
-          _versionId: versionId,
-        };
-        return [newReview, ...prev];
-      });
-
-      // 2) Optimistically update noteDetail.webhookVersions.smeIssues
+      // Optimistically update noteDetail.webhookVersions.smeIssues (include issueDescription so dropdown disables immediately)
       setNoteDetail(prev => {
         if (!prev) return prev;
 
@@ -311,7 +287,7 @@ const SingleNoteAudit = () => {
             displayName: issueRelatedToOption?.displayName,
           },
           description: issueForm.issueDescription,
-          issueDescription: undefined,
+          issueDescription: descriptionId != null ? { id: descriptionId, description: issueForm.issueDescription ?? '' } : undefined,
           noteId: prev.id,
           status: {
             id: 1,
@@ -335,7 +311,64 @@ const SingleNoteAudit = () => {
         };
       });
     },
-    [errorTypes, issueRelatedTo, loggedInUserId, user],
+    [errorTypes, issueRelatedTo, loggedInUserId],
+  );
+
+  // Keep noteDetail.webhookVersions in sync when an SME issue or review is deleted
+  const onSMEIssueDeleted = useCallback((versionId: number, smeIssueId: number) => {
+    setNoteDetail(prev => {
+      if (!prev?.webhookVersions?.length) return prev;
+      return {
+        ...prev,
+        webhookVersions: prev.webhookVersions.map(v =>
+          v.id === versionId ? { ...v, smeIssues: (v.smeIssues || []).filter(i => i.id !== smeIssueId) } : v,
+        ),
+      };
+    });
+  }, []);
+
+  const onSMEReviewDeleted = useCallback((versionId: number | null, reviewerId: number) => {
+    setNoteDetail(prev => {
+      if (!prev?.webhookVersions?.length) return prev;
+      return {
+        ...prev,
+        webhookVersions: prev.webhookVersions.map(v =>
+          versionId === null || v.id === versionId ? { ...v, smeIssues: (v.smeIssues || []).filter(i => i.reviewerId !== reviewerId) } : v,
+        ),
+      };
+    });
+  }, []);
+
+  // Sync noteDetail when an SME issue is updated (e.g. description changed) so Therapy Session Summary dropdown disables immediately
+  const onSMEIssueUpdated = useCallback(
+    (versionId: number, smeIssueId: number, payload: { issueDescriptionId?: number; issueDescriptionText?: string }) => {
+      const { issueDescriptionId, issueDescriptionText } = payload;
+      setNoteDetail(prev => {
+        if (!prev?.webhookVersions?.length) return prev;
+        return {
+          ...prev,
+          webhookVersions: prev.webhookVersions.map(v => {
+            if (v.id !== versionId) return v;
+            return {
+              ...v,
+              smeIssues: (v.smeIssues || []).map(issue =>
+                issue.id === smeIssueId
+                  ? {
+                      ...issue,
+                      description: issueDescriptionText ?? issue.description,
+                      issueDescription:
+                        issueDescriptionId != null
+                          ? { id: issueDescriptionId, description: issueDescriptionText ?? issue.issueDescription?.description ?? '' }
+                          : issue.issueDescription,
+                    }
+                  : issue,
+              ),
+            };
+          }),
+        };
+      });
+    },
+    [],
   );
 
   if (loading) {
@@ -397,6 +430,9 @@ const SingleNoteAudit = () => {
               practitionerId={practitionerId || 0}
               reviewerId={reviewerId}
               isManagerReviewing={isManagerReviewing}
+              onSMEIssueDeleted={onSMEIssueDeleted}
+              onSMEReviewDeleted={onSMEReviewDeleted}
+              onSMEIssueUpdated={onSMEIssueUpdated}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (

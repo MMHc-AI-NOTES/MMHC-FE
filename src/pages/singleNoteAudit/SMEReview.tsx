@@ -25,6 +25,13 @@ interface SMEReviewProps {
   practitionerId: number;
   reviewerId?: number | null;
   isManagerReviewing?: boolean;
+  onSMEIssueDeleted?: (versionId: number, smeIssueId: number) => void;
+  onSMEReviewDeleted?: (versionId: number | null, reviewerId: number) => void;
+  onSMEIssueUpdated?: (
+    versionId: number,
+    smeIssueId: number,
+    payload: { issueDescriptionId?: number; issueDescriptionText?: string },
+  ) => void;
 }
 
 const SMEReview = ({
@@ -38,6 +45,9 @@ const SMEReview = ({
   practitionerId,
   reviewerId,
   isManagerReviewing = false,
+  onSMEIssueDeleted,
+  onSMEReviewDeleted,
+  onSMEIssueUpdated,
 }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
@@ -115,6 +125,7 @@ const SMEReview = ({
     priorityId,
     practitionerId,
     webhookVersions,
+    onSMEIssueUpdated,
   });
 
   // Check if user already has a review in the current selected version
@@ -175,6 +186,11 @@ const SMEReview = ({
       // Remove from local state on success
       setReviews(prev => prev.filter(r => r.id !== reviewToDelete));
       setActiveIssueForms(prev => prev.filter(form => form.reviewId !== reviewToDelete));
+
+      // Sync Therapy Session Summary counts (remove this reviewer's issues from webhookVersions)
+      if (reviewerIdNum != null && onSMEReviewDeleted) {
+        onSMEReviewDeleted(versionId ?? null, reviewerIdNum);
+      }
     } catch (error) {
       console.error('Error deleting review:', error);
       // Error is already handled by the API function (toast message)
@@ -186,9 +202,14 @@ const SMEReview = ({
   };
 
   const handleRemoveReview = (reviewId: string) => {
+    const review = reviews.find(r => r.id === reviewId);
     // Just remove from local state for new reviews (no API call needed)
     setReviews(prev => prev.filter(r => r.id !== reviewId));
     setActiveIssueForms(prev => prev.filter(form => form.reviewId !== reviewId));
+    // Sync Therapy Session Summary counts for optimistically added issues
+    if (review?.reviewerId != null && onSMEReviewDeleted && versionId != null) {
+      onSMEReviewDeleted(versionId, Number(review.reviewerId));
+    }
   };
 
   const handleDeleteIssueClick = (reviewId: string, issueId: string) => {
@@ -198,8 +219,19 @@ const SMEReview = ({
 
   const handleConfirmDeleteIssue = async () => {
     if (!issueToDelete) return;
+
+    const review = reviews.find(r => r.id === issueToDelete.reviewId);
+    const issue = review?.issues.find(i => i.id === issueToDelete.issueId);
+    const smeIssueId = issue?._smeIssueId;
+
     setIsDeletingIssue(true);
     await handleDeleteIssue(issueToDelete.reviewId, issueToDelete.issueId);
+
+    // Sync Therapy Session Summary count (remove this issue from webhookVersions)
+    if (smeIssueId != null && versionId != null && onSMEIssueDeleted) {
+      onSMEIssueDeleted(versionId, smeIssueId);
+    }
+
     setIsDeletingIssue(false);
     setIsDeleteIssueDialogOpen(false);
     setIssueToDelete(null);
