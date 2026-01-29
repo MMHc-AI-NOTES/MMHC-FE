@@ -119,6 +119,9 @@ export interface SMEIssuePayload {
   is_current_version: boolean;
 }
 
+/** Update payload: issue_description_id omitted for "overall" issues (they use comment) */
+export type UpdateSMEIssuePayload = Omit<SMEIssuePayload, 'issue_description_id'> & { issue_description_id?: number };
+
 /** Create SME issue from a description-mapping template (no error_type_id, issues_related_to_id, issue_description_id) */
 export interface CreateSMEIssueFromTemplatePayload {
   note_id: string;
@@ -127,6 +130,20 @@ export interface CreateSMEIssueFromTemplatePayload {
   is_current_version: number;
   version_id: number;
   template_id: number;
+  ai_status: number;
+  priority: number;
+}
+
+/** Create "overall" SME issue (error_type_id, issues_related_to_id for overall, comment; no template_id) */
+export interface CreateSMEIssueOverallPayload {
+  note_id: string;
+  reviewer_id: number;
+  practitioner_id: number;
+  is_current_version: number;
+  version_id: number;
+  error_type_id: number;
+  issues_related_to_id: number;
+  comment: string;
   ai_status: number;
   priority: number;
 }
@@ -170,9 +187,29 @@ export const createSMEIssueFromTemplate = async (payload: CreateSMEIssueFromTemp
 };
 
 /**
- * Update SME issue
+ * Create "overall" SME issue (error_type_id, issues_related_to_id, comment; no template_id)
  */
-export const updateSMEIssue = async (issueId: number, payload: SMEIssuePayload): Promise<any> => {
+export const createSMEIssueOverall = async (payload: CreateSMEIssueOverallPayload): Promise<any> => {
+  try {
+    const response = await axios.post('/sme-issues', payload);
+
+    if (response?.status) {
+      showToast.success('SME issue created successfully');
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+/**
+ * Update SME issue.
+ * Use UpdateSMEIssuePayload and omit issue_description_id for "overall" issues (they use comment).
+ */
+export const updateSMEIssue = async (issueId: number, payload: UpdateSMEIssuePayload): Promise<any> => {
   try {
     const response = await axios.patch(`/sme-issues/${issueId}`, payload);
 

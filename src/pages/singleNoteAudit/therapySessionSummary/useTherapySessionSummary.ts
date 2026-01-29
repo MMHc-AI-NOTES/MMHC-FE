@@ -5,7 +5,7 @@ import { WebhookVersion } from '@/types/notes';
 import { fetchSMETemplates, fetchIssueRelatedTo, fetchIssueDescriptions } from '@/pages/settings/settingsApiCalls';
 import { setSMETemplates, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import moment from 'moment';
-import { createSMEIssueFromTemplate } from '../singleNoteApiCalls';
+import { createSMEIssueFromTemplate, createSMEIssueOverall } from '../singleNoteApiCalls';
 import type { IssueForm } from '../components/types';
 import type { SMETemplate } from '@/pages/settings/settingsApiCalls';
 
@@ -48,8 +48,17 @@ export function useTherapySessionSummary({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [isOverallFormOpen, setIsOverallFormOpen] = useState(false);
+  const [overallErrorTypeId, setOverallErrorTypeId] = useState<number>(1);
+  const [overallComment, setOverallComment] = useState('');
+  const [isSavingOverall, setIsSavingOverall] = useState(false);
 
   const sortedVersions = useMemo(() => [...webhookVersions].sort((a, b) => b.id - a.id), [webhookVersions]);
+
+  const overallIssueRelatedToId = useMemo(() => {
+    const irt = issueRelatedTo?.find(opt => (opt.fieldId || '').toLowerCase() === 'overall');
+    return irt?.id ?? null;
+  }, [issueRelatedTo]);
 
   const currentVersion = sortedVersions[selectedVersionIndex];
   const previousVersion = selectedVersionIndex < sortedVersions.length - 1 ? sortedVersions[selectedVersionIndex + 1] : null;
@@ -145,6 +154,12 @@ export function useTherapySessionSummary({
     },
     [findIssueRelatedTo],
   );
+
+  const getIssueCountForOverall = useCallback((): number => {
+    if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues) || !user?.id || overallIssueRelatedToId == null) return 0;
+    return currentVersion.smeIssues.filter(issue => issue.issuesRelatedTo?.id === overallIssueRelatedToId && issue.reviewerId === user.id)
+      .length;
+  }, [currentVersion?.smeIssues, user?.id, overallIssueRelatedToId]);
 
   const getIssueCountForField = useCallback(
     (fieldKey: string): number => {
@@ -318,6 +333,68 @@ export function useTherapySessionSummary({
     setSelectedTemplateId('');
   }, []);
 
+  const openOverallForm = useCallback(() => setIsOverallFormOpen(true), []);
+  const closeOverallForm = useCallback(() => {
+    setIsOverallFormOpen(false);
+    setOverallComment('');
+  }, []);
+
+  const handleSaveOverallIssue = useCallback(async () => {
+    if (!noteId || !versionId || reviewerId == null || overallIssueRelatedToId == null || !onSMEIssueCreatedFromTemplate) return;
+    const revId = typeof reviewerId === 'number' ? reviewerId : null;
+    if (revId == null) return;
+
+    setIsSavingOverall(true);
+    try {
+      const isCurrentVersion = sortedVersions.length > 0 && sortedVersions[0].id === versionId;
+      const res = await createSMEIssueOverall({
+        note_id: noteId,
+        reviewer_id: revId,
+        practitioner_id: practitionerId,
+        is_current_version: isCurrentVersion ? 1 : 0,
+        version_id: versionId,
+        error_type_id: overallErrorTypeId,
+        issues_related_to_id: overallIssueRelatedToId,
+        comment: overallComment.trim(),
+        ai_status: aiStatusId,
+        priority: priorityId,
+      });
+      if (!res?.id) return;
+
+      const et = errorTypes.find(e => e.id === overallErrorTypeId);
+      const irt = issueRelatedTo.find(i => i.id === overallIssueRelatedToId);
+      const issueForm: IssueForm = {
+        id: `version-issue-${res.id}`,
+        errorType: et?.name ?? '',
+        issueRelatedTo: irt?.fieldId ?? 'overall',
+        issueDescription: overallComment.trim(),
+        _smeIssueId: res.id,
+        _isVersionIssue: true,
+      };
+      onSMEIssueCreatedFromTemplate(res, issueForm, versionId, undefined);
+      closeOverallForm();
+    } catch (e) {
+      console.error('Create overall SME issue:', e);
+    } finally {
+      setIsSavingOverall(false);
+    }
+  }, [
+    noteId,
+    versionId,
+    reviewerId,
+    overallIssueRelatedToId,
+    overallErrorTypeId,
+    overallComment,
+    practitionerId,
+    sortedVersions,
+    aiStatusId,
+    priorityId,
+    errorTypes,
+    issueRelatedTo,
+    onSMEIssueCreatedFromTemplate,
+    closeOverallForm,
+  ]);
+
   return {
     user,
     sortedVersions,
@@ -346,5 +423,17 @@ export function useTherapySessionSummary({
     handleSaveFromTemplate,
     closeTemplateForm,
     formatDate,
+    overallIssueRelatedToId,
+    getIssueCountForOverall,
+    isOverallFormOpen,
+    openOverallForm,
+    closeOverallForm,
+    overallErrorTypeId,
+    setOverallErrorTypeId,
+    overallComment,
+    setOverallComment,
+    isSavingOverall,
+    handleSaveOverallIssue,
+    errorTypes,
   };
 }

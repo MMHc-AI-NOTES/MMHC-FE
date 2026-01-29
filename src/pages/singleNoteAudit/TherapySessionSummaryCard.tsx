@@ -1,12 +1,15 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine, Flag } from 'lucide-react';
 import { WebhookVersion } from '@/types/notes';
 import type { IssueForm } from './components/types';
+import { UserRoleEnum } from '@/constants/common';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { VersionHistoryPopover } from './therapySessionSummary/VersionHistoryPopover';
 import { SessionFieldRow } from './therapySessionSummary/SessionFieldRow';
+import { OverallSummaryFlagForm } from './therapySessionSummary/OverallSummaryFlagForm';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
@@ -71,6 +74,18 @@ const TherapySessionSummaryCard = ({
     handleSaveFromTemplate,
     closeTemplateForm,
     formatDate,
+    overallIssueRelatedToId,
+    getIssueCountForOverall,
+    isOverallFormOpen,
+    openOverallForm,
+    closeOverallForm,
+    overallErrorTypeId,
+    setOverallErrorTypeId,
+    overallComment,
+    setOverallComment,
+    isSavingOverall,
+    handleSaveOverallIssue,
+    errorTypes,
   } = summary;
 
   useEffect(() => {
@@ -89,23 +104,58 @@ const TherapySessionSummaryCard = ({
   return (
     <Card className="gap-1">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-center justify-between xl:flex-row">
           <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
             <Stethoscope />
             Therapy Session Summary
           </CardTitle>
-          <VersionHistoryPopover
-            versions={sortedVersions}
-            selectedVersionIndex={selectedVersionIndex}
-            isOpen={isVersionHistoryOpen}
-            onOpenChange={setIsVersionHistoryOpen}
-            onVersionSelect={handleVersionSelect}
-            formatDate={formatDate}
-          />
+          <div className="flex items-center gap-2">
+            {Number(user?.type) === UserRoleEnum.sme_reviewer && overallIssueRelatedToId != null && (
+              <>
+                {getIssueCountForOverall() > 0 && Number(user?.type) !== UserRoleEnum.superAdmin && (
+                  <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">
+                    {getIssueCountForOverall()}
+                  </Badge>
+                )}
+                {getIssueCountForOverall() === 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-primary flex items-center gap-2 border"
+                    onClick={openOverallForm}
+                    title="Overall Summary Flag"
+                  >
+                    <Flag className="h-4 w-4" />
+                    Overall Summary Flag
+                  </Button>
+                )}
+              </>
+            )}
+            <VersionHistoryPopover
+              versions={sortedVersions}
+              selectedVersionIndex={selectedVersionIndex}
+              isOpen={isVersionHistoryOpen}
+              onOpenChange={setIsVersionHistoryOpen}
+              onVersionSelect={handleVersionSelect}
+              formatDate={formatDate}
+            />
+          </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {isOverallFormOpen && (
+          <OverallSummaryFlagForm
+            errorTypes={errorTypes ?? []}
+            selectedErrorTypeId={overallErrorTypeId}
+            onErrorTypeChange={setOverallErrorTypeId}
+            comment={overallComment}
+            onCommentChange={setOverallComment}
+            isSaving={isSavingOverall}
+            onSave={handleSaveOverallIssue}
+            onClose={closeOverallForm}
+          />
+        )}
         <div className="space-y-2">
           {isHistoricalVersion && (
             <div className="bg-orange-light border-orange-dark flex w-fit items-center gap-2 rounded-md border px-5 py-2.5">
