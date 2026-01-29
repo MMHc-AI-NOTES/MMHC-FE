@@ -102,9 +102,9 @@ const DescriptionMappingSection: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Error Type</TableHead>
-                    <TableHead>Issue Related To</TableHead>
-                    <TableHead>Issue Description</TableHead>
+                    <TableHead className="pl-3 text-left">Error Type</TableHead>
+                    <TableHead className="pl-3 text-left">Issue Related To</TableHead>
+                    <TableHead className="pl-3 text-left">Issue Description</TableHead>
                     <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -120,9 +120,9 @@ const DescriptionMappingSection: React.FC = () => {
                       const d = display(m);
                       return (
                         <TableRow key={m.id}>
-                          <TableCell>{d.errorType}</TableCell>
-                          <TableCell>{d.issueRelatedTo}</TableCell>
-                          <TableCell className="max-w-[320px] truncate">{d.issueDescription}</TableCell>
+                          <TableCell className="text-left">{d.errorType}</TableCell>
+                          <TableCell className="text-left">{d.issueRelatedTo}</TableCell>
+                          <TableCell className="max-w-[320px] truncate text-left">{d.issueDescription}</TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-2">
                               <Button variant="ghost" size="sm" onClick={() => handleEdit(m)} className="h-8 w-8 p-0">

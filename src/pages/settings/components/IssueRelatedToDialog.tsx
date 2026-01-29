@@ -12,7 +12,7 @@ interface IssueRelatedToDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (issue: { field_id: string; display_name: string }) => void;
-  editingIssue: IssueRelatedTo | null;
+  editingIssue?: IssueRelatedTo | null;
 }
 
 interface IssueRelatedToFormValues {

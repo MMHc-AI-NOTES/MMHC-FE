@@ -12,7 +12,7 @@ interface ErrorTypeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (errorType: { name: string; display_name: string; points: number }) => void;
-  editingErrorType: ErrorType | null;
+  editingErrorType?: ErrorType | null;
 }
 
 interface ErrorTypeFormValues {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Review, IssueForm, ActiveIssueForm } from './types';
-import { createSMEIssue, updateSMEIssue, deleteSMEIssue, SMEIssuePayload } from '../singleNoteApiCalls';
+import { createSMEIssue, updateSMEIssue, deleteSMEIssue, SMEIssuePayload, UpdateSMEIssuePayload } from '../singleNoteApiCalls';
 import { getErrorTypeId, getIssuesRelatedToId, getDescriptionId } from './reviewUtils';
 import { getState, useAppSelector, useAppDispatch } from '@/store/store';
 import { WebhookVersion } from '@/types/notes';
@@ -18,6 +18,11 @@ interface UseReviewsProps {
   priorityId: number;
   practitionerId: number;
   webhookVersions: WebhookVersion[];
+  onSMEIssueUpdated?: (
+    versionId: number,
+    smeIssueId: number,
+    payload: { issueDescriptionId?: number; issueDescriptionText?: string },
+  ) => void;
 }
 
 export const useReviews = ({
@@ -32,6 +37,7 @@ export const useReviews = ({
   priorityId,
   practitionerId,
   webhookVersions,
+  onSMEIssueUpdated,
 }: UseReviewsProps) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
@@ -156,7 +162,7 @@ export const useReviews = ({
           return sorted[0]?.id === versionId;
         })();
 
-        const payload: SMEIssuePayload = {
+        const basePayload: SMEIssuePayload = {
           note_id: noteId,
           reviewer_id: loggedInUserId,
           error_type_id: errorTypeId,
@@ -170,7 +176,22 @@ export const useReviews = ({
         };
         // If versionId exists, treat as version issue (create/update via API)
         if (versionId && smeIssueId) {
-          const response = await updateSMEIssue(smeIssueId, payload);
+          // Overall issues use comment, not issue_description_id; exclude it from update payload
+          const updatePayload: UpdateSMEIssuePayload =
+            values.issueRelatedTo === 'overall'
+              ? {
+                  note_id: basePayload.note_id,
+                  reviewer_id: basePayload.reviewer_id,
+                  error_type_id: basePayload.error_type_id,
+                  issues_related_to_id: basePayload.issues_related_to_id,
+                  version_id: basePayload.version_id,
+                  ai_status: basePayload.ai_status,
+                  priority: basePayload.priority,
+                  practitioner_id: basePayload.practitioner_id,
+                  is_current_version: basePayload.is_current_version,
+                }
+              : basePayload;
+          const response = await updateSMEIssue(smeIssueId, updatePayload);
           if (!response?.id) return;
 
           const issueData: IssueForm = {
@@ -191,8 +212,16 @@ export const useReviews = ({
             ),
           );
           setActiveIssueForms(prev => prev.filter(form => !(form.reviewId === reviewId && form.issueId === issueId)));
+
+          // Sync noteDetail so Therapy Session Summary dropdown disables the new option immediately
+          if (onSMEIssueUpdated && versionId) {
+            onSMEIssueUpdated(versionId, smeIssueId, {
+              issueDescriptionId: descriptionId ?? undefined,
+              issueDescriptionText: values.issueDescription,
+            });
+          }
         } else if (versionId && !smeIssueId) {
-          const response = await createSMEIssue(payload);
+          const response = await createSMEIssue(basePayload);
           if (!response?.id) return;
 
           const issueData: IssueForm = {
@@ -243,15 +272,16 @@ export const useReviews = ({
     [
       reviews,
       noteId,
-      versionId,
-      setReviews,
-      setActiveIssueForms,
+      loggedInUserId,
       setSavingIssueId,
+      versionId,
       aiStatusId,
       priorityId,
-      loggedInUserId,
       practitionerId,
       webhookVersions,
+      setReviews,
+      setActiveIssueForms,
+      onSMEIssueUpdated,
     ],
   );
 
