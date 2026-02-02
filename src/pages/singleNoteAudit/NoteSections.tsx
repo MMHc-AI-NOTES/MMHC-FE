@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertTriangle, MessageSquare, Eye, Target, Lightbulb, ListChecks, TrendingUp } from 'lucide-react';
+import { MessageSquare, Eye, Target, Lightbulb, ListChecks, TrendingUp } from 'lucide-react';
 
 const noteSections = [
   {
@@ -46,13 +46,13 @@ const noteSections = [
     extractkey: 'gm4p-1_progress',
     icon: TrendingUp,
   },
-  {
-    id: 'si-hi',
-    title: 'SI / HI',
-    code: 'lx3p-7',
-    extractkey: 'kxgx-7_&_kxgx-8_suicidality/homicidality',
-    icon: AlertTriangle,
-  },
+  // {
+  //   id: 'si-hi',
+  //   title: 'SI / HI',
+  //   code: 'lx3p-7',
+  //   extractkey: 'kxgx-7_&_kxgx-8_suicidality/homicidality',
+  //   icon: AlertTriangle,
+  // },
 ];
 
 interface NoteSectionsProps {
