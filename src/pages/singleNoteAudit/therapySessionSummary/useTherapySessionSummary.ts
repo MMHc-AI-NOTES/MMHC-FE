@@ -201,20 +201,27 @@ export function useTherapySessionSummary({
       const templates = getTemplatesForField(fieldKey);
       if (!templates?.length) return [];
       if (!issueDescriptions || !Array.isArray(issueDescriptions)) {
-        return templates.map(t => ({ value: t.id, label: `Template ${t.id}` }));
+        return templates.map(t => {
+          const errorType = errorTypes?.find(e => e.id === t.error_type_id);
+          const pointsStr = errorType?.points != null ? ` (${errorType.points} pts)` : '';
+          return { value: t.id, label: `Template ${t.id}${pointsStr}` };
+        });
       }
       const uniqueDescriptionIds = [...new Set(templates.map(t => t.issue_description_id).filter(id => id != null))];
       const matchingDescriptions = issueDescriptions.filter(desc => desc.id != null && uniqueDescriptionIds.includes(desc.id));
       return matchingDescriptions.map(desc => {
         const matchingTemplate = templates.find(t => t.issue_description_id === desc.id);
+        const errorType = errorTypes?.find(e => e.id === matchingTemplate?.error_type_id);
+        const pointsStr = errorType?.points != null ? ` (${errorType.points} pts)` : '';
+        const baseLabel = desc.description ?? `Description ${desc.id}`;
         return {
           value: matchingTemplate?.id ?? 0,
-          label: desc.description ?? `Description ${desc.id}`,
+          label: `${baseLabel}${pointsStr}`,
           descriptionId: desc.id ?? undefined,
         };
       });
     },
-    [getTemplatesForField, issueDescriptions],
+    [getTemplatesForField, issueDescriptions, errorTypes],
   );
 
   useEffect(() => {
