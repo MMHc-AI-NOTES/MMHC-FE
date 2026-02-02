@@ -183,7 +183,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </TooltipProvider>
                   </div>
                 </TableHead>
-                <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
+                <TableHead className="text-primary sticky right-0 z-10 bg-white text-center">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -270,7 +270,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                   </TooltipProvider>
                 </div>
               </TableHead>
-              <TableHead className="text-primary min-w-[100px] text-center font-semibold">Action</TableHead>
+              <TableHead className="text-primary sticky right-0 z-10 bg-white text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -305,18 +305,15 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     <span className="text-muted-foreground text-sm">-</span>
                   )}
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => onViewNote(note.id)}
-                      className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
-                    >
-                      Open
-                      <ArrowRight className="ml-1" />
-                    </Button>
-                  </div>
+                <TableCell className="border-border sticky right-0 z-10 bg-white">
+                  <Button
+                    variant="outline"
+                    onClick={() => onViewNote(note.id)}
+                    className="border-primary text-primary hover:bg-primary h-9 bg-transparent text-[13px] hover:text-white"
+                  >
+                    Open
+                    <ArrowRight />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
