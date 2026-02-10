@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Pencil, Trash2, X, User, Save } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
@@ -14,6 +15,10 @@ import ScoreComparison from './ScoreComparison';
 import { UserRoleEnum } from '@/constants/common';
 import { fetchUsersListingThunk, type UsersQuery } from '@/store/slices/usersSlice';
 import { assignToManager } from '../singleNoteApiCalls';
+
+type SaveIssueValues = Omit<LocalIssueFormValues, 'reviewerName'> & {
+  comment?: string;
+};
 
 interface ReviewCardProps {
   review: Review;
@@ -25,7 +30,7 @@ interface ReviewCardProps {
   practitionerId?: number;
   priorityId?: number;
   onDeleteIssue: (reviewId: string, issueId: string) => void;
-  onSaveIssue: (reviewId: string, issueId: string, values: Omit<LocalIssueFormValues, 'reviewerName'>) => void;
+  onSaveIssue: (reviewId: string, issueId: string, values: SaveIssueValues) => void;
   onCancelEdit: (reviewId: string, issueId: string) => void;
   onDeleteReview: (reviewId: string) => void;
   onRemoveReview?: (reviewId: string) => void;
@@ -61,6 +66,7 @@ const ReviewCard = ({
   const [editingIssueId, setEditingIssueId] = useState<string | null>(null);
   const [selectedDescriptionId, setSelectedDescriptionId] = useState<number | ''>('');
   const [isSavingDescription, setIsSavingDescription] = useState(false);
+  const [editingIssueComment, setEditingIssueComment] = useState<string>('');
 
   // State for overall-issue edit form (when editing an issue with issueRelatedTo === 'overall')
   const [overallEditForm, setOverallEditForm] = useState<{ issueId: string; errorTypeId: number; comment: string } | null>(null);
@@ -192,11 +198,13 @@ const ReviewCard = ({
     // Find current description ID if it exists
     const currentDesc = issueDescriptions.find(d => d.description === issue.issueDescription);
     setSelectedDescriptionId(currentDesc?.id ?? '');
+    setEditingIssueComment(issue.comment ?? '');
   };
 
   const handleCancelEditInline = () => {
     setEditingIssueId(null);
     setSelectedDescriptionId('');
+    setEditingIssueComment('');
   };
 
   const handleSaveDescription = async (issue: IssueForm) => {
@@ -210,10 +218,11 @@ const ReviewCard = ({
         return;
       }
 
-      // Update the issue with new description
+      // Update the issue with new description/comment
       const updatedIssue: IssueForm = {
         ...issue,
         issueDescription: selectedDescription.description,
+        comment: editingIssueComment,
       };
 
       // Wait for API to complete before closing the form
@@ -221,10 +230,12 @@ const ReviewCard = ({
         errorType: updatedIssue.errorType,
         issueRelatedTo: updatedIssue.issueRelatedTo,
         issueDescription: updatedIssue.issueDescription,
+        comment: editingIssueComment,
       });
 
       setEditingIssueId(null);
       setSelectedDescriptionId('');
+      setEditingIssueComment('');
     } catch (error) {
       console.error('Error saving description:', error);
     } finally {
@@ -417,6 +428,11 @@ const ReviewCard = ({
                       <p className="mt-1 text-xs leading-relaxed text-gray-600">
                         <span className="font-medium">Description:</span> {savedIssue.issueDescription}
                       </p>
+                      {savedIssue.comment && savedIssue.comment.trim() !== '' && (
+                        <p className="mt-2 rounded-xs border-l-3 border-gray-400 bg-gray-200 p-2 text-xs leading-relaxed text-gray-700">
+                          {savedIssue.comment}
+                        </p>
+                      )}
                     </div>
                     {/* Inline edit form for description */}
                     {editingIssueId === savedIssue.id &&
@@ -470,6 +486,8 @@ const ReviewCard = ({
                               errorType: errorTypeName,
                               issueRelatedTo: 'overall',
                               issueDescription: values.issueDescription,
+                              // For overall issues, treat issueDescription as the comment text
+                              comment: values.issueDescription,
                             });
                             setOverallEditForm(null);
                             handleCancelEditInline();
@@ -495,6 +513,15 @@ const ReviewCard = ({
                                   ))}
                                 </SelectContent>
                               </Select>
+                            </div>
+                            <div>
+                              <Label>Comment (Optional)</Label>
+                              <Textarea
+                                className="mt-1 min-h-[80px] w-full"
+                                placeholder="Add additional notes or context about this issue..."
+                                value={editingIssueComment}
+                                onChange={e => setEditingIssueComment(e.target.value)}
+                              />
                             </div>
                             <div className="flex items-center justify-end gap-2">
                               <Button variant="outline" onClick={handleCancelEditInline} disabled={isSavingDescription}>

@@ -81,11 +81,14 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
       const descriptionText =
         typeof rawDescription === 'string' ? rawDescription : (rawDescription as { id: string; name: string })?.name || '';
 
+      const comment: string = (issue as any)?.comment ?? '';
+
       grouped[reviewerId].push({
         id: `version-issue-${issue.id}`,
         errorType: errorTypeValue,
         issueRelatedTo: issuesRelatedToId,
         issueDescription: descriptionText,
+        comment,
         _smeIssueId: issue.id,
         _isVersionIssue: true,
       });

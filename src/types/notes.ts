@@ -181,6 +181,8 @@ export interface SMEIssue {
   // Backend may send `description` as string or { id, name }, older responses used `issueDescription.description`
   description?: string | { id: string; name: string };
   issueDescription?: { id: number; description: string };
+  /** Optional free-text comment for this SME issue */
+  comment?: string;
   noteId: string;
   status: {
     id: number;

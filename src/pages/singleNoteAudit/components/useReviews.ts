@@ -136,7 +136,11 @@ export const useReviews = ({
   );
 
   const handleSaveIssue = useCallback(
-    async (reviewId: string, issueId: string, values: { errorType: string; issueRelatedTo: string; issueDescription: string }) => {
+    async (
+      reviewId: string,
+      issueId: string,
+      values: { errorType: string; issueRelatedTo: string; issueDescription: string; comment?: string },
+    ) => {
       const review = reviews.find(r => r.id === reviewId);
       if (!review || !noteId || !loggedInUserId) return;
 
@@ -154,6 +158,7 @@ export const useReviews = ({
         const errorTypeId = getErrorTypeId(values.errorType, errorTypes);
         const issuesRelatedToId = getIssuesRelatedToId(values.issueRelatedTo, issueRelatedTo);
         const descriptionId = getDescriptionId(values.issueDescription, issueDescriptions);
+        const comment = values.comment;
 
         // Determine if the version is current (latest version)
         const isCurrentVersion = (() => {
@@ -173,6 +178,7 @@ export const useReviews = ({
           priority: priorityId,
           practitioner_id: practitionerId,
           is_current_version: isCurrentVersion,
+          comment,
         };
         // If versionId exists, treat as version issue (create/update via API)
         if (versionId && smeIssueId) {
@@ -189,6 +195,7 @@ export const useReviews = ({
                   priority: basePayload.priority,
                   practitioner_id: basePayload.practitioner_id,
                   is_current_version: basePayload.is_current_version,
+                  comment: values.issueDescription,
                 }
               : basePayload;
           const response = await updateSMEIssue(smeIssueId, updatePayload);
@@ -197,6 +204,7 @@ export const useReviews = ({
           const issueData: IssueForm = {
             id: issueId,
             ...values,
+            comment: comment,
             _smeIssueId: smeIssueId,
             _isVersionIssue: true,
           };
@@ -227,6 +235,7 @@ export const useReviews = ({
           const issueData: IssueForm = {
             id: issueId,
             ...values,
+            comment: comment,
             _smeIssueId: response?.id || issueId,
             _isVersionIssue: true,
           };
@@ -249,6 +258,7 @@ export const useReviews = ({
           const issueData: IssueForm = {
             id: issueId,
             ...values,
+            comment: comment,
           };
 
           setReviews(prev =>

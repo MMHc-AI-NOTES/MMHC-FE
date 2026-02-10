@@ -21,7 +21,7 @@ interface SessionFieldRowProps {
   showSMEActions: boolean;
   onToggleForm: (fieldKey: string) => void;
   onTemplateChange: (value: number | '') => void;
-  onSave: (fieldKey: string) => void;
+  onSave: (fieldKey: string, comment?: string) => void;
   onCloseForm: () => void;
 }
 
