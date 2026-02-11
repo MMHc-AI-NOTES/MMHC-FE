@@ -84,18 +84,18 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent aria-describedby="">
+      <DialogContent aria-describedby="" className="max-w-lg overflow-hidden">
         <DialogHeader>
           <DialogTitle>{editingMapping ? 'Edit Description Mapping' : 'Add Description Mapping'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={formik.handleSubmit} className="space-y-4 py-4">
-          <div>
+        <form onSubmit={formik.handleSubmit} className="min-w-0 space-y-4 py-4">
+          <div className="min-w-0">
             <Label htmlFor="error-type">Error Type *</Label>
             <Select
               value={formik.values.error_type_id === '' ? '' : String(formik.values.error_type_id)}
               onValueChange={setId('error_type_id')}
             >
-              <SelectTrigger id="error-type" className="mt-1 w-full">
+              <SelectTrigger id="error-type" className="mt-1 w-full max-w-full min-w-0">
                 <SelectValue placeholder="Select error type" />
               </SelectTrigger>
               <SelectContent>
@@ -110,13 +110,13 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
               <p className="mt-1 text-xs text-red-600">{formik.errors.error_type_id}</p>
             )}
           </div>
-          <div>
+          <div className="min-w-0">
             <Label htmlFor="issue-related-to">Issue Related To *</Label>
             <Select
               value={formik.values.issues_related_to_id === '' ? '' : String(formik.values.issues_related_to_id)}
               onValueChange={setId('issues_related_to_id')}
             >
-              <SelectTrigger id="issue-related-to" className="mt-1 w-full">
+              <SelectTrigger id="issue-related-to" className="mt-1 w-full max-w-full min-w-0">
                 <SelectValue placeholder="Select issue related to" />
               </SelectTrigger>
               <SelectContent>
@@ -131,14 +131,14 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
               <p className="mt-1 text-xs text-red-600">{formik.errors.issues_related_to_id}</p>
             )}
           </div>
-          <div>
+          <div className="min-w-0">
             <Label htmlFor="issue-description">Issue Description *</Label>
             <Select
               value={formik.values.issue_description_id === '' ? '' : String(formik.values.issue_description_id)}
               onValueChange={setId('issue_description_id')}
             >
-              <SelectTrigger id="issue-description" className="mt-1 w-full">
-                <SelectValue placeholder="Select issue description" className="line-clamp-2" />
+              <SelectTrigger id="issue-description" className="mt-1 w-full max-w-full min-w-0">
+                <SelectValue placeholder="Select issue description" />
               </SelectTrigger>
               <SelectContent className="max-w-lg">
                 {issueDescriptionOptions.map(d => (
