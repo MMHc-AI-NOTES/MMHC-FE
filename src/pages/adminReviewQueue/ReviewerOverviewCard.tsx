@@ -1,4 +1,4 @@
-// @/pages/humanReviewQueue/ReviewerOverviewCard.tsx
+// @/pages/adminReviewQueue/ReviewerOverviewCard.tsx
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, AlertTriangle, Clock, TrendingUp } from 'lucide-react';

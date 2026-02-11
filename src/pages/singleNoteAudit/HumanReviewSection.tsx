@@ -7,9 +7,6 @@ import { Check, Save, UserCheck, X, CircleHelp, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { submitHumanReview, updateHumanReview } from './singleNoteApiCalls';
-import { useDispatch } from 'react-redux';
-import { fetchPractitioners } from '../notesQueue/notesApiCalls';
-import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { cn } from '@/lib/utils';
 import { HumanReview } from '@/types/notes';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,8 +34,7 @@ const HumanReviewSection = ({
   humanReview,
   isEditMode = false,
 }: HumanReviewSectionProps) => {
-  const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
-  const dispatch = useDispatch();
+  const { practitioners } = useAppSelector(state => state.filterOptions);
 
   const [decision, setDecision] = useState<string>('');
   const [reviewerName, setReviewerName] = useState<string>('');
@@ -73,19 +69,6 @@ const HumanReviewSection = ({
       }
     }
   }, [isEditMode, humanReview]);
-
-  useEffect(() => {
-    const loadPractitioners = async () => {
-      if (practitionersLoaded) return; // Skip if already loaded
-      try {
-        const practitionersData = await fetchPractitioners();
-        dispatch(setPractitioners(practitionersData));
-      } catch (error) {
-        console.error('Error loading practitioners:', error);
-      }
-    };
-    loadPractitioners();
-  }, [practitionersLoaded, dispatch]);
 
   const handleManualScoreChange = (value: string) => {
     // Allow empty, PASS, FAIL, or numeric values 0-100
@@ -146,7 +129,7 @@ const HumanReviewSection = ({
           <div className="flex items-center gap-2">
             <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
               <UserCheck />
-              {isEditMode ? 'Edit Human Review' : 'Human Review'}
+              {isEditMode ? 'Edit Admin Review' : 'Admin Review'}
             </CardTitle>
             <TooltipProvider>
               <Tooltip>
@@ -327,7 +310,7 @@ const HumanReviewSection = ({
           </Button>
           <Button className="bg-gradient-light text-primary h-12" onClick={handleSubmitReview} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : <Check />}
-            {isEditMode ? 'Update Human Review' : 'Submit Human Review'}
+            {isEditMode ? 'Update Admin Review' : 'Submit Admin Review'}
           </Button>
         </div>
       </CardContent>

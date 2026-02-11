@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { FormikProps } from 'formik';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -43,32 +43,49 @@ const SliderField: React.FC<SliderFieldProps> = ({
     return Number(num.toFixed(decimals)).toString();
   };
 
-  // Generate a compact set of tick markers (max 5) to avoid overlap
+  // Generate a compact set of tick markers to avoid overlap
   const generateSteps = () => {
     if (!showSteps) return null;
 
-    const maxTicks = 5;
+    const maxTicks = 11; // Increased to 11 to accommodate common cases like 0-1 with step 0.1
     const range = max - min;
     const possibleSteps = Math.floor(range / step) + 1;
 
     const ticks: number[] = [];
     if (possibleSteps <= maxTicks) {
       // show all discrete steps
-      for (let i = min; i <= max; i += step) {
+      let current = min;
+      while (current <= max + step / 1000) {
         // avoid floating point accumulation errors
-        ticks.push(Number(i.toFixed(8)));
+        const rounded = Number(current.toFixed(8));
+        if (rounded <= max) {
+          ticks.push(rounded);
+        }
+        current += step;
+      }
+      // Ensure max is always included
+      if (ticks.length === 0 || ticks[ticks.length - 1] < max) {
+        ticks.push(max);
       }
     } else {
-      // show evenly spaced ticks (min, 25%, 50%, 75%, max)
+      // show evenly spaced ticks, but round to nearest step value
       for (let i = 0; i < maxTicks; i++) {
         const ratio = i / (maxTicks - 1);
-        ticks.push(Number((min + ratio * range).toFixed(8)));
+        const rawValue = min + ratio * range;
+        // Round to nearest step value
+        const roundedValue = Math.round(rawValue / step) * step;
+        // Clamp to min/max bounds
+        const clampedValue = Math.max(min, Math.min(max, roundedValue));
+        ticks.push(Number(clampedValue.toFixed(8)));
       }
     }
 
+    // Remove duplicates and sort
+    const uniqueTicks = Array.from(new Set(ticks)).sort((a, b) => a - b);
+
     return (
-      <div className="mt-2 flex justify-between text-xs text-gray-500">
-        {ticks.map(t => (
+      <div className="mt-2 flex justify-between px-1 text-xs text-gray-500">
+        {uniqueTicks.map(t => (
           <span key={t} className="whitespace-nowrap">
             {formatNumber(t)}
           </span>
@@ -77,7 +94,44 @@ const SliderField: React.FC<SliderFieldProps> = ({
     );
   };
 
-  const displayValue = formatNumber(value as number);
+  // Ensure value is within bounds and properly rounded to step
+  // Use useMemo to ensure consistent calculation
+  const finalValue = useMemo(() => {
+    const numValue = value as number;
+    if (isNaN(numValue) || numValue === null || numValue === undefined) {
+      return min;
+    }
+    const clampedValue = Math.max(min, Math.min(max, numValue));
+    // Round to nearest step with proper handling of floating point
+    const roundedValue = Math.round(clampedValue / step) * step;
+    // Ensure we don't exceed bounds due to rounding
+    const boundedValue = Math.max(min, Math.min(max, roundedValue));
+    return Number(boundedValue.toFixed(getDecimalPlaces(step)));
+  }, [value, min, max, step]);
+
+  // Use the rounded value for display to ensure consistency
+  const displayValue = formatNumber(finalValue);
+
+  // Sync formik value to rounded value if they don't match (but avoid infinite loops)
+  const isUpdatingRef = useRef(false);
+  const lastSyncedValueRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isUpdatingRef.current) {
+      isUpdatingRef.current = false;
+      return;
+    }
+
+    const currentValue = value as number;
+    const tolerance = step / 10000; // Very small tolerance to account for floating point errors
+
+    // Only sync if value changed and doesn't match rounded value, and we haven't synced this value before
+    if (lastSyncedValueRef.current !== currentValue && Math.abs(currentValue - finalValue) > tolerance) {
+      isUpdatingRef.current = true;
+      lastSyncedValueRef.current = finalValue;
+      formik.setFieldValue(id, finalValue, false);
+    }
+  }, [id, value, finalValue, step, formik]);
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -93,8 +147,13 @@ const SliderField: React.FC<SliderFieldProps> = ({
         min={min}
         max={max}
         step={step}
-        value={[value]}
-        onValueChange={newValue => formik.setFieldValue(id, newValue[0])}
+        value={[finalValue]}
+        onValueChange={newValue => {
+          const rounded = Math.round(newValue[0] / step) * step;
+          const clamped = Math.max(min, Math.min(max, rounded));
+          const normalizedValue = Number(clamped.toFixed(getDecimalPlaces(step)));
+          formik.setFieldValue(id, normalizedValue);
+        }}
         className="w-full"
       />
 

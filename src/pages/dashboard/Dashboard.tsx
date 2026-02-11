@@ -11,8 +11,15 @@ import DashboardSkeleton from './DashboardSkeleton';
 import DashboardCardHeader from './DashboardCardHeader';
 import { Activity, Clock, Settings, Users, Zap } from 'lucide-react';
 import DashboardHeader from './DashboardHeader';
+import { fetchAgents } from '@/pages/settings/settingsApiCalls';
+import { useAppSelector } from '@/store/store';
+import { setAgents } from '@/store/slices/agentsSlice';
+import { useAppDispatch } from '@/store/store';
+import type { Agent } from '@/types/agent';
 
 const Dashboard = () => {
+  const dispatch = useAppDispatch();
+  const { agents } = useAppSelector(state => state.agents);
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,6 +39,19 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
+  useEffect(() => {
+    const loadAgents = async () => {
+      const agentsData = await fetchAgents();
+      if (agentsData) {
+        dispatch(setAgents(agentsData));
+      }
+    };
+
+    if (agents.length === 0) {
+      loadAgents();
+    }
+  }, [dispatch, agents.length]);
+
   if (loading) {
     return <DashboardSkeleton />;
   }
@@ -46,13 +66,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader count={2} />
+      <DashboardHeader count={0} />
       {/* Stats Card */}
       <StatsCard
         notesAuditedToday={dashboardData.notesAuditedToday}
-        weeklyGrowth={15} // Example data - you can add this to your API response
-        activePractitioners={24} // Example data
-        criticalIssues={10} // Example data
+        weeklyGrowth={0} // Example data - you can add this to your API response
+        activePractitioners={0} // Example data
+        criticalIssues={0} // Example data
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -69,11 +89,32 @@ const Dashboard = () => {
 
         <Card className="gap-2">
           <CardHeader>
-            <DashboardCardHeader title="Model & Rules Version" icon={Settings} isIconBg />
+            <DashboardCardHeader title="Default Agent" icon={Settings} isIconBg />
           </CardHeader>
           <CardContent>
-            <p className="text-primary text-3xl font-semibold"> Model v1.4 • Rules v1.0</p>
-            <p className="mt-2 text-gray-400">Last updated 2 days ago</p>
+            {(() => {
+              const defaultAgent = agents.find((agent: Agent) => agent.is_default === 1) || agents[0];
+              if (defaultAgent) {
+                return (
+                  <>
+                    <p className="text-primary text-3xl font-semibold">{defaultAgent.name}</p>
+                    <p className="mt-2 text-gray-400">
+                      {defaultAgent.updated_at
+                        ? `Last updated ${new Date(defaultAgent.updated_at).toLocaleDateString()}`
+                        : defaultAgent.created_at
+                          ? `Created ${new Date(defaultAgent.created_at).toLocaleDateString()}`
+                          : 'Default agent'}
+                    </p>
+                  </>
+                );
+              }
+              return (
+                <>
+                  <p className="text-primary text-3xl font-semibold">Model v1.4 • Rules v1.0</p>
+                  <p className="mt-2 text-gray-400">Last updated 2 days ago</p>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
 
@@ -105,7 +146,7 @@ const Dashboard = () => {
             <DashboardCardHeader title="Recent Activity" icon={Clock} />
           </CardHeader>
           <CardContent>
-            <RecentActivity activities={dashboardData.recentActivities} />
+            <RecentActivity activities={[]} />
           </CardContent>
         </Card>
 

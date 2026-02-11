@@ -1,28 +1,34 @@
-// @/pages/humanReviewQueue/HumanReviewQueue.tsx
+// @/pages/adminReviewQueue/AdminReviewQueue.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HumanReviewTable } from './HumanReviewTable';
+import { AdminReviewTable } from './AdminReviewTable';
 import { DataTablePagination } from '@/shared/DataTablePagination';
-import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
-import { fetchHumanReviewNotes, fetchReviewerOverview, fetchQueueStatus } from './humanReviewApiCalls';
+import {
+  HumanReviewNote,
+  // ReviewerOverview, QueueStatus
+} from '@/types/notes';
+import {
+  fetchHumanReviewNotes,
+  // fetchReviewerOverview, fetchQueueStatus
+} from './adminReviewApiCalls';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ReviewerOverviewCard } from './ReviewerOverviewCard';
-import { QueueStatusCard } from './QueueStatusCard';
+// import { ReviewerOverviewCard } from './ReviewerOverviewCard';
+// import { QueueStatusCard } from './QueueStatusCard';
 import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { HumanReviewColorKey } from './HumanReviewColorKey';
+import { AdminReviewColorKey } from './AdminReviewColorKey';
 import { FiltersSection } from './FiltersSection';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 
-const HumanReviewQueue = () => {
+const AdminReviewQueue = () => {
   const [notes, setNotes] = useState<HumanReviewNote[]>([]);
   const [notesLoading, setNotesLoading] = useState(true);
-  const [overviewLoading, setOverviewLoading] = useState(true);
-  const [queueStatusLoading, setQueueStatusLoading] = useState(true);
-  const [reviewerOverview, setReviewerOverview] = useState<ReviewerOverview | null>(null);
-  const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
+  // const [overviewLoading, setOverviewLoading] = useState(true);
+  // const [queueStatusLoading, setQueueStatusLoading] = useState(true);
+  // const [reviewerOverview, setReviewerOverview] = useState<ReviewerOverview | null>(null);
+  // const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,7 +37,7 @@ const HumanReviewQueue = () => {
 
   // Filter states with persistence
   const defaultFilters = { status: 'all', priority: 'all', reviewer: 'all', search: '' };
-  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('humanReviewQueueFilters', defaultFilters);
+  const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('adminReviewQueueFilters', defaultFilters);
 
   const navigate = useNavigate();
 
@@ -62,38 +68,38 @@ const HumanReviewQueue = () => {
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
   };
 
-  // Load initial data
-  useEffect(() => {
-    // Fetch reviewer overview
-    const loadReviewerOverview = async () => {
-      try {
-        setOverviewLoading(true);
-        const overviewData = await fetchReviewerOverview();
-        setReviewerOverview(overviewData);
-      } catch (error) {
-        console.error('Error loading reviewer overview:', error);
-      } finally {
-        setOverviewLoading(false);
-      }
-    };
+  // // Load initial data
+  // useEffect(() => {
+  //   // Fetch reviewer overview
+  //   const loadReviewerOverview = async () => {
+  //     try {
+  //       // setOverviewLoading(true);
+  //       const overviewData = await fetchReviewerOverview();
+  //       setReviewerOverview(overviewData);
+  //     } catch (error) {
+  //       console.error('Error loading reviewer overview:', error);
+  //     } finally {
+  //       // setOverviewLoading(false);
+  //     }
+  //   };
 
-    // Fetch queue status
-    const loadQueueStatus = async () => {
-      try {
-        setQueueStatusLoading(true);
-        const queueStatusData = await fetchQueueStatus();
-        setQueueStatus(queueStatusData);
-      } catch (error) {
-        console.error('Error loading queue status:', error);
-      } finally {
-        setQueueStatusLoading(false);
-      }
-    };
+  //   // Fetch queue status
+  //   const loadQueueStatus = async () => {
+  //     try {
+  //       // setQueueStatusLoading(true);
+  //       const queueStatusData = await fetchQueueStatus();
+  //       setQueueStatus(queueStatusData);
+  //     } catch (error) {
+  //       console.error('Error loading queue status:', error);
+  //     } finally {
+  //       // setQueueStatusLoading(false);
+  //     }
+  //   };
 
-    // Run non-note fetches in parallel
-    loadReviewerOverview();
-    loadQueueStatus();
-  }, []);
+  //   // Run non-note fetches in parallel
+  //   loadReviewerOverview();
+  //   loadQueueStatus();
+  // }, []);
 
   // Load notes - apply saved filters if they exist
   useEffect(() => {
@@ -203,15 +209,15 @@ const HumanReviewQueue = () => {
   };
 
   const handleReviewNote = (noteId: string) => {
-    navigate(`/human-review-queue/single-note-audit/${noteId}`, {
-      state: { from: 'human-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
+    navigate(`/admin-review-queue/single-note-audit/${noteId}`, {
+      state: { from: 'admin-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
     });
   };
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Left Column: Table with Filters */}
-      <div className="space-y-6 lg:col-span-9">
+      <div className="space-y-6 lg:col-span-12">
         <Card className="p-6">
           {/* Filters Section */}
           <FiltersSection
@@ -227,7 +233,7 @@ const HumanReviewQueue = () => {
           <div>
             <div className="mb-4 flex items-center justify-between px-6">
               <div>
-                <h3 className="text-primary text-lg font-semibold">Pending Human Reviews</h3>
+                <h3 className="text-primary text-lg font-semibold">Pending Admin Reviews</h3>
                 <p className="text-muted-foreground text-sm">{notes.length} notes requiring review</p>
               </div>
               <Popover>
@@ -238,7 +244,7 @@ const HumanReviewQueue = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
-                  <HumanReviewColorKey />
+                  <AdminReviewColorKey />
                 </PopoverContent>
               </Popover>
             </div>
@@ -255,7 +261,7 @@ const HumanReviewQueue = () => {
               </div>
             ) : (
               <>
-                <HumanReviewTable notes={notes} onReviewNote={handleReviewNote} />
+                <AdminReviewTable notes={notes} onReviewNote={handleReviewNote} />
 
                 {/* Pagination */}
                 {notes.length > 0 && (
@@ -281,12 +287,12 @@ const HumanReviewQueue = () => {
       </div>
 
       {/* Right Column: Overview Cards */}
-      <div className="space-y-6 lg:col-span-3">
+      {/* <div className="space-y-6 lg:col-span-3">
         <ReviewerOverviewCard data={reviewerOverview} loading={overviewLoading} />
         <QueueStatusCard data={queueStatus} loading={queueStatusLoading} />
-      </div>
+      </div> */}
     </div>
   );
 };
 
-export default HumanReviewQueue;
+export default AdminReviewQueue;

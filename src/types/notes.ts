@@ -100,6 +100,7 @@ export interface NoteDetail {
     description: string;
     sectionId: string;
   }[];
+  webhookVersions: WebhookVersion[];
 }
 
 export interface NoteSection {
@@ -162,6 +163,42 @@ export interface Practitioner {
   updatedAt: string;
 }
 
+export interface SMEIssue {
+  id: number;
+  reviewerId: number;
+  versionId: number;
+  errorType: {
+    id: number;
+    name?: string;
+    displayName?: string;
+    points: number;
+  };
+  issuesRelatedTo: {
+    id: number;
+    name?: string;
+    displayName?: string;
+  };
+  // Backend may send `description` as string or { id, name }, older responses used `issueDescription.description`
+  description?: string | { id: string; name: string };
+  issueDescription?: { id: number; description: string };
+  noteId: string;
+  status: {
+    id: number;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookVersion {
+  id: number;
+  noteId: string;
+  sessionJson: string;
+  createdAt: string;
+  updatedAt: string;
+  smeIssues: SMEIssue[];
+}
+
 export interface ApiNoteDetail {
   id: number;
   chat_count: number;
@@ -182,6 +219,7 @@ export interface ApiNoteDetail {
   practitioner: Practitioner; // Object type
   chats: Chat[];
   humanReview: HumanReview[] | null;
+  webhookVersions: WebhookVersion[];
 }
 
 // Queue Overview Data
@@ -218,7 +256,7 @@ export interface CptCodeOption {
   code: string;
 }
 
-// Human Review Queue Types
+// Admin Review Queue Types
 export interface HumanReviewNote {
   id: string;
   chatId: number;

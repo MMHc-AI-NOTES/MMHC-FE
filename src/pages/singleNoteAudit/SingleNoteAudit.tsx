@@ -3,28 +3,35 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, Stethoscope, UserRoundCog, UserRoundPen } from 'lucide-react';
+import { ArrowLeft, MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen } from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
 import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
+import SMEReview from './SMEReview';
 import ActionButtons from './ActionButtons';
-import HumanReviewSection from './HumanReviewSection';
+// import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
 import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail, Chat } from '@/types/notes';
+import { NoteDetail, ApiNoteDetail, Chat, SMEIssue } from '@/types/notes';
 import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
+import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import ModelInformation from './ModelInformation';
 import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
+import { fetchPractitioners } from '../notesQueue/notesApiCalls';
+import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
+import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
+import type { Review, IssueForm } from './components/types';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
@@ -87,6 +94,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     aiStatus: apiData.aiStatus,
     priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
+    webhookVersions: apiData.webhookVersions || [],
   };
 };
 
@@ -97,7 +105,13 @@ const SingleNoteAudit = () => {
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId } = useAppSelector(state => state.agents);
+  const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded, errorTypes, issueRelatedTo } = useAppSelector(
+    state => state.smeConfig,
+  );
+  const user = useAppSelector(state => state.auth.user);
   const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
@@ -105,11 +119,12 @@ const SingleNoteAudit = () => {
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
+  const [practitionerId, setPractitionerId] = useState<number | null>(null);
 
-  // Check if coming from human-review-queue
-  const isFromHumanReviewQueue = location.state?.from === 'human-review-queue';
   const chatId = location.state?.chatId;
-  const [showHumanReview, setShowHumanReview] = useState(isFromHumanReviewQueue);
+  const reviewerId = location.state?.reviewerId || null;
+  const isManagerReviewing = location.state?.isManagerReviewing || false;
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -132,6 +147,7 @@ const SingleNoteAudit = () => {
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);
+        setPractitionerId(apiNoteDetail.practitionerId);
         // Store all chats for audit history
         setAuditHistory(apiNoteDetail.chats || []);
       } finally {
@@ -185,6 +201,53 @@ const SingleNoteAudit = () => {
     }
   }, [agentsLoaded, selectedAgentId, noteId, noteDetail, loadNoteDetail]);
 
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (practitionersLoaded) return; // Skip if already loaded
+      try {
+        const practitionersData = await fetchPractitioners();
+        dispatch(setPractitioners(practitionersData));
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+      }
+    };
+    loadPractitioners();
+  }, [practitionersLoaded, dispatch]);
+
+  // Load SME config data if needed
+  useEffect(() => {
+    const loadSMEData = async () => {
+      const promises: Promise<any>[] = [];
+
+      if (!errorTypesLoaded) {
+        promises.push(
+          fetchErrorTypes().then(data => {
+            dispatch(setErrorTypes(data));
+          }),
+        );
+      }
+
+      if (!issueRelatedToLoaded) {
+        promises.push(
+          fetchIssueRelatedTo().then(data => {
+            dispatch(setIssueRelatedTo(data));
+          }),
+        );
+      }
+
+      if (!issueDescriptionsLoaded) {
+        promises.push(
+          fetchIssueDescriptions().then(data => {
+            dispatch(setIssueDescriptions(data));
+          }),
+        );
+      }
+
+      await Promise.all(promises);
+    };
+    loadSMEData();
+  }, [dispatch, errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded]);
+
   // Cleanup ref on unmount
   useEffect(() => {
     return () => {
@@ -194,14 +257,119 @@ const SingleNoteAudit = () => {
     };
   }, []);
 
-  const handleSaveDraft = () => {
-    console.log('Saving draft...');
-    setShowHumanReview(false);
-  };
+  const loggedInUserId = user?.id ?? null;
 
-  const handleFlagReview = () => {
-    setShowHumanReview(true);
-  };
+  const handleSMEIssueCreatedFromTemplate = useCallback(
+    (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => {
+      if (!loggedInUserId) return;
+      // Optimistically update noteDetail.webhookVersions.smeIssues (include issueDescription so dropdown disables immediately)
+      setNoteDetail(prev => {
+        if (!prev) return prev;
+
+        const errorTypeOption = errorTypes.find(type => type.name === issueForm.errorType || type.displayName === issueForm.errorType);
+        const issueRelatedToOption = issueRelatedTo.find(
+          opt => opt.fieldId === issueForm.issueRelatedTo || opt.displayName === issueForm.issueRelatedTo,
+        );
+
+        const newSmeIssue: SMEIssue = {
+          id: response.id,
+          reviewerId: loggedInUserId,
+          versionId,
+          errorType: {
+            id: errorTypeOption?.id ?? 0,
+            name: errorTypeOption?.name,
+            displayName: errorTypeOption?.displayName,
+            points: errorTypeOption?.points ?? 0,
+          },
+          issuesRelatedTo: {
+            id: issueRelatedToOption?.id ?? 0,
+            name: issueRelatedToOption?.displayName,
+            displayName: issueRelatedToOption?.displayName,
+          },
+          description: issueForm.issueDescription,
+          issueDescription: descriptionId != null ? { id: descriptionId, description: issueForm.issueDescription ?? '' } : undefined,
+          noteId: prev.id,
+          status: {
+            id: 1,
+            name: 'Open',
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const updatedWebhookVersions = (prev.webhookVersions || []).map(version => {
+          if (version.id !== versionId) return version;
+          return {
+            ...version,
+            smeIssues: [...(version.smeIssues || []), newSmeIssue],
+          };
+        });
+
+        return {
+          ...prev,
+          webhookVersions: updatedWebhookVersions,
+        };
+      });
+    },
+    [errorTypes, issueRelatedTo, loggedInUserId],
+  );
+
+  // Keep noteDetail.webhookVersions in sync when an SME issue or review is deleted
+  const onSMEIssueDeleted = useCallback((versionId: number, smeIssueId: number) => {
+    setNoteDetail(prev => {
+      if (!prev?.webhookVersions?.length) return prev;
+      return {
+        ...prev,
+        webhookVersions: prev.webhookVersions.map(v =>
+          v.id === versionId ? { ...v, smeIssues: (v.smeIssues || []).filter(i => i.id !== smeIssueId) } : v,
+        ),
+      };
+    });
+  }, []);
+
+  const onSMEReviewDeleted = useCallback((versionId: number | null, reviewerId: number) => {
+    setNoteDetail(prev => {
+      if (!prev?.webhookVersions?.length) return prev;
+      return {
+        ...prev,
+        webhookVersions: prev.webhookVersions.map(v =>
+          versionId === null || v.id === versionId ? { ...v, smeIssues: (v.smeIssues || []).filter(i => i.reviewerId !== reviewerId) } : v,
+        ),
+      };
+    });
+  }, []);
+
+  // Sync noteDetail when an SME issue is updated (e.g. description changed) so Therapy Session Summary dropdown disables immediately
+  const onSMEIssueUpdated = useCallback(
+    (versionId: number, smeIssueId: number, payload: { issueDescriptionId?: number; issueDescriptionText?: string }) => {
+      const { issueDescriptionId, issueDescriptionText } = payload;
+      setNoteDetail(prev => {
+        if (!prev?.webhookVersions?.length) return prev;
+        return {
+          ...prev,
+          webhookVersions: prev.webhookVersions.map(v => {
+            if (v.id !== versionId) return v;
+            return {
+              ...v,
+              smeIssues: (v.smeIssues || []).map(issue =>
+                issue.id === smeIssueId
+                  ? {
+                      ...issue,
+                      description: issueDescriptionText ?? issue.description,
+                      issueDescription:
+                        issueDescriptionId != null
+                          ? { id: issueDescriptionId, description: issueDescriptionText ?? issue.issueDescription?.description ?? '' }
+                          : issue.issueDescription,
+                    }
+                  : issue,
+              ),
+            };
+          }),
+        };
+      });
+    },
+    [],
+  );
 
   if (loading) {
     return (
@@ -209,7 +377,7 @@ const SingleNoteAudit = () => {
         <LoadingSkeleton />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
-          <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} isReRun={loading} />
+          {!isManagerReviewing && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
         </div>
       </div>
     );
@@ -225,7 +393,17 @@ const SingleNoteAudit = () => {
           {/* Left Sidebar */}
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} />
-            <SummaryCard title="Therapy Session Summary" summary={noteDetail.therapySummary} icon={Stethoscope} />
+            <TherapySessionSummaryCard
+              webhookVersions={noteDetail.webhookVersions}
+              onVersionChange={setSelectedVersionId}
+              noteId={noteId}
+              versionId={selectedVersionId}
+              reviewerId={reviewerId ?? loggedInUserId}
+              practitionerId={practitionerId ?? 0}
+              aiStatusId={noteDetail.aiStatus?.id ?? 1}
+              priorityId={noteDetail.priority?.id ?? 1}
+              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+            />
             <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
           </div>
 
@@ -241,8 +419,23 @@ const SingleNoteAudit = () => {
                 setOpenSectionId(sectionId);
               }}
             />
-            {/* Conditionally render Human Review or Action Buttons */}
-            {showHumanReview && noteId ? (
+            <SMEReview
+              reviews={reviews}
+              setReviews={setReviews}
+              auditScore={noteDetail?.auditScore || 0}
+              versionId={selectedVersionId}
+              webhookVersions={noteDetail.webhookVersions || []}
+              aiStatusId={noteDetail.aiStatus?.id || 1}
+              priorityId={noteDetail.priority?.id || 1}
+              practitionerId={practitionerId || 0}
+              reviewerId={reviewerId}
+              isManagerReviewing={isManagerReviewing}
+              onSMEIssueDeleted={onSMEIssueDeleted}
+              onSMEReviewDeleted={onSMEReviewDeleted}
+              onSMEIssueUpdated={onSMEIssueUpdated}
+            />
+            {/* Conditionally render Admin Review or Action Buttons */}
+            {/* {showHumanReview && noteId ? (
               <HumanReviewSection
                 noteId={noteId}
                 priority={noteDetail.priority?.id || 0}
@@ -253,8 +446,15 @@ const SingleNoteAudit = () => {
                 humanReview={isFromHumanReviewQueue ? noteDetail.humanReview : null}
                 isEditMode={isFromHumanReviewQueue}
               />
-            ) : null}
-            <ActionButtons onFlagReview={handleFlagReview} onReRunAudit={loadNoteDetail} />
+            ) : null} */}
+            <ActionButtons
+              onReRunAudit={loadNoteDetail}
+              isManagerReviewing={isManagerReviewing}
+              reviewerId={reviewerId}
+              practitionerId={practitionerId}
+              noteId={noteId}
+              versionId={selectedVersionId}
+            />
             <AuditHistoryCard chats={auditHistory} />
             <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />

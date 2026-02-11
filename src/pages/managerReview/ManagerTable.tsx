@@ -3,10 +3,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { ManagerNote } from './managerReviewTypes';
 import {
-  DisagreementLevelEnum,
-  DisagreementLevelLabels,
-  HumanReviewDecisionEnum,
-  HumanReviewDecisionLabels,
+  // DisagreementLevelEnum,
+  // DisagreementLevelLabels,
+  // HumanReviewDecisionEnum,
+  // HumanReviewDecisionLabels,
   PriorityEnum,
   PriorityLabels,
 } from '@/constants/common';
@@ -15,43 +15,43 @@ import { GradientBadge } from '@/shared/GradientBadge';
 interface ManagerTableProps {
   notes: ManagerNote[];
   loading?: boolean;
-  onReview: (id: string, noteId: string) => void;
+  onReview: (note: ManagerNote) => void;
   selectedIds: string[];
   onToggleRow: (id: string) => void;
   onToggleAll: () => void;
 }
 
 export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onToggleAll }: ManagerTableProps) => {
-  const getManagerGradientDecision = (manager: number): string => {
-    switch (manager) {
-      case HumanReviewDecisionEnum.accept_ai_evaluation:
-        return 'bg-gradient-workflow-completed';
-      case HumanReviewDecisionEnum.ai_incorrect_override_score:
-        return 'bg-gradient-workflow-returned';
-      case HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues:
-        return 'bg-gradient-priority-medium';
-      case HumanReviewDecisionEnum.needs_practitioner_correction:
-        return 'bg-gradient-priority-low';
-      case HumanReviewDecisionEnum.escalate_to_office_manager:
-        return 'bg-gradient-neutral';
-      default:
-        return 'bg-gradient-neutral';
-    }
-  };
-  const getDisagreementLevelGradient = (disagreement: number): string => {
-    switch (disagreement) {
-      case DisagreementLevelEnum.high:
-        return 'bg-gradient-priority-high';
-      case DisagreementLevelEnum.medium:
-        return 'bg-gradient-priority-medium';
-      case DisagreementLevelEnum.low:
-        return 'bg-gradient-priority-low';
-      case DisagreementLevelEnum.none:
-        return 'bg-gradient-workflow-completed';
-      default:
-        return 'bg-gradient-neutral';
-    }
-  };
+  // const getManagerGradientDecision = (manager: number): string => {
+  //   switch (manager) {
+  //     case HumanReviewDecisionEnum.accept_ai_evaluation:
+  //       return 'bg-gradient-workflow-completed';
+  //     case HumanReviewDecisionEnum.ai_incorrect_override_score:
+  //       return 'bg-gradient-workflow-returned';
+  //     case HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues:
+  //       return 'bg-gradient-priority-medium';
+  //     case HumanReviewDecisionEnum.needs_practitioner_correction:
+  //       return 'bg-gradient-priority-low';
+  //     case HumanReviewDecisionEnum.escalate_to_office_manager:
+  //       return 'bg-gradient-neutral';
+  //     default:
+  //       return 'bg-gradient-neutral';
+  //   }
+  // };
+  // const getDisagreementLevelGradient = (disagreement: number): string => {
+  //   switch (disagreement) {
+  //     case DisagreementLevelEnum.high:
+  //       return 'bg-gradient-priority-high';
+  //     case DisagreementLevelEnum.medium:
+  //       return 'bg-gradient-priority-medium';
+  //     case DisagreementLevelEnum.low:
+  //       return 'bg-gradient-priority-low';
+  //     case DisagreementLevelEnum.none:
+  //       return 'bg-gradient-workflow-completed';
+  //     default:
+  //       return 'bg-gradient-neutral';
+  //   }
+  // };
 
   const getPriorityGradient = (priority: number): string => {
     switch (priority) {
@@ -124,8 +124,8 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
               <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead>
               <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
-              <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
+              {/* <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead> */}
               <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead>
               <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
             </TableRow>
@@ -148,7 +148,7 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                   <TableCell className="font-semibold">{note.aiScore}</TableCell>
                   <TableCell className="font-semibold">{note.humanScore ?? '—'}</TableCell>
                   <TableCell>{note.reviewer}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {note.humanDecision ? (
                       <GradientBadge
                         label={HumanReviewDecisionLabels[note.humanDecision] || 'Unknown'}
@@ -167,7 +167,7 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
                   </TableCell>
@@ -177,7 +177,7 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                         size="lg"
                         variant="outline"
                         className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
-                        onClick={() => onReview(note.id.toString(), note.noteId)}
+                        onClick={() => onReview(note)}
                       >
                         Review
                       </Button>

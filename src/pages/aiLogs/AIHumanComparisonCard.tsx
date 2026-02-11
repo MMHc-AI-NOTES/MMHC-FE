@@ -19,7 +19,7 @@ const AIHumanComparisonCard = ({ log }: AIHumanComparisonCardProps) => {
       <CardContent className="p-6">
         <h3 className="text-primary mb-6 flex items-center gap-2 border-b pb-4 text-lg font-semibold">
           <BarChart3 className="h-5 w-5" />
-          AI vs Human Review Comparison
+          AI vs Admin Review Comparison
         </h3>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

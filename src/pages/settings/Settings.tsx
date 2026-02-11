@@ -1,20 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Users, Zap } from 'lucide-react';
-import NotificationsTab from './NotificationsTab';
+import { Users, Zap, Columns3Cog } from 'lucide-react';
+// import NotificationsTab from './NotificationsTab';
 import UserManagementTab from './UserManagementTab';
 import AIModelPromptTab from './AIModelPromptTab';
+import SMEConfigTab from './SMEConfigTab';
 
-type TabType = 'notifications' | 'user-management' | 'ai-model-prompt';
+type TabType = 'notifications' | 'user-management' | 'ai-model-prompt' | 'sme-config';
+
+const SETTINGS_TAB_STORAGE_KEY = 'settings_active_tab';
 
 const tabs = [
-  { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
+  // { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
   { id: 'user-management' as TabType, label: 'User Management', icon: Users },
   { id: 'ai-model-prompt' as TabType, label: 'AI Model & Prompt', icon: Zap },
+  { id: 'sme-config' as TabType, label: 'SME Config', icon: Columns3Cog },
 ];
 
 const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('notifications');
+  // Initialize with persisted tab or default to 'notifications'
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    if (typeof window !== 'undefined') {
+      const persistedTab = localStorage.getItem(SETTINGS_TAB_STORAGE_KEY) as TabType | null;
+      if (persistedTab && tabs.some(tab => tab.id === persistedTab)) {
+        return persistedTab;
+      }
+    }
+    return 'user-management';
+  });
+
+  // Persist tab changes to localStorage
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, activeTab);
+  }, [activeTab]);
 
   return (
     <div className="space-y-6">
@@ -43,9 +61,10 @@ const Settings: React.FC = () => {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'notifications' && <NotificationsTab />}
+        {/* {activeTab === 'notifications' && <NotificationsTab />} */}
         {activeTab === 'user-management' && <UserManagementTab />}
         {activeTab === 'ai-model-prompt' && <AIModelPromptTab />}
+        {activeTab === 'sme-config' && <SMEConfigTab />}
       </div>
     </div>
   );

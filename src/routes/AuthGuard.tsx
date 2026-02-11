@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { getLocalStorageItem } from '@/utils/helper';
+import { getLocalStorageItem } from '@/utils/storage';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const authToken = getLocalStorageItem('authentication_token');

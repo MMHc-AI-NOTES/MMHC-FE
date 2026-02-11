@@ -33,25 +33,28 @@ export interface AvailableVariable {
 }
 
 // User Management
-export type UserRole = 1 | 2 | 3;
+export type UserRole = 1 | 2 | 3 | 4;
 
 export interface User {
-  id: string;
+  id: number;
   fullName: string;
   email: string;
-  role: UserRole;
-  status: 'active' | 'inactive';
+  type: UserRole;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  hasCompletedOnboarding?: boolean;
 }
 
 export interface CreateUserRequest {
   fullName: string;
   email: string;
-  role: UserRole;
-  status: 'active' | 'inactive';
+  type: UserRole;
+  isActive: boolean;
 }
 
 export interface UpdateUserRequest extends CreateUserRequest {
-  id: string;
+  id: number;
 }
 
 // Notification Settings

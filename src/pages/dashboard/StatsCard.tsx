@@ -17,7 +17,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       iconBg: 'bg-green-50',
       iconColor: 'text-primary',
       isTrendingUp: true,
-      trendingValue: 12,
+      trendingValue: 0,
     },
     {
       title: 'Pass Rate',
@@ -26,7 +26,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
       iconBg: 'bg-green-50',
       iconColor: 'text-primary',
       isTrendingUp: true,
-      trendingValue: 3,
+      trendingValue: 0,
     },
     {
       title: 'Practitioner Corrections Required',
@@ -61,7 +61,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criti
 
                 {stat.isTrendingUp ? (
                   <div className="text-primary-light flex items-center gap-1.5 text-xs">
-                    <TrendingUp size={14} /> <p>+{stat.trendingValue}%</p>{' '}
+                    <TrendingUp size={14} /> <p>{stat.trendingValue}%</p>{' '}
                   </div>
                 ) : stat.isReview ? (
                   <div className={`rounded-full p-1.5 ${stat.iconBg}`}>

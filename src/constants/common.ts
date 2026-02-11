@@ -1,6 +1,6 @@
 export const SLIDER_CONFIGS = {
   TEMPERATURE: { min: 0, max: 1, step: 0.1 },
-  TOP_P: { min: 0, max: 1, step: 0.2 },
+  TOP_P: { min: 0, max: 1, step: 0.1 },
   TOP_K: { min: 0, max: 1000, step: 100 },
 } as const;
 
@@ -65,7 +65,7 @@ export const AiStatusEnum = {
   needs_review: 5,
 } as const;
 
-// Human Review Enum
+// Admin Review Enum
 export const HumanReviewEnum = {
   not_needed: 1,
   completed: 2,
@@ -110,7 +110,7 @@ export const ReviewCycleEnum = {
   blacklisted: 4,
 } as const;
 
-// Review Status Enum (for Human Review Queue)
+// Review Status Enum (for Admin Review Queue)
 export const ReviewStatusEnum = {
   pending: 1,
   in_progress: 2,
@@ -296,16 +296,18 @@ export const ResolutionActionLabels: Record<number, string> = {
 
 // User Role Enum
 export const UserRoleEnum = {
-  super_admin: 1,
-  practitioner: 2,
-  manager: 3,
+  superAdmin: 1,
+  user: 2,
+  practitioner: 3,
+  sme_reviewer: 4,
 } as const;
 
 // User Role Labels (for consistency, though values are the same as enum)
 export const UserRoleLabels: Record<string, string> = {
-  [UserRoleEnum.super_admin]: 'Super Admin',
+  [UserRoleEnum.superAdmin]: 'Super Admin',
+  [UserRoleEnum.user]: 'User',
   [UserRoleEnum.practitioner]: 'Practitioner',
-  [UserRoleEnum.manager]: 'Manager',
+  [UserRoleEnum.sme_reviewer]: 'SME Reviewer',
 };
 
 // Note Submission Enums
@@ -383,14 +385,16 @@ export const StructureQualityLabels: Record<number, string> = {
 
 export const AgentModelKeys = {
   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
-  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
-  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0', // Inference profile format
+  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0', // Inference profile format
+  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', // Claude Sonnet 4.5 (inference profile format)
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
   CLAUDE_3_HAIKU: 'Claude 3 Haiku',
   CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku',
   CLAUDE_4_5_HAIKU_V1: 'Claude 4.5 Haiku',
+  CLAUDE_4_5_SONNET_V1: 'Claude 4.5 Sonnet',
 };
 
 export const AgentTypes = {
@@ -403,4 +407,20 @@ export const AgentTypeLabels: Record<number, string> = {
   [AgentTypes.SYSTEM]: 'System',
   [AgentTypes.SOAP]: 'SOAP',
   [AgentTypes.CUSTOM]: 'Custom',
+};
+
+// Session JSON field display names mapping
+export const SessionJsonFieldDisplayNames: Record<string, string> = {
+  'Session Duration': 'Session Duration',
+  'Mental Status (optional)': 'Mental Status',
+  Suicidality: 'Suicidality',
+  Homicidality: 'Homicidality',
+  Subjective: 'Subjective',
+  Objective: 'Objective',
+  'Assessment & Therapeutic Intervention': 'Assessment & Therapeutic Intervention',
+  'Reaction to Intervention': 'Reaction to Intervention',
+  'Plan and Collaboration': 'Plan and Collaboration',
+  'Therapist Reflection and Insight (optional)': 'Therapist Reflection and Insight',
+  Progress: 'Progress',
+  'Therapist Initials': 'Therapist Initials',
 };

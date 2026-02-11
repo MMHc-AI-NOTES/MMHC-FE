@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormik } from 'formik';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +13,6 @@ import { Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { DialogFooter } from '@/components/ui/dialog';
 import { getAgentModelOptions } from '@/utils/helper';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface AgentFormProps {
   agent?: Agent;
@@ -22,7 +20,6 @@ interface AgentFormProps {
   onCancel: () => void;
   isSubmitting: boolean;
 }
-
 const agentValidationSchema = yup.object({
   name: yup.string().required('Agent name is required'),
   model: yup.string().required('Model is required'),
@@ -33,7 +30,6 @@ const agentValidationSchema = yup.object({
   previous_section: yup.array().of(yup.number()).required(),
   prompt: yup.string().required('Prompt is required'),
 });
-
 interface AgentFormValues {
   name: string;
   model: string;
@@ -42,45 +38,8 @@ interface AgentFormValues {
   top_k: number;
   top_p: number;
   previous_section: number[];
-  // single backend prompt (we'll compose this from section prompts before submit)
   prompt: string;
   description: string;
-
-  // Section-specific prompts (UI only)
-  subjective_prompt: string;
-  objective_prompt: string;
-  assessment_prompt: string;
-  reaction_prompt: string;
-  plan_prompt: string;
-  reflection_prompt: string;
-  progress_prompt: string;
-  // Section-specific sliders (UI-only; keep backend sliders unchanged)
-  temperature_subjective: number;
-  top_p_subjective: number;
-  top_k_subjective: number;
-  temperature_objective: number;
-  top_p_objective: number;
-  top_k_objective: number;
-  temperature_assessment: number;
-  top_p_assessment: number;
-  top_k_assessment: number;
-  temperature_reaction: number;
-  top_p_reaction: number;
-  top_k_reaction: number;
-  temperature_plan: number;
-  top_p_plan: number;
-  top_k_plan: number;
-  temperature_reflection: number;
-  top_p_reflection: number;
-  top_k_reflection: number;
-  temperature_progress: number;
-  top_p_progress: number;
-  top_k_progress: number;
-  temperature_risk: number;
-  top_p_risk: number;
-  top_k_risk: number;
-  // Risk assessment
-  risk_prompt: string;
 }
 
 // Tooltip content for each parameter
@@ -99,85 +58,26 @@ const TOOLTIP_CONTENT = {
     description: 'Encourages new topics by penalizing tokens that have already appeared. Higher values promote new concepts. Range: 0 to 1',
   },
 };
-
 const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubmitting }) => {
   const formik = useFormik<AgentFormValues>({
     initialValues: {
       name: agent?.name || '',
       model: agent?.model || AgentModelKeys.CLAUDE_3_5_HAIKU_V1,
       is_default: agent?.is_default ? 1 : 0,
-      temperature: agent?.temperature ?? 0,
-      top_k: agent?.top_k ?? 0,
-      top_p: agent?.top_p ?? 0,
+      temperature: agent?.temperature || 0,
+      top_k: agent?.top_k || 0,
+      top_p: agent?.top_p || 0,
       previous_section: agent?.previous_section || [],
       prompt: agent?.prompt || '',
       description: agent?.description || '',
-
-      // UI-only section prompts default to empty or fall back to main prompt
-      subjective_prompt: agent?.prompt || '',
-      objective_prompt: agent?.prompt || '',
-      assessment_prompt: '',
-      reaction_prompt: '',
-      plan_prompt: '',
-      reflection_prompt: '',
-      progress_prompt: '',
-
-      // per-section slider defaults (use agent defaults if present)
-      temperature_subjective: agent?.temperature ?? 0,
-      top_p_subjective: agent?.top_p ?? 0,
-      top_k_subjective: agent?.top_k ?? 0,
-      temperature_objective: agent?.temperature ?? 0,
-      top_p_objective: agent?.top_p ?? 0,
-      top_k_objective: agent?.top_k ?? 0,
-      temperature_assessment: agent?.temperature ?? 0,
-      top_p_assessment: agent?.top_p ?? 0,
-      top_k_assessment: agent?.top_k ?? 0,
-      temperature_reaction: agent?.temperature ?? 0,
-      top_p_reaction: agent?.top_p ?? 0,
-      top_k_reaction: agent?.top_k ?? 0,
-      temperature_plan: agent?.temperature ?? 0,
-      top_p_plan: agent?.top_p ?? 0,
-      top_k_plan: agent?.top_k ?? 0,
-      temperature_reflection: agent?.temperature ?? 0,
-      top_p_reflection: agent?.top_p ?? 0,
-      top_k_reflection: agent?.top_k ?? 0,
-      temperature_progress: agent?.temperature ?? 0,
-      top_p_progress: agent?.top_p ?? 0,
-      top_k_progress: agent?.top_k ?? 0,
-      temperature_risk: agent?.temperature ?? 0,
-      top_p_risk: agent?.top_p ?? 0,
-      top_k_risk: agent?.top_k ?? 0,
-
-      risk_prompt: '',
     },
     validationSchema: agentValidationSchema,
     onSubmit: async values => {
-      // Compose a single backend prompt from the section prompts in the required order
-      const sections: { title: string; text?: string }[] = [
-        { title: 'Subjective', text: values.subjective_prompt },
-        { title: 'Objective', text: values.objective_prompt },
-        { title: 'Assessment & Therapeutic Intervention', text: values.assessment_prompt },
-        { title: 'Reaction to Intervention', text: values.reaction_prompt },
-        { title: 'Plan and Collaboration', text: values.plan_prompt },
-        { title: 'Therapist Reflection and Insight', text: values.reflection_prompt },
-        { title: 'Progress', text: values.progress_prompt },
-        { title: 'Risk Assessment', text: values.risk_prompt },
-      ];
-
-      const composedPrompt = sections
-        .filter(s => s.text && s.text.trim() !== '')
-        .map(s => `=== ${s.title} ===\n${s.text}`)
-        .join('\n\n');
-
-      // Set the composed prompt into the field expected by the backend
-      const submitValues = {
+      const submitData = {
         ...values,
-        prompt: composedPrompt || values.prompt,
-        // keep model/sliders mapped to the main fields (we expose them in both Subjective/Objective but bind to same keys)
         description: values.description.trim() === '' ? null : values.description,
-      } as unknown as CreateAgentRequest;
-
-      await onSubmit(submitValues);
+      };
+      await onSubmit(submitData);
     },
   });
 
@@ -194,192 +94,120 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
     </Tooltip>
   );
 
-  // Section descriptors to drive the accordion rendering (keeps UI DRY)
-  const SECTIONS: { key: string; title: string; description: string; promptField: keyof AgentFormValues }[] = [
-    {
-      key: 'subjective',
-      title: 'Subjective',
-      description: 'Instructions for generating the Subjective section',
-      promptField: 'subjective_prompt',
-    },
-    {
-      key: 'objective',
-      title: 'Objective',
-      description: 'Instructions for generating the Objective section',
-      promptField: 'objective_prompt',
-    },
-    {
-      key: 'assessment',
-      title: 'Assessment & Therapeutic Intervention',
-      description: 'Assessment, clinical reasoning, and interventions applied',
-      promptField: 'assessment_prompt',
-    },
-    { key: 'reaction', title: 'Reaction to Intervention', description: 'Client response to interventions', promptField: 'reaction_prompt' },
-    {
-      key: 'plan',
-      title: 'Plan and Collaboration',
-      description: 'Next steps, goals, referrals, and shared decisions',
-      promptField: 'plan_prompt',
-    },
-    {
-      key: 'reflection',
-      title: 'Therapist Reflection and Insight',
-      description: 'Therapist insights, reflections, and clinical notes',
-      promptField: 'reflection_prompt',
-    },
-    { key: 'progress', title: 'Progress', description: 'Changes since the previous session', promptField: 'progress_prompt' },
-    {
-      key: 'risk',
-      title: 'Risk Assessment',
-      description: 'Instructions for generating the Risk Assessment section',
-      promptField: 'risk_prompt',
-    },
-  ];
-
   return (
     <TooltipProvider>
       <form onSubmit={formik.handleSubmit}>
         <div className="mb-4 space-y-4 px-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-end space-x-2">
-              <Switch
-                id="is_default"
-                checked={formik.values.is_default ? true : false}
-                onCheckedChange={(checked: any) => formik.setFieldValue('is_default', checked ? 1 : 0)}
-              />
-              <Label htmlFor="is_default" className="cursor-pointer">
-                Set as Default
-              </Label>
-            </div>
+          <div className="flex items-center justify-end space-x-2">
+            <Switch
+              id="is_default"
+              checked={formik.values.is_default ? true : false}
+              onCheckedChange={(checked: any) => formik.setFieldValue('is_default', checked ? 1 : 0)}
+            />
+            <Label htmlFor="is_default" className="cursor-pointer">
+              Set as Default
+            </Label>
+          </div>
+          <InputField id="name" placeholder="Enter agent name" formik={formik} label="Agent Name" />
 
-            {/* Basic agent details (moved out of accordion) */}
-            <div className="space-y-3">
-              <InputField id="name" placeholder="Enter agent name" formik={formik} label="Agent Name" />
-
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <p className="text-sm text-gray-500">Explain what this agent does and when it should be used</p>
-                <Textarea
-                  id="description"
-                  name="description"
-                  placeholder="Enter agent description..."
-                  value={formik.values.description}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className="mt-2"
-                />
-                {formik.touched.description && formik.errors.description && (
-                  <div className="mt-1 text-sm text-red-500">{formik.errors.description}</div>
-                )}
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Enter agent description..."
+              value={formik.values.description}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+            {formik.touched.description && formik.errors.description && (
+              <div className="mt-1 text-sm text-red-500">{formik.errors.description}</div>
+            )}
           </div>
 
-          <Accordion type="single" collapsible defaultValue={SECTIONS[0].key} className="w-full rounded-lg border">
-            {SECTIONS.map(s => (
-              <AccordionItem key={s.key} value={s.key} className="rounded-lg bg-white">
-                <AccordionTrigger className="px-4 hover:no-underline">
-                  <span className="text-sm font-semibold text-slate-800">{s.title}</span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 p-4 pt-2">
-                    <div>
-                      <Label htmlFor={s.promptField}>{'Prompt'}</Label>
-                      <p className="text-sm text-gray-500">{s.description}</p>
-                      <Textarea
-                        id={s.promptField}
-                        name={s.promptField}
-                        placeholder={`Enter ${s.title.toLowerCase()} prompt...`}
-                        value={(formik.values as any)[s.promptField]}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="mt-2"
-                      />
-                    </div>
+          <div className="space-y-2">
+            <Label htmlFor="prompt">Prompt</Label>
+            <Textarea
+              id="prompt"
+              name="prompt"
+              placeholder="Enter agent prompt..."
+              value={formik.values.prompt}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+            {formik.touched.prompt && formik.errors.prompt && <div className="mt-1 text-sm text-red-500">{formik.errors.prompt}</div>}
+          </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div>
-                        <Label htmlFor="model">Model</Label>
-                        <Select value={formik.values.model} onValueChange={value => formik.setFieldValue('model', value)}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getAgentModelOptions().map(model => (
-                              <SelectItem key={model.key} value={model.value}>
-                                {model.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+          <div className="space-y-2">
+            <Label htmlFor="model">Model</Label>
+            <Select value={formik.values.model} onValueChange={value => formik.setFieldValue('model', value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {getAgentModelOptions().map(model => (
+                  <SelectItem key={model.key} value={model.value}>
+                    {model.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formik.touched.model && formik.errors.model && <div className="mt-1 text-sm text-red-500">{formik.errors.model}</div>}
+          </div>
 
-                    <div className="mt-4 flex flex-col gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`temperature_${s.key}`} className="text-sm font-medium">
-                            Temperature
-                          </Label>
-                          <InfoTooltip content={TOOLTIP_CONTENT.temperature} />
-                        </div>
-                        <div className="mt-2">
-                          <SliderField
-                            id={`temperature_${s.key}`}
-                            formik={formik}
-                            label=""
-                            min={SLIDER_CONFIGS.TEMPERATURE.min}
-                            max={SLIDER_CONFIGS.TEMPERATURE.max}
-                            step={SLIDER_CONFIGS.TEMPERATURE.step}
-                          />
-                        </div>
-                      </div>
+          <div className="flex flex-col gap-4">
+            <div className="rounded-lg border bg-white p-4 shadow">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="temperature" className="text-sm font-medium">
+                  Temperature
+                </Label>
+                <InfoTooltip content={TOOLTIP_CONTENT.temperature} />
+              </div>
+              <SliderField
+                id="temperature"
+                formik={formik}
+                label=""
+                min={SLIDER_CONFIGS.TEMPERATURE.min}
+                max={SLIDER_CONFIGS.TEMPERATURE.max}
+                step={SLIDER_CONFIGS.TEMPERATURE.step}
+              />
+            </div>
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`top_p_${s.key}`} className="text-sm font-medium">
-                            Top P
-                          </Label>
-                          <InfoTooltip content={TOOLTIP_CONTENT.top_p} />
-                        </div>
-                        <div className="mt-2">
-                          <SliderField
-                            id={`top_p_${s.key}`}
-                            formik={formik}
-                            label=""
-                            min={SLIDER_CONFIGS.TOP_P.min}
-                            max={SLIDER_CONFIGS.TOP_P.max}
-                            step={SLIDER_CONFIGS.TOP_P.step}
-                          />
-                        </div>
-                      </div>
+            <div className="rounded-lg border bg-white p-4 shadow">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="top_p" className="text-sm font-medium">
+                  Top P
+                </Label>
+                <InfoTooltip content={TOOLTIP_CONTENT.top_p} />
+              </div>
+              <SliderField
+                id="top_p"
+                formik={formik}
+                label=""
+                min={SLIDER_CONFIGS.TOP_P.min}
+                max={SLIDER_CONFIGS.TOP_P.max}
+                step={SLIDER_CONFIGS.TOP_P.step}
+              />
+            </div>
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`top_k_${s.key}`} className="text-sm font-medium">
-                            Top K
-                          </Label>
-                          <InfoTooltip content={TOOLTIP_CONTENT.top_k} />
-                        </div>
-                        <div className="mt-2">
-                          <SliderField
-                            id={`top_k_${s.key}`}
-                            formik={formik}
-                            label=""
-                            min={SLIDER_CONFIGS.TOP_K.min}
-                            max={SLIDER_CONFIGS.TOP_K.max}
-                            step={SLIDER_CONFIGS.TOP_K.step}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+            <div className="rounded-lg border bg-white p-4 shadow">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="top_k" className="text-sm font-medium">
+                  Top K
+                </Label>
+                <InfoTooltip content={TOOLTIP_CONTENT.top_k} />
+              </div>
+              <SliderField
+                id="top_k"
+                formik={formik}
+                label=""
+                min={SLIDER_CONFIGS.TOP_K.min}
+                max={SLIDER_CONFIGS.TOP_K.max}
+                step={SLIDER_CONFIGS.TOP_K.step}
+              />
+            </div>
+          </div>
         </div>
-
         <DialogFooter className="border-t p-4">
           <div className="flex justify-end space-x-3">
             <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
@@ -394,5 +222,4 @@ const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, onCancel, isSubm
     </TooltipProvider>
   );
 };
-
 export default AgentForm;
