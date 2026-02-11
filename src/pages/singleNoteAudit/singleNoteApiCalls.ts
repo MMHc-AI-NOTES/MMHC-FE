@@ -117,6 +117,8 @@ export interface SMEIssuePayload {
   priority: number;
   practitioner_id: number;
   is_current_version: boolean;
+  /** Optional free-text comment for this SME issue */
+  comment?: string;
 }
 
 /** Update payload: issue_description_id omitted for "overall" issues (they use comment) */
@@ -132,6 +134,8 @@ export interface CreateSMEIssueFromTemplatePayload {
   template_id: number;
   ai_status: number;
   priority: number;
+  /** Optional free-text comment for this template-based issue */
+  comment?: string;
 }
 
 /** Create "overall" SME issue (error_type_id, issues_related_to_id for overall, comment; no template_id) */

@@ -112,8 +112,8 @@ const IssueDescriptionsSection: React.FC = () => {
                   ) : (
                     issueDescriptions.map(desc => (
                       <TableRow key={desc.id}>
-                        <TableCell className="text-left">{desc.key}</TableCell>
-                        <TableCell className="text-left">{desc.description}</TableCell>
+                        <TableCell className="max-w-[200px] text-left break-words whitespace-normal">{desc.key}</TableCell>
+                        <TableCell className="max-w-[400px] text-left break-words whitespace-normal">{desc.description}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-2">
                             <Button variant="ghost" size="sm" onClick={() => handleEdit(desc)} className="h-8 w-8 p-0">
