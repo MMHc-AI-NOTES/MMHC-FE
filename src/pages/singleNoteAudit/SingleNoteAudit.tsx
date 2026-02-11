@@ -287,6 +287,7 @@ const SingleNoteAudit = () => {
             displayName: issueRelatedToOption?.displayName,
           },
           description: issueForm.issueDescription,
+          comment: issueForm.comment,
           issueDescription: descriptionId != null ? { id: descriptionId, description: issueForm.issueDescription ?? '' } : undefined,
           noteId: prev.id,
           status: {

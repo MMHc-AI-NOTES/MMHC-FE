@@ -20,18 +20,38 @@ interface IssueDescriptionDialogProps {
   editingDescription: { key: string; description: string } | null;
 }
 
+const MAX_LENGTH = 250;
+
 const validationSchema = yup.object({
-  key: yup.string().required('Key is required').min(1, 'Key cannot be empty'),
-  description: yup.string().required('Description is required').min(1, 'Description cannot be empty'),
+  key: yup
+    .string()
+    .required('Key is required')
+    .min(1, 'Key cannot be empty')
+    .max(MAX_LENGTH, `Key must be ${MAX_LENGTH} characters or less`),
+  description: yup
+    .string()
+    .required('Description is required')
+    .min(1, 'Description cannot be empty')
+    .max(MAX_LENGTH, `Description must be ${MAX_LENGTH} characters or less`),
 });
+
+const generateKeyFromDescription = (description: string): string => {
+  const key = description
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return key.slice(0, MAX_LENGTH);
+};
 
 const IssueDescriptionDialog: React.FC<IssueDescriptionDialogProps> = ({ isOpen, onClose, onSave, editingDescription }) => {
   const formik = useFormik<IssueDescriptionFormValues>({
     initialValues: editingDescription || { key: '', description: '' },
     validationSchema,
     enableReinitialize: true,
-    onSubmit: values => {
-      onSave(values);
+    onSubmit: async values => {
+      await onSave(values);
+      formik.resetForm();
     },
   });
 
@@ -53,22 +73,33 @@ const IssueDescriptionDialog: React.FC<IssueDescriptionDialogProps> = ({ isOpen,
               id="issue-description-key"
               name="key"
               value={formik.values.key}
-              onChange={formik.handleChange}
+              readOnly
               onBlur={formik.handleBlur}
+              disabled
               placeholder="e.g., plan_generic_continuity_only_test"
+              maxLength={MAX_LENGTH}
             />
             {formik.touched.key && formik.errors.key && <p className="mt-1 text-xs text-red-600">{formik.errors.key}</p>}
           </div>
           <div>
-            <Label htmlFor="issue-description-description">Description *</Label>
+            <div className="mb-1 flex items-center justify-between">
+              <Label htmlFor="issue-description-description">Description *</Label>
+              <span className="text-muted-foreground text-xs">{MAX_LENGTH - formik.values.description.length}/250</span>
+            </div>
             <Textarea
               id="issue-description-description"
               name="description"
               value={formik.values.description}
-              onChange={formik.handleChange}
+              onChange={e => {
+                const value = e.target.value.slice(0, MAX_LENGTH);
+                formik.setFieldValue('description', value);
+                const generatedKey = generateKeyFromDescription(value);
+                formik.setFieldValue('key', generatedKey);
+              }}
               onBlur={formik.handleBlur}
               placeholder="e.g., Plan is generic or continuity-only"
               rows={4}
+              maxLength={MAX_LENGTH}
             />
             {formik.touched.description && formik.errors.description && (
               <p className="mt-1 text-xs text-red-600">{formik.errors.description}</p>

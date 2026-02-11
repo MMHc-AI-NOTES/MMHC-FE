@@ -271,7 +271,7 @@ export function useTherapySessionSummary({
   }, []);
 
   const handleSaveFromTemplate = useCallback(
-    async (fieldKey: string) => {
+    async (fieldKey: string, comment?: string) => {
       if (!noteId || !versionId || !fieldKey || selectedTemplateId === '' || typeof selectedTemplateId !== 'number' || reviewerId == null)
         return;
       const revId = typeof reviewerId === 'number' ? reviewerId : null;
@@ -289,6 +289,7 @@ export function useTherapySessionSummary({
           template_id: selectedTemplateId,
           ai_status: aiStatusId,
           priority: priorityId,
+          comment: (comment ?? '').trim(),
         });
         if (!res?.id) return;
 
@@ -306,6 +307,7 @@ export function useTherapySessionSummary({
           errorType: et?.name ?? '',
           issueRelatedTo: irt?.fieldId ?? '',
           issueDescription: desc?.description ?? '',
+          comment: (comment ?? '').trim(),
           _smeIssueId: res.id,
           _isVersionIssue: true,
         };

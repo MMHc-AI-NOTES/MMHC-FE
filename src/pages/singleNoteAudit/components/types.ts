@@ -2,6 +2,8 @@ import { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 
 export interface IssueForm extends Omit<LocalIssueFormValues, 'reviewerName'> {
   id: string;
+  /** Optional free-text comment stored on the SME issue */
+  comment?: string;
   _smeIssueId?: number; // Original SME issue ID for version issues
   _isVersionIssue?: boolean; // Flag to identify version issues
 }
