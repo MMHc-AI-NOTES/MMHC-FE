@@ -70,8 +70,6 @@ export const logoutUser = async (): Promise<boolean> => {
 };
 
 export const handleSignIn = async (email: string, password: string): Promise<boolean> => {
-  dispatch(setShowBeatLoader());
-
   try {
     const response = (await axios.post('/login', { email, password })) as unknown as LoginResponseBody;
 
@@ -90,8 +88,6 @@ export const handleSignIn = async (email: string, password: string): Promise<boo
   } catch (error: any) {
     handleCatchMessages(error);
     return false;
-  } finally {
-    dispatch(setHideBeatLoader());
   }
 };
 
