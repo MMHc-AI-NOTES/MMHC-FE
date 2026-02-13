@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronDownIcon, Save, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TemplateOption {
   value: number;
@@ -35,6 +37,10 @@ export function AddIssueFromTemplateForm({
   onClose,
 }: AddIssueFromTemplateFormProps) {
   const [comment, setComment] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const selectedTemplate = options.find(opt => opt.value === selectedTemplateId);
+
   if (!hasTemplates) {
     return (
       <div className="mt-3 rounded-lg border bg-white p-4">
@@ -59,24 +65,48 @@ export function AddIssueFromTemplateForm({
           <p className="text-primary mb-1 font-semibold">
             Issue description <span className="text-red-600">*</span>
           </p>
-          <Select
-            value={selectedTemplateId === '' ? '' : String(selectedTemplateId)}
-            onValueChange={v => onTemplateChange(v ? parseInt(v, 10) : '')}
-          >
-            <SelectTrigger className="mt-1 w-full">
-              <SelectValue placeholder="Select a description" />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map(opt => {
-                const alreadyUsed = opt.descriptionId != null && alreadyUsedDescriptionIds.includes(opt.descriptionId);
-                return (
-                  <SelectItem key={opt.value} value={String(opt.value)} disabled={alreadyUsed}>
-                    {opt.label}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="mt-1 w-full justify-between font-normal"
+              >
+                <span className="truncate">{selectedTemplate?.label ?? 'Select a description'}</span>
+                <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+              <Command className="w-full">
+                <CommandInput placeholder="Search description..." />
+                <CommandList>
+                  <CommandEmpty>No description found.</CommandEmpty>
+                  <CommandGroup>
+                    {options.map(opt => {
+                      const alreadyUsed = opt.descriptionId != null && alreadyUsedDescriptionIds.includes(opt.descriptionId);
+                      return (
+                        <CommandItem
+                          key={opt.value}
+                          value={opt.label}
+                          disabled={alreadyUsed}
+                          onSelect={() => {
+                            if (alreadyUsed) return;
+                            onTemplateChange(opt.value);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check className={cn('mr-2 h-4 w-4', selectedTemplateId === opt.value ? 'opacity-100' : 'opacity-0')} />
+                          {opt.label}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           {selectedTemplateId !== '' && (
             <div className="mt-3">
               <Label htmlFor={`template-comment-${fieldKey}`} className="text-sm font-medium">
