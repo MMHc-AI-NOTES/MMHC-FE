@@ -7,7 +7,7 @@ import { ArrowLeft, MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen } fr
 
 // Components
 import NoteInformation from './NoteInformation';
-import NoteSections from './NoteSections';
+// import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import SMEReview from './SMEReview';
@@ -24,8 +24,9 @@ import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
 import TherapySessionSummaryCard from './TherapySessionSummaryCard';
+import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
-import { mapCategoryToSectionId } from '@/utils/helper';
+// import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
@@ -110,7 +111,7 @@ const SingleNoteAudit = () => {
     state => state.smeConfig,
   );
   const user = useAppSelector(state => state.auth.user);
-  const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
+  // const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
   const [reviews, setReviews] = useState<Review[]>([]);
 
   // Create a ref to store the latest selectedAgentId
@@ -405,7 +406,18 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
             />
-            <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
+            <PreviousSessionCard
+              webhookVersions={noteDetail.webhookVersions}
+              onVersionChange={setSelectedVersionId}
+              noteId={noteId}
+              versionId={selectedVersionId}
+              reviewerId={reviewerId ?? loggedInUserId}
+              practitionerId={practitionerId ?? 0}
+              aiStatusId={noteDetail.aiStatus?.id ?? 1}
+              priorityId={noteDetail.priority?.id ?? 1}
+              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+            />
+            {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
 
           {/* Right Content */}
@@ -413,13 +425,7 @@ const SingleNoteAudit = () => {
             <AuditScoreCard noteDetail={noteDetail} />
             <ModelInformation modelDetail={noteDetail.modelDetail} />
             <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
-            <IssuesIdentifiedCard
-              issues={noteDetail.issues}
-              onCategoryClick={category => {
-                const sectionId = mapCategoryToSectionId(category);
-                setOpenSectionId(sectionId);
-              }}
-            />
+            <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />
             <SMEReview
               reviews={reviews}
               setReviews={setReviews}
