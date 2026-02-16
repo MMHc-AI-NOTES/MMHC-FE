@@ -87,6 +87,8 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
       manager: item.manager?.id || 1, // Default to not_needed
       workflow: item.workflow?.id || 1, // Default to in_queue
       priority: item.priority?.id || 1, // Default to low
+      smeReview: item.smeReview?.id || 1, // Default to pending
+      smeReviewers: (item.humanReviews || []).map(rev => rev.reviewer?.fullName || 'Unknown'),
       sessionTime: moment(item.sessionTime).format('MMM D, YYYY h:mm A'),
       rawData: item,
     } as FormattedNote;
