@@ -17,6 +17,8 @@ export interface RawApiNote {
   manager?: { id: number; name: string };
   workflow?: { id: number; name: string };
   priority?: { id: number; name: string };
+  smeReview?: { id: number; name: string };
+  humanReviews?: HumanReview[];
   createdAt: string;
   updatedAt: string;
   practitioner: {
@@ -46,6 +48,8 @@ export interface FormattedNote {
   manager: number;
   workflow: number;
   priority: number;
+  smeReview: number;
+  smeReviewers?: string[];
   reviewCycle?: { id: number; name: string };
   sessionTime?: string;
   rawData?: RawApiNote;
@@ -71,6 +75,7 @@ export interface HumanReview {
   noteId?: string;
   practitionerId?: number;
   humanResult?: { id: number; name: string };
+  reviewer?: { id: number; fullName: string };
 }
 export interface NoteDetail {
   id: string;

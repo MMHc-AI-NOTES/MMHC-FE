@@ -13,7 +13,10 @@ const getTextColor = (gradientClass: string): string => {
     gradientClass.includes('not-reviewed') ||
     gradientClass.includes('not-needed') ||
     gradientClass.includes('neutral') ||
-    gradientClass.includes('blue')
+    gradientClass.includes('blue') ||
+    gradientClass.includes('indigo') ||
+    gradientClass.includes('slate') ||
+    gradientClass.includes('gray')
   ) {
     return 'text-gradient-light';
   }
@@ -25,16 +28,18 @@ interface GradientBadgeProps {
   gradient: string; // Now accepts CSS class name instead of gradient string
   icon?: ReactNode;
   className?: string;
+  title?: string;
 }
 
-export const GradientBadge = ({ label, gradient, icon, className = '' }: GradientBadgeProps) => {
+export const GradientBadge = ({ label, gradient, icon, className = '', title }: GradientBadgeProps) => {
   const textColor = getTextColor(gradient);
   return (
-    <p
-      className={`inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-widest ${gradient} ${textColor} ${className}`}
+    <span
+      title={title}
+      className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold tracking-widest ${gradient} ${textColor} ${className}`}
     >
-      {icon && <span className="[&>svg]:!size-4">{icon}</span>}
-      {label}
-    </p>
+      {icon && <span className="mr-2 flex-shrink-0 [&>svg]:!size-4">{icon}</span>}
+      <span className="truncate">{label}</span>
+    </span>
   );
 };

@@ -3,22 +3,24 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormattedNote } from '@/types/notes';
-// import {
-//   AiStatusLabels,
-//   HumanReviewLabels,
-//   ManagerLabels,
-//   WorkflowLabels,
-//   PriorityLabels,
-//   ReviewCycleLabels,
-//   AiStatusEnum,
-//   HumanReviewEnum,
-//   ManagerEnum,
-//   WorkflowEnum,
-//   PriorityEnum,
-//   ReviewCycleEnum,
-// } from '@/constants/common';
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-// import { GradientBadge } from '@/shared/GradientBadge';
+import {
+  // AiStatusLabels,
+  // HumanReviewLabels,
+  // ManagerLabels,
+  // WorkflowLabels,
+  // PriorityLabels,
+  // ReviewCycleLabels,
+  // AiStatusEnum,
+  // HumanReviewEnum,
+  // ManagerEnum,
+  // WorkflowEnum,
+  // PriorityEnum,
+  // ReviewCycleEnum,
+  ReviewStatusEnum,
+  ReviewStatusLabels,
+} from '@/constants/common';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { GradientBadge } from '@/shared/GradientBadge';
 import { useAppSelector } from '@/store/store';
 
 interface NotesTableProps {
@@ -116,9 +118,22 @@ interface NotesTableProps {
 //   }
 // };
 
+const getSmeReviewGradient = (status: number): string => {
+  switch (status) {
+    case ReviewStatusEnum.pending:
+      return 'bg-gradient-human-pending';
+    case ReviewStatusEnum.in_progress:
+      return 'bg-gradient-manager-in-progress';
+    case ReviewStatusEnum.returned:
+      return 'bg-gradient-human-returned';
+    default:
+      return 'bg-gradient-neutral';
+  }
+};
+
 export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
-  const columnCount = 11;
+  const columnCount = 15;
 
   if (notes.length === 0) {
     return (
@@ -128,6 +143,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[200px] text-center font-semibold">SME REVIEW</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
@@ -205,6 +221,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <TableHeader>
             <TableRow>
               <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[200px] text-center font-semibold">SME REVIEW</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
@@ -275,6 +292,63 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
                 <TableCell className="text-left font-medium">{note.id}</TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center gap-1.5">
+                    {note.smeReviewers && note.smeReviewers.length > 0 ? (
+                      <>
+                        <div className="flex flex-nowrap items-center gap-1.5">
+                          {note.smeReviewers.slice(0, 2).map((reviewer, idx) => (
+                            <TooltipProvider key={idx}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span>
+                                    <GradientBadge
+                                      label={reviewer}
+                                      gradient="bg-slate-200"
+                                      className="max-w-[110px] min-w-[90px] cursor-default uppercase"
+                                    />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs font-medium uppercase">{reviewer}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ))}
+                        </div>
+                        {note.smeReviewers.length > 2 && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex-shrink-0 cursor-pointer">
+                                  <GradientBadge
+                                    label={`+${note.smeReviewers.length - 2}`}
+                                    gradient="bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm"
+                                    className="!font-bold tracking-widest"
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1">
+                                  {note.smeReviewers.slice(2).map((reviewer, idx) => (
+                                    <p key={idx} className="text-xs font-medium uppercase">
+                                      {reviewer}
+                                    </p>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </>
+                    ) : (
+                      <GradientBadge
+                        label={ReviewStatusLabels[note.smeReview] || 'Pending'}
+                        gradient={getSmeReviewGradient(note.smeReview)}
+                      />
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.client}</TableCell>
