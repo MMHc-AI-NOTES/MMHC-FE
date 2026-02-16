@@ -1,7 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Search } from 'lucide-react';
+import { useAppSelector } from '@/store/store';
 import {
   AiStatusEnum,
   WorkflowEnum,
@@ -29,11 +31,12 @@ interface FiltersSectionProps {
     manager: string;
     workflow: string;
     search: string;
+    reviewedByMe: boolean;
   };
   practitioners: PractitionerOption[];
   cptCodes: CptCodeOption[];
   loading: boolean;
-  onFilterChange: (key: string, value: string) => void;
+  onFilterChange: (key: string, value: string | boolean) => void;
   onApplyFilters: () => void;
   onClearFilters: () => void;
 }
@@ -47,6 +50,8 @@ export const FiltersSection = ({
   onApplyFilters,
   onClearFilters,
 }: FiltersSectionProps) => {
+  const user = useAppSelector(state => state.auth.user);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -188,6 +193,28 @@ export const FiltersSection = ({
               className="w-full pl-10"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Checkbox Filter */}
+      <div>
+        <div className="flex items-center space-x-2">
+          <div
+            className={`flex items-center gap-2 rounded-md border-2 p-3 ${filters.reviewedByMe ? 'border-green-500 bg-green-50' : 'border-transparent bg-transparent'}`}
+          >
+            <Checkbox
+              id="reviewed-by-me"
+              checked={filters.reviewedByMe}
+              onCheckedChange={checked => onFilterChange('reviewedByMe', checked === true)}
+            />
+            <label
+              htmlFor="reviewed-by-me"
+              className="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Show only notes reviewed by me
+            </label>
+          </div>
+          {user?.fullName && <span className="text-muted-foreground text-xs">(Logged in as: {user.fullName})</span>}
         </div>
       </div>
 
