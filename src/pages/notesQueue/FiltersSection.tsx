@@ -200,16 +200,17 @@ export const FiltersSection = ({
       <div>
         <div className="flex items-center space-x-2">
           <div
-            className={`flex items-center gap-2 rounded-md border-2 p-3 ${filters.reviewedByMe ? 'border-green-500 bg-green-50' : 'border-transparent bg-transparent'}`}
+            className={`flex items-center gap-3 rounded-md border-2 px-4 py-2.5 hover:border-[#B0E490] hover:bg-green-50 ${filters.reviewedByMe ? 'border-[#B0E490] bg-green-50' : 'border-gray-200 bg-white'}`}
           >
             <Checkbox
               id="reviewed-by-me"
+              className="border-gray-300 data-[state=checked]:border-transparent data-[state=checked]:bg-[#B0E490] [&_svg]:!size-4"
               checked={filters.reviewedByMe}
               onCheckedChange={checked => onFilterChange('reviewedByMe', checked === true)}
             />
             <label
               htmlFor="reviewed-by-me"
-              className="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className={`cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${filters.reviewedByMe ? 'text-primary' : 'text-gray-500'}`}
             >
               Show only notes reviewed by me
             </label>
