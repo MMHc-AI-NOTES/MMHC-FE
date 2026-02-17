@@ -212,7 +212,7 @@ export const FiltersSection = ({
               htmlFor="reviewed-by-me"
               className={`cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${filters.reviewedByMe ? 'text-primary' : 'text-gray-500'}`}
             >
-              Show only notes reviewed by me
+              Show only notes not reviewed by me
             </label>
           </div>
           {user?.fullName && <span className="text-muted-foreground text-xs">(Logged in as: {user.fullName})</span>}
