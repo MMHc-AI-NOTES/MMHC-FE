@@ -21,6 +21,7 @@ export interface UseTherapySessionSummaryProps {
   aiStatusId?: number;
   priorityId?: number;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
+  initialVersionIndex?: number;
 }
 
 const normalizeFieldKey = (key: string): string => {
@@ -38,6 +39,7 @@ export function useTherapySessionSummary({
   aiStatusId = 1,
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
+  initialVersionIndex = 0,
 }: UseTherapySessionSummaryProps) {
   const dispatch = useDispatch();
   const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes } = useAppSelector(state => state.smeConfig);
@@ -46,7 +48,7 @@ export function useTherapySessionSummary({
   const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>('');
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(initialVersionIndex);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isOverallFormOpen, setIsOverallFormOpen] = useState(false);
   const [overallErrorTypeId, setOverallErrorTypeId] = useState<number>(1);
@@ -54,6 +56,13 @@ export function useTherapySessionSummary({
   const [isSavingOverall, setIsSavingOverall] = useState(false);
 
   const sortedVersions = useMemo(() => [...webhookVersions].sort((a, b) => b.id - a.id), [webhookVersions]);
+
+  useEffect(() => {
+    if (!sortedVersions.length) return;
+    if (selectedVersionIndex > sortedVersions.length - 1) {
+      setSelectedVersionIndex(Math.max(0, sortedVersions.length - 1));
+    }
+  }, [sortedVersions.length, selectedVersionIndex]);
 
   const overallIssueRelatedToId = useMemo(() => {
     const irt = issueRelatedTo?.find(opt => (opt.fieldId || '').toLowerCase() === 'overall');
