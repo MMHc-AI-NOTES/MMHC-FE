@@ -124,10 +124,10 @@ export const FiltersSection = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* Row 2: Review Stage, Priority, Date Range */}
+      {/* Row 2: Review Stage, Priority, Date Range */}
+      {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 
-        {/* <div className="w-full">
+        <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Workflow</label>
           <Select value={filters.workflow} onValueChange={value => onFilterChange('workflow', value)}>
             <SelectTrigger className="w-full">
@@ -142,9 +142,9 @@ export const FiltersSection = ({
               ))}
             </SelectContent>
           </Select>
-        </div> */}
+        </div>
 
-        {/* <div className="w-full">
+        <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Priority</label>
           <Select value={filters.priority} onValueChange={value => onFilterChange('priority', value)}>
             <SelectTrigger className="w-full">
@@ -159,9 +159,9 @@ export const FiltersSection = ({
               ))}
             </SelectContent>
           </Select>
-        </div> */}
+        </div>
 
-        {/* <div className="w-full">
+        <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Date Range</label>
           <Select value={filters.dateRange} onValueChange={value => onFilterChange('dateRange', value)}>
             <SelectTrigger className="w-full">
@@ -176,8 +176,8 @@ export const FiltersSection = ({
               <SelectItem value="last_month">Last Month</SelectItem>
             </SelectContent>
           </Select>
-        </div> */}
-      </div>
+        </div>
+      </div> */}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Row 3: CPT Code, Search */}

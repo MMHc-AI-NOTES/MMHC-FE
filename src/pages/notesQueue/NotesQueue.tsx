@@ -26,6 +26,7 @@ const NotesQueue = () => {
   const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
   const [workload, setWorkload] = useState<Workload | null>(null);
+  const user = useAppSelector(state => state.auth.user);
 
   // Get filter options from Redux
   const dispatch = useDispatch();
@@ -105,7 +106,7 @@ const NotesQueue = () => {
 
     // Reviewed By Me filter
     if (filters.reviewedByMe) {
-      filterArray.push({ columnName: 'reviewed_by_me', type: 'exact', value: true });
+      filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
