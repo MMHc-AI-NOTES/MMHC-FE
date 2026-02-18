@@ -5,13 +5,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import {
-  AiStatusEnum,
-  WorkflowEnum,
-  PriorityEnum,
+  // AiStatusEnum,
+  // WorkflowEnum,
+  // PriorityEnum,
   SessionTypeEnum,
-  AiStatusLabels,
-  WorkflowLabels,
-  PriorityLabels,
+  // AiStatusLabels,
+  // WorkflowLabels,
+  // PriorityLabels,
   SessionTypeLabels,
 } from '@/constants/common';
 import { PractitionerOption, CptCodeOption } from '@/types/notes';
@@ -56,7 +56,7 @@ export const FiltersSection = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Row 1: Status, Note Type, Practitioner */}
-        <div className="w-full">
+        {/* <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Status</label>
           <Select value={filters.aiStatus} onValueChange={value => onFilterChange('aiStatus', value)}>
             <SelectTrigger className="w-full">
@@ -71,7 +71,7 @@ export const FiltersSection = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Note Type</label>
@@ -106,45 +106,6 @@ export const FiltersSection = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* Row 2: Review Stage, Priority, Date Range */}
-
-        <div className="w-full">
-          <label className="mb-2 block text-sm font-medium text-gray-500">Workflow</label>
-          <Select value={filters.workflow} onValueChange={value => onFilterChange('workflow', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {getEnumValues(WorkflowEnum).map(value => (
-                <SelectItem key={value} value={value.toString()}>
-                  {WorkflowLabels[value]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="w-full">
-          <label className="mb-2 block text-sm font-medium text-gray-500">Priority</label>
-          <Select value={filters.priority} onValueChange={value => onFilterChange('priority', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {getEnumValues(PriorityEnum).map(value => (
-                <SelectItem key={value} value={value.toString()}>
-                  {PriorityLabels[value]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Date Range</label>
           <Select value={filters.dateRange} onValueChange={value => onFilterChange('dateRange', value)}>
@@ -161,6 +122,61 @@ export const FiltersSection = ({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Row 2: Review Stage, Priority, Date Range */}
+
+        {/* <div className="w-full">
+          <label className="mb-2 block text-sm font-medium text-gray-500">Workflow</label>
+          <Select value={filters.workflow} onValueChange={value => onFilterChange('workflow', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {getEnumValues(WorkflowEnum).map(value => (
+                <SelectItem key={value} value={value.toString()}>
+                  {WorkflowLabels[value]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div> */}
+
+        {/* <div className="w-full">
+          <label className="mb-2 block text-sm font-medium text-gray-500">Priority</label>
+          <Select value={filters.priority} onValueChange={value => onFilterChange('priority', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {getEnumValues(PriorityEnum).map(value => (
+                <SelectItem key={value} value={value.toString()}>
+                  {PriorityLabels[value]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div> */}
+
+        {/* <div className="w-full">
+          <label className="mb-2 block text-sm font-medium text-gray-500">Date Range</label>
+          <Select value={filters.dateRange} onValueChange={value => onFilterChange('dateRange', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="last_7_days">Last 7 Days</SelectItem>
+              <SelectItem value="last_30_days">Last 30 Days</SelectItem>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div> */}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
