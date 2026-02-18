@@ -1,4 +1,16 @@
-import { LayoutDashboard, FileText, Ban, ShieldCheck, ScrollText, Settings, HelpCircle, LogOut, FilePlus, UserCheck } from 'lucide-react';
+import {
+  LayoutDashboard,
+  FileText,
+  Ban,
+  ShieldCheck,
+  ScrollText,
+  Settings,
+  HelpCircle,
+  LogOut,
+  FilePlus,
+  UserCheck,
+  Database,
+} from 'lucide-react';
 import { UserRoleEnum } from '@/constants/common';
 import type { UserRole } from '@/types/settings';
 
@@ -12,6 +24,7 @@ export const allNavItems: NavItem[] = [
   { path: '/ai-logs', name: 'AI Logs', icon: ScrollText },
   { path: '/settings', name: 'Settings', icon: Settings },
   { path: '/note-submission', name: 'Note Submission', icon: FilePlus },
+  { path: '/notes-fetch-from-airtable', name: 'Notes Fetch From Airtable', icon: Database },
 ];
 
 export const bottomNavItems: NavItem[] = [
@@ -38,6 +51,7 @@ export const routeAccess: Record<string, UserRole[]> = {
   '/manager-review': [UserRoleEnum.superAdmin],
   '/ai-logs': [UserRoleEnum.superAdmin],
   '/note-submission': [UserRoleEnum.superAdmin],
+  '/notes-fetch-from-airtable': [UserRoleEnum.superAdmin],
   '/settings': [UserRoleEnum.superAdmin],
 };
 

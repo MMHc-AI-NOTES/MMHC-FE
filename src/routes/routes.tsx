@@ -18,6 +18,7 @@ const ManagerReviewQueue = lazy(() => import('@/pages/managerReview/ManagerRevie
 const ManagerSingleReview = lazy(() => import('@/pages/managerReview/ManagerSingleReview'));
 const BlacklistedNotes = lazy(() => import('@/pages/blacklistedNotes/BlacklistedNotes'));
 const NoteSubmission = lazy(() => import('@/pages/noteSubmission/NoteSubmission'));
+const NotesFetchFromAirtable = lazy(() => import('@/pages/notesFetchFromAirtable/NotesFetchFromAirtable'));
 const Profile = lazy(() => import('@/pages/profile/Profile'));
 
 const Routes = () => {
@@ -124,6 +125,14 @@ const Routes = () => {
           element: (
             <RoleGuard>
               <NoteSubmission />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'notes-fetch-from-airtable',
+          element: (
+            <RoleGuard>
+              <NotesFetchFromAirtable />
             </RoleGuard>
           ),
         },
