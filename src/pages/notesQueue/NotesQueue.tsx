@@ -26,6 +26,7 @@ const NotesQueue = () => {
   const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
   const [workload, setWorkload] = useState<Workload | null>(null);
+  const user = useAppSelector(state => state.auth.user);
 
   // Get filter options from Redux
   const dispatch = useDispatch();
@@ -50,6 +51,7 @@ const NotesQueue = () => {
     manager: 'all',
     workflow: 'all',
     search: '',
+    reviewedByMe: false,
   };
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('notesQueueFilters', defaultFilters);
 
@@ -100,6 +102,11 @@ const NotesQueue = () => {
       if (dateRange) {
         filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
       }
+    }
+
+    // Reviewed By Me filter
+    if (filters.reviewedByMe) {
+      filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
@@ -182,7 +189,8 @@ const NotesQueue = () => {
           filters.humanReview !== 'all' ||
           filters.manager !== 'all' ||
           filters.workflow !== 'all' ||
-          filters.search !== '';
+          filters.search !== '' ||
+          filters.reviewedByMe;
 
         let payload;
         if (hasActive) {
@@ -216,6 +224,9 @@ const NotesQueue = () => {
               filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
             }
           }
+          if (filters.reviewedByMe) {
+            filterArray.push({ columnName: 'reviewed_by_me', type: 'exact', value: true });
+          }
 
           payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
         } else {
@@ -237,7 +248,7 @@ const NotesQueue = () => {
   }, []); // Only run on mount
 
   // Handle filter changes (updates local state only)
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: string | boolean) => {
     setFilters({ ...filters, [key]: value });
   };
 
