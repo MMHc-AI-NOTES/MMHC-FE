@@ -383,7 +383,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                 <TableCell className="border-border sticky right-0 z-10 bg-white">
                   <Button
                     variant="outline"
-                    onClick={() => onViewNote(note.id)}
+                    onClick={() => onViewNote(note.noteId)}
                     className="border-primary text-primary hover:bg-primary h-9 bg-transparent text-[13px] hover:text-white"
                   >
                     Open
