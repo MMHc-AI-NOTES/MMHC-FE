@@ -1,36 +1,36 @@
 import { useState } from 'react';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { fetchNoteFromAirtable } from './notesFetchFromAirtableApiCalls';
 import type { NoteDetailFromAirtable } from './notesFetchFromAirtableApiCalls';
 import { Loader2 } from 'lucide-react';
+import InputField from '@/shared/InputField';
+
+interface FormValues {
+  noteId: string;
+}
+
+const validationSchema = yup.object({
+  noteId: yup.string().trim().required('Note ID is required').min(1, 'Note ID cannot be empty'),
+});
 
 const NotesFetchFromAirtable = () => {
-  const [noteId, setNoteId] = useState('');
   const [detail, setDetail] = useState<NoteDetailFromAirtable | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleFetch = async () => {
-    const id = noteId.trim();
-    if (!id) return;
-
-    setLoading(true);
-    setError(null);
-    setDetail(null);
-
-    try {
+  const formik = useFormik<FormValues>({
+    initialValues: {
+      noteId: '',
+    },
+    validationSchema,
+    onSubmit: async values => {
+      const id = values.noteId.trim();
+      if (!id) return;
       const data = await fetchNoteFromAirtable(id);
       setDetail(data);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch note details';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-8">
@@ -39,35 +39,19 @@ const NotesFetchFromAirtable = () => {
           <CardTitle>Notes Fetch from Airtable</CardTitle>
           <p className="text-muted-foreground text-sm">Enter a note ID and click Fetch to load details from Airtable.</p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="note-id">Note ID</Label>
-            <Input
-              id="note-id"
-              placeholder="Enter note ID"
-              value={noteId}
-              onChange={e => setNoteId(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleFetch()}
-              disabled={loading}
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={handleFetch} disabled={loading || !noteId.trim()}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Fetch'}
-            </Button>
-          </div>
+        <CardContent>
+          <form onSubmit={formik.handleSubmit} className="space-y-4">
+            <InputField id="noteId" label="Note ID" placeholder="Enter note ID" formik={formik} disabled={formik.isSubmitting} />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={formik.isSubmitting} className="w-28">
+                {formik.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Fetch'}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 
-      {error && (
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-destructive text-sm">{error}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {detail !== null && !error && (
+      {detail !== null && (
         <Card>
           <CardHeader>
             <CardTitle>Note details</CardTitle>
