@@ -51,7 +51,7 @@ export const routeAccess: Record<string, UserRole[]> = {
   '/manager-review': [UserRoleEnum.superAdmin],
   '/ai-logs': [UserRoleEnum.superAdmin],
   '/note-submission': [UserRoleEnum.superAdmin],
-  '/notes-fetch-from-airtable': [UserRoleEnum.superAdmin],
+  '/notes-fetch-from-airtable': [UserRoleEnum.superAdmin, UserRoleEnum.sme_reviewer],
   '/settings': [UserRoleEnum.superAdmin],
 };
 

@@ -51,16 +51,11 @@ const NotesFetchFromAirtable = () => {
               disabled={loading}
             />
           </div>
-          <Button onClick={handleFetch} disabled={loading || !noteId.trim()}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Fetching…
-              </>
-            ) : (
-              'Fetch'
-            )}
-          </Button>
+          <div className="flex justify-end">
+            <Button onClick={handleFetch} disabled={loading || !noteId.trim()}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Fetch'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
