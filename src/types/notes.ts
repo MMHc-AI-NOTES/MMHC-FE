@@ -37,6 +37,7 @@ export interface RawApiNote {
 
 export interface FormattedNote {
   id: string;
+  noteId: string;
   cptCode: number;
   practitioner: string;
   client: string;

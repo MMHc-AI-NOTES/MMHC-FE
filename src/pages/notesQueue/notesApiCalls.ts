@@ -74,13 +74,14 @@ export const getDateRange = (range: string): { startDate: string; endDate: strin
 const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
   return data.map((item: RawApiNote) => {
     return {
-      id: item.noteId,
+      id: item.id?.toString() || item.noteId,
+      noteId: item.noteId,
       cptCode: item.cptCodeId,
       reviewCycle: item.reviewCycle,
       practitioner: item.practitioner.fullName,
       client: item.patient.clientId || '-',
       date: moment(item.sessionTime).format('MMM D, YYYY'),
-      type: item.noteType?.id || 'Progress Note',
+      type: item.noteType?.name || 'Progress Note',
       aiScore: item.aiScore || 0,
       aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
       humanReview: item.humanReview?.id || 1, // Default to not_needed
