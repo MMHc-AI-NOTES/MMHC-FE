@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
@@ -105,7 +105,7 @@ const SingleNoteAudit = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
-  const { selectedAgentId } = useAppSelector(state => state.agents);
+  const { selectedAgentId, agents } = useAppSelector(state => state.agents);
   const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
   const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded, errorTypes, issueRelatedTo } = useAppSelector(
     state => state.smeConfig,
@@ -380,6 +380,22 @@ const SingleNoteAudit = () => {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
           {!isManagerReviewing && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
+        </div>
+      </div>
+    );
+  }
+
+  if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
+    return (
+      <div>
+        <Button onClick={() => navigate(-1)} className="mb-2">
+          <ArrowLeft />
+        </Button>
+        <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
+          <p className="text-base">No agent configured. Create an agent first, then come back to create chat.</p>
+          <Button asChild>
+            <Link to="/settings">Go to Settings to create an agent</Link>
+          </Button>
         </div>
       </div>
     );
