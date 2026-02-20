@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, X, User, Save } from 'lucide-react';
+import { Pencil, Trash2, X, User, Save, FileCheck } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
@@ -306,6 +306,10 @@ const ReviewCard = ({
     <Card className="relative gap-0 pt-1 pb-4">
       {isOwnReview && (
         <div className="flex items-center justify-end gap-2 p-2">
+          <Button size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
+            <FileCheck />
+            Mark For Review
+          </Button>
           <Button onClick={handleAssignToManager} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
             <User />
             Assign to Manager
