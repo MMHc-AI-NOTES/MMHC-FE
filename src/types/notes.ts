@@ -107,6 +107,8 @@ export interface NoteDetail {
     sectionId: string;
   }[];
   webhookVersions: WebhookVersion[];
+  /** Reviewer id -> marked for review (from note detail API) */
+  noteReviewMarks?: Record<string, boolean>;
 }
 
 export interface NoteSection {
@@ -207,6 +209,17 @@ export interface WebhookVersion {
   smeIssues: SMEIssue[];
 }
 
+/** From API (fetchNoteDetail): reviewers who have marked this note for review */
+export interface NoteReviewMarkItem {
+  id: number;
+  noteId: string;
+  reviewerId: number;
+  markedAsReviewed: number; // 1 = marked, 0 = not
+  markedAt?: string;
+  createdAt: string;
+  reviewer?: { id: number; fullName: string; email: string; [key: string]: unknown };
+}
+
 export interface ApiNoteDetail {
   id: number;
   chat_count: number;
@@ -228,6 +241,9 @@ export interface ApiNoteDetail {
   chats: Chat[];
   humanReview: HumanReview[] | null;
   webhookVersions: WebhookVersion[];
+  /** Note review marks from API (fetchNoteDetail) – array with reviewerId & markedAsReviewed */
+  note_review_marks?: NoteReviewMarkItem[];
+  noteReviewMarks?: NoteReviewMarkItem[];
 }
 
 // Queue Overview Data

@@ -297,6 +297,34 @@ export const assignToManager = async (payload: AssignToManagerPayload): Promise<
   }
 };
 
+export interface NoteReviewMarkPayload {
+  note_id: string;
+  reviewer_id: string;
+  marked: boolean;
+}
+
+export interface NoteReviewMarkResponse {
+  marked?: boolean;
+}
+
+/**
+ * Mark or unmark a note for review (reviewer's issues marked as ready for review)
+ */
+export const markNoteForReview = async (payload: NoteReviewMarkPayload): Promise<NoteReviewMarkResponse | null> => {
+  try {
+    const response = await axios.patch('/note-review-marks/mark', payload);
+    if (response?.status) {
+      showToast.success(payload.marked ? 'Marked for review successfully' : 'Unmarked for review');
+      return response.data ?? { marked: payload.marked };
+    }
+    handleErrorMessages(response);
+    return null;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
 export interface NotifyPractitionerPayload {
   practitioner_id: number;
   note_id: string;
