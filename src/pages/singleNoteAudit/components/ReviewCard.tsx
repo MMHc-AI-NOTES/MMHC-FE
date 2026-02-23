@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,10 @@ interface ReviewCardProps {
   onCancelEdit: (reviewId: string, issueId: string) => void;
   onDeleteReview: (reviewId: string) => void;
   onRemoveReview?: (reviewId: string) => void;
+  isMarkedForReview?: boolean;
+  hasIssuesChangedSinceMark?: boolean;
+  onMarkForReview?: () => void;
+  isMarkingForReview?: boolean;
 }
 
 const ReviewCard = ({
@@ -50,6 +54,10 @@ const ReviewCard = ({
   onCancelEdit,
   onDeleteReview,
   onRemoveReview,
+  isMarkedForReview = false,
+  hasIssuesChangedSinceMark = false,
+  onMarkForReview,
+  isMarkingForReview = false,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -170,6 +178,20 @@ const ReviewCard = ({
     if (!smeTemplates || !Array.isArray(smeTemplates)) return [];
     return smeTemplates.filter(t => t.issues_related_to_id === issueRelatedToId);
   };
+
+  // Already-used description IDs for a field (so New Issue dropdown can disable them)
+  const getAlreadyUsedDescriptionIdsForField = useCallback(
+    (fieldId: string, excludeIssueId?: string): number[] => {
+      const issues = [...savedIssues, ...editingIssues].filter(
+        i => i.issueRelatedTo === fieldId && (excludeIssueId == null || i.id !== excludeIssueId),
+      );
+      const ids = issues
+        .map(i => issueDescriptions.find(d => d.description === i.issueDescription)?.id)
+        .filter((id): id is number => id != null);
+      return [...new Set(ids)];
+    },
+    [savedIssues, editingIssues, issueDescriptions],
+  );
 
   // Get description options for an issue based on its issueRelatedTo
   const getDescriptionOptionsForIssue = (issue: IssueForm) => {
@@ -306,9 +328,14 @@ const ReviewCard = ({
     <Card className="relative gap-0 pt-1 pb-4">
       {isOwnReview && (
         <div className="flex items-center justify-end gap-2 p-2">
-          <Button size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
+          <Button
+            size="sm"
+            className="bg-gradient-light text-primary border-0 shadow-sm"
+            disabled={(isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
+            onClick={onMarkForReview}
+          >
             <FileCheck />
-            Mark For Review
+            {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
           </Button>
           <Button onClick={handleAssignToManager} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
             <User />
@@ -510,11 +537,21 @@ const ReviewCard = ({
                                   <SelectValue placeholder="Select a description" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {getDescriptionOptionsForIssue(savedIssue).map(opt => (
-                                    <SelectItem key={opt.value} value={String(opt.value)}>
-                                      {opt.label}
-                                    </SelectItem>
-                                  ))}
+                                  {(() => {
+                                    const alreadyUsedByOther = getAlreadyUsedDescriptionIdsForField(
+                                      savedIssue.issueRelatedTo,
+                                      savedIssue.id,
+                                    );
+                                    return getDescriptionOptionsForIssue(savedIssue).map(opt => (
+                                      <SelectItem
+                                        key={opt.value}
+                                        value={String(opt.value)}
+                                        disabled={alreadyUsedByOther.includes(opt.value)}
+                                      >
+                                        {opt.label}
+                                      </SelectItem>
+                                    ));
+                                  })()}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -578,6 +615,7 @@ const ReviewCard = ({
                   isSaving={savingIssueId === issue.id}
                   isEditMode={isEditMode}
                   hideReviewerField={true}
+                  getAlreadyUsedDescriptionIdsForField={(fieldId: string) => getAlreadyUsedDescriptionIdsForField(fieldId, issue.id)}
                 />
               );
             })}

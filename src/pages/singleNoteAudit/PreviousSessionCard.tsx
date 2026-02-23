@@ -16,6 +16,7 @@ interface TherapySessionSummaryCardProps {
   aiStatusId?: number;
   priorityId?: number;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
+  onReviewerIssuesChanged?: (reviewerId: number) => void;
 }
 
 const PreviousSessionCard = ({
@@ -28,6 +29,7 @@ const PreviousSessionCard = ({
   aiStatusId = 1,
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
+  onReviewerIssuesChanged,
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
@@ -39,6 +41,7 @@ const PreviousSessionCard = ({
     aiStatusId,
     priorityId,
     onSMEIssueCreatedFromTemplate,
+    onReviewerIssuesChanged,
     initialVersionIndex: 1,
   });
 

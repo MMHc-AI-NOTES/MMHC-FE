@@ -20,7 +20,15 @@ export interface UseTherapySessionSummaryProps {
   practitionerId?: number;
   aiStatusId?: number;
   priorityId?: number;
-  onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
+  onSMEIssueCreatedFromTemplate?: (
+    response: { id: number },
+    issueForm: IssueForm,
+    versionId: number,
+    descriptionId?: number,
+    createdForReviewerId?: number,
+  ) => void;
+  /** Called when an issue is created so SME Review can re-enable "Mark For Review" */
+  onReviewerIssuesChanged?: (reviewerId: number) => void;
   initialVersionIndex?: number;
 }
 
@@ -39,6 +47,7 @@ export function useTherapySessionSummary({
   aiStatusId = 1,
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
+  onReviewerIssuesChanged,
   initialVersionIndex = 0,
 }: UseTherapySessionSummaryProps) {
   const dispatch = useDispatch();
@@ -191,17 +200,31 @@ export function useTherapySessionSummary({
     [getIssueRelatedToId, smeTemplates],
   );
 
+  // Reviewer we're adding issues for (prop); used so "already used" is for that reviewer's issues (creating or editing)
+  const effectiveReviewerId = typeof reviewerId === 'number' ? reviewerId : (user?.id ?? null);
+
   const getAlreadyUsedDescriptionIdsForField = useCallback(
     (fieldKey: string): number[] => {
-      if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues) || !user?.id) return [];
+      if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues) || effectiveReviewerId == null) return [];
       const issueRelatedToId = getIssueRelatedToId(fieldKey);
       if (!issueRelatedToId) return [];
-      return currentVersion.smeIssues
-        .filter(issue => issue.issuesRelatedTo?.id === issueRelatedToId && issue.reviewerId === user.id)
-        .map(issue => issue.issueDescription?.id)
-        .filter((id): id is number => id != null);
+      const ids: number[] = [];
+      for (const issue of currentVersion.smeIssues) {
+        if (issue.issuesRelatedTo?.id !== issueRelatedToId || Number(issue.reviewerId) !== effectiveReviewerId) continue;
+        const fromIssueDesc = issue.issueDescription?.id;
+        if (fromIssueDesc != null) {
+          ids.push(fromIssueDesc);
+          continue;
+        }
+        const descText = typeof issue.description === 'string' ? issue.description : undefined;
+        if (descText && issueDescriptions?.length) {
+          const matched = issueDescriptions.find(d => d.description === descText);
+          if (matched?.id != null) ids.push(matched.id);
+        }
+      }
+      return [...new Set(ids)];
     },
-    [currentVersion?.smeIssues, getIssueRelatedToId, user?.id],
+    [currentVersion?.smeIssues, getIssueRelatedToId, effectiveReviewerId, issueDescriptions],
   );
 
   const getTemplateDropdownOptions = useCallback(
@@ -320,7 +343,8 @@ export function useTherapySessionSummary({
           _smeIssueId: res.id,
           _isVersionIssue: true,
         };
-        onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined);
+        onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined, revId);
+        onReviewerIssuesChanged?.(revId);
         setExpandedFieldKey(null);
         setSelectedTemplateId('');
       } catch (e) {
@@ -343,6 +367,7 @@ export function useTherapySessionSummary({
       issueRelatedTo,
       issueDescriptions,
       onSMEIssueCreatedFromTemplate,
+      onReviewerIssuesChanged,
     ],
   );
 
@@ -389,7 +414,8 @@ export function useTherapySessionSummary({
         _smeIssueId: res.id,
         _isVersionIssue: true,
       };
-      onSMEIssueCreatedFromTemplate(res, issueForm, versionId, undefined);
+      onSMEIssueCreatedFromTemplate(res, issueForm, versionId, undefined, revId);
+      onReviewerIssuesChanged?.(revId);
       closeOverallForm();
     } catch (e) {
       console.error('Create overall SME issue:', e);
@@ -410,6 +436,7 @@ export function useTherapySessionSummary({
     errorTypes,
     issueRelatedTo,
     onSMEIssueCreatedFromTemplate,
+    onReviewerIssuesChanged,
     closeOverallForm,
   ]);
 

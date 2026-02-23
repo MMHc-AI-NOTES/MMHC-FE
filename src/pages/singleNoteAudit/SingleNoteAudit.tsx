@@ -96,6 +96,17 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
     webhookVersions: apiData.webhookVersions || [],
+    noteReviewMarks: (() => {
+      const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
+      if (!Array.isArray(arr)) return undefined;
+      return arr.reduce(
+        (acc: Record<string, boolean>, row: { reviewerId: number; markedAsReviewed?: number }) => {
+          acc[String(row.reviewerId)] = row.markedAsReviewed === 1;
+          return acc;
+        },
+        {} as Record<string, boolean>,
+      );
+    })(),
   };
 };
 
@@ -117,6 +128,7 @@ const SingleNoteAudit = () => {
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
   const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
+  const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
@@ -261,8 +273,9 @@ const SingleNoteAudit = () => {
   const loggedInUserId = user?.id ?? null;
 
   const handleSMEIssueCreatedFromTemplate = useCallback(
-    (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => {
+    (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number, createdForReviewerId?: number) => {
       if (!loggedInUserId) return;
+      const reviewerIdForIssue = createdForReviewerId ?? loggedInUserId;
       // Optimistically update noteDetail.webhookVersions.smeIssues (include issueDescription so dropdown disables immediately)
       setNoteDetail(prev => {
         if (!prev) return prev;
@@ -274,7 +287,7 @@ const SingleNoteAudit = () => {
 
         const newSmeIssue: SMEIssue = {
           id: response.id,
-          reviewerId: loggedInUserId,
+          reviewerId: reviewerIdForIssue,
           versionId,
           errorType: {
             id: errorTypeOption?.id ?? 0,
@@ -421,6 +434,7 @@ const SingleNoteAudit = () => {
               aiStatusId={noteDetail.aiStatus?.id ?? 1}
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
             />
             <PreviousSessionCard
               webhookVersions={noteDetail.webhookVersions}
@@ -432,6 +446,7 @@ const SingleNoteAudit = () => {
               aiStatusId={noteDetail.aiStatus?.id ?? 1}
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
             />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
@@ -448,6 +463,7 @@ const SingleNoteAudit = () => {
               auditScore={noteDetail?.auditScore || 0}
               versionId={selectedVersionId}
               webhookVersions={noteDetail.webhookVersions || []}
+              noteReviewMarks={noteDetail.noteReviewMarks}
               aiStatusId={noteDetail.aiStatus?.id || 1}
               priorityId={noteDetail.priority?.id || 1}
               practitionerId={practitionerId || 0}
@@ -456,6 +472,7 @@ const SingleNoteAudit = () => {
               onSMEIssueDeleted={onSMEIssueDeleted}
               onSMEReviewDeleted={onSMEReviewDeleted}
               onSMEIssueUpdated={onSMEIssueUpdated}
+              onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
