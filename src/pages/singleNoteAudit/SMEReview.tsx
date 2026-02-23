@@ -310,28 +310,28 @@ const SMEReview = ({
     [reviewMarkState, getIssuesSignature],
   );
 
-  // When any issue is created/updated/deleted: set persisted state to false (button enabled) and update in-memory state
+  // When any issue is created/updated/deleted: set persisted state to false (button enabled) and update baseline so we don't re-trigger (avoids infinite loop)
   useEffect(() => {
     if (!noteId) return;
-    const reviewIdsToClear: string[] = [];
+    const toClear: { id: string; baseline: string }[] = [];
     for (const review of reviews) {
       if (review.reviewerId && Number(review.reviewerId) !== loggedInUserId) continue;
       const changed = getHasIssuesChangedSinceMark(review);
       if (changed) {
         setMarkedInStorage(noteId, review.reviewerId, false);
-        reviewIdsToClear.push(review.id);
+        toClear.push({ id: review.id, baseline: getIssuesSignature(review.issues) });
       }
     }
-    if (reviewIdsToClear.length > 0) {
+    if (toClear.length > 0) {
       setReviewMarkState(prev => {
         const next = { ...prev };
-        for (const id of reviewIdsToClear) {
-          next[id] = { ...(next[id] ?? { marked: false }), marked: false };
+        for (const { id, baseline } of toClear) {
+          next[id] = { ...(next[id] ?? { marked: false }), marked: false, issuesBaseline: baseline };
         }
         return next;
       });
     }
-  }, [noteId, reviews, loggedInUserId, getHasIssuesChangedSinceMark]);
+  }, [noteId, reviews, loggedInUserId, getHasIssuesChangedSinceMark, getIssuesSignature]);
 
   // Register callback so parent can notify when an issue is created from summary cards (no-op now; we derive from baseline)
   useEffect(() => {
