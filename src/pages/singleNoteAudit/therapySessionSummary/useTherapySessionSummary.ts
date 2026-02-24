@@ -30,6 +30,8 @@ export interface UseTherapySessionSummaryProps {
   /** Called when an issue is created so SME Review can re-enable "Mark For Review" */
   onReviewerIssuesChanged?: (reviewerId: number) => void;
   initialVersionIndex?: number;
+  /** When true, session data comes from latest version's previous_note (for Previous Session card) */
+  sourcePreviousSessionFromNote?: boolean;
 }
 
 const normalizeFieldKey = (key: string): string => {
@@ -49,6 +51,7 @@ export function useTherapySessionSummary({
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
   initialVersionIndex = 0,
+  sourcePreviousSessionFromNote = false,
 }: UseTherapySessionSummaryProps) {
   const dispatch = useDispatch();
   const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes } = useAppSelector(state => state.smeConfig);
@@ -79,19 +82,41 @@ export function useTherapySessionSummary({
   }, [issueRelatedTo]);
 
   const currentVersion = sortedVersions[selectedVersionIndex];
+  const latestVersion = sortedVersions[0] ?? null;
   const previousVersion = selectedVersionIndex < sortedVersions.length - 1 ? sortedVersions[selectedVersionIndex + 1] : null;
   const isHistoricalVersion = selectedVersionIndex > 0;
   const isFirstVersion = selectedVersionIndex === sortedVersions.length - 1;
   const isLastVersion = selectedVersionIndex === 0;
 
   const currentSessionData = useMemo(() => {
+    const previousNote =
+      latestVersion?.previous_note ?? (latestVersion as { previousNote?: { session?: string; sessionJson?: string } })?.previousNote;
+    if (sourcePreviousSessionFromNote && previousNote) {
+      const sessionStr = previousNote.session ?? previousNote.sessionJson;
+      if (sessionStr) {
+        try {
+          return JSON.parse(sessionStr);
+        } catch {
+          return {};
+        }
+      }
+      return {};
+    }
     if (!currentVersion?.sessionJson) return {};
     try {
       return JSON.parse(currentVersion.sessionJson);
     } catch {
       return {};
     }
-  }, [currentVersion]);
+  }, [sourcePreviousSessionFromNote, latestVersion, currentVersion]);
+
+  const hasPreviousSessionData = useMemo(() => {
+    if (sourcePreviousSessionFromNote && latestVersion) {
+      const prev = latestVersion.previous_note ?? (latestVersion as { previousNote?: unknown }).previousNote;
+      return Boolean(prev);
+    }
+    return sortedVersions.length >= 2;
+  }, [sourcePreviousSessionFromNote, latestVersion, sortedVersions.length]);
 
   const previousSessionData = useMemo(() => {
     if (!previousVersion?.sessionJson) return {};
@@ -445,6 +470,7 @@ export function useTherapySessionSummary({
     sortedVersions,
     currentVersion,
     currentSessionData,
+    hasPreviousSessionData,
     changedFields,
     selectedVersionIndex,
     isVersionHistoryOpen,

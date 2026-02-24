@@ -26,6 +26,8 @@ import { useAppSelector } from '@/store/store';
 interface NotesTableProps {
   notes: FormattedNote[];
   onViewNote: (noteId: string) => void;
+  page?: number;
+  pageSize?: number;
 }
 
 // Helper functions to get gradient CSS classes for badges
@@ -131,7 +133,7 @@ const getSmeReviewGradient = (status: number): string => {
   }
 };
 
-export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
+export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60 }: NotesTableProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const columnCount = 15;
 
@@ -142,7 +144,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[120px] font-semibold">ID</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">No.</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
@@ -221,7 +223,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary pl-4 text-left font-semibold">ID</TableHead>
+              <TableHead className="text-primary pl-4 text-left font-semibold">No.</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
@@ -293,7 +295,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
-                <TableCell className="text-left font-medium">{note.id}</TableCell>
+                <TableCell className="text-left font-medium">{(page - 1) * pageSize + index + 1}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.client}</TableCell>
                 <TableCell>{note.date}</TableCell>

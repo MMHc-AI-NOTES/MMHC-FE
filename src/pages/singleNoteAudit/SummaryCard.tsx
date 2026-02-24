@@ -53,11 +53,19 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
     return highlightedText;
   };
 
+  const formatValueForDisplay = (value: unknown): string => {
+    if (value === '' || value === null || value === undefined) return '-';
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+  };
+
   const handleCopy = async () => {
     try {
       const textToCopy = isJsonFormat
         ? Object.entries(jsonData!)
-            .map(([key, value]) => `${key}: ${value || '-'}`)
+            .map(
+              ([key, value]) => `${key}: ${typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : (value ?? '-')}`,
+            )
             .join('\n')
         : displayText;
       await navigator.clipboard.writeText(textToCopy);
@@ -90,14 +98,48 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
             {isJsonFormat
               ? // Render JSON format
                 Object.entries(jsonData!).map(([key, value]) => {
-                  const displayValue = value === '' || value === null || value === undefined ? '-' : String(value);
                   const highlightedKey = highlightPromptKeys(key);
-                  const highlightedValue = highlightPromptKeys(displayValue);
+                  const isArrayOfObjects =
+                    Array.isArray(value) &&
+                    value.length > 0 &&
+                    value.every((item: unknown) => typeof item === 'object' && item !== null && !Array.isArray(item));
+                  const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
 
                   return (
                     <div key={key} className="mb-2">
                       <h4 className="font-semibold text-gray-800" dangerouslySetInnerHTML={{ __html: `${highlightedKey}:` }} />
-                      <p className="ml-4 text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedValue }} />
+                      {isArrayOfObjects ? (
+                        <div className="mt-1 ml-4 space-y-3">
+                          {(value as Record<string, unknown>[]).map((item, idx) => (
+                            <div key={idx} className="rounded bg-gray-100/80 p-2 text-xs">
+                              {Object.entries(item).map(([k, v]) => (
+                                <div key={k} className="mb-1 last:mb-0">
+                                  <span className="font-medium text-gray-700">{k}:</span>{' '}
+                                  <span className="text-gray-700">{v === null || v === undefined ? '-' : String(v)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ) : isPlainObject ? (
+                        <div className="mt-1 ml-4 rounded bg-gray-100/80 p-2 text-xs">
+                          {Object.entries(value as Record<string, unknown>).map(([k, v]) => (
+                            <div key={k} className="mb-1 last:mb-0">
+                              <span className="font-medium text-gray-700">{k}:</span>{' '}
+                              <span className="text-gray-700">
+                                {v === null || v === undefined ? '-' : typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p
+                          className="ml-4 text-gray-700"
+                          dangerouslySetInnerHTML={{
+                            __html: highlightPromptKeys(formatValueForDisplay(value)),
+                          }}
+                        />
+                      )}
                     </div>
                   );
                 })
