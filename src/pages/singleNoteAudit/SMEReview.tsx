@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 // import { Button } from '@/components/ui/button';
-import { Bug } from 'lucide-react';
+import { Bug, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
@@ -428,7 +428,12 @@ const SMEReview = ({
           }
 
           if (filteredReviews.length === 0) {
-            return <p className="py-4 text-center text-sm text-gray-500">No reviews added yet. Click "Add Review" to create one.</p>;
+            return (
+              <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">
+                No reviews added yet. Click <Plus className="h-4 w-4" />
+                icon in current session to create.
+              </div>
+            );
           }
 
           return filteredReviews.map(review => (

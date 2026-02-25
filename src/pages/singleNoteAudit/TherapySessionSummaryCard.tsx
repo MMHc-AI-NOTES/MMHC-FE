@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine, Flag } from 'lucide-react';
+// import { Badge } from '@/components/ui/badge';
+import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine } from 'lucide-react';
 import { WebhookVersion } from '@/types/notes';
 import type { IssueForm } from './components/types';
-import { UserRoleEnum } from '@/constants/common';
+// import { UserRoleEnum } from '@/constants/common';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { VersionHistoryPopover } from './therapySessionSummary/VersionHistoryPopover';
 import { SessionFieldRow } from './therapySessionSummary/SessionFieldRow';
-import { OverallSummaryFlagForm } from './therapySessionSummary/OverallSummaryFlagForm';
+// import { OverallSummaryFlagForm } from './therapySessionSummary/OverallSummaryFlagForm';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
@@ -77,18 +77,17 @@ const TherapySessionSummaryCard = ({
     handleSaveFromTemplate,
     closeTemplateForm,
     formatDate,
-    overallIssueRelatedToId,
-    getIssueCountForOverall,
-    isOverallFormOpen,
-    openOverallForm,
-    closeOverallForm,
-    overallErrorTypeId,
-    setOverallErrorTypeId,
-    overallComment,
-    setOverallComment,
-    isSavingOverall,
-    handleSaveOverallIssue,
-    errorTypes,
+    // overallIssueRelatedToId,
+    // getIssueCountForOverall,
+    // isOverallFormOpen,
+    // closeOverallForm,
+    // overallErrorTypeId,
+    // setOverallErrorTypeId,
+    // overallComment,
+    // setOverallComment,
+    // isSavingOverall,
+    // handleSaveOverallIssue,
+    // errorTypes,
   } = summary;
 
   useEffect(() => {
@@ -118,6 +117,10 @@ const TherapySessionSummaryCard = ({
   }
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
+  const overallFieldKey = 'overall';
+  const overallIssueCount = getIssueCountForField(overallFieldKey);
+  const overallTemplates = getTemplatesForField(overallFieldKey);
+  const overallDisplayName = getFieldDisplayName(overallFieldKey);
 
   return (
     <Card className="gap-1">
@@ -129,7 +132,7 @@ const TherapySessionSummaryCard = ({
           </CardTitle>
 
           <div className="flex items-center gap-2">
-            {Number(user?.type) === UserRoleEnum.sme_reviewer && overallIssueRelatedToId != null && (
+            {/* {Number(user?.type) === UserRoleEnum.sme_reviewer && overallIssueRelatedToId != null && (
               <>
                 {getIssueCountForOverall() > 0 && Number(user?.type) !== UserRoleEnum.superAdmin && (
                   <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">
@@ -149,7 +152,7 @@ const TherapySessionSummaryCard = ({
                   </Button>
                 )}
               </>
-            )}
+            )} */}
             <VersionHistoryPopover
               versions={sortedVersions}
               selectedVersionIndex={selectedVersionIndex}
@@ -163,7 +166,8 @@ const TherapySessionSummaryCard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {isOverallFormOpen && (
+        {/* Previous overall method – overall now uses same flow as other fields (SessionFieldRow) */}
+        {/* {isOverallFormOpen && (
           <OverallSummaryFlagForm
             errorTypes={errorTypes ?? []}
             selectedErrorTypeId={overallErrorTypeId}
@@ -174,7 +178,7 @@ const TherapySessionSummaryCard = ({
             onSave={handleSaveOverallIssue}
             onClose={closeOverallForm}
           />
-        )}
+        )} */}
         <div className="space-y-2">
           {isHistoricalVersion && (
             <div className="bg-orange-light border-orange-dark flex w-fit items-center gap-2 rounded-md border px-5 py-2.5">
@@ -197,6 +201,27 @@ const TherapySessionSummaryCard = ({
 
         <div className="rounded-lg bg-[#F0F0F0] p-4">
           <div className="space-y-3 text-sm leading-relaxed text-gray-700">
+            <SessionFieldRow
+              key={overallFieldKey}
+              fieldKey={overallFieldKey}
+              displayName={overallDisplayName}
+              displayValue="-"
+              isChanged={false}
+              previousValue={null}
+              issueCount={overallIssueCount}
+              isExpanded={expandedFieldKey === overallFieldKey}
+              selectedTemplateId={selectedTemplateId}
+              templateOptions={getTemplateDropdownOptions(overallFieldKey)}
+              alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(overallFieldKey)}
+              isSaving={isSaving}
+              hasTemplates={overallTemplates.length > 0}
+              userType={user?.type}
+              showSMEActions={showSMEActions}
+              onToggleForm={toggleFieldForm}
+              onTemplateChange={setSelectedTemplateId}
+              onSave={handleSaveFromTemplate}
+              onCloseForm={closeTemplateForm}
+            />
             {Object.entries(currentSessionData).map(([key, value]) => {
               const displayName = getFieldDisplayName(key);
               const displayValue = value === '' || value === null || value === undefined ? '-' : String(value);
