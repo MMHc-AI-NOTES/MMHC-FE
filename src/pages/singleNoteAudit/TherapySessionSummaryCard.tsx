@@ -99,7 +99,22 @@ const TherapySessionSummaryCard = ({
   }, []);
 
   if (sortedVersions.length === 0) {
-    return null;
+    return (
+      <Card className="gap-1">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
+            <Stethoscope />
+            Current Session
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <div className="rounded-lg bg-[#F0F0F0] p-4">
+            <p className="text-center text-sm text-gray-500">N/A</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
@@ -112,6 +127,7 @@ const TherapySessionSummaryCard = ({
             <Stethoscope />
             Current Session
           </CardTitle>
+
           <div className="flex items-center gap-2">
             {Number(user?.type) === UserRoleEnum.sme_reviewer && overallIssueRelatedToId != null && (
               <>

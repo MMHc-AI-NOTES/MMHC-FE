@@ -42,13 +42,14 @@ const PreviousSessionCard = ({
     priorityId,
     onSMEIssueCreatedFromTemplate,
     onReviewerIssuesChanged,
-    initialVersionIndex: 1,
+    initialVersionIndex: 0,
+    sourcePreviousSessionFromNote: true,
   });
 
   const {
     user,
-    sortedVersions,
     currentSessionData,
+    hasPreviousSessionData,
     expandedFieldKey,
     selectedTemplateId,
     setSelectedTemplateId,
@@ -73,7 +74,6 @@ const PreviousSessionCard = ({
   } = summary;
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
-  const hasPreviousSession = sortedVersions.length >= 2;
 
   return (
     <Card className="gap-1">
@@ -130,7 +130,7 @@ const PreviousSessionCard = ({
             onClose={closeOverallForm}
           />
         )}
-        {!hasPreviousSession ? (
+        {!hasPreviousSessionData ? (
           <div className="rounded-lg bg-[#F0F0F0] p-4">
             <p className="text-center text-sm text-gray-500">N/A</p>
           </div>
