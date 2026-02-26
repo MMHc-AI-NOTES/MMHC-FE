@@ -65,6 +65,7 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
           issue_description_id: values.issue_description_id,
         });
       }
+      formik.resetForm();
     },
   });
 

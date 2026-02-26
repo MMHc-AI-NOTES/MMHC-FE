@@ -49,7 +49,10 @@ export function SessionFieldRow({
     <div className="mb-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h4 className="text-primary font-semibold">{displayName}:</h4>
+          <h4 className="text-primary font-semibold">
+            {displayName}
+            {fieldKey === 'overall' ? '' : ':'}
+          </h4>
           {isChanged && <Badge className="bg-gradient-light text-primary rounded-sm text-xs font-semibold">CHANGED</Badge>}
         </div>
         {showSMEActions && (

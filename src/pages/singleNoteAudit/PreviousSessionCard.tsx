@@ -4,7 +4,7 @@ import { WebhookVersion } from '@/types/notes';
 import type { IssueForm } from './components/types';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { SessionFieldRow } from './therapySessionSummary/SessionFieldRow';
-import { OverallSummaryFlagForm } from './therapySessionSummary/OverallSummaryFlagForm';
+// import { OverallSummaryFlagForm } from './therapySessionSummary/OverallSummaryFlagForm';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
@@ -42,13 +42,14 @@ const PreviousSessionCard = ({
     priorityId,
     onSMEIssueCreatedFromTemplate,
     onReviewerIssuesChanged,
-    initialVersionIndex: 1,
+    initialVersionIndex: 0,
+    sourcePreviousSessionFromNote: true,
   });
 
   const {
     user,
-    sortedVersions,
     currentSessionData,
+    hasPreviousSessionData,
     expandedFieldKey,
     selectedTemplateId,
     setSelectedTemplateId,
@@ -61,19 +62,18 @@ const PreviousSessionCard = ({
     toggleFieldForm,
     handleSaveFromTemplate,
     closeTemplateForm,
-    isOverallFormOpen,
-    closeOverallForm,
-    overallErrorTypeId,
-    setOverallErrorTypeId,
-    overallComment,
-    setOverallComment,
-    isSavingOverall,
-    handleSaveOverallIssue,
-    errorTypes,
+    // isOverallFormOpen,
+    // closeOverallForm,
+    // overallErrorTypeId,
+    // setOverallErrorTypeId,
+    // overallComment,
+    // setOverallComment,
+    // isSavingOverall,
+    // handleSaveOverallIssue,
+    // errorTypes,
   } = summary;
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
-  const hasPreviousSession = sortedVersions.length >= 2;
 
   return (
     <Card className="gap-1">
@@ -118,7 +118,8 @@ const PreviousSessionCard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {isOverallFormOpen && (
+        {/* Previous overall method – overall now uses same flow as other fields */}
+        {/* {isOverallFormOpen && (
           <OverallSummaryFlagForm
             errorTypes={errorTypes ?? []}
             selectedErrorTypeId={overallErrorTypeId}
@@ -129,8 +130,8 @@ const PreviousSessionCard = ({
             onSave={handleSaveOverallIssue}
             onClose={closeOverallForm}
           />
-        )}
-        {!hasPreviousSession ? (
+        )} */}
+        {!hasPreviousSessionData ? (
           <div className="rounded-lg bg-[#F0F0F0] p-4">
             <p className="text-center text-sm text-gray-500">N/A</p>
           </div>

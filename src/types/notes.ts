@@ -200,6 +200,19 @@ export interface SMEIssue {
   updatedAt: string;
 }
 
+/** Previous note linked to this webhook version (from API webhookVersions[].previous_note) */
+export interface PreviousNote {
+  id: number;
+  noteId: string;
+  /** Session content as JSON string (API may send `session` or `sessionJson`) */
+  session?: string;
+  sessionJson?: string;
+  sessionTime?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
 export interface WebhookVersion {
   id: number;
   noteId: string;
@@ -207,6 +220,8 @@ export interface WebhookVersion {
   createdAt: string;
   updatedAt: string;
   smeIssues: SMEIssue[];
+  /** Previous note for this version (from API) */
+  previous_note?: PreviousNote;
 }
 
 /** From API (fetchNoteDetail): reviewers who have marked this note for review */

@@ -6,7 +6,15 @@ import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { FormattedNote, QueueOverview, Workload } from '@/types/notes';
-import { fetchNotes, fetchQueueOverview, fetchWorkload, fetchPractitioners, fetchCptCodes, getDateRange } from './notesApiCalls';
+import {
+  fetchNotes,
+  fetchQueueOverview,
+  fetchWorkload,
+  fetchPractitioners,
+  fetchCptCodes,
+  getDateRange,
+  type NotesPayload,
+} from './notesApiCalls';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueOverviewCard } from './QueueOverviewCard';
@@ -58,7 +66,7 @@ const NotesQueue = () => {
   const navigate = useNavigate();
 
   // Build filter payload in the new format
-  const buildFilterPayload = () => {
+  const buildFilterPayload = (): NotesPayload => {
     const filterArray: any[] = [];
 
     // Note Type filter
@@ -192,7 +200,7 @@ const NotesQueue = () => {
           filters.search !== '' ||
           filters.reviewedByMe;
 
-        let payload;
+        let payload: NotesPayload;
         if (hasActive) {
           // Build filter payload
           const filterArray: any[] = [];
@@ -358,7 +366,7 @@ const NotesQueue = () => {
               </div>
             ) : (
               <>
-                <NotesTable notes={notes} onViewNote={handleViewNote} />
+                <NotesTable notes={notes} onViewNote={handleViewNote} page={currentPage} pageSize={itemsPerPage} />
 
                 {/* Pagination */}
                 {notes.length > 0 && (

@@ -22,11 +22,22 @@ interface FilterItem {
   endDate?: string;
 }
 
-interface NotesPayload {
+export interface SortItem {
+  columnName: string;
+  orderBy: 'asc' | 'desc';
+}
+
+export interface NotesPayload {
   page: number;
   pageSize: number;
   filters: FilterItem[];
+  sorts?: SortItem[];
 }
+
+const DEFAULT_NOTES_SORTS: SortItem[] = [
+  { columnName: 'session_time', orderBy: 'desc' },
+  { columnName: 'id', orderBy: 'desc' },
+];
 
 interface NotesResponse {
   data: any[];
@@ -98,7 +109,8 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
 
 export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> => {
   try {
-    const response = await axios.post<ApiResponse<any>>('/notes/listing', payload);
+    const body = { ...payload, sorts: DEFAULT_NOTES_SORTS };
+    const response = await axios.post<ApiResponse<any>>('/notes/listing', body);
 
     if (response?.status) {
       const notesArray = response.data?.data || [];
