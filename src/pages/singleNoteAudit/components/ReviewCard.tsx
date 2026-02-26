@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, X, User, Save, FileCheck } from 'lucide-react';
+import { Pencil, Trash2, User, Save, FileCheck, Plus } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 // import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
@@ -337,7 +337,12 @@ const ReviewCard = ({
             <FileCheck />
             {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
           </Button>
-          <Button onClick={handleAssignToManager} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
+          <Button
+            onClick={handleAssignToManager}
+            size="sm"
+            className="bg-gradient-light text-primary border-0 shadow-sm"
+            disabled={review.issues.length === 0}
+          >
             <User />
             Assign to Manager
           </Button>
@@ -346,11 +351,12 @@ const ReviewCard = ({
             variant="ghost"
             size="icon"
             onClick={handleRemoveOrDelete}
+            disabled={review.issues.length === 0}
             className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
             title={isReviewSaved ? 'Delete review' : 'Remove review'}
             type="button"
           >
-            {isReviewSaved ? <Trash2 /> : <X />}
+            <Trash2 />
           </Button>
         </div>
       )}
@@ -394,12 +400,10 @@ const ReviewCard = ({
           </div>
         )}
 
-        {/* Score Display - Show if there are any issues (saved or being edited) */}
-        {issuesForScore.length > 0 && (
-          <div className="mt-2 rounded-lg bg-gray-100 px-4 py-2">
-            <ScoreComparison issues={issuesForScore} auditScore={auditScore} />
-          </div>
-        )}
+        {/* Score Display - Always show; SME score 100 when no issues */}
+        <div className="mt-2 rounded-lg bg-gray-100 px-4 py-2">
+          <ScoreComparison issues={issuesForScore} auditScore={auditScore} />
+        </div>
 
         {/* Saved Issues List */}
         {savedIssues.length > 0 && (
@@ -615,7 +619,10 @@ const ReviewCard = ({
         )}
 
         {savedIssues.length === 0 && editingIssues.length === 0 && (
-          <p className="py-4 text-center text-sm text-gray-500">No issues added yet. Click "Add Issue" to create one.</p>
+          <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">
+            No reviews added yet. Click <Plus className="h-4 w-4" />
+            icon in current session to create.
+          </div>
         )}
       </CardContent>
     </Card>

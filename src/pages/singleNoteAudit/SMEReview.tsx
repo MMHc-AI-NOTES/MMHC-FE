@@ -12,7 +12,7 @@ import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
 import { deleteSMEReview, markNoteForReview } from './singleNoteApiCalls';
-// import { UserRoleEnum } from '@/constants/common';
+import { UserRoleEnum } from '@/constants/common';
 
 const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
 
@@ -427,7 +427,25 @@ const SMEReview = ({
             });
           }
 
-          if (filteredReviews.length === 0) {
+          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible (not for admin – admin can't add review)
+          const hasCurrentUserReview = filteredReviews.some(r => r.reviewerId != null && Number(r.reviewerId) === loggedInUserId);
+          const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
+          const showPlaceholder =
+            !isAdmin &&
+            loggedInUserId != null &&
+            versionId != null &&
+            !hasCurrentUserReview &&
+            (!isManagerReviewing || reviewerId === loggedInUserId);
+          const placeholderReview: Review = {
+            id: `new-review-${loggedInUserId}`,
+            reviewerId: String(loggedInUserId),
+            reviewerName: user?.fullName?.trim() || user?.email || 'You',
+            issues: [],
+            _versionId: versionId,
+          };
+          const displayReviews = showPlaceholder ? [placeholderReview, ...filteredReviews] : filteredReviews;
+
+          if (displayReviews.length === 0) {
             return (
               <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">
                 No reviews added yet. Click <Plus className="h-4 w-4" />
@@ -436,7 +454,7 @@ const SMEReview = ({
             );
           }
 
-          return filteredReviews.map(review => (
+          return displayReviews.map(review => (
             <ReviewCard
               key={review.id}
               review={review}

@@ -3,7 +3,10 @@ import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen } from 'lucide-react';
+import {
+  ArrowLeft,
+  //  MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen
+} from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
@@ -22,10 +25,10 @@ import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
-import SummaryCard from './SummaryCard';
+// import SummaryCard from './SummaryCard';
 import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import PreviousSessionCard from './PreviousSessionCard';
-import ModelInformation from './ModelInformation';
+// import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
@@ -51,7 +54,8 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     severity: (issue.severity?.toUpperCase() as 'CRITICAL' | 'MODERATE' | 'MINOR') || 'MINOR',
     category: issue.section || 'General',
     points: issue.points_deducted || 0,
-    description: issue.justification || 'No description provided',
+    description: issue.severity_details || 'No description provided',
+    justification: issue.justification || 'No justification provided',
     sectionId: issue.section_id || '',
   })) || [
     // Fallback to default issues if no chat data
@@ -454,8 +458,8 @@ const SingleNoteAudit = () => {
           {/* Right Content */}
           <div className="space-y-4">
             <AuditScoreCard noteDetail={noteDetail} />
-            <ModelInformation modelDetail={noteDetail.modelDetail} />
-            <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
+            {/* <ModelInformation modelDetail={noteDetail.modelDetail} /> */}
+            {/* <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} /> */}
             <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />
             <SMEReview
               reviews={reviews}
@@ -496,9 +500,9 @@ const SingleNoteAudit = () => {
               versionId={selectedVersionId}
             />
             <AuditHistoryCard chats={auditHistory} />
-            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
-            <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />
-            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
+            {/* <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} /> */}
+            {/* <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} /> */}
+            {/* <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} /> */}
           </div>
         </div>
       </div>

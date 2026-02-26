@@ -105,6 +105,7 @@ export interface NoteDetail {
     points: number;
     description: string;
     sectionId: string;
+    justification: string;
   }[];
   webhookVersions: WebhookVersion[];
   /** Reviewer id -> marked for review (from note detail API) */
