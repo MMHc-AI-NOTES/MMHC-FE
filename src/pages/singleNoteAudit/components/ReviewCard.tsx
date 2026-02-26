@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Pencil, Trash2, X, User, Save, FileCheck } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
-import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
+// import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { Review, IssueForm, ActiveIssueForm } from './types';
 import ScoreComparison from './ScoreComparison';
@@ -76,8 +76,8 @@ const ReviewCard = ({
   const [isSavingDescription, setIsSavingDescription] = useState(false);
   const [editingIssueComment, setEditingIssueComment] = useState<string>('');
 
-  // State for overall-issue edit form (when editing an issue with issueRelatedTo === 'overall')
-  const [overallEditForm, setOverallEditForm] = useState<{ issueId: string; errorTypeId: number; comment: string } | null>(null);
+  // Previous overall method – overall edit now same as others (description dropdown + comment)
+  // const [overallEditForm, setOverallEditForm] = useState<{ issueId: string; errorTypeId: number; comment: string } | null>(null);
 
   // Get all users from entities
   const users = useMemo(() => {
@@ -131,26 +131,26 @@ const ReviewCard = ({
     activeIssueForms.some(form => form.reviewId === review.id && form.issueId === issue.id),
   );
 
-  // Sync overall-edit form state when editing an issue with issueRelatedTo === 'overall'
-  const editingOverallIssue = editingIssues.find(i => String(i.issueRelatedTo || '').toLowerCase() === 'overall');
-  useEffect(() => {
-    if (editingOverallIssue) {
-      const errorTypeId =
-        errorTypes.find(
-          t => (t.name && t.name === editingOverallIssue.errorType) || (t.displayName && t.displayName === editingOverallIssue.errorType),
-        )?.id ?? 1;
-      setOverallEditForm(prev => {
-        if (prev?.issueId === editingOverallIssue.id) return prev;
-        return {
-          issueId: editingOverallIssue.id,
-          errorTypeId: typeof errorTypeId === 'number' ? errorTypeId : 1,
-          comment: editingOverallIssue.issueDescription ?? '',
-        };
-      });
-    } else {
-      setOverallEditForm(null);
-    }
-  }, [editingOverallIssue, errorTypes]);
+  // Previous overall method – overall edit now same as others
+  // const editingOverallIssue = editingIssues.find(i => String(i.issueRelatedTo || '').toLowerCase() === 'overall');
+  // useEffect(() => {
+  //   if (editingOverallIssue) {
+  //     const errorTypeId =
+  //       errorTypes.find(
+  //         t => (t.name && t.name === editingOverallIssue.errorType) || (t.displayName && t.displayName === editingOverallIssue.errorType),
+  //       )?.id ?? 1;
+  //     setOverallEditForm(prev => {
+  //       if (prev?.issueId === editingOverallIssue.id) return prev;
+  //       return {
+  //         issueId: editingOverallIssue.id,
+  //         errorTypeId: typeof errorTypeId === 'number' ? errorTypeId : 1,
+  //         comment: editingOverallIssue.issueDescription ?? '',
+  //       };
+  //     });
+  //   } else {
+  //     setOverallEditForm(null);
+  //   }
+  // }, [editingOverallIssue, errorTypes]);
 
   // For score calculation, include all issues (use original values for editing issues)
   // This ensures the score doesn't change until after saving
@@ -466,120 +466,112 @@ const ReviewCard = ({
                       )}
                     </div>
                     {/* Inline edit form for description */}
-                    {editingIssueId === savedIssue.id &&
-                      isOwnReview &&
-                      (savedIssue.issueRelatedTo === 'overall' ? (
-                        <OverallSummaryFlagForm
-                          key={savedIssue.id}
-                          errorTypes={errorTypes ?? []}
-                          selectedErrorTypeId={
-                            overallEditForm?.issueId === savedIssue.id
-                              ? overallEditForm.errorTypeId
-                              : (errorTypes.find(t => t.name === savedIssue.errorType || t.displayName === savedIssue.errorType)?.id ?? 1)
-                          }
-                          onErrorTypeChange={id =>
-                            setOverallEditForm(prev =>
-                              prev?.issueId === savedIssue.id
-                                ? { issueId: prev.issueId, errorTypeId: id, comment: prev.comment }
-                                : {
-                                    issueId: savedIssue.id,
-                                    errorTypeId: id,
-                                    comment: savedIssue.issueDescription ?? '',
-                                  },
-                            )
-                          }
-                          comment={
-                            overallEditForm?.issueId === savedIssue.id ? overallEditForm.comment : (savedIssue.issueDescription ?? '')
-                          }
-                          onCommentChange={value =>
-                            setOverallEditForm(prev =>
-                              prev?.issueId === savedIssue.id
-                                ? { issueId: prev.issueId, errorTypeId: prev.errorTypeId, comment: value }
-                                : {
-                                    issueId: savedIssue.id,
-                                    errorTypeId:
-                                      errorTypes.find(t => t.name === savedIssue.errorType || t.displayName === savedIssue.errorType)?.id ??
-                                      1,
-                                    comment: value,
-                                  },
-                            )
-                          }
-                          isSaving={savingIssueId === savedIssue.id}
-                          onSave={() => {}}
-                          onClose={handleCancelEditInline}
-                          onSaveEdit={async values => {
-                            // Same payload shape as TherapySessionSummaryCard: resolve error type by name
-                            // so useReviews.handleSaveIssue → getErrorTypeId(values.errorType) works.
-                            const errorTypeName =
-                              errorTypes.find(t => t.displayName === values.errorType || t.name === values.errorType)?.name ??
-                              values.errorType;
-                            await onSaveIssue(review.id, savedIssue.id, {
-                              errorType: errorTypeName,
-                              issueRelatedTo: 'overall',
-                              issueDescription: values.issueDescription,
-                              // For overall issues, treat issueDescription as the comment text
-                              comment: values.issueDescription,
-                            });
-                            setOverallEditForm(null);
-                            handleCancelEditInline();
-                          }}
-                        />
-                      ) : (
-                        <div className="mt-3 rounded-lg border bg-gray-50 p-4">
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Issue Description</Label>
-                              <Select
-                                value={selectedDescriptionId === '' ? '' : String(selectedDescriptionId)}
-                                onValueChange={v => setSelectedDescriptionId(v ? parseInt(v, 10) : '')}
-                              >
-                                <SelectTrigger className="mt-1 w-full">
-                                  <SelectValue placeholder="Select a description" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(() => {
-                                    const alreadyUsedByOther = getAlreadyUsedDescriptionIdsForField(
-                                      savedIssue.issueRelatedTo,
-                                      savedIssue.id,
-                                    );
-                                    return getDescriptionOptionsForIssue(savedIssue).map(opt => (
-                                      <SelectItem
-                                        key={opt.value}
-                                        value={String(opt.value)}
-                                        disabled={alreadyUsedByOther.includes(opt.value)}
-                                      >
-                                        {opt.label}
-                                      </SelectItem>
-                                    ));
-                                  })()}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label>Comment (Optional)</Label>
-                              <Textarea
-                                className="mt-1 min-h-[80px] w-full"
-                                placeholder="Add additional notes or context about this issue..."
-                                value={editingIssueComment}
-                                onChange={e => setEditingIssueComment(e.target.value)}
-                              />
-                            </div>
-                            <div className="flex items-center justify-end gap-2">
-                              <Button variant="outline" onClick={handleCancelEditInline} disabled={isSavingDescription}>
-                                Cancel
-                              </Button>
-                              <Button
-                                className="bg-gradient-light text-primary border-0"
-                                disabled={isSavingDescription || selectedDescriptionId === ''}
-                                onClick={() => handleSaveDescription(savedIssue)}
-                              >
-                                <Save className="h-4 w-4" />
-                                {isSavingDescription ? 'Saving...' : 'Save'}
-                              </Button>
-                            </div>
+                    {editingIssueId === savedIssue.id && isOwnReview && (
+                      // (savedIssue.issueRelatedTo === 'overall' ? (
+                      //   <OverallSummaryFlagForm
+                      //     key={savedIssue.id}
+                      //     errorTypes={errorTypes ?? []}
+                      //     selectedErrorTypeId={
+                      //       overallEditForm?.issueId === savedIssue.id
+                      //         ? overallEditForm.errorTypeId
+                      //         : (errorTypes.find(t => t.name === savedIssue.errorType || t.displayName === savedIssue.errorType)?.id ?? 1)
+                      //     }
+                      //     onErrorTypeChange={id =>
+                      //       setOverallEditForm(prev =>
+                      //         prev?.issueId === savedIssue.id
+                      //           ? { issueId: prev.issueId, errorTypeId: id, comment: prev.comment }
+                      //           : {
+                      //               issueId: savedIssue.id,
+                      //               errorTypeId: id,
+                      //               comment: savedIssue.issueDescription ?? '',
+                      //             },
+                      //       )
+                      //     }
+                      //     comment={
+                      //       overallEditForm?.issueId === savedIssue.id ? overallEditForm.comment : (savedIssue.issueDescription ?? '')
+                      //     }
+                      //     onCommentChange={value =>
+                      //       setOverallEditForm(prev =>
+                      //         prev?.issueId === savedIssue.id
+                      //           ? { issueId: prev.issueId, errorTypeId: prev.errorTypeId, comment: value }
+                      //           : {
+                      //               issueId: savedIssue.id,
+                      //               errorTypeId:
+                      //                 errorTypes.find(t => t.name === savedIssue.errorType || t.displayName === savedIssue.errorType)?.id ??
+                      //                 1,
+                      //               comment: value,
+                      //             },
+                      //       )
+                      //     }
+                      //     isSaving={savingIssueId === savedIssue.id}
+                      //     onSave={() => {}}
+                      //     onClose={handleCancelEditInline}
+                      //     onSaveEdit={async values => {
+                      //       // Same payload shape as TherapySessionSummaryCard: resolve error type by name
+                      //       // so useReviews.handleSaveIssue → getErrorTypeId(values.errorType) works.
+                      //       const errorTypeName =
+                      //         errorTypes.find(t => t.displayName === values.errorType || t.name === values.errorType)?.name ??
+                      //         values.errorType;
+                      //       await onSaveIssue(review.id, savedIssue.id, {
+                      //         errorType: errorTypeName,
+                      //         issueRelatedTo: 'overall',
+                      //         issueDescription: values.issueDescription,
+                      //         // For overall issues, treat issueDescription as the comment text
+                      //         comment: values.issueDescription,
+                      //       });
+                      //       setOverallEditForm(null);
+                      //       handleCancelEditInline();
+                      //     }}
+                      //   />
+                      // ) : (
+                      <div className="mt-3 rounded-lg border bg-gray-50 p-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Issue Description</Label>
+                            <Select
+                              value={selectedDescriptionId === '' ? '' : String(selectedDescriptionId)}
+                              onValueChange={v => setSelectedDescriptionId(v ? parseInt(v, 10) : '')}
+                            >
+                              <SelectTrigger className="mt-1 w-full">
+                                <SelectValue placeholder="Select a description" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(() => {
+                                  const alreadyUsedByOther = getAlreadyUsedDescriptionIdsForField(savedIssue.issueRelatedTo, savedIssue.id);
+                                  return getDescriptionOptionsForIssue(savedIssue).map(opt => (
+                                    <SelectItem key={opt.value} value={String(opt.value)} disabled={alreadyUsedByOther.includes(opt.value)}>
+                                      {opt.label}
+                                    </SelectItem>
+                                  ));
+                                })()}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Comment (Optional)</Label>
+                            <Textarea
+                              className="mt-1 min-h-[80px] w-full"
+                              placeholder="Add additional notes or context about this issue..."
+                              value={editingIssueComment}
+                              onChange={e => setEditingIssueComment(e.target.value)}
+                            />
+                          </div>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="outline" onClick={handleCancelEditInline} disabled={isSavingDescription}>
+                              Cancel
+                            </Button>
+                            <Button
+                              className="bg-gradient-light text-primary border-0"
+                              disabled={isSavingDescription || selectedDescriptionId === ''}
+                              onClick={() => handleSaveDescription(savedIssue)}
+                            >
+                              <Save className="h-4 w-4" />
+                              {isSavingDescription ? 'Saving...' : 'Save'}
+                            </Button>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    )}
                   </div>
                   {index < savedIssues.length - 1 && <Separator className="my-3" />}
                 </div>

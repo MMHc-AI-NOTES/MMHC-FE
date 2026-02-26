@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -11,14 +10,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogOut, User } from 'lucide-react';
 import { logoutUser } from '@/pages/auth/authApiCalls';
-import { handleLogout } from '@/utils/helper';
-import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { useAppSelector } from '@/store/store';
 
 const UserDropdown = () => {
   const navigate = useNavigate();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const user = useAppSelector(state => state.auth.user);
 
   const userProfilePicture = (user as any)?.profilePicture;
@@ -43,30 +38,12 @@ const UserDropdown = () => {
             <span>Profile</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsDialogOpen(true)} className="text-red-600">
+          <DropdownMenuItem onClick={() => logoutUser()} className="text-red-600">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <ConfirmationDialog
-        isOpen={isDialogOpen}
-        isLoading={isLoading}
-        onOpenChange={setIsDialogOpen}
-        onConfirm={async () => {
-          setIsLoading(true);
-          const result = await logoutUser();
-          setIsLoading(false);
-          if (result) {
-            setIsDialogOpen(false);
-            handleLogout();
-          }
-        }}
-        title="Log Out"
-        description="Are you sure you want to log out? You will need to log in again to access your account."
-        confirmButtonText="Log Out"
-      />
     </>
   );
 };

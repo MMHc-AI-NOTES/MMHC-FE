@@ -109,7 +109,7 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
 
 export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> => {
   try {
-    const body = { ...payload, sorts: payload.sorts ?? DEFAULT_NOTES_SORTS };
+    const body = { ...payload, sorts: DEFAULT_NOTES_SORTS };
     const response = await axios.post<ApiResponse<any>>('/notes/listing', body);
 
     if (response?.status) {

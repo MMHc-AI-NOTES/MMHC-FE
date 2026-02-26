@@ -393,6 +393,7 @@ export const AgentModelKeys = {
   LLAMA_4_SCOUT_17B: 'meta.llama4-scout-17b-instruct-v1:0', // Llama 4 Scout 17B
   GPT_OSS_SAFEGUARD_120B: 'openai.gpt-oss-safeguard-120b', // GPT OSS Safeguard 120B
   NOVA_PREMIER: 'us.amazon.nova-premier-v1:0', // Nova Premier (inference profile)
+  CUSTOM_DEPLOYMENT_Y5K4: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
@@ -404,6 +405,7 @@ export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string>
   LLAMA_4_SCOUT_17B: 'Llama 4 Scout',
   GPT_OSS_SAFEGUARD_120B: 'GPT OSS Safeguard',
   NOVA_PREMIER: 'Nova Premier',
+  CUSTOM_DEPLOYMENT_Y5K4: 'Custom Fine-tuned Model',
 };
 
 export const AgentTypes = {

@@ -183,21 +183,21 @@ export const useReviews = ({
         // If versionId exists, treat as version issue (create/update via API)
         if (versionId && smeIssueId) {
           // Overall issues use comment, not issue_description_id; exclude it from update payload
-          const updatePayload: UpdateSMEIssuePayload =
-            values.issueRelatedTo === 'overall'
-              ? {
-                  note_id: basePayload.note_id,
-                  reviewer_id: basePayload.reviewer_id,
-                  error_type_id: basePayload.error_type_id,
-                  issues_related_to_id: basePayload.issues_related_to_id,
-                  version_id: basePayload.version_id,
-                  ai_status: basePayload.ai_status,
-                  priority: basePayload.priority,
-                  practitioner_id: basePayload.practitioner_id,
-                  is_current_version: basePayload.is_current_version,
-                  comment: values.issueDescription,
-                }
-              : basePayload;
+          const updatePayload: UpdateSMEIssuePayload = basePayload;
+          // values.issueRelatedTo === 'overall'
+          //   ? {
+          //       note_id: basePayload.note_id,
+          //       reviewer_id: basePayload.reviewer_id,
+          //       error_type_id: basePayload.error_type_id,
+          //       issues_related_to_id: basePayload.issues_related_to_id,
+          //       version_id: basePayload.version_id,
+          //       ai_status: basePayload.ai_status,
+          //       priority: basePayload.priority,
+          //       practitioner_id: basePayload.practitioner_id,
+          //       is_current_version: basePayload.is_current_version,
+          //       comment: values.issueDescription,
+          //     }
+          //   : basePayload;
           const response = await updateSMEIssue(smeIssueId, updatePayload);
           if (!response?.id) return;
 

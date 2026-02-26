@@ -39,7 +39,7 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
               <div
                 key={index}
                 onClick={() => onCategoryClick?.(issue.category)}
-                className={`cursor-pointer space-y-2 rounded-lg p-4 transition-colors ${onCategoryClick ? 'hover:border hover:border-green-300' : ''}`}
+                className={`cursor-pointer space-y-2 rounded-lg border border-transparent p-4 transition-colors ${onCategoryClick && 'hover:border-green-300'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

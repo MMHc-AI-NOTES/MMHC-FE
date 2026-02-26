@@ -7,6 +7,7 @@ import RoleGuard from './RoleGuard';
 const MainLayout = lazy(() => import('@/components/layout/MainLayout'));
 const SimpleLayout = lazy(() => import('@/theme/simpleLayout/SimpleLayout'));
 const Login = lazy(() => import('@/pages/auth/Login'));
+const ImpersonateLogin = lazy(() => import('@/pages/auth/ImpersonateLogin'));
 const Signup = lazy(() => import('@/pages/auth/Signup'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const NotesQueue = lazy(() => import('@/pages/notesQueue/NotesQueue'));
@@ -146,6 +147,7 @@ const Routes = () => {
       ),
       children: [
         { path: 'login', element: <Login /> },
+        { path: 'impersonate-login', element: <ImpersonateLogin /> },
         { path: 'create-invited-user', element: <Signup /> },
       ],
     },

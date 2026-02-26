@@ -117,15 +117,7 @@ const NotesQueue = () => {
       filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
     }
 
-    return {
-      page: currentPage,
-      pageSize: itemsPerPage,
-      filters: filterArray,
-      sorts: [
-        { columnName: 'session_time', orderBy: 'desc' },
-        { columnName: 'id', orderBy: 'desc' },
-      ],
-    };
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
   };
 
   // Load initial data - each API call has its own loading state
@@ -244,25 +236,9 @@ const NotesQueue = () => {
             filterArray.push({ columnName: 'reviewed_by_me', type: 'exact', value: true });
           }
 
-          payload = {
-            page: 1,
-            pageSize: itemsPerPage,
-            filters: filterArray,
-            sorts: [
-              { columnName: 'session_time', orderBy: 'desc' },
-              { columnName: 'id', orderBy: 'desc' },
-            ],
-          };
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
         } else {
-          payload = {
-            page: 1,
-            pageSize: itemsPerPage,
-            filters: [],
-            sorts: [
-              { columnName: 'session_time', orderBy: 'desc' },
-              { columnName: 'id', orderBy: 'desc' },
-            ],
-          };
+          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
         }
 
         const notesResponse = await fetchNotes(payload);

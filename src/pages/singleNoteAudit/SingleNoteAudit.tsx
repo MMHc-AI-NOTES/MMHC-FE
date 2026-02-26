@@ -52,7 +52,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     category: issue.section || 'General',
     points: issue.points_deducted || 0,
     description: issue.justification || 'No description provided',
-    sectionId: issue.section_id || 'general',
+    sectionId: issue.section_id || '',
   })) || [
     // Fallback to default issues if no chat data
     {
