@@ -31,8 +31,8 @@ import PreviousSessionCard from './PreviousSessionCard';
 // import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
-import { fetchPractitioners } from '../notesQueue/notesApiCalls';
-import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
+import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
 import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import type { Review, IssueForm } from './components/types';
@@ -100,6 +100,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
     webhookVersions: apiData.webhookVersions || [],
+    previousNote: apiData.previous_note,
     noteReviewMarks: (() => {
       const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
       if (!Array.isArray(arr)) return undefined;
@@ -111,6 +112,10 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
         {} as Record<string, boolean>,
       );
     })(),
+    noteReviewMarksRaw: (() => {
+      const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
+      return Array.isArray(arr) ? (arr as any) : undefined;
+    })(),
   };
 };
 
@@ -121,7 +126,7 @@ const SingleNoteAudit = () => {
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
   const { selectedAgentId, agents } = useAppSelector(state => state.agents);
-  const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const { practitionersLoaded, cptCodesLoaded } = useAppSelector(state => state.filterOptions);
   const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded, errorTypes, issueRelatedTo } = useAppSelector(
     state => state.smeConfig,
   );
@@ -228,8 +233,20 @@ const SingleNoteAudit = () => {
         console.error('Error loading practitioners:', error);
       }
     };
+
+    const loadCptCodes = async () => {
+      if (cptCodesLoaded) return; // Skip if already loaded
+      try {
+        const cptCodesData = await fetchCptCodes();
+        dispatch(setCptCodes(cptCodesData));
+      } catch (error) {
+        console.error('Error loading CPT codes:', error);
+      }
+    };
+
     loadPractitioners();
-  }, [practitionersLoaded, dispatch]);
+    loadCptCodes();
+  }, [practitionersLoaded, cptCodesLoaded, dispatch]);
 
   // Load SME config data if needed
   useEffect(() => {
@@ -442,6 +459,7 @@ const SingleNoteAudit = () => {
             />
             <PreviousSessionCard
               webhookVersions={noteDetail.webhookVersions}
+              previousNote={noteDetail.previousNote}
               onVersionChange={setSelectedVersionId}
               noteId={noteId}
               versionId={selectedVersionId}
@@ -468,6 +486,7 @@ const SingleNoteAudit = () => {
               versionId={selectedVersionId}
               webhookVersions={noteDetail.webhookVersions || []}
               noteReviewMarks={noteDetail.noteReviewMarks}
+              noteReviewMarksRaw={noteDetail.noteReviewMarksRaw}
               aiStatusId={noteDetail.aiStatus?.id || 1}
               priorityId={noteDetail.priority?.id || 1}
               practitionerId={practitionerId || 0}

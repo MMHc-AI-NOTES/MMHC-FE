@@ -36,7 +36,7 @@ export interface NotesPayload {
 
 const DEFAULT_NOTES_SORTS: SortItem[] = [
   { columnName: 'session_time', orderBy: 'desc' },
-  { columnName: 'id', orderBy: 'desc' },
+  // { columnName: 'id', orderBy: 'desc' },
 ];
 
 interface NotesResponse {

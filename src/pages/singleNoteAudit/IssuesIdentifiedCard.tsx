@@ -73,7 +73,9 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
 
                   <p className="mt-1 text-sm font-bold text-red-600">–{issue.points} points</p>
                   <p className="mt-2 text-xs leading-relaxed text-gray-600">{issue.description}</p>
-                  <p className="mt-2 rounded-md bg-gray-200 p-2 text-xs leading-relaxed text-gray-600">{issue.justification}</p>
+                  {issue.justification != null && issue.justification !== '' && (
+                    <p className="mt-2 rounded-md bg-gray-200 p-2 text-xs leading-relaxed text-gray-600">{issue.justification}</p>
+                  )}
                 </div>
               </div>
               {index < issues.length - 1 && <Separator />}

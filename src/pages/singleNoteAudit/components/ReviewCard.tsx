@@ -38,6 +38,8 @@ interface ReviewCardProps {
   hasIssuesChangedSinceMark?: boolean;
   onMarkForReview?: () => void;
   isMarkingForReview?: boolean;
+  readOnly?: boolean;
+  markedAtLabel?: string | null;
 }
 
 const ReviewCard = ({
@@ -58,6 +60,8 @@ const ReviewCard = ({
   hasIssuesChangedSinceMark = false,
   onMarkForReview,
   isMarkingForReview = false,
+  readOnly = false,
+  markedAtLabel = null,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -327,37 +331,40 @@ const ReviewCard = ({
   return (
     <Card className="relative gap-0 pt-1 pb-4">
       {isOwnReview && (
-        <div className="flex items-center justify-end gap-2 p-2">
-          <Button
-            size="sm"
-            className="bg-gradient-light text-primary w-36 border-0 shadow-sm"
-            disabled={(isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
-            onClick={onMarkForReview}
-          >
-            <FileCheck />
-            {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
-          </Button>
-          <Button
-            onClick={handleAssignToManager}
-            size="sm"
-            className="bg-gradient-light text-primary border-0 shadow-sm"
-            disabled={review.issues.length === 0}
-          >
-            <User />
-            Assign to Manager
-          </Button>
+        <div className="flex flex-col items-end gap-1 p-2">
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              size="sm"
+              className="bg-gradient-light text-primary w-36 border-0 shadow-sm"
+              disabled={readOnly || (isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
+              onClick={onMarkForReview}
+            >
+              <FileCheck />
+              {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
+            </Button>
+            <Button
+              onClick={handleAssignToManager}
+              size="sm"
+              className="bg-gradient-light text-primary border-0 shadow-sm"
+              disabled={readOnly || review.issues.length === 0}
+            >
+              <User />
+              Assign to Manager
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRemoveOrDelete}
-            disabled={review.issues.length === 0}
-            className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
-            title={isReviewSaved ? 'Delete review' : 'Remove review'}
-            type="button"
-          >
-            <Trash2 />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRemoveOrDelete}
+              disabled={readOnly || review.issues.length === 0}
+              className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
+              title={isReviewSaved ? 'Delete review' : 'Remove review'}
+              type="button"
+            >
+              <Trash2 />
+            </Button>
+          </div>
+          {markedAtLabel && <div className="text-xs text-gray-600">Marked done on {markedAtLabel}</div>}
         </div>
       )}
       <CardContent className="space-y-3">
@@ -437,7 +444,7 @@ const ReviewCard = ({
                             size="icon"
                             onClick={() => handleEditIssueInline(savedIssue)}
                             title="Edit issue description"
-                            disabled={editingIssueId === savedIssue.id}
+                            disabled={readOnly || editingIssueId === savedIssue.id}
                           >
                             <Pencil className="text-gray-600" />
                           </Button>
@@ -447,6 +454,7 @@ const ReviewCard = ({
                             onClick={() => onDeleteIssue(review.id, savedIssue.id)}
                             className="text-red-600"
                             title="Delete issue"
+                            disabled={readOnly}
                           >
                             <Trash2 />
                           </Button>
@@ -470,7 +478,7 @@ const ReviewCard = ({
                       )}
                     </div>
                     {/* Inline edit form for description */}
-                    {editingIssueId === savedIssue.id && isOwnReview && (
+                    {editingIssueId === savedIssue.id && isOwnReview && !readOnly && (
                       // (savedIssue.issueRelatedTo === 'overall' ? (
                       //   <OverallSummaryFlagForm
                       //     key={savedIssue.id}

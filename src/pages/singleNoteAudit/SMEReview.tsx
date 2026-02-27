@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, NoteReviewMarkItem } from '@/types/notes';
+import moment from 'moment';
 import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
@@ -56,6 +57,8 @@ interface SMEReviewProps {
   webhookVersions?: WebhookVersion[];
   /** Reviewer id -> marked (from note detail); used to seed mark state on load */
   noteReviewMarks?: Record<string, boolean>;
+  /** Raw note review marks array from API, used for displaying marked date */
+  noteReviewMarksRaw?: NoteReviewMarkItem[];
   aiStatusId: number;
   priorityId: number;
   practitionerId: number;
@@ -79,6 +82,7 @@ const SMEReview = ({
   versionId,
   webhookVersions = [],
   noteReviewMarks,
+  noteReviewMarksRaw,
   aiStatusId,
   priorityId,
   practitionerId,
@@ -458,6 +462,8 @@ const SMEReview = ({
             );
           }
 
+          const isCurrentVersion = !versionId || versionNumber === 'Current';
+
           return displayReviews.map(review => (
             <ReviewCard
               key={review.id}
@@ -478,6 +484,18 @@ const SMEReview = ({
               hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
               onMarkForReview={() => handleMarkForReview(review.id)}
               isMarkingForReview={markingReviewId === review.id}
+              readOnly={!isCurrentVersion}
+              markedAtLabel={(() => {
+                const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
+                if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
+                const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
+                  m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
+                );
+                if (!mark) return null;
+                const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
+                if (!ts) return null;
+                return moment(ts).format('DD-MM-YYYY');
+              })()}
             />
           ));
         })()}

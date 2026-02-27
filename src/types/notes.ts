@@ -104,12 +104,16 @@ export interface NoteDetail {
     category: string;
     points: number;
     description: string;
+    justification?: string;
     sectionId: string;
-    justification: string;
   }[];
   webhookVersions: WebhookVersion[];
   /** Reviewer id -> marked for review (from note detail API) */
   noteReviewMarks?: Record<string, boolean>;
+  /** Previous note for this note (from API top-level previous_note) */
+  previousNote?: PreviousNote;
+  /** Raw note review marks array from API, including timestamps */
+  noteReviewMarksRaw?: NoteReviewMarkItem[];
 }
 
 export interface NoteSection {
@@ -257,6 +261,8 @@ export interface ApiNoteDetail {
   chats: Chat[];
   humanReview: HumanReview[] | null;
   webhookVersions: WebhookVersion[];
+  /** Top-level previous note for this note detail (API previous_note) */
+  previous_note?: PreviousNote;
   /** Note review marks from API (fetchNoteDetail) – array with reviewerId & markedAsReviewed */
   note_review_marks?: NoteReviewMarkItem[];
   noteReviewMarks?: NoteReviewMarkItem[];
