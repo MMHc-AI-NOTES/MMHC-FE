@@ -280,23 +280,27 @@ const SMEReview = ({
   const handleMarkForReview = useCallback(
     async (reviewId: string) => {
       const review = reviews.find(r => r.id === reviewId);
-      if (!noteId || !review?.reviewerId) return;
+
       setMarkingReviewId(reviewId);
       try {
-        const result = await markNoteForReview({ note_id: noteId, reviewer_id: review.reviewerId, marked: true });
+        const result = await markNoteForReview({
+          note_id: noteId || '',
+          reviewer_id: review?.reviewerId || String(loggedInUserId),
+          marked: true,
+        });
         if (result) {
-          const baseline = getIssuesSignature(review.issues);
+          const baseline = getIssuesSignature(review?.issues ?? []);
           setReviewMarkState(prev => ({
             ...prev,
             [reviewId]: { ...(prev[reviewId] ?? { marked: false }), marked: true, issuesBaseline: baseline },
           }));
-          setMarkedInStorage(noteId, review.reviewerId, true);
+          setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
         }
       } finally {
         setMarkingReviewId(null);
       }
     },
-    [noteId, reviews, getIssuesSignature],
+    [reviews, noteId, loggedInUserId, getIssuesSignature],
   );
 
   // Derive "issues changed" from baseline: any new issue or updated issue enables the button (higher priority than id matched)

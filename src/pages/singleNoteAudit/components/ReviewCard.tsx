@@ -330,7 +330,7 @@ const ReviewCard = ({
         <div className="flex items-center justify-end gap-2 p-2">
           <Button
             size="sm"
-            className="bg-gradient-light text-primary border-0 shadow-sm"
+            className="bg-gradient-light text-primary w-36 border-0 shadow-sm"
             disabled={(isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
             onClick={onMarkForReview}
           >
