@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Loader2, Send, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import type { ManagerBulkSendNoteItem } from './managerReviewTypes';
 
 interface ManagerBulkSendDialogProps {
@@ -17,6 +18,20 @@ const isSendableNote = (note: ManagerBulkSendNoteItem) =>
   note.practitionerId !== null && note.reviewerId !== null && note.versionId !== null;
 
 export const ManagerBulkSendDialog = ({ open, onOpenChange, notes, isSending, onConfirm }: ManagerBulkSendDialogProps) => {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const sendableCount = useMemo(() => notes.filter(isSendableNote).length, [notes]);
+
+  const handleSendClick = () => {
+    if (sendableCount === 0) return;
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmSend = () => {
+    onConfirm();
+    setIsConfirmOpen(false);
+  };
+
   const groupedByPractitioner = useMemo(() => {
     const map = new Map<string, { practitionerName: string; practitionerEmail: string | null; notes: ManagerBulkSendNoteItem[] }>();
 
@@ -44,7 +59,6 @@ export const ManagerBulkSendDialog = ({ open, onOpenChange, notes, isSending, on
     }));
   }, [notes]);
 
-  const sendableCount = useMemo(() => notes.filter(isSendableNote).length, [notes]);
   const skippedCount = notes.length - sendableCount;
 
   return (
@@ -172,12 +186,21 @@ export const ManagerBulkSendDialog = ({ open, onOpenChange, notes, isSending, on
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSending}>
             Cancel
           </Button>
-          <Button className="bg-gradient-light text-primary" disabled={isSending || sendableCount === 0} onClick={onConfirm}>
+          <Button className="bg-gradient-light text-primary" disabled={isSending || sendableCount === 0} onClick={handleSendClick}>
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             {isSending ? 'Sending...' : `Send (${sendableCount})`}
           </Button>
         </DialogFooter>
       </DialogContent>
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        isLoading={isSending}
+        onOpenChange={setIsConfirmOpen}
+        onConfirm={handleConfirmSend}
+        title="Send to Practitioner"
+        description={`Are you sure you want to send ${sendableCount} note${sendableCount !== 1 ? 's' : ''} to practitioners? This will notify them about the review.`}
+        confirmButtonText="Send"
+      />
     </Dialog>
   );
 };

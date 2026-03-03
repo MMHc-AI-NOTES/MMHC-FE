@@ -1,7 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GradientBadge } from '@/shared/GradientBadge';
 import { BlacklistedNote } from '@/types/blacklistedNotes';
-import moment from 'moment';
 import { AlertTriangle, OctagonAlert, Square, SquareCheckBig, ArrowRight } from 'lucide-react';
 import { ChatSeverityLabels, BlacklistStatusLabels } from '@/constants/common';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import {
   getStatusIcon,
   // getStatusIconColor
 } from './SharedComponents';
+import { formatDate } from '@/utils/helper';
 
 interface BlacklistedNotesTableProps {
   notes: BlacklistedNote[];
@@ -126,7 +126,7 @@ export const BlacklistedNotesTable = ({
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{note.practitioner.name}</TableCell>
-                  <TableCell>{moment(note.date).format('MMM D, YYYY')}</TableCell>
+                  <TableCell>{formatDate(note.date)}</TableCell>
                   <TableCell>{note.noteType.name}</TableCell>
                   <TableCell className="font-semibold">{note.aiScore !== null ? note.aiScore : 'N/A'}</TableCell>
                   <TableCell>{note.blacklistReason.name}</TableCell>

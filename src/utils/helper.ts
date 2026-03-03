@@ -1,7 +1,15 @@
 import axios, { AxiosError } from 'axios';
 import { showToast } from '@/lib/toast';
 import moment from 'moment';
-import { AgentModelDisplayNames, AgentModelKeys, HumanReviewDecisionEnum, HumanReviewDecisionLabels } from '@/constants/common';
+import {
+  AgentModelDisplayNames,
+  AgentModelKeys,
+  DATE_FORMAT,
+  DATE_TIME_FORMAT,
+  HumanReviewDecisionEnum,
+  HumanReviewDecisionLabels,
+  TIME_FORMAT,
+} from '@/constants/common';
 
 export interface ErrorMessage {
   message: string;
@@ -132,6 +140,23 @@ export const getEnumValues = (enumObj: Record<string, number>): number[] => {
 export const getModelDisplayName = (modelId: string): string => {
   const modelEntry = Object.entries(AgentModelKeys).find(([, value]) => value === modelId);
   return modelEntry ? AgentModelDisplayNames[modelEntry[0] as keyof typeof AgentModelKeys] : modelId;
+};
+
+type DateLike = string | number | Date | null | undefined;
+
+export const formatDate = (value: DateLike): string => {
+  if (!value) return '';
+  return moment(value).format(DATE_FORMAT);
+};
+
+export const formatTime = (value: DateLike): string => {
+  if (!value) return '';
+  return moment(value).format(TIME_FORMAT);
+};
+
+export const formatDateTime = (value: DateLike): string => {
+  if (!value) return '';
+  return moment(value).format(DATE_TIME_FORMAT);
 };
 
 // Utility function to get default date range

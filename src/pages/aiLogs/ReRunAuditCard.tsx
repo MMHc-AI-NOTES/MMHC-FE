@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { AILog } from '@/types/aiLogs';
 import { Agent } from '@/types/agent';
 import { RefreshCw, Sparkles, Clock } from 'lucide-react';
-import moment from 'moment';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getModelDisplayName } from '@/utils/helper';
+import { formatDateTime, getModelDisplayName } from '@/utils/helper';
 import { Separator } from '@/components/ui/separator';
 
 interface ReRunAuditCardProps {
@@ -79,7 +78,7 @@ const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
             <Separator className="my-4" />
             <p className="mt-3 text-xs text-gray-400">
               <Clock className="mr-1 inline h-3 w-3" />
-              Last re-run: {moment(log.endTime || log.createdAt).format('MMM D, YYYY – h:mm A')} • {modelDisplayName}
+              Last re-run: {formatDateTime(log.endTime || log.createdAt)} • {modelDisplayName}
             </p>
           </div>
         </div>

@@ -81,14 +81,16 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                 </TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
                 <TableHead className="text-primary min-w-[160px] font-semibold">PRACTITIONER</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">DATE</TableHead>
-                <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead>
-                <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">ASSIGN DATE</TableHead>
+                {/* <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead> */}
+                <TableHead className="text-primary min-w-[110px] font-semibold">ADMIN SCORE</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
                 {/* <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
                 <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead> */}
-                <TableHead className="text-primary min-w-[160px] font-semibold">EMAIL SEND DATE</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">EMAIL SENT</TableHead>
+                {/* <TableHead className="text-primary min-w-[160px] font-semibold">REVIEWER VERSION</TableHead> */}
+                <TableHead className="text-primary min-w-[160px] font-semibold">NOTE VERSION</TableHead>
                 <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
@@ -120,14 +122,16 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
               </TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
               <TableHead className="text-primary min-w-[160px] font-semibold">PRACTITIONER</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">DATE</TableHead>
-              <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead>
-              <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">ASSIGN DATE</TableHead>
+              {/* <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead> */}
+              <TableHead className="text-primary min-w-[110px] font-semibold">ADMIN SCORE</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
               {/* <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
                 <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead> */}
-              <TableHead className="text-primary min-w-[160px] font-semibold">EMAIL SEND DATE</TableHead>
+              <TableHead className="text-primary min-w-[160px] font-semibold">EMAIL SENT</TableHead>
+              {/* <TableHead className="text-primary min-w-[160px] font-semibold">REVIEWER VERSION</TableHead> */}
+              <TableHead className="text-primary min-w-[160px] font-semibold">NOTE VERSION</TableHead>
               <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
             </TableRow>
           </TableHeader>
@@ -146,7 +150,7 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                   <TableCell className="text-primary font-semibold">{note.noteId}</TableCell>
                   <TableCell className="font-medium">{note.practitioner}</TableCell>
                   <TableCell>{note.date}</TableCell>
-                  <TableCell className="font-semibold">{note.aiScore}</TableCell>
+                  {/* <TableCell className="font-semibold">{note.aiScore}</TableCell> */}
                   <TableCell className="font-semibold">{note.humanScore ?? '—'}</TableCell>
                   <TableCell>{note.reviewer}</TableCell>
                   {/* <TableCell>
@@ -173,6 +177,8 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                     <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
                   </TableCell> */}
                   <TableCell>{note.emailSendDate || '-'}</TableCell>
+                  {/* <TableCell>{note.reviewerVersion || '-'}</TableCell> */}
+                  <TableCell>{note.noteVersion || '-'}</TableCell>
                   <TableCell>
                     <div className="flex justify-center">
                       <Button

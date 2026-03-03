@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -36,18 +35,17 @@ import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
 import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import type { Review, IssueForm } from './components/types';
+import { formatDate, formatDateTime } from '@/utils/helper';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
-  // Use moment for date formatting
-  const sessionDate = moment(apiData.sessionTime);
-  const formattedDate = sessionDate.format('MMM D, YYYY');
+  const formattedDate = formatDate(apiData.sessionTime);
 
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
   const extractedHumanReviewChat = apiData.chats?.find(chat => chat.id === chatId);
   const bedrockResponse = latestChat?.bedrockResponse;
-  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY - h:mm A') : '';
+  const formattedDateTime = latestChat?.createdAt ? formatDateTime(latestChat.createdAt) : '';
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({

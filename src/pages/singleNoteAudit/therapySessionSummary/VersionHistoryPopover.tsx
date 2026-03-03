@@ -59,7 +59,7 @@ export function VersionHistoryPopover({
                     }}
                   >
                     <div className="flex flex-col gap-1">
-                      <p className="text-primary font-semibold">{isCurrentVersion ? 'Current' : `Version ${versionNumber}`}</p>
+                      <p className="text-primary font-semibold">{`Version ${versionNumber}`}</p>
                       <p className="text-sm text-gray-600">{formatDate(version.createdAt)}</p>
                     </div>
                     {isCurrentVersion && (

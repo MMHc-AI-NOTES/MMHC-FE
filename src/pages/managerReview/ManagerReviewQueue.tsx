@@ -13,14 +13,13 @@ import type {
   ManagerBulkSendNoteItem,
   ManagerNote, // ManagerOverview
 } from './managerReviewTypes';
-import {
-  fetchManagerNotes, // fetchManagerOverview
-} from './managerReviewApiCalls';
+import { fetchManagerNotes, bulkSendToPractitioner } from './managerReviewApiCalls';
 import { ManagerFiltersSection } from './ManagerFiltersSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { ManagerBulkSendDialog } from './ManagerBulkSendDialog';
+import { formatDateTime } from '@/utils/helper';
 
 const defaultFilters = {
   humanDecision: 'all',
@@ -61,15 +60,6 @@ const mapIssuesForBulkDialog = (note: ManagerNote): ManagerBulkSendNoteItem['iss
     points: issue.errorType?.points ?? issue.points ?? null,
   }));
 
-type SendableBulkNoteItem = ManagerBulkSendNoteItem & {
-  practitionerId: number;
-  reviewerId: number;
-  versionId: number;
-};
-
-const isBulkSendable = (note: ManagerBulkSendNoteItem): note is SendableBulkNoteItem =>
-  note.practitionerId !== null && note.reviewerId !== null && note.versionId !== null;
-
 export const ManagerReviewQueue = () => {
   const navigate = useNavigate();
   const [notes, setNotes] = useState<ManagerNote[]>([]);
@@ -78,6 +68,7 @@ export const ManagerReviewQueue = () => {
   // const [overviewLoading, setOverviewLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkSendDialogOpen, setIsBulkSendDialogOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   // Pagination (dummy for now - client-side only, same shape as NotesQueue)
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,8 +97,6 @@ export const ManagerReviewQueue = () => {
         })),
     [notes, selectedIds],
   );
-
-  const sendableSelectedNoteItems = useMemo(() => selectedNoteItems.filter(isBulkSendable), [selectedNoteItems]);
 
   const buildFilterPayload = () => {
     const filterArray: any[] = [];
@@ -272,26 +261,25 @@ export const ManagerReviewQueue = () => {
     return response;
   };
 
-  const handleBulkSendToPractitioner = async () => {
-    if (selectedNoteItems.length === 0) {
+  const handleConfirmBulkSend = async () => {
+    const ids = selectedIds.map(id => parseInt(id, 10)).filter(n => !Number.isNaN(n));
+    if (ids.length === 0) {
       showToast.warning('Select at least one note first');
       return;
     }
 
-    const skippedNoteIds = selectedNoteItems.filter(note => !isBulkSendable(note)).map(note => note.id);
-    const readyCount = sendableSelectedNoteItems.length;
-
-    if (readyCount === 0) {
-      showToast.warning('Selected notes are missing practitioner, reviewer, or version details');
-      return;
+    setIsSending(true);
+    try {
+      const success = await bulkSendToPractitioner(ids);
+      if (success) {
+        const sentAt = formatDateTime(new Date());
+        setNotes(prev => prev.map(note => (selectedIds.includes(note.id.toString()) ? { ...note, emailSendDate: sentAt } : note)));
+        setSelectedIds([]);
+        setIsBulkSendDialogOpen(false);
+      }
+    } finally {
+      setIsSending(false);
     }
-
-    showToast.info(`UI only mode: ${readyCount} note${readyCount > 1 ? 's are' : ' is'} ready for submission`);
-    if (skippedNoteIds.length > 0) {
-      showToast.warning(`${skippedNoteIds.length} note${skippedNoteIds.length > 1 ? 's were' : ' was'} skipped (missing data)`);
-    }
-
-    setIsBulkSendDialogOpen(false);
   };
 
   // Server-side pagination
@@ -399,8 +387,8 @@ export const ManagerReviewQueue = () => {
             open={isBulkSendDialogOpen}
             onOpenChange={setIsBulkSendDialogOpen}
             notes={selectedNoteItems}
-            isSending={false}
-            onConfirm={handleBulkSendToPractitioner}
+            isSending={isSending}
+            onConfirm={handleConfirmBulkSend}
           />
         </div>
 

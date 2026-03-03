@@ -6,6 +6,10 @@ export interface ManagerNote {
   practitioner: string;
   date: string;
   emailSendDate: string;
+  /** Version associated with the reviewer / review record (optional, used for display only) */
+  reviewerVersion?: string;
+  /** Current note/session version (optional, used for display only) */
+  noteVersion?: string;
   aiScore: number;
   humanScore: number | null;
   reviewer: string;
@@ -93,6 +97,9 @@ export interface ChatInfo {
 
 export interface ManagerReviewApiItem {
   id: number;
+  practitionerNotifiedAt: string | null;
+  versionLabel: string | null;
+  noteVersion: string | null;
   chat_count: number;
   managerId: number;
   reviewId: number;

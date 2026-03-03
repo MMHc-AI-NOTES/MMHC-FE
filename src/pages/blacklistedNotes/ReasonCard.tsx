@@ -3,7 +3,7 @@ import { BlacklistedNote } from '@/types/blacklistedNotes';
 import { GradientBadge } from '@/shared/GradientBadge';
 import { AlertTriangle, OctagonAlert } from 'lucide-react';
 import { ChatSeverityLabels } from '@/constants/common';
-import moment from 'moment';
+import { formatDateTime } from '@/utils/helper';
 
 interface ReasonCardProps {
   note: BlacklistedNote;
@@ -60,7 +60,7 @@ export const ReasonCard = ({ note }: ReasonCardProps) => {
             className="rounded-[6px]"
           />
 
-          <p className="text-xs text-gray-500">{moment(reasonDetails.date).format('MMM D, YYYY - h:mm A')}</p>
+          <p className="text-xs text-gray-500">{formatDateTime(reasonDetails.date)}</p>
           {reasonDetails.autoBlacklistedBy && <p className="">{reasonDetails.autoBlacklistedBy}</p>}
         </div>
       </CardContent>
