@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Info, Sparkles } from 'lucide-react';
+import { Info, Send, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ManagerTable } from './ManagerTable';
 import { ManagerColorKey } from './ManagerColorKey';
+import { showToast } from '@/lib/toast';
 // import { ManagerOverviewCard } from './ManagerOverviewCard';
 // import { ManagerDecisionBreakdownCard } from './ManagerDecisionBreakdownCard';
-import {
+import type {
+  ManagerBulkSendNoteItem,
   ManagerNote, // ManagerOverview
 } from './managerReviewTypes';
 import {
@@ -18,6 +20,7 @@ import { ManagerFiltersSection } from './ManagerFiltersSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { ManagerBulkSendDialog } from './ManagerBulkSendDialog';
 
 const defaultFilters = {
   humanDecision: 'all',
@@ -28,6 +31,45 @@ const defaultFilters = {
   search: '',
 };
 
+const getReviewerId = (note: ManagerNote): number | null =>
+  note.rawData?.smeIssues?.[0]?.reviewerId ?? note.rawData?.smeIssues?.[0]?.reviewer?.id ?? null;
+
+const getVersionId = (note: ManagerNote): number | null => {
+  const versionFromIssue = note.rawData?.smeIssues?.[0]?.versionId;
+  if (versionFromIssue !== undefined && versionFromIssue !== null) {
+    return versionFromIssue;
+  }
+
+  const versionFromWebhook = note.rawData?.webhookVersions?.reduce<number | null>(
+    (maxVersionId, version) => (maxVersionId === null || version.id > maxVersionId ? version.id : maxVersionId),
+    null,
+  );
+
+  return versionFromWebhook ?? null;
+};
+
+const getIssueDescription = (issue: NonNullable<ManagerNote['rawData']>['smeIssues'][number]): string =>
+  issue.issueDescription?.description || issue.description || issue.comment || 'No description provided';
+
+const mapIssuesForBulkDialog = (note: ManagerNote): ManagerBulkSendNoteItem['issues'] =>
+  (note.rawData?.smeIssues || []).map((issue, index) => ({
+    id: issue.id?.toString() || `${note.id}-issue-${index}`,
+    errorType: issue.errorType?.displayName || issue.errorType?.name || 'General Issue',
+    relatedTo: issue.issuesRelatedTo?.displayName || issue.category || 'General',
+    description: getIssueDescription(issue),
+    comment: issue.comment || null,
+    points: issue.errorType?.points ?? issue.points ?? null,
+  }));
+
+type SendableBulkNoteItem = ManagerBulkSendNoteItem & {
+  practitionerId: number;
+  reviewerId: number;
+  versionId: number;
+};
+
+const isBulkSendable = (note: ManagerBulkSendNoteItem): note is SendableBulkNoteItem =>
+  note.practitionerId !== null && note.reviewerId !== null && note.versionId !== null;
+
 export const ManagerReviewQueue = () => {
   const navigate = useNavigate();
   const [notes, setNotes] = useState<ManagerNote[]>([]);
@@ -35,6 +77,7 @@ export const ManagerReviewQueue = () => {
   // const [overview, setOverview] = useState<ManagerOverview | null>(null);
   // const [overviewLoading, setOverviewLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkSendDialogOpen, setIsBulkSendDialogOpen] = useState(false);
 
   // Pagination (dummy for now - client-side only, same shape as NotesQueue)
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +85,29 @@ export const ManagerReviewQueue = () => {
   const itemsPerPage = 20;
 
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('managerReviewFilters', defaultFilters);
+
+  const selectedNoteItems = useMemo<ManagerBulkSendNoteItem[]>(
+    () =>
+      notes
+        .filter(note => selectedIds.includes(note.id.toString()))
+        .map(note => ({
+          id: note.id.toString(),
+          noteId: note.noteId,
+          practitionerName: note.practitioner || 'Unknown',
+          practitionerEmail: note.rawData?.practitioner?.email || null,
+          practitionerId: note.rawData?.practitionerId ?? note.rawData?.practitioner?.id ?? null,
+          reviewerId: getReviewerId(note),
+          reviewerName: note.reviewer || 'Unknown',
+          versionId: getVersionId(note),
+          date: note.date || 'N/A',
+          aiScore: note.aiScore || 0,
+          humanScore: note.humanScore ?? null,
+          issues: mapIssuesForBulkDialog(note),
+        })),
+    [notes, selectedIds],
+  );
+
+  const sendableSelectedNoteItems = useMemo(() => selectedNoteItems.filter(isBulkSendable), [selectedNoteItems]);
 
   const buildFilterPayload = () => {
     const filterArray: any[] = [];
@@ -166,6 +232,7 @@ export const ManagerReviewQueue = () => {
     setTotalItems(response.totalCount);
     setCurrentPage(response.page);
     setSelectedIds([]);
+    setIsBulkSendDialogOpen(false);
     setLoading(false);
   };
 
@@ -177,6 +244,7 @@ export const ManagerReviewQueue = () => {
     setTotalItems(response.totalCount);
     setCurrentPage(response.page);
     setSelectedIds([]);
+    setIsBulkSendDialogOpen(false);
     setLoading(false);
   };
 
@@ -192,9 +260,7 @@ export const ManagerReviewQueue = () => {
     }
   };
 
-  // Server-side pagination
-  const handlePageChange = async (page: number) => {
-    setLoading(true);
+  const loadNotesPage = async (page: number) => {
     const payload = buildFilterPayload();
     payload.page = page;
 
@@ -202,6 +268,38 @@ export const ManagerReviewQueue = () => {
     setNotes(response.data);
     setTotalItems(response.totalCount);
     setCurrentPage(response.page);
+
+    return response;
+  };
+
+  const handleBulkSendToPractitioner = async () => {
+    if (selectedNoteItems.length === 0) {
+      showToast.warning('Select at least one note first');
+      return;
+    }
+
+    const skippedNoteIds = selectedNoteItems.filter(note => !isBulkSendable(note)).map(note => note.id);
+    const readyCount = sendableSelectedNoteItems.length;
+
+    if (readyCount === 0) {
+      showToast.warning('Selected notes are missing practitioner, reviewer, or version details');
+      return;
+    }
+
+    showToast.info(`UI only mode: ${readyCount} note${readyCount > 1 ? 's are' : ' is'} ready for submission`);
+    if (skippedNoteIds.length > 0) {
+      showToast.warning(`${skippedNoteIds.length} note${skippedNoteIds.length > 1 ? 's were' : ' was'} skipped (missing data)`);
+    }
+
+    setIsBulkSendDialogOpen(false);
+  };
+
+  // Server-side pagination
+  const handlePageChange = async (page: number) => {
+    setLoading(true);
+    await loadNotesPage(page);
+    setSelectedIds([]);
+    setIsBulkSendDialogOpen(false);
     setLoading(false);
   };
 
@@ -225,11 +323,22 @@ export const ManagerReviewQueue = () => {
                 <p className="text-muted-foreground text-sm">{notes.length} notes awaiting manager review</p>
               </div>
               <div className="flex items-center gap-3">
-                {selectedIds.length ? (
-                  <Button variant="outline" size="lg" className="bg-primary-light text-primary font-semibold">
-                    <Sparkles className="h-4 w-4" />
-                    Ready for AI Training ({selectedIds.length})
-                  </Button>
+                {selectedNoteItems.length ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-orange-dark text-orange-dark hover:bg-orange-dark/10 font-semibold"
+                      onClick={() => setIsBulkSendDialogOpen(true)}
+                    >
+                      <Send className="h-4 w-4" />
+                      Send to Practitioner ({selectedNoteItems.length})
+                    </Button>
+                    <Button variant="outline" size="lg" className="bg-primary-light text-primary font-semibold">
+                      <Sparkles className="h-4 w-4" />
+                      Ready for AI Training ({selectedNoteItems.length})
+                    </Button>
+                  </>
                 ) : null}
 
                 <Popover>
@@ -285,6 +394,14 @@ export const ManagerReviewQueue = () => {
               </>
             )}
           </Card>
+
+          <ManagerBulkSendDialog
+            open={isBulkSendDialogOpen}
+            onOpenChange={setIsBulkSendDialogOpen}
+            notes={selectedNoteItems}
+            isSending={false}
+            onConfirm={handleBulkSendToPractitioner}
+          />
         </div>
 
         {/* <div className="space-y-4 lg:col-span-3">

@@ -2,16 +2,15 @@ import { Square, SquareCheckBig } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ManagerNote } from './managerReviewTypes';
-import {
-  // DisagreementLevelEnum,
-  // DisagreementLevelLabels,
-  // HumanReviewDecisionEnum,
-  // HumanReviewDecisionLabels,
-  PriorityEnum,
-  PriorityLabels,
-} from '@/constants/common';
-import { GradientBadge } from '@/shared/GradientBadge';
-
+// import {
+//   DisagreementLevelEnum,
+//   DisagreementLevelLabels,
+//   HumanReviewDecisionEnum,
+//   HumanReviewDecisionLabels,
+//   PriorityEnum,
+//   PriorityLabels,
+// } from '@/constants/common';
+// import { GradientBadge } from '@/shared/GradientBadge';
 interface ManagerTableProps {
   notes: ManagerNote[];
   loading?: boolean;
@@ -21,51 +20,51 @@ interface ManagerTableProps {
   onToggleAll: () => void;
 }
 
+// const getManagerGradientDecision = (manager: number): string => {
+//   switch (manager) {
+//     case HumanReviewDecisionEnum.accept_ai_evaluation:
+//       return 'bg-gradient-workflow-completed';
+//     case HumanReviewDecisionEnum.ai_incorrect_override_score:
+//       return 'bg-gradient-workflow-returned';
+//     case HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues:
+//       return 'bg-gradient-priority-medium';
+//     case HumanReviewDecisionEnum.needs_practitioner_correction:
+//       return 'bg-gradient-priority-low';
+//     case HumanReviewDecisionEnum.escalate_to_office_manager:
+//       return 'bg-gradient-neutral';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
+// const getDisagreementLevelGradient = (disagreement: number): string => {
+//   switch (disagreement) {
+//     case DisagreementLevelEnum.high:
+//       return 'bg-gradient-priority-high';
+//     case DisagreementLevelEnum.medium:
+//       return 'bg-gradient-priority-medium';
+//     case DisagreementLevelEnum.low:
+//       return 'bg-gradient-priority-low';
+//     case DisagreementLevelEnum.none:
+//       return 'bg-gradient-workflow-completed';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
+
+// const getPriorityGradient = (priority: number): string => {
+//   switch (priority) {
+//     case PriorityEnum.high:
+//       return 'bg-gradient-priority-high';
+//     case PriorityEnum.medium:
+//       return 'bg-gradient-priority-medium';
+//     case PriorityEnum.low:
+//       return 'bg-gradient-priority-low';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
+
 export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onToggleAll }: ManagerTableProps) => {
-  // const getManagerGradientDecision = (manager: number): string => {
-  //   switch (manager) {
-  //     case HumanReviewDecisionEnum.accept_ai_evaluation:
-  //       return 'bg-gradient-workflow-completed';
-  //     case HumanReviewDecisionEnum.ai_incorrect_override_score:
-  //       return 'bg-gradient-workflow-returned';
-  //     case HumanReviewDecisionEnum.clinically_acceptable_despite_ai_issues:
-  //       return 'bg-gradient-priority-medium';
-  //     case HumanReviewDecisionEnum.needs_practitioner_correction:
-  //       return 'bg-gradient-priority-low';
-  //     case HumanReviewDecisionEnum.escalate_to_office_manager:
-  //       return 'bg-gradient-neutral';
-  //     default:
-  //       return 'bg-gradient-neutral';
-  //   }
-  // };
-  // const getDisagreementLevelGradient = (disagreement: number): string => {
-  //   switch (disagreement) {
-  //     case DisagreementLevelEnum.high:
-  //       return 'bg-gradient-priority-high';
-  //     case DisagreementLevelEnum.medium:
-  //       return 'bg-gradient-priority-medium';
-  //     case DisagreementLevelEnum.low:
-  //       return 'bg-gradient-priority-low';
-  //     case DisagreementLevelEnum.none:
-  //       return 'bg-gradient-workflow-completed';
-  //     default:
-  //       return 'bg-gradient-neutral';
-  //   }
-  // };
-
-  const getPriorityGradient = (priority: number): string => {
-    switch (priority) {
-      case PriorityEnum.high:
-        return 'bg-gradient-priority-high';
-      case PriorityEnum.medium:
-        return 'bg-gradient-priority-medium';
-      case PriorityEnum.low:
-        return 'bg-gradient-priority-low';
-      default:
-        return 'bg-gradient-neutral';
-    }
-  };
-
   if (notes.length === 0) {
     return (
       <div className="border-y">
@@ -86,15 +85,16 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                 <TableHead className="text-primary min-w-[80px] font-semibold">AI SCORE</TableHead>
                 <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
+                {/* <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
-                <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead>
+                <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead> */}
+                <TableHead className="text-primary min-w-[160px] font-semibold">EMAIL SEND DATE</TableHead>
                 <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell colSpan={10} className="text-muted-foreground py-8 text-center">
+                <TableCell colSpan={9} className="text-muted-foreground py-8 text-center">
                   No data found matching your filters.
                 </TableCell>
               </TableRow>
@@ -125,8 +125,9 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
               <TableHead className="text-primary min-w-[110px] font-semibold">HUMAN SCORE</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
               {/* <TableHead className="text-primary min-w-[160px] font-semibold">HUMAN DECISION</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead> */}
-              <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">DISAGREEMENT</TableHead>
+                <TableHead className="text-primary min-w-[110px] font-semibold">PRIORITY</TableHead> */}
+              <TableHead className="text-primary min-w-[160px] font-semibold">EMAIL SEND DATE</TableHead>
               <TableHead className="text-primary min-w-[100px] text-center font-semibold">ACTION</TableHead>
             </TableRow>
           </TableHeader>
@@ -167,10 +168,11 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
-                  </TableCell> */}
+                  </TableCell>
                   <TableCell>
                     <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
-                  </TableCell>
+                  </TableCell> */}
+                  <TableCell>{note.emailSendDate || '-'}</TableCell>
                   <TableCell>
                     <div className="flex justify-center">
                       <Button

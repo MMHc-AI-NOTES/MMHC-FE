@@ -31,6 +31,29 @@ export interface ManagerNotesResponse {
   pageSize: number;
 }
 
+const formatOptionalDate = (value: unknown): string => {
+  if (!value) return '-';
+  const parsed = moment(value as moment.MomentInput);
+  return parsed.isValid() ? parsed.format('MMM D, YYYY') : '-';
+};
+
+const getEmailSendDate = (item: ManagerReviewApiItem): string => {
+  const rawItem = item as ManagerReviewApiItem & Record<string, unknown>;
+
+  const sendDateCandidate =
+    rawItem.emailSentAt ||
+    rawItem.email_sent_at ||
+    rawItem.notifiedAt ||
+    rawItem.notified_at ||
+    rawItem.practitionerEmailSentAt ||
+    rawItem.practitioner_email_sent_at ||
+    rawItem.notificationSentAt ||
+    rawItem.notification_sent_at ||
+    null;
+
+  return formatOptionalDate(sendDateCandidate);
+};
+
 // Format raw API data to ManagerNote format
 const formatManagerReviewData = (data: ManagerReviewApiItem[]): ManagerNote[] => {
   return data.map((item: ManagerReviewApiItem) => {
@@ -52,6 +75,7 @@ const formatManagerReviewData = (data: ManagerReviewApiItem[]): ManagerNote[] =>
       noteId: item.noteId,
       practitioner: item.practitioner?.fullName || 'Unknown',
       date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
+      emailSendDate: getEmailSendDate(item),
       aiScore: item.aiScore || item.session?.aiScore || 0,
       humanScore,
       reviewer: item.manager?.fullName || 'Unknown',

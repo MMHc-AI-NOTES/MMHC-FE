@@ -5,6 +5,7 @@ export interface ManagerNote {
   noteId: string;
   practitioner: string;
   date: string;
+  emailSendDate: string;
   aiScore: number;
   humanScore: number | null;
   reviewer: string;
@@ -160,6 +161,7 @@ export interface ManagerIssue {
   issuesRelatedToId?: number;
   issueDescriptionId?: number;
   noteId?: string;
+  comment?: string;
   errorType?: {
     id: number;
     name: string;
@@ -191,6 +193,30 @@ export interface ManagerIssue {
   category?: string;
   description?: string;
   points?: number;
+}
+
+export interface ManagerBulkIssueItem {
+  id: string;
+  errorType: string;
+  relatedTo: string;
+  description: string;
+  comment: string | null;
+  points: number | null;
+}
+
+export interface ManagerBulkSendNoteItem {
+  id: string;
+  noteId: string;
+  practitionerName: string;
+  practitionerEmail: string | null;
+  practitionerId: number | null;
+  reviewerId: number | null;
+  reviewerName: string;
+  versionId: number | null;
+  date: string;
+  aiScore: number;
+  humanScore: number | null;
+  issues: ManagerBulkIssueItem[];
 }
 
 export interface ManagerNoteDetail {
