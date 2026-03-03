@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, X, User, Save, FileCheck } from 'lucide-react';
+import { Pencil, Trash2, User, Save, FileCheck, Plus } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 // import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
@@ -38,6 +38,8 @@ interface ReviewCardProps {
   hasIssuesChangedSinceMark?: boolean;
   onMarkForReview?: () => void;
   isMarkingForReview?: boolean;
+  readOnly?: boolean;
+  markedAtLabel?: string | null;
 }
 
 const ReviewCard = ({
@@ -58,6 +60,8 @@ const ReviewCard = ({
   hasIssuesChangedSinceMark = false,
   onMarkForReview,
   isMarkingForReview = false,
+  readOnly = false,
+  markedAtLabel = null,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -327,31 +331,40 @@ const ReviewCard = ({
   return (
     <Card className="relative gap-0 pt-1 pb-4">
       {isOwnReview && (
-        <div className="flex items-center justify-end gap-2 p-2">
-          <Button
-            size="sm"
-            className="bg-gradient-light text-primary border-0 shadow-sm"
-            disabled={(isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
-            onClick={onMarkForReview}
-          >
-            <FileCheck />
-            {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
-          </Button>
-          <Button onClick={handleAssignToManager} size="sm" className="bg-gradient-light text-primary border-0 shadow-sm">
-            <User />
-            Assign to Manager
-          </Button>
+        <div className="flex flex-col items-end gap-1 p-2">
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              size="sm"
+              className="bg-gradient-light text-primary w-36 border-0 shadow-sm"
+              disabled={readOnly || (isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
+              onClick={onMarkForReview}
+            >
+              <FileCheck />
+              {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
+            </Button>
+            <Button
+              onClick={handleAssignToManager}
+              size="sm"
+              className="bg-gradient-light text-primary border-0 shadow-sm"
+              disabled={readOnly || review.issues.length === 0}
+            >
+              <User />
+              Assign to Manager
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRemoveOrDelete}
-            className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
-            title={isReviewSaved ? 'Delete review' : 'Remove review'}
-            type="button"
-          >
-            {isReviewSaved ? <Trash2 /> : <X />}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRemoveOrDelete}
+              disabled={readOnly || review.issues.length === 0}
+              className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
+              title={isReviewSaved ? 'Delete review' : 'Remove review'}
+              type="button"
+            >
+              <Trash2 />
+            </Button>
+          </div>
+          {markedAtLabel && <div className="text-xs text-gray-600">Marked done on {markedAtLabel}</div>}
         </div>
       )}
       <CardContent className="space-y-3">
@@ -394,12 +407,10 @@ const ReviewCard = ({
           </div>
         )}
 
-        {/* Score Display - Show if there are any issues (saved or being edited) */}
-        {issuesForScore.length > 0 && (
-          <div className="mt-2 rounded-lg bg-gray-100 px-4 py-2">
-            <ScoreComparison issues={issuesForScore} auditScore={auditScore} />
-          </div>
-        )}
+        {/* Score Display - Always show; SME score 100 when no issues */}
+        <div className="mt-2 rounded-lg bg-gray-100 px-4 py-2">
+          <ScoreComparison issues={issuesForScore} auditScore={auditScore} />
+        </div>
 
         {/* Saved Issues List */}
         {savedIssues.length > 0 && (
@@ -433,7 +444,7 @@ const ReviewCard = ({
                             size="icon"
                             onClick={() => handleEditIssueInline(savedIssue)}
                             title="Edit issue description"
-                            disabled={editingIssueId === savedIssue.id}
+                            disabled={readOnly || editingIssueId === savedIssue.id}
                           >
                             <Pencil className="text-gray-600" />
                           </Button>
@@ -443,6 +454,7 @@ const ReviewCard = ({
                             onClick={() => onDeleteIssue(review.id, savedIssue.id)}
                             className="text-red-600"
                             title="Delete issue"
+                            disabled={readOnly}
                           >
                             <Trash2 />
                           </Button>
@@ -466,7 +478,7 @@ const ReviewCard = ({
                       )}
                     </div>
                     {/* Inline edit form for description */}
-                    {editingIssueId === savedIssue.id && isOwnReview && (
+                    {editingIssueId === savedIssue.id && isOwnReview && !readOnly && (
                       // (savedIssue.issueRelatedTo === 'overall' ? (
                       //   <OverallSummaryFlagForm
                       //     key={savedIssue.id}
@@ -615,7 +627,10 @@ const ReviewCard = ({
         )}
 
         {savedIssues.length === 0 && editingIssues.length === 0 && (
-          <p className="py-4 text-center text-sm text-gray-500">No issues added yet. Click "Add Issue" to create one.</p>
+          <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">
+            No reviews added yet. Click <Plus className="h-4 w-4" />
+            icon in current session to create.
+          </div>
         )}
       </CardContent>
     </Card>

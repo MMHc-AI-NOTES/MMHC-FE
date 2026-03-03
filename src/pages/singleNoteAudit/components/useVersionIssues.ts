@@ -130,10 +130,10 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
       const versionReviews = Object.entries(versionIssuesByReviewer)
         .map(([reviewerId, issues]) => {
           const reviewId = `version-review-${reviewerId}`;
-          // Skip if this review was deleted for this specific version
-          // Check both the simple ID and version-specific ID
           const versionSpecificKey = versionId ? `version-review-${reviewerId}-v${versionId}` : reviewId;
-          if (deletedReviewIds.has(reviewId) || deletedReviewIds.has(versionSpecificKey)) {
+          const wasDeleted = deletedReviewIds.has(reviewId) || deletedReviewIds.has(versionSpecificKey);
+          // Re-include review when API has issues again for this reviewer (e.g. after delete then create from template)
+          if (wasDeleted && (!issues || issues.length === 0)) {
             return null;
           }
           const reviewer = users.find(u => u.id === Number(reviewerId));

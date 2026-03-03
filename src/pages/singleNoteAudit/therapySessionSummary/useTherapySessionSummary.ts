@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '@/store/store';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, PreviousNote } from '@/types/notes';
 import { fetchSMETemplates, fetchIssueRelatedTo, fetchIssueDescriptions } from '@/pages/settings/settingsApiCalls';
 import { setSMETemplates, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import moment from 'moment';
@@ -14,6 +14,7 @@ const formatDate = (dateString: string) => moment(dateString).format('MMM D, YYY
 
 export interface UseTherapySessionSummaryProps {
   webhookVersions: WebhookVersion[];
+  previousNoteFromDetail?: PreviousNote;
   onVersionChange?: (versionId: number) => void;
   noteId?: string;
   versionId?: number | null;
@@ -42,6 +43,7 @@ const normalizeFieldKey = (key: string): string => {
 
 export function useTherapySessionSummary({
   webhookVersions,
+  previousNoteFromDetail,
   onVersionChange,
   noteId,
   versionId,
@@ -92,7 +94,9 @@ export function useTherapySessionSummary({
 
   const currentSessionData = useMemo(() => {
     const previousNote =
-      latestVersion?.previous_note ?? (latestVersion as { previousNote?: { session?: string; sessionJson?: string } })?.previousNote;
+      previousNoteFromDetail ??
+      latestVersion?.previous_note ??
+      (latestVersion as { previousNote?: { session?: string; sessionJson?: string } })?.previousNote;
     if (sourcePreviousSessionFromNote && previousNote) {
       const sessionStr = previousNote.session ?? previousNote.sessionJson;
       if (sessionStr) {
@@ -110,15 +114,19 @@ export function useTherapySessionSummary({
     } catch {
       return {};
     }
-  }, [sourcePreviousSessionFromNote, latestVersion, currentVersion]);
+  }, [previousNoteFromDetail, latestVersion, sourcePreviousSessionFromNote, currentVersion.sessionJson]);
 
   const hasPreviousSessionData = useMemo(() => {
-    if (sourcePreviousSessionFromNote && latestVersion) {
-      const prev = latestVersion.previous_note ?? (latestVersion as { previousNote?: unknown }).previousNote;
-      return Boolean(prev);
+    if (sourcePreviousSessionFromNote) {
+      if (previousNoteFromDetail) return true;
+      if (latestVersion) {
+        const prev = latestVersion.previous_note ?? (latestVersion as { previousNote?: unknown }).previousNote;
+        return Boolean(prev);
+      }
+      return false;
     }
     return sortedVersions.length >= 2;
-  }, [sourcePreviousSessionFromNote, latestVersion, sortedVersions.length]);
+  }, [sourcePreviousSessionFromNote, sortedVersions.length, previousNoteFromDetail, latestVersion]);
 
   const previousSessionData = useMemo(() => {
     if (!previousVersion?.sessionJson) return {};
