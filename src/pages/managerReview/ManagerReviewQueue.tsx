@@ -270,9 +270,9 @@ export const ManagerReviewQueue = () => {
 
     setIsSending(true);
     try {
+      const sentAt = formatDateTime(new Date());
       const success = await bulkSendToPractitioner(ids);
       if (success) {
-        const sentAt = formatDateTime(new Date());
         setNotes(prev => prev.map(note => (selectedIds.includes(note.id.toString()) ? { ...note, emailSendDate: sentAt } : note)));
         setSelectedIds([]);
         setIsBulkSendDialogOpen(false);
