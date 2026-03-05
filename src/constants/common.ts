@@ -4,8 +4,8 @@ export const SLIDER_CONFIGS = {
   TOP_K: { min: 0, max: 1000, step: 100 },
 } as const;
 
-// Standard date/time display formats (DD-MM-YYYY 13:43:00)
-export const DATE_FORMAT = 'DD-MM-YYYY';
+// Standard date/time display formats
+export const DATE_FORMAT = 'MM-DD-YYYY';
 export const TIME_FORMAT = 'HH:mm:ss';
 export const DATE_TIME_FORMAT = `${DATE_FORMAT} ${TIME_FORMAT}`;
 
