@@ -3,9 +3,8 @@ import { ChevronDown, AlertTriangle, Info, Database, CircleCheckBig, CircleX } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GradientBadge } from '@/shared/GradientBadge';
 import { AILog } from '@/types/aiLogs';
-import moment from 'moment';
 import { getResultStatus } from './aiLogsApiCalls';
-import { getModelDisplayName } from '@/utils/helper';
+import { getModelDisplayName, formatDateTime } from '@/utils/helper';
 
 interface AILogsTableProps {
   logs: AILog[];
@@ -139,7 +138,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                     />
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">{log.agent?.name || '-'}</TableCell>
-                  <TableCell className="text-sm text-gray-600">{moment(log.createdAt).format('MMM D, YYYY – h:mm A')}</TableCell>
+                  <TableCell className="text-sm text-gray-600">{formatDateTime(log.createdAt)}</TableCell>
                   <TableCell>
                     <GradientBadge
                       label={result === 'pass' ? 'Pass' : result === 'fail' ? 'Fail' : 'Error'}

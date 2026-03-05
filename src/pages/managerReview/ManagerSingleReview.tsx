@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import moment from 'moment';
 
 // Reuse existing Single Note Audit components and manager-specific cards
 import ManagerNoteInformation from './ManagerNoteInformation';
@@ -15,7 +14,7 @@ import IssuesIdentifiedCard from '../singleNoteAudit/IssuesIdentifiedCard';
 import LoadingSkeleton from '../singleNoteAudit/LoadingSkeleton';
 
 import type { NoteDetail } from '@/types/notes';
-import { mapCategoryToSectionId } from '@/utils/helper';
+import { formatDate, formatDateTime, mapCategoryToSectionId } from '@/utils/helper';
 import { fetchManagerReviewDetail } from './managerReviewApiCalls';
 import { ManagerReviewApiItem } from './managerReviewTypes';
 import { HumanReviewDecisionLabels, HumanReviewLabels, SessionTypeLabels } from '@/constants/common';
@@ -43,7 +42,7 @@ const transformToNoteDetail = (data: ManagerReviewApiItem): NoteDetail => {
           },
         ]
       : null,
-    date: data.createdAt ? moment(data.createdAt).format('MMM D, YYYY') : 'N/A',
+    date: data.createdAt ? formatDate(data.createdAt) : 'N/A',
     practitioner: data.practitioner?.fullName || 'Unknown',
     cptCode: data.session?.cptCodeId || 0,
     reviewCycle: data.session?.reviewCycle || { id: 1, name: 'Cycle 1' },
@@ -51,7 +50,7 @@ const transformToNoteDetail = (data: ManagerReviewApiItem): NoteDetail => {
     noteType: SessionTypeLabels[data.session?.type?.id] || '-',
     aiReviews: data.chat_count || 0,
     auditScore: data.aiScore || data.chat?.evaluationScore || 0,
-    lastRun: data.chat?.createdAt ? moment(data.chat.createdAt).format('MMM D, YYYY — h:mm A') : 'N/A',
+    lastRun: data.chat?.createdAt ? formatDateTime(data.chat.createdAt) : 'N/A',
     aiSummary: bedrockResponse.summary || data.chat?.evaluation || '',
     therapySummary: data.session?.session || '',
     bedrockResponse: bedrockResponse,
@@ -61,7 +60,7 @@ const transformToNoteDetail = (data: ManagerReviewApiItem): NoteDetail => {
     modelDetail: {
       modelVersion: data.chat?.modelId || 'Unknown',
       auditRunId: data.chatId,
-      lastRun: data.chat?.createdAt ? moment(data.chat.createdAt).format('MMM D, YYYY — h:mm A') : 'N/A',
+      lastRun: data.chat?.createdAt ? formatDateTime(data.chat.createdAt) : 'N/A',
     },
     issues: issues.map((issue: any) => ({
       severity: (issue.severity?.toUpperCase() || 'MINOR') as 'CRITICAL' | 'MODERATE' | 'MINOR',

@@ -5,12 +5,13 @@ import { WebhookVersion, PreviousNote } from '@/types/notes';
 import { fetchSMETemplates, fetchIssueRelatedTo, fetchIssueDescriptions } from '@/pages/settings/settingsApiCalls';
 import { setSMETemplates, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import moment from 'moment';
+import { DATE_FORMAT } from '@/constants/common';
 import { createSMEIssueFromTemplate } from '../singleNoteApiCalls';
 // import { createSMEIssueOverall } from '../singleNoteApiCalls';
 import type { IssueForm } from '../components/types';
 import type { SMETemplate } from '@/pages/settings/settingsApiCalls';
 
-const formatDate = (dateString: string) => moment(dateString).format('MMM D, YYYY');
+const formatDate = (dateString: string) => moment(dateString).format(DATE_FORMAT);
 
 export interface UseTherapySessionSummaryProps {
   webhookVersions: WebhookVersion[];

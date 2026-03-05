@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ReviewHistoryItem } from '@/types/blacklistedNotes';
 import { Clock } from 'lucide-react';
-import moment from 'moment';
+import { formatDateTime } from '@/utils/helper';
 
 interface ReviewHistoryCardProps {
   reviewHistory: ReviewHistoryItem[];
@@ -95,7 +95,7 @@ export const ReviewHistoryCard = ({ reviewHistory }: ReviewHistoryCardProps) => 
                     <p className="text-sm font-semibold text-gray-900">{formatTitle(item)}</p>
 
                     {/* Date and Time */}
-                    <p className="text-xs text-gray-600">{moment(item.date).format('MMM D, YYYY – h:mm A')}</p>
+                    <p className="text-xs text-gray-600">{formatDateTime(item.date)}</p>
 
                     {/* User/Reviewer */}
                     {item.user && <p className="text-xs text-gray-600">{item.user}</p>}

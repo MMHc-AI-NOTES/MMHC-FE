@@ -4,9 +4,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AILog } from '@/types/aiLogs';
 import { FileText, Hash, Database, Code, Clock, Activity, Calendar, Zap, HelpCircle } from 'lucide-react';
-import moment from 'moment';
 import { cn } from '@/lib/utils';
-import { getModelDisplayName } from '@/utils/helper';
+import { formatDateTime, getModelDisplayName } from '@/utils/helper';
 import { ChatTriggerSourceEnum } from '@/constants/common';
 
 interface LogDetailsCardProps {
@@ -148,7 +147,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
                 <Calendar className="h-4 w-4" />
                 <span className="text-sm">Timestamp:</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">{moment(log.createdAt).format('MMM D, YYYY – h:mm A')}</span>
+              <span className="text-sm font-medium text-gray-900">{formatDateTime(log.createdAt)}</span>
             </div>
 
             {/* Trigger Source */}

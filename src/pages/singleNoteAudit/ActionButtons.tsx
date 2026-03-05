@@ -131,7 +131,7 @@ const ActionButtons = ({
               onClick={() => setIsNotifyDialogOpen(true)}
             >
               <Send className="mr-2" />
-              Send to Practitioner
+              Send To Practitioner
             </Button>
           </div>
         )}

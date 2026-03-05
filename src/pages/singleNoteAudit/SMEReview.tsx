@@ -7,13 +7,13 @@ import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { WebhookVersion, NoteReviewMarkItem } from '@/types/notes';
-import moment from 'moment';
 import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
-import { deleteSMEReview, markNoteForReview } from './singleNoteApiCalls';
+import { deleteSMEReview, markNoteForReview, type NoteReviewMarkPayload } from './singleNoteApiCalls';
 import { UserRoleEnum } from '@/constants/common';
+import { formatDate } from '@/utils/helper';
 
 const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
 
@@ -109,6 +109,15 @@ const SMEReview = ({
     const sorted = [...webhookVersions].sort((a, b) => b.id - a.id);
     const index = sorted.findIndex(v => v.id === versionId);
     if (index === 0) return 'Current';
+    return sorted.length - index;
+  }, [webhookVersions, versionId]);
+
+  // Numeric version order for API payloads (1 = oldest, increasing toward latest)
+  const versionOrderForApi = useMemo(() => {
+    if (!webhookVersions.length || !versionId) return null;
+    const sorted = [...webhookVersions].sort((a, b) => b.id - a.id);
+    const index = sorted.findIndex(v => v.id === versionId);
+    if (index === -1) return null;
     return sorted.length - index;
   }, [webhookVersions, versionId]);
 
@@ -287,11 +296,13 @@ const SMEReview = ({
 
       setMarkingReviewId(reviewId);
       try {
-        const result = await markNoteForReview({
+        const payload: NoteReviewMarkPayload & { note_version_id?: number } = {
           note_id: noteId || '',
           reviewer_id: review?.reviewerId || String(loggedInUserId),
           marked: true,
-        });
+          note_version_id: versionId ?? undefined,
+        };
+        const result = await markNoteForReview(payload);
         if (result) {
           const baseline = getIssuesSignature(review?.issues ?? []);
           setReviewMarkState(prev => ({
@@ -304,7 +315,7 @@ const SMEReview = ({
         setMarkingReviewId(null);
       }
     },
-    [reviews, noteId, loggedInUserId, getIssuesSignature],
+    [reviews, noteId, loggedInUserId, versionId, getIssuesSignature],
   );
 
   // Derive "issues changed" from baseline: any new issue or updated issue enables the button (higher priority than id matched)
@@ -473,6 +484,7 @@ const SMEReview = ({
               savingIssueId={savingIssueId}
               noteId={noteId}
               versionId={versionId}
+              versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
               practitionerId={practitionerId}
               priorityId={priorityId}
               onDeleteIssue={handleDeleteIssueClick}
@@ -494,7 +506,7 @@ const SMEReview = ({
                 if (!mark) return null;
                 const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
                 if (!ts) return null;
-                return moment(ts).format('DD-MM-YYYY');
+                return formatDate(ts);
               })()}
             />
           ));

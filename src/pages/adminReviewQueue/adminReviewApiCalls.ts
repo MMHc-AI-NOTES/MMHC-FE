@@ -1,8 +1,7 @@
 // @/pages/adminReviewQueue/adminReviewApiCalls.ts
-import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { handleCatchMessages, handleErrorMessages, formatDate } from '@/utils/helper';
 import axios from 'axios';
 import { HumanReviewNote, ReviewerOverview, QueueStatus } from '@/types/notes';
-import moment from 'moment';
 
 interface ApiResponse<T> {
   status: boolean;
@@ -39,7 +38,7 @@ const formatHumanReviewData = (data: any[]): HumanReviewNote[] => {
     id: item.noteId || item.id?.toString(),
     chatId: item.chatId || 0,
     practitioner: item.practitioner?.fullName || 'Unknown',
-    date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
+    date: item.createdAt ? formatDate(item.createdAt) : 'N/A',
     score: item.note?.aiScore || 0,
     aiStatus: item.aiStatus?.id || 1,
     reviewStatus: item.note?.humanReview?.id || 1,

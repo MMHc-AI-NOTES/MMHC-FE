@@ -27,6 +27,8 @@ interface ReviewCardProps {
   savingIssueId: string | null;
   noteId?: string;
   versionId?: number | null;
+  /** Optional display label for the selected version (e.g. "V1", "V2") */
+  versionLabel?: string;
   practitionerId?: number;
   priorityId?: number;
   onDeleteIssue: (reviewId: string, issueId: string) => void;
@@ -49,6 +51,7 @@ const ReviewCard = ({
   savingIssueId,
   noteId,
   versionId,
+  versionLabel,
   practitionerId,
   priorityId,
   onDeleteIssue,
@@ -316,6 +319,7 @@ const ReviewCard = ({
         ai_score: auditScore,
         reviewer_id: reviewerId,
         priority: priorityId,
+        version_label: versionLabel,
       });
 
       // Reset form after successful assignment
@@ -349,7 +353,7 @@ const ReviewCard = ({
               disabled={readOnly || review.issues.length === 0}
             >
               <User />
-              Assign to Manager
+              Assign To Manager
             </Button>
 
             <Button

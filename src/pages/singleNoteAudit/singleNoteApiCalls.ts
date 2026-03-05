@@ -276,6 +276,8 @@ export interface AssignToManagerPayload {
   human_decision?: number;
   disagreement?: number;
   priority: number;
+  /** Optional human-readable version label (e.g. "V1", "V2") */
+  version_label?: string;
 }
 
 /**
@@ -301,6 +303,8 @@ export interface NoteReviewMarkPayload {
   note_id: string;
   reviewer_id: string;
   marked: boolean;
+  /** Optional note version for which the review mark applies */
+  note_version_id?: number;
 }
 
 export interface NoteReviewMarkResponse {
