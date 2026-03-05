@@ -1,18 +1,21 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '@/store/store';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, PreviousNote } from '@/types/notes';
 import { fetchSMETemplates, fetchIssueRelatedTo, fetchIssueDescriptions } from '@/pages/settings/settingsApiCalls';
 import { setSMETemplates, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import moment from 'moment';
-import { createSMEIssueFromTemplate, createSMEIssueOverall } from '../singleNoteApiCalls';
+import { DATE_FORMAT } from '@/constants/common';
+import { createSMEIssueFromTemplate } from '../singleNoteApiCalls';
+// import { createSMEIssueOverall } from '../singleNoteApiCalls';
 import type { IssueForm } from '../components/types';
 import type { SMETemplate } from '@/pages/settings/settingsApiCalls';
 
-const formatDate = (dateString: string) => moment(dateString).format('MMM D, YYYY');
+const formatDate = (dateString: string) => moment(dateString).format(DATE_FORMAT);
 
 export interface UseTherapySessionSummaryProps {
   webhookVersions: WebhookVersion[];
+  previousNoteFromDetail?: PreviousNote;
   onVersionChange?: (versionId: number) => void;
   noteId?: string;
   versionId?: number | null;
@@ -20,7 +23,18 @@ export interface UseTherapySessionSummaryProps {
   practitionerId?: number;
   aiStatusId?: number;
   priorityId?: number;
-  onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
+  onSMEIssueCreatedFromTemplate?: (
+    response: { id: number },
+    issueForm: IssueForm,
+    versionId: number,
+    descriptionId?: number,
+    createdForReviewerId?: number,
+  ) => void;
+  /** Called when an issue is created so SME Review can re-enable "Mark For Review" */
+  onReviewerIssuesChanged?: (reviewerId: number) => void;
+  initialVersionIndex?: number;
+  /** When true, session data comes from latest version's previous_note (for Previous Session card) */
+  sourcePreviousSessionFromNote?: boolean;
 }
 
 const normalizeFieldKey = (key: string): string => {
@@ -30,6 +44,7 @@ const normalizeFieldKey = (key: string): string => {
 
 export function useTherapySessionSummary({
   webhookVersions,
+  previousNoteFromDetail,
   onVersionChange,
   noteId,
   versionId,
@@ -38,6 +53,9 @@ export function useTherapySessionSummary({
   aiStatusId = 1,
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
+  onReviewerIssuesChanged,
+  initialVersionIndex = 0,
+  sourcePreviousSessionFromNote = false,
 }: UseTherapySessionSummaryProps) {
   const dispatch = useDispatch();
   const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes } = useAppSelector(state => state.smeConfig);
@@ -46,14 +64,22 @@ export function useTherapySessionSummary({
   const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>('');
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(initialVersionIndex);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
-  const [isOverallFormOpen, setIsOverallFormOpen] = useState(false);
-  const [overallErrorTypeId, setOverallErrorTypeId] = useState<number>(1);
-  const [overallComment, setOverallComment] = useState('');
-  const [isSavingOverall, setIsSavingOverall] = useState(false);
+  // Previous overall method – overall now uses same flow as other fields (SessionFieldRow)
+  // const [isOverallFormOpen, setIsOverallFormOpen] = useState(false);
+  // const [overallErrorTypeId, setOverallErrorTypeId] = useState<number>(1);
+  // const [overallComment, setOverallComment] = useState('');
+  // const [isSavingOverall, setIsSavingOverall] = useState(false);
 
   const sortedVersions = useMemo(() => [...webhookVersions].sort((a, b) => b.id - a.id), [webhookVersions]);
+
+  useEffect(() => {
+    if (!sortedVersions.length) return;
+    if (selectedVersionIndex > sortedVersions.length - 1) {
+      setSelectedVersionIndex(Math.max(0, sortedVersions.length - 1));
+    }
+  }, [sortedVersions.length, selectedVersionIndex]);
 
   const overallIssueRelatedToId = useMemo(() => {
     const irt = issueRelatedTo?.find(opt => (opt.fieldId || '').toLowerCase() === 'overall');
@@ -61,19 +87,47 @@ export function useTherapySessionSummary({
   }, [issueRelatedTo]);
 
   const currentVersion = sortedVersions[selectedVersionIndex];
+  const latestVersion = sortedVersions[0] ?? null;
   const previousVersion = selectedVersionIndex < sortedVersions.length - 1 ? sortedVersions[selectedVersionIndex + 1] : null;
   const isHistoricalVersion = selectedVersionIndex > 0;
   const isFirstVersion = selectedVersionIndex === sortedVersions.length - 1;
   const isLastVersion = selectedVersionIndex === 0;
 
   const currentSessionData = useMemo(() => {
+    const previousNote =
+      previousNoteFromDetail ??
+      latestVersion?.previous_note ??
+      (latestVersion as { previousNote?: { session?: string; sessionJson?: string } })?.previousNote;
+    if (sourcePreviousSessionFromNote && previousNote) {
+      const sessionStr = previousNote.session ?? previousNote.sessionJson;
+      if (sessionStr) {
+        try {
+          return JSON.parse(sessionStr);
+        } catch {
+          return {};
+        }
+      }
+      return {};
+    }
     if (!currentVersion?.sessionJson) return {};
     try {
       return JSON.parse(currentVersion.sessionJson);
     } catch {
       return {};
     }
-  }, [currentVersion]);
+  }, [previousNoteFromDetail, latestVersion, sourcePreviousSessionFromNote, currentVersion.sessionJson]);
+
+  const hasPreviousSessionData = useMemo(() => {
+    if (sourcePreviousSessionFromNote) {
+      if (previousNoteFromDetail) return true;
+      if (latestVersion) {
+        const prev = latestVersion.previous_note ?? (latestVersion as { previousNote?: unknown }).previousNote;
+        return Boolean(prev);
+      }
+      return false;
+    }
+    return sortedVersions.length >= 2;
+  }, [sourcePreviousSessionFromNote, sortedVersions.length, previousNoteFromDetail, latestVersion]);
 
   const previousSessionData = useMemo(() => {
     if (!previousVersion?.sessionJson) return {};
@@ -182,17 +236,31 @@ export function useTherapySessionSummary({
     [getIssueRelatedToId, smeTemplates],
   );
 
+  // Reviewer we're adding issues for (prop); used so "already used" is for that reviewer's issues (creating or editing)
+  const effectiveReviewerId = typeof reviewerId === 'number' ? reviewerId : (user?.id ?? null);
+
   const getAlreadyUsedDescriptionIdsForField = useCallback(
     (fieldKey: string): number[] => {
-      if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues) || !user?.id) return [];
+      if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues) || effectiveReviewerId == null) return [];
       const issueRelatedToId = getIssueRelatedToId(fieldKey);
       if (!issueRelatedToId) return [];
-      return currentVersion.smeIssues
-        .filter(issue => issue.issuesRelatedTo?.id === issueRelatedToId && issue.reviewerId === user.id)
-        .map(issue => issue.issueDescription?.id)
-        .filter((id): id is number => id != null);
+      const ids: number[] = [];
+      for (const issue of currentVersion.smeIssues) {
+        if (issue.issuesRelatedTo?.id !== issueRelatedToId || Number(issue.reviewerId) !== effectiveReviewerId) continue;
+        const fromIssueDesc = issue.issueDescription?.id;
+        if (fromIssueDesc != null) {
+          ids.push(fromIssueDesc);
+          continue;
+        }
+        const descText = typeof issue.description === 'string' ? issue.description : undefined;
+        if (descText && issueDescriptions?.length) {
+          const matched = issueDescriptions.find(d => d.description === descText);
+          if (matched?.id != null) ids.push(matched.id);
+        }
+      }
+      return [...new Set(ids)];
     },
-    [currentVersion?.smeIssues, getIssueRelatedToId, user?.id],
+    [currentVersion?.smeIssues, getIssueRelatedToId, effectiveReviewerId, issueDescriptions],
   );
 
   const getTemplateDropdownOptions = useCallback(
@@ -311,7 +379,8 @@ export function useTherapySessionSummary({
           _smeIssueId: res.id,
           _isVersionIssue: true,
         };
-        onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined);
+        onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined, revId);
+        onReviewerIssuesChanged?.(revId);
         setExpandedFieldKey(null);
         setSelectedTemplateId('');
       } catch (e) {
@@ -334,6 +403,7 @@ export function useTherapySessionSummary({
       issueRelatedTo,
       issueDescriptions,
       onSMEIssueCreatedFromTemplate,
+      onReviewerIssuesChanged,
     ],
   );
 
@@ -342,73 +412,58 @@ export function useTherapySessionSummary({
     setSelectedTemplateId('');
   }, []);
 
-  const openOverallForm = useCallback(() => setIsOverallFormOpen(true), []);
-  const closeOverallForm = useCallback(() => {
-    setIsOverallFormOpen(false);
-    setOverallComment('');
-  }, []);
-
-  const handleSaveOverallIssue = useCallback(async () => {
-    if (!noteId || !versionId || reviewerId == null || overallIssueRelatedToId == null || !onSMEIssueCreatedFromTemplate) return;
-    const revId = typeof reviewerId === 'number' ? reviewerId : null;
-    if (revId == null) return;
-
-    setIsSavingOverall(true);
-    try {
-      const isCurrentVersion = sortedVersions.length > 0 && sortedVersions[0].id === versionId;
-      const res = await createSMEIssueOverall({
-        note_id: noteId,
-        reviewer_id: revId,
-        practitioner_id: practitionerId,
-        is_current_version: isCurrentVersion ? 1 : 0,
-        version_id: versionId,
-        error_type_id: overallErrorTypeId,
-        issues_related_to_id: overallIssueRelatedToId,
-        comment: overallComment.trim(),
-        ai_status: aiStatusId,
-        priority: priorityId,
-      });
-      if (!res?.id) return;
-
-      const et = errorTypes.find(e => e.id === overallErrorTypeId);
-      const irt = issueRelatedTo.find(i => i.id === overallIssueRelatedToId);
-      const issueForm: IssueForm = {
-        id: `version-issue-${res.id}`,
-        errorType: et?.name ?? '',
-        issueRelatedTo: irt?.fieldId ?? 'overall',
-        issueDescription: overallComment.trim(),
-        _smeIssueId: res.id,
-        _isVersionIssue: true,
-      };
-      onSMEIssueCreatedFromTemplate(res, issueForm, versionId, undefined);
-      closeOverallForm();
-    } catch (e) {
-      console.error('Create overall SME issue:', e);
-    } finally {
-      setIsSavingOverall(false);
-    }
-  }, [
-    noteId,
-    versionId,
-    reviewerId,
-    overallIssueRelatedToId,
-    overallErrorTypeId,
-    overallComment,
-    practitionerId,
-    sortedVersions,
-    aiStatusId,
-    priorityId,
-    errorTypes,
-    issueRelatedTo,
-    onSMEIssueCreatedFromTemplate,
-    closeOverallForm,
-  ]);
+  // Previous overall method – overall now uses same flow as other fields (handleSaveFromTemplate)
+  // const openOverallForm = useCallback(() => setIsOverallFormOpen(true), []);
+  // const closeOverallForm = useCallback(() => {
+  //   setIsOverallFormOpen(false);
+  //   setOverallComment('');
+  // }, []);
+  // const handleSaveOverallIssue = useCallback(async () => {
+  //   if (!noteId || !versionId || reviewerId == null || overallIssueRelatedToId == null || !onSMEIssueCreatedFromTemplate) return;
+  //   const revId = typeof reviewerId === 'number' ? reviewerId : null;
+  //   if (revId == null) return;
+  //   setIsSavingOverall(true);
+  //   try {
+  //     const isCurrentVersion = sortedVersions.length > 0 && sortedVersions[0].id === versionId;
+  //     const res = await createSMEIssueOverall({
+  //       note_id: noteId,
+  //       reviewer_id: revId,
+  //       practitioner_id: practitionerId,
+  //       is_current_version: isCurrentVersion ? 1 : 0,
+  //       version_id: versionId,
+  //       error_type_id: overallErrorTypeId,
+  //       issues_related_to_id: overallIssueRelatedToId,
+  //       comment: overallComment.trim(),
+  //       ai_status: aiStatusId,
+  //       priority: priorityId,
+  //     });
+  //     if (!res?.id) return;
+  //     const et = errorTypes.find(e => e.id === overallErrorTypeId);
+  //     const irt = issueRelatedTo.find(i => i.id === overallIssueRelatedToId);
+  //     const issueForm: IssueForm = {
+  //       id: `version-issue-${res.id}`,
+  //       errorType: et?.name ?? '',
+  //       issueRelatedTo: irt?.fieldId ?? 'overall',
+  //       issueDescription: overallComment.trim(),
+  //       _smeIssueId: res.id,
+  //       _isVersionIssue: true,
+  //     };
+  //     onSMEIssueCreatedFromTemplate(res, issueForm, versionId, undefined, revId);
+  //     onReviewerIssuesChanged?.(revId);
+  //     closeOverallForm();
+  //   } catch (e) {
+  //     console.error('Create overall SME issue:', e);
+  //   } finally {
+  //     setIsSavingOverall(false);
+  //   }
+  // }, [noteId, versionId, reviewerId, overallIssueRelatedToId, overallErrorTypeId, overallComment, practitionerId, sortedVersions, aiStatusId, priorityId, errorTypes, issueRelatedTo, onSMEIssueCreatedFromTemplate, onReviewerIssuesChanged, closeOverallForm]);
 
   return {
     user,
     sortedVersions,
     currentVersion,
     currentSessionData,
+    hasPreviousSessionData,
     changedFields,
     selectedVersionIndex,
     isVersionHistoryOpen,
@@ -434,15 +489,15 @@ export function useTherapySessionSummary({
     formatDate,
     overallIssueRelatedToId,
     getIssueCountForOverall,
-    isOverallFormOpen,
-    openOverallForm,
-    closeOverallForm,
-    overallErrorTypeId,
-    setOverallErrorTypeId,
-    overallComment,
-    setOverallComment,
-    isSavingOverall,
-    handleSaveOverallIssue,
+    // isOverallFormOpen,
+    // openOverallForm,
+    // closeOverallForm,
+    // overallErrorTypeId,
+    // setOverallErrorTypeId,
+    // overallComment,
+    // setOverallComment,
+    // isSavingOverall,
+    // handleSaveOverallIssue,
     errorTypes,
   };
 }

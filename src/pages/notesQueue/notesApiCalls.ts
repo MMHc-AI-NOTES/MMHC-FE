@@ -1,5 +1,5 @@
 // @/services/notesService.ts
-import { getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { formatDate, formatDateTime, getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
 import { RawApiNote, FormattedNote, DataFormatterProps, QueueOverview, Workload, PractitionerOption, CptCodeOption } from '@/types/notes';
 import moment from 'moment';
@@ -22,11 +22,22 @@ interface FilterItem {
   endDate?: string;
 }
 
-interface NotesPayload {
+export interface SortItem {
+  columnName: string;
+  orderBy: 'asc' | 'desc';
+}
+
+export interface NotesPayload {
   page: number;
   pageSize: number;
   filters: FilterItem[];
+  sorts?: SortItem[];
 }
+
+const DEFAULT_NOTES_SORTS: SortItem[] = [
+  { columnName: 'session_time', orderBy: 'desc' },
+  // { columnName: 'id', orderBy: 'desc' },
+];
 
 interface NotesResponse {
   data: any[];
@@ -74,20 +85,23 @@ export const getDateRange = (range: string): { startDate: string; endDate: strin
 const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
   return data.map((item: RawApiNote) => {
     return {
-      id: item.noteId,
+      id: item.id?.toString() || item.noteId,
+      noteId: item.noteId,
       cptCode: item.cptCodeId,
       reviewCycle: item.reviewCycle,
       practitioner: item.practitioner.fullName,
       client: item.patient.clientId || '-',
-      date: moment(item.sessionTime).format('MMM D, YYYY'),
-      type: item.noteType?.id || 'Progress Note',
+      date: formatDate(item.sessionTime),
+      type: item.noteType?.name || 'Progress Note',
       aiScore: item.aiScore || 0,
       aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
       humanReview: item.humanReview?.id || 1, // Default to not_needed
       manager: item.manager?.id || 1, // Default to not_needed
       workflow: item.workflow?.id || 1, // Default to in_queue
       priority: item.priority?.id || 1, // Default to low
-      sessionTime: moment(item.sessionTime).format('MMM D, YYYY h:mm A'),
+      smeReview: item.smeReview?.id || 1, // Default to pending
+      smeReviewers: (item.humanReviews || []).map(rev => rev.reviewer?.fullName || 'Unknown'),
+      sessionTime: formatDateTime(item.sessionTime),
       rawData: item,
     } as FormattedNote;
   });
@@ -95,7 +109,8 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
 
 export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> => {
   try {
-    const response = await axios.post<ApiResponse<any>>('/notes/listing', payload);
+    const body = { ...payload, sorts: DEFAULT_NOTES_SORTS };
+    const response = await axios.post<ApiResponse<any>>('/notes/listing', body);
 
     if (response?.status) {
       const notesArray = response.data?.data || [];

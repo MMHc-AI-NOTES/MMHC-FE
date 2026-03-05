@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { History, Bot, RotateCcw } from 'lucide-react';
 import moment from 'moment';
 import { Chat } from '@/types/notes';
+import { formatDateTime } from '@/utils/helper';
 
 interface AuditHistoryCardProps {
   chats: Chat[];
@@ -38,7 +39,7 @@ const AuditHistoryCard = ({ chats }: AuditHistoryCardProps) => {
             const bedrockResponse = chat.bedrockResponse;
             const score = bedrockResponse?.score || 0;
             const scoreStatus = getScoreStatus(score);
-            const formattedDate = moment(chat.createdAt).format('MMM D, YYYY — h:mm A');
+            const formattedDate = formatDateTime(chat.createdAt);
 
             return (
               <div key={chat.id} className="space-y-3">

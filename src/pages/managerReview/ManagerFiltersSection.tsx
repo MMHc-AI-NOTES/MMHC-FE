@@ -3,8 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import {
-  PriorityEnum,
-  PriorityLabels,
+  // PriorityEnum,
+  // PriorityLabels,
   UserRoleEnum,
   // DisagreementLevelEnum,
   // DisagreementLevelLabels
@@ -31,7 +31,7 @@ interface FiltersSectionProps {
 
 // const managerDecisions = getHumanReviewDecisionOptions();
 // const disagreementLevels = Object.values(DisagreementLevelEnum) as number[];
-const priorityLevels = Object.values(PriorityEnum) as number[];
+// const priorityLevels = Object.values(PriorityEnum) as number[];
 
 export const ManagerFiltersSection = ({ filters, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
   const dispatch = useAppDispatch();
@@ -87,7 +87,7 @@ export const ManagerFiltersSection = ({ filters, loading, onFilterChange, onAppl
           </Select>
         </div> */}
 
-        <div className="w-full md:col-span-3">
+        {/* <div className="w-full md:col-span-3">
           <label className="mb-2 block text-sm font-medium text-gray-500">Priority</label>
           <Select
             value={filters.priority === 'all' ? 'all' : filters.priority.toString()}
@@ -105,9 +105,9 @@ export const ManagerFiltersSection = ({ filters, loading, onFilterChange, onAppl
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
-        <div className="w-full md:col-span-3">
+        <div className="w-full md:col-span-4">
           <label className="mb-2 block text-sm font-medium text-gray-500">Practitioner</label>
           <Select value={filters.practitioner} onValueChange={value => onFilterChange('practitioner', value)}>
             <SelectTrigger className="w-full">
@@ -124,7 +124,7 @@ export const ManagerFiltersSection = ({ filters, loading, onFilterChange, onAppl
           </Select>
         </div>
 
-        <div className="w-full md:col-span-3">
+        <div className="w-full md:col-span-4">
           <label className="mb-2 block text-sm font-medium text-gray-500">Reviewer</label>
           <Select value={filters.reviewer} onValueChange={value => onFilterChange('reviewer', value)}>
             <SelectTrigger className="w-full">
@@ -161,7 +161,7 @@ export const ManagerFiltersSection = ({ filters, loading, onFilterChange, onAppl
           </Select>
         </div> */}
 
-        <div className="w-full md:col-span-3">
+        <div className="w-full md:col-span-4">
           <label className="mb-2 block text-sm font-medium text-gray-500">Search</label>
           <div className="relative w-full">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />

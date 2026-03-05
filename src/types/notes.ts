@@ -17,6 +17,8 @@ export interface RawApiNote {
   manager?: { id: number; name: string };
   workflow?: { id: number; name: string };
   priority?: { id: number; name: string };
+  smeReview?: { id: number; name: string };
+  humanReviews?: HumanReview[];
   createdAt: string;
   updatedAt: string;
   practitioner: {
@@ -35,6 +37,7 @@ export interface RawApiNote {
 
 export interface FormattedNote {
   id: string;
+  noteId: string;
   cptCode: number;
   practitioner: string;
   client: string;
@@ -46,6 +49,8 @@ export interface FormattedNote {
   manager: number;
   workflow: number;
   priority: number;
+  smeReview: number;
+  smeReviewers?: string[];
   reviewCycle?: { id: number; name: string };
   sessionTime?: string;
   rawData?: RawApiNote;
@@ -71,6 +76,7 @@ export interface HumanReview {
   noteId?: string;
   practitionerId?: number;
   humanResult?: { id: number; name: string };
+  reviewer?: { id: number; fullName: string };
 }
 export interface NoteDetail {
   id: string;
@@ -98,9 +104,16 @@ export interface NoteDetail {
     category: string;
     points: number;
     description: string;
+    justification?: string;
     sectionId: string;
   }[];
   webhookVersions: WebhookVersion[];
+  /** Reviewer id -> marked for review (from note detail API) */
+  noteReviewMarks?: Record<string, boolean>;
+  /** Previous note for this note (from API top-level previous_note) */
+  previousNote?: PreviousNote;
+  /** Raw note review marks array from API, including timestamps */
+  noteReviewMarksRaw?: NoteReviewMarkItem[];
 }
 
 export interface NoteSection {
@@ -192,6 +205,19 @@ export interface SMEIssue {
   updatedAt: string;
 }
 
+/** Previous note linked to this webhook version (from API webhookVersions[].previous_note) */
+export interface PreviousNote {
+  id: number;
+  noteId: string;
+  /** Session content as JSON string (API may send `session` or `sessionJson`) */
+  session?: string;
+  sessionJson?: string;
+  sessionTime?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
 export interface WebhookVersion {
   id: number;
   noteId: string;
@@ -199,6 +225,19 @@ export interface WebhookVersion {
   createdAt: string;
   updatedAt: string;
   smeIssues: SMEIssue[];
+  /** Previous note for this version (from API) */
+  previous_note?: PreviousNote;
+}
+
+/** From API (fetchNoteDetail): reviewers who have marked this note for review */
+export interface NoteReviewMarkItem {
+  id: number;
+  noteId: string;
+  reviewerId: number;
+  markedAsReviewed: number; // 1 = marked, 0 = not
+  markedAt?: string;
+  createdAt: string;
+  reviewer?: { id: number; fullName: string; email: string; [key: string]: unknown };
 }
 
 export interface ApiNoteDetail {
@@ -222,6 +261,11 @@ export interface ApiNoteDetail {
   chats: Chat[];
   humanReview: HumanReview[] | null;
   webhookVersions: WebhookVersion[];
+  /** Top-level previous note for this note detail (API previous_note) */
+  previous_note?: PreviousNote;
+  /** Note review marks from API (fetchNoteDetail) – array with reviewerId & markedAsReviewed */
+  note_review_marks?: NoteReviewMarkItem[];
+  noteReviewMarks?: NoteReviewMarkItem[];
 }
 
 // Queue Overview Data

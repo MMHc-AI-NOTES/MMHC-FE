@@ -27,7 +27,7 @@ const createIssueValidationSchema = (requireReviewer: boolean) =>
     issueDescription: yup.string().required('Issue description is required'),
   });
 
-interface IssueFormCardProps {
+export interface IssueFormCardProps {
   issue: {
     id: string;
     reviewerName: string;
@@ -41,9 +41,18 @@ interface IssueFormCardProps {
   isSaving?: boolean;
   isEditMode?: boolean;
   hideReviewerField?: boolean;
+  /** Returns description IDs already used in this review for the given field (so they can be disabled) */
+  getAlreadyUsedDescriptionIdsForField?: (fieldId: string) => number[];
 }
 
-const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideReviewerField = false }: IssueFormCardProps) => {
+const IssueFormCard = ({
+  issue,
+  onSave,
+  onCancelEdit,
+  isSaving = false,
+  hideReviewerField = false,
+  getAlreadyUsedDescriptionIdsForField,
+}: IssueFormCardProps) => {
   const { practitioners } = useAppSelector(state => state.filterOptions);
   const { errorTypes, issueRelatedTo, issueDescriptions } = useAppSelector(state => state.smeConfig);
 
@@ -71,7 +80,11 @@ const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideRevi
     id: opt.fieldId,
     name: opt.displayName,
   }));
-  const issueDescriptionOptions = issueDescriptions.map(desc => desc.description);
+  const issueDescriptionOptionsWithId = issueDescriptions.map(desc => ({
+    id: desc.id ?? 0,
+    value: desc.description ?? `Description ${desc.id ?? ''}`,
+  }));
+  const alreadyUsedDescriptionIds = getAlreadyUsedDescriptionIdsForField?.(formik.values.issueRelatedTo) ?? [];
 
   const errorTypeLabel = errorTypeOptions.find(type => type.value === formik.values.errorType)?.label || '';
   const issueRelatedToLabel = issueRelatedToOptions.find(opt => opt.id === formik.values.issueRelatedTo)?.name || '';
@@ -196,15 +209,19 @@ const IssueFormCard = ({ issue, onSave, onCancelEdit, isSaving = false, hideRevi
                 <SelectValue placeholder="Select issue description" className="line-clamp-2" />
               </SelectTrigger>
               <SelectContent className="max-w-lg">
-                {issueDescriptionOptions.map((description, idx) => (
-                  <SelectItem
-                    key={idx}
-                    value={description}
-                    className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
-                  >
-                    {description}
-                  </SelectItem>
-                ))}
+                {issueDescriptionOptionsWithId.map(opt => {
+                  const alreadyUsed = opt.id != null && alreadyUsedDescriptionIds.includes(opt.id);
+                  return (
+                    <SelectItem
+                      key={opt.id}
+                      value={opt.value}
+                      disabled={alreadyUsed}
+                      className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
+                    >
+                      {opt.value}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             {formik.touched.issueDescription && formik.errors.issueDescription && (

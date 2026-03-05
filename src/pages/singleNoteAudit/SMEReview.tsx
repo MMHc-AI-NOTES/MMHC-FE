@@ -1,18 +1,53 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 // import { Button } from '@/components/ui/button';
-import { Bug } from 'lucide-react';
+import { Bug, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, NoteReviewMarkItem } from '@/types/notes';
 import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
-import { Review, ActiveIssueForm } from './components/types';
-import { deleteSMEReview } from './singleNoteApiCalls';
-// import { UserRoleEnum } from '@/constants/common';
+import { Review, ActiveIssueForm, type IssueForm } from './components/types';
+import { deleteSMEReview, markNoteForReview, type NoteReviewMarkPayload } from './singleNoteApiCalls';
+import { UserRoleEnum } from '@/constants/common';
+import { formatDate } from '@/utils/helper';
+
+const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
+
+function getMarkedForReviewStorageKey(noteId: string, reviewerId: string): string {
+  return `${MARKED_FOR_REVIEW_STORAGE_PREFIX}_${noteId}_${reviewerId}`;
+}
+
+/** Returns true/false from storage; undefined when key not set (use API then). */
+function getMarkedFromStorage(noteId: string, reviewerId: string): boolean | undefined {
+  if (typeof window === 'undefined' || !window.localStorage) return undefined;
+  try {
+    const raw = window.localStorage.getItem(getMarkedForReviewStorageKey(noteId, reviewerId));
+    if (raw === null) return undefined;
+    return raw === '1';
+  } catch {
+    return undefined;
+  }
+}
+
+function setMarkedInStorage(noteId: string, reviewerId: string, marked: boolean): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const key = getMarkedForReviewStorageKey(noteId, reviewerId);
+    window.localStorage.setItem(key, marked ? '1' : '0');
+  } catch {
+    // ignore
+  }
+}
+
+export type ReviewMarkState = {
+  marked: boolean;
+  issuesChangedSinceMark?: boolean;
+  /** Snapshot when we marked or first loaded (fetchNoteDetail) */ issuesBaseline?: string;
+};
 
 interface SMEReviewProps {
   reviews: Review[];
@@ -20,6 +55,10 @@ interface SMEReviewProps {
   auditScore: number;
   versionId?: number | null;
   webhookVersions?: WebhookVersion[];
+  /** Reviewer id -> marked (from note detail); used to seed mark state on load */
+  noteReviewMarks?: Record<string, boolean>;
+  /** Raw note review marks array from API, used for displaying marked date */
+  noteReviewMarksRaw?: NoteReviewMarkItem[];
   aiStatusId: number;
   priorityId: number;
   practitionerId: number;
@@ -32,6 +71,8 @@ interface SMEReviewProps {
     smeIssueId: number,
     payload: { issueDescriptionId?: number; issueDescriptionText?: string },
   ) => void;
+  /** Ref SingleNoteAudit sets so we can notify when an issue is created from summary cards */
+  onReviewerIssuesChangedRef?: React.MutableRefObject<((reviewerId: number) => void) | null>;
 }
 
 const SMEReview = ({
@@ -40,6 +81,8 @@ const SMEReview = ({
   auditScore,
   versionId,
   webhookVersions = [],
+  noteReviewMarks,
+  noteReviewMarksRaw,
   aiStatusId,
   priorityId,
   practitionerId,
@@ -48,6 +91,7 @@ const SMEReview = ({
   onSMEIssueDeleted,
   onSMEReviewDeleted,
   onSMEIssueUpdated,
+  onReviewerIssuesChangedRef,
 }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
@@ -68,6 +112,15 @@ const SMEReview = ({
     return sorted.length - index;
   }, [webhookVersions, versionId]);
 
+  // Numeric version order for API payloads (1 = oldest, increasing toward latest)
+  const versionOrderForApi = useMemo(() => {
+    if (!webhookVersions.length || !versionId) return null;
+    const sorted = [...webhookVersions].sort((a, b) => b.id - a.id);
+    const index = sorted.findIndex(v => v.id === versionId);
+    if (index === -1) return null;
+    return sorted.length - index;
+  }, [webhookVersions, versionId]);
+
   // State management
   const [activeIssueForms, setActiveIssueForms] = useState<ActiveIssueForm[]>([]);
   const [savingIssueId, setSavingIssueId] = useState<string | null>(null);
@@ -78,6 +131,42 @@ const SMEReview = ({
   const [isDeletingIssue, setIsDeletingIssue] = useState(false);
   const [issueToDelete, setIssueToDelete] = useState<{ reviewId: string; issueId: string } | null>(null);
   const [deletedReviewIds, setDeletedReviewIds] = useState<Set<string>>(new Set());
+  const [reviewMarkState, setReviewMarkState] = useState<Record<string, ReviewMarkState>>({});
+  const [markingReviewId, setMarkingReviewId] = useState<string | null>(null);
+  const lastSeededNoteIdRef = useRef<string | null>(null);
+
+  // Stable signature for comparing issues (new/updated/removed)
+  const getIssuesSignature = useCallback((issues: IssueForm[]): string => {
+    const normalized = [...issues]
+      .sort((a, b) => (a.id || '').localeCompare(b.id || ''))
+      .map(i => `${i.id}|${i.errorType}|${i.issueRelatedTo}|${i.issueDescription ?? ''}|${i.comment ?? ''}|${i._smeIssueId ?? ''}`)
+      .join(';');
+    return normalized;
+  }, []);
+
+  // Seed once per note: button state comes from localStorage only (persisted). Use API only when storage has no value.
+  useEffect(() => {
+    if (!noteId) return;
+    const ownReviews = reviews.filter(r => r.reviewerId && Number(r.reviewerId) === loggedInUserId);
+    if (ownReviews.length === 0) return;
+    if (lastSeededNoteIdRef.current === noteId) return;
+    lastSeededNoteIdRef.current = noteId;
+    setReviewMarkState(prev => {
+      const next = { ...prev };
+      for (const review of ownReviews) {
+        const fromStorage = getMarkedFromStorage(noteId, review.reviewerId);
+        const marked = fromStorage !== undefined ? fromStorage : (noteReviewMarks?.[review.reviewerId] ?? false);
+        const baseline = getIssuesSignature(review.issues);
+        next[review.id] = {
+          ...(prev[review.id] ?? { marked: false }),
+          marked,
+          issuesBaseline: baseline,
+        };
+        if (fromStorage === undefined && marked) setMarkedInStorage(noteId, review.reviewerId, true);
+      }
+      return next;
+    });
+  }, [noteId, noteReviewMarks, reviews, loggedInUserId, getIssuesSignature]);
 
   // Filter reviews by current version when versionId changes
   // Note: We preserve all new reviews in state, only filter version reviews
@@ -201,6 +290,77 @@ const SMEReview = ({
     }
   };
 
+  const handleMarkForReview = useCallback(
+    async (reviewId: string) => {
+      const review = reviews.find(r => r.id === reviewId);
+
+      setMarkingReviewId(reviewId);
+      try {
+        const payload: NoteReviewMarkPayload & { note_version_id?: number } = {
+          note_id: noteId || '',
+          reviewer_id: review?.reviewerId || String(loggedInUserId),
+          marked: true,
+          note_version_id: versionId ?? undefined,
+        };
+        const result = await markNoteForReview(payload);
+        if (result) {
+          const baseline = getIssuesSignature(review?.issues ?? []);
+          setReviewMarkState(prev => ({
+            ...prev,
+            [reviewId]: { ...(prev[reviewId] ?? { marked: false }), marked: true, issuesBaseline: baseline },
+          }));
+          setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
+        }
+      } finally {
+        setMarkingReviewId(null);
+      }
+    },
+    [reviews, noteId, loggedInUserId, versionId, getIssuesSignature],
+  );
+
+  // Derive "issues changed" from baseline: any new issue or updated issue enables the button (higher priority than id matched)
+  const getHasIssuesChangedSinceMark = useCallback(
+    (review: Review): boolean => {
+      const state = reviewMarkState[review.id];
+      const baseline = state?.issuesBaseline;
+      if (baseline == null) return false;
+      return getIssuesSignature(review.issues) !== baseline;
+    },
+    [reviewMarkState, getIssuesSignature],
+  );
+
+  // When any issue is created/updated/deleted: set persisted state to false (button enabled) and update baseline so we don't re-trigger (avoids infinite loop)
+  useEffect(() => {
+    if (!noteId) return;
+    const toClear: { id: string; baseline: string }[] = [];
+    for (const review of reviews) {
+      if (review.reviewerId && Number(review.reviewerId) !== loggedInUserId) continue;
+      const changed = getHasIssuesChangedSinceMark(review);
+      if (changed) {
+        setMarkedInStorage(noteId, review.reviewerId, false);
+        toClear.push({ id: review.id, baseline: getIssuesSignature(review.issues) });
+      }
+    }
+    if (toClear.length > 0) {
+      setReviewMarkState(prev => {
+        const next = { ...prev };
+        for (const { id, baseline } of toClear) {
+          next[id] = { ...(next[id] ?? { marked: false }), marked: false, issuesBaseline: baseline };
+        }
+        return next;
+      });
+    }
+  }, [noteId, reviews, loggedInUserId, getHasIssuesChangedSinceMark, getIssuesSignature]);
+
+  // Register callback so parent can notify when an issue is created from summary cards (no-op now; we derive from baseline)
+  useEffect(() => {
+    if (!onReviewerIssuesChangedRef) return;
+    onReviewerIssuesChangedRef.current = () => {};
+    return () => {
+      onReviewerIssuesChangedRef.current = null;
+    };
+  }, [onReviewerIssuesChangedRef]);
+
   const handleRemoveReview = (reviewId: string) => {
     const review = reviews.find(r => r.id === reviewId);
     // Just remove from local state for new reviews (no API call needed)
@@ -286,11 +446,36 @@ const SMEReview = ({
             });
           }
 
-          if (filteredReviews.length === 0) {
-            return <p className="py-4 text-center text-sm text-gray-500">No reviews added yet. Click "Add Review" to create one.</p>;
+          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible (not for admin – admin can't add review)
+          const hasCurrentUserReview = filteredReviews.some(r => r.reviewerId != null && Number(r.reviewerId) === loggedInUserId);
+          const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
+          const showPlaceholder =
+            !isAdmin &&
+            loggedInUserId != null &&
+            versionId != null &&
+            !hasCurrentUserReview &&
+            (!isManagerReviewing || reviewerId === loggedInUserId);
+          const placeholderReview: Review = {
+            id: `new-review-${loggedInUserId}`,
+            reviewerId: String(loggedInUserId),
+            reviewerName: user?.fullName?.trim() || user?.email || 'You',
+            issues: [],
+            _versionId: versionId,
+          };
+          const displayReviews = showPlaceholder ? [placeholderReview, ...filteredReviews] : filteredReviews;
+
+          if (displayReviews.length === 0) {
+            return (
+              <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">
+                No reviews added yet. Click <Plus className="h-4 w-4" />
+                icon in current session to create.
+              </div>
+            );
           }
 
-          return filteredReviews.map(review => (
+          const isCurrentVersion = !versionId || versionNumber === 'Current';
+
+          return displayReviews.map(review => (
             <ReviewCard
               key={review.id}
               review={review}
@@ -299,6 +484,7 @@ const SMEReview = ({
               savingIssueId={savingIssueId}
               noteId={noteId}
               versionId={versionId}
+              versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
               practitionerId={practitionerId}
               priorityId={priorityId}
               onDeleteIssue={handleDeleteIssueClick}
@@ -306,6 +492,22 @@ const SMEReview = ({
               onCancelEdit={handleCancelEdit}
               onDeleteReview={handleDeleteReviewClick}
               onRemoveReview={handleRemoveReview}
+              isMarkedForReview={reviewMarkState[review.id]?.marked ?? false}
+              hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
+              onMarkForReview={() => handleMarkForReview(review.id)}
+              isMarkingForReview={markingReviewId === review.id}
+              readOnly={!isCurrentVersion}
+              markedAtLabel={(() => {
+                const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
+                if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
+                const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
+                  m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
+                );
+                if (!mark) return null;
+                const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
+                if (!ts) return null;
+                return formatDate(ts);
+              })()}
             />
           ));
         })()}

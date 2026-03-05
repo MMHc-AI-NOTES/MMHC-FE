@@ -1,5 +1,5 @@
-import axios, { AxiosError } from 'axios';
-import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import axios from 'axios';
+import { handleCatchMessages, handleErrorMessages, handleLogout } from '@/utils/helper';
 import { setLocalStorageItem } from '@/utils/storage';
 import { showToast } from '../../lib/toast';
 import { setHideBeatLoader, setShowBeatLoader } from '@/store/slices/alertsSlice';
@@ -11,11 +11,11 @@ export const API_ENDPOINTS = {
   LOGOUT: '/auth/logout',
 };
 
-interface ApiResponse {
-  status: boolean;
-  message?: string;
-  errors?: Record<string, string[]>;
-}
+// interface ApiResponse {
+//   status: boolean;
+//   message?: string;
+//   errors?: Record<string, string[]>;
+// }
 
 interface LoginResponseBody {
   status: boolean;
@@ -47,24 +47,13 @@ interface OnboardingResponseBody {
   data?: any;
 }
 
-const delay = (ms: number) =>
-  new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
-
 export const logoutUser = async (): Promise<boolean> => {
   try {
-    await delay(2000);
-
-    const response: ApiResponse = { status: true, message: 'Logged out successfully' };
-
-    if (response.status) {
-      showToast.success('Logged Out Successfully!');
-      return true;
-    }
+    await axios.get('/logout');
+    handleLogout();
     return false;
-  } catch (error: unknown) {
-    handleCatchMessages(error as AxiosError<{ message?: string }>);
+  } catch (error: any) {
+    handleCatchMessages(error);
     return false;
   }
 };
@@ -74,6 +63,31 @@ export const handleSignIn = async (email: string, password: string): Promise<boo
     const response = (await axios.post('/login', { email, password })) as unknown as LoginResponseBody;
 
     // Axios interceptor returns response body (not AxiosResponse)
+    const token = response?.data?.token?.token;
+    const user = response?.data?.user;
+
+    if (response?.status && token && user) {
+      setLocalStorageItem('authentication_token', token);
+      dispatch(setAuthUser(user));
+      return true;
+    } else {
+      handleErrorMessages(response);
+      return false;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
+
+export const handleImpersonateSignIn = async (email: string, password: string, targetUserEmail: string): Promise<boolean> => {
+  try {
+    const response = (await axios.post('/impersonate', {
+      email,
+      password,
+      target_user_email: targetUserEmail,
+    })) as unknown as LoginResponseBody;
+
     const token = response?.data?.token?.token;
     const user = response?.data?.user;
 

@@ -39,7 +39,7 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
               <div
                 key={index}
                 onClick={() => onCategoryClick?.(issue.category)}
-                className={`cursor-pointer space-y-2 rounded-lg p-4 transition-colors ${onCategoryClick ? 'hover:border hover:border-green-300' : ''}`}
+                className={`space-y-2 rounded-lg border border-transparent p-4 transition-colors ${onCategoryClick && 'hover:border-green-300'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -73,6 +73,9 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
 
                   <p className="mt-1 text-sm font-bold text-red-600">–{issue.points} points</p>
                   <p className="mt-2 text-xs leading-relaxed text-gray-600">{issue.description}</p>
+                  {issue.justification != null && issue.justification !== '' && (
+                    <p className="mt-2 rounded-md bg-gray-200 p-2 text-xs leading-relaxed text-gray-600">{issue.justification}</p>
+                  )}
                 </div>
               </div>
               {index < issues.length - 1 && <Separator />}
