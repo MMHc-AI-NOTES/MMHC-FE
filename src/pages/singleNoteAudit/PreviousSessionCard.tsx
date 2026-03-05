@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Stethoscope } from 'lucide-react';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, PreviousNote } from '@/types/notes';
 import type { IssueForm } from './components/types';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { SessionFieldRow } from './therapySessionSummary/SessionFieldRow';
@@ -8,6 +8,7 @@ import { SessionFieldRow } from './therapySessionSummary/SessionFieldRow';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
+  previousNote?: PreviousNote;
   onVersionChange?: (versionId: number) => void;
   noteId?: string;
   versionId?: number | null;
@@ -21,6 +22,7 @@ interface TherapySessionSummaryCardProps {
 
 const PreviousSessionCard = ({
   webhookVersions,
+  previousNote,
   onVersionChange,
   noteId,
   versionId,
@@ -33,6 +35,7 @@ const PreviousSessionCard = ({
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
+    previousNoteFromDetail: previousNote,
     onVersionChange,
     noteId,
     versionId,
@@ -73,7 +76,7 @@ const PreviousSessionCard = ({
     // errorTypes,
   } = summary;
 
-  const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
+  const showSMEActions = false;
 
   return (
     <Card className="gap-1">

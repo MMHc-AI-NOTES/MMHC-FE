@@ -133,7 +133,11 @@ export const DataTablePagination = ({
                 key={index}
                 variant={page === currentPage ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => typeof page === 'number' && onPageChange(page)}
+                onClick={() => {
+                  if (typeof page === 'number' && page !== currentPage) {
+                    onPageChange(page);
+                  }
+                }}
                 disabled={page === '...'}
                 className={`h-8 w-8 p-0 ${page === '...' ? 'cursor-default' : ''} ${page === currentPage ? 'bg-primary text-primary-light' : 'bg-white'}`}
               >

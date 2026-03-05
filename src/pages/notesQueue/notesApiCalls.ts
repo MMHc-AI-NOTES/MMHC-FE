@@ -1,5 +1,5 @@
 // @/services/notesService.ts
-import { getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { formatDate, formatDateTime, getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
 import { RawApiNote, FormattedNote, DataFormatterProps, QueueOverview, Workload, PractitionerOption, CptCodeOption } from '@/types/notes';
 import moment from 'moment';
@@ -36,7 +36,7 @@ export interface NotesPayload {
 
 const DEFAULT_NOTES_SORTS: SortItem[] = [
   { columnName: 'session_time', orderBy: 'desc' },
-  { columnName: 'id', orderBy: 'desc' },
+  // { columnName: 'id', orderBy: 'desc' },
 ];
 
 interface NotesResponse {
@@ -91,7 +91,7 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
       reviewCycle: item.reviewCycle,
       practitioner: item.practitioner.fullName,
       client: item.patient.clientId || '-',
-      date: moment(item.sessionTime).format('MMM D, YYYY'),
+      date: formatDate(item.sessionTime),
       type: item.noteType?.name || 'Progress Note',
       aiScore: item.aiScore || 0,
       aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
@@ -101,7 +101,7 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
       priority: item.priority?.id || 1, // Default to low
       smeReview: item.smeReview?.id || 1, // Default to pending
       smeReviewers: (item.humanReviews || []).map(rev => rev.reviewer?.fullName || 'Unknown'),
-      sessionTime: moment(item.sessionTime).format('MMM D, YYYY h:mm A'),
+      sessionTime: formatDateTime(item.sessionTime),
       rawData: item,
     } as FormattedNote;
   });

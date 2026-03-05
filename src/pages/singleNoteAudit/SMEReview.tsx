@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, NoteReviewMarkItem } from '@/types/notes';
 import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
-import { deleteSMEReview, markNoteForReview } from './singleNoteApiCalls';
-// import { UserRoleEnum } from '@/constants/common';
+import { deleteSMEReview, markNoteForReview, type NoteReviewMarkPayload } from './singleNoteApiCalls';
+import { UserRoleEnum } from '@/constants/common';
+import { formatDate } from '@/utils/helper';
 
 const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
 
@@ -56,6 +57,8 @@ interface SMEReviewProps {
   webhookVersions?: WebhookVersion[];
   /** Reviewer id -> marked (from note detail); used to seed mark state on load */
   noteReviewMarks?: Record<string, boolean>;
+  /** Raw note review marks array from API, used for displaying marked date */
+  noteReviewMarksRaw?: NoteReviewMarkItem[];
   aiStatusId: number;
   priorityId: number;
   practitionerId: number;
@@ -79,6 +82,7 @@ const SMEReview = ({
   versionId,
   webhookVersions = [],
   noteReviewMarks,
+  noteReviewMarksRaw,
   aiStatusId,
   priorityId,
   practitionerId,
@@ -105,6 +109,15 @@ const SMEReview = ({
     const sorted = [...webhookVersions].sort((a, b) => b.id - a.id);
     const index = sorted.findIndex(v => v.id === versionId);
     if (index === 0) return 'Current';
+    return sorted.length - index;
+  }, [webhookVersions, versionId]);
+
+  // Numeric version order for API payloads (1 = oldest, increasing toward latest)
+  const versionOrderForApi = useMemo(() => {
+    if (!webhookVersions.length || !versionId) return null;
+    const sorted = [...webhookVersions].sort((a, b) => b.id - a.id);
+    const index = sorted.findIndex(v => v.id === versionId);
+    if (index === -1) return null;
     return sorted.length - index;
   }, [webhookVersions, versionId]);
 
@@ -280,23 +293,29 @@ const SMEReview = ({
   const handleMarkForReview = useCallback(
     async (reviewId: string) => {
       const review = reviews.find(r => r.id === reviewId);
-      if (!noteId || !review?.reviewerId) return;
+
       setMarkingReviewId(reviewId);
       try {
-        const result = await markNoteForReview({ note_id: noteId, reviewer_id: review.reviewerId, marked: true });
+        const payload: NoteReviewMarkPayload & { note_version_id?: number } = {
+          note_id: noteId || '',
+          reviewer_id: review?.reviewerId || String(loggedInUserId),
+          marked: true,
+          note_version_id: versionId ?? undefined,
+        };
+        const result = await markNoteForReview(payload);
         if (result) {
-          const baseline = getIssuesSignature(review.issues);
+          const baseline = getIssuesSignature(review?.issues ?? []);
           setReviewMarkState(prev => ({
             ...prev,
             [reviewId]: { ...(prev[reviewId] ?? { marked: false }), marked: true, issuesBaseline: baseline },
           }));
-          setMarkedInStorage(noteId, review.reviewerId, true);
+          setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
         }
       } finally {
         setMarkingReviewId(null);
       }
     },
-    [noteId, reviews, getIssuesSignature],
+    [reviews, noteId, loggedInUserId, versionId, getIssuesSignature],
   );
 
   // Derive "issues changed" from baseline: any new issue or updated issue enables the button (higher priority than id matched)
@@ -427,7 +446,25 @@ const SMEReview = ({
             });
           }
 
-          if (filteredReviews.length === 0) {
+          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible (not for admin – admin can't add review)
+          const hasCurrentUserReview = filteredReviews.some(r => r.reviewerId != null && Number(r.reviewerId) === loggedInUserId);
+          const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
+          const showPlaceholder =
+            !isAdmin &&
+            loggedInUserId != null &&
+            versionId != null &&
+            !hasCurrentUserReview &&
+            (!isManagerReviewing || reviewerId === loggedInUserId);
+          const placeholderReview: Review = {
+            id: `new-review-${loggedInUserId}`,
+            reviewerId: String(loggedInUserId),
+            reviewerName: user?.fullName?.trim() || user?.email || 'You',
+            issues: [],
+            _versionId: versionId,
+          };
+          const displayReviews = showPlaceholder ? [placeholderReview, ...filteredReviews] : filteredReviews;
+
+          if (displayReviews.length === 0) {
             return (
               <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">
                 No reviews added yet. Click <Plus className="h-4 w-4" />
@@ -436,7 +473,9 @@ const SMEReview = ({
             );
           }
 
-          return filteredReviews.map(review => (
+          const isCurrentVersion = !versionId || versionNumber === 'Current';
+
+          return displayReviews.map(review => (
             <ReviewCard
               key={review.id}
               review={review}
@@ -445,6 +484,7 @@ const SMEReview = ({
               savingIssueId={savingIssueId}
               noteId={noteId}
               versionId={versionId}
+              versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
               practitionerId={practitionerId}
               priorityId={priorityId}
               onDeleteIssue={handleDeleteIssueClick}
@@ -456,6 +496,18 @@ const SMEReview = ({
               hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
               onMarkForReview={() => handleMarkForReview(review.id)}
               isMarkingForReview={markingReviewId === review.id}
+              readOnly={!isCurrentVersion}
+              markedAtLabel={(() => {
+                const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
+                if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
+                const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
+                  m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
+                );
+                if (!mark) return null;
+                const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
+                if (!ts) return null;
+                return formatDate(ts);
+              })()}
             />
           ));
         })()}

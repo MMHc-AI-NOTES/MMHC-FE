@@ -19,6 +19,7 @@ interface SessionFieldRowProps {
   hasTemplates: boolean;
   userType?: number;
   showSMEActions: boolean;
+  disableAddButton?: boolean;
   onToggleForm: (fieldKey: string) => void;
   onTemplateChange: (value: number | '') => void;
   onSave: (fieldKey: string, comment?: string) => void;
@@ -40,6 +41,7 @@ export function SessionFieldRow({
   hasTemplates,
   userType,
   showSMEActions,
+  disableAddButton = false,
   onToggleForm,
   onTemplateChange,
   onSave,
@@ -64,6 +66,7 @@ export function SessionFieldRow({
               <Button
                 variant="ghost"
                 size="icon"
+                disabled={disableAddButton}
                 className="text-primary hover:bg-primary/10 h-7 w-7"
                 onClick={() => onToggleForm(fieldKey)}
                 title="Add SME issue from template"
