@@ -1,8 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { AILog } from '@/types/aiLogs';
 import { Cpu, FileCode, Hash, Clock } from 'lucide-react';
-import moment from 'moment';
-import { getModelDisplayName } from '@/utils/helper';
+import { formatDateTime, getModelDisplayName } from '@/utils/helper';
 
 interface ModelInfoCardProps {
   log: AILog;
@@ -43,7 +42,7 @@ const ModelInfoCard = ({ log }: ModelInfoCardProps) => {
             <Clock className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Last Run</p>
-              <p className="text-sm text-black">{moment(log.createdAt).format('MMM D, YYYY – h:mm A')}</p>
+              <p className="text-sm text-black">{formatDateTime(log.createdAt)}</p>
             </div>
           </div>
         </div>

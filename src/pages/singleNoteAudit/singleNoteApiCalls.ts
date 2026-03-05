@@ -276,6 +276,8 @@ export interface AssignToManagerPayload {
   human_decision?: number;
   disagreement?: number;
   priority: number;
+  /** Optional human-readable version label (e.g. "V1", "V2") */
+  version_label?: string;
 }
 
 /**
@@ -291,6 +293,36 @@ export const assignToManager = async (payload: AssignToManagerPayload): Promise<
     } else {
       handleErrorMessages(response);
     }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    throw error;
+  }
+};
+
+export interface NoteReviewMarkPayload {
+  note_id: string;
+  reviewer_id: string;
+  marked: boolean;
+  /** Optional note version for which the review mark applies */
+  note_version_id?: number;
+}
+
+export interface NoteReviewMarkResponse {
+  marked?: boolean;
+}
+
+/**
+ * Mark or unmark a note for review (reviewer's issues marked as ready for review)
+ */
+export const markNoteForReview = async (payload: NoteReviewMarkPayload): Promise<NoteReviewMarkResponse | null> => {
+  try {
+    const response = await axios.patch('/note-review-marks/mark', payload);
+    if (response?.status) {
+      showToast.success(payload.marked ? 'Marked for review successfully' : 'Unmarked for review');
+      return response.data ?? { marked: payload.marked };
+    }
+    handleErrorMessages(response);
+    return null;
   } catch (error: any) {
     handleCatchMessages(error);
     throw error;

@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import moment from 'moment';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen } from 'lucide-react';
+import {
+  ArrowLeft,
+  //  MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen
+} from 'lucide-react';
 
 // Components
 import NoteInformation from './NoteInformation';
-import NoteSections from './NoteSections';
+// import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import SMEReview from './SMEReview';
@@ -22,36 +24,37 @@ import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
-import SummaryCard from './SummaryCard';
+// import SummaryCard from './SummaryCard';
 import TherapySessionSummaryCard from './TherapySessionSummaryCard';
-import ModelInformation from './ModelInformation';
-import { mapCategoryToSectionId } from '@/utils/helper';
+import PreviousSessionCard from './PreviousSessionCard';
+// import ModelInformation from './ModelInformation';
+// import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
-import { fetchPractitioners } from '../notesQueue/notesApiCalls';
-import { setPractitioners } from '@/store/slices/filterOptionsSlice';
+import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
+import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
 import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import type { Review, IssueForm } from './components/types';
+import { formatDate, formatDateTime } from '@/utils/helper';
 
 // Utility function to format API response to component expected format
 const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail => {
-  // Use moment for date formatting
-  const sessionDate = moment(apiData.sessionTime);
-  const formattedDate = sessionDate.format('MMM D, YYYY');
+  const formattedDate = formatDate(apiData.sessionTime);
 
   // Use actual data from the API response if available
   const latestChat = apiData.chats?.[0];
   const extractedHumanReviewChat = apiData.chats?.find(chat => chat.id === chatId);
   const bedrockResponse = latestChat?.bedrockResponse;
-  const formattedDateTime = latestChat?.createdAt ? moment(latestChat.createdAt).format('MMM D, YYYY - h:mm A') : '';
+  const formattedDateTime = latestChat?.createdAt ? formatDateTime(latestChat.createdAt) : '';
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({
     severity: (issue.severity?.toUpperCase() as 'CRITICAL' | 'MODERATE' | 'MINOR') || 'MINOR',
     category: issue.section || 'General',
     points: issue.points_deducted || 0,
-    description: issue.justification || 'No description provided',
-    sectionId: issue.section_id || 'general',
+    description: issue.severity_details || 'No description provided',
+    justification: issue.justification || 'No justification provided',
+    sectionId: issue.section_id || '',
   })) || [
     // Fallback to default issues if no chat data
     {
@@ -95,6 +98,22 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     priority: apiData.priority,
     modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
     webhookVersions: apiData.webhookVersions || [],
+    previousNote: apiData.previous_note,
+    noteReviewMarks: (() => {
+      const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
+      if (!Array.isArray(arr)) return undefined;
+      return arr.reduce(
+        (acc: Record<string, boolean>, row: { reviewerId: number; markedAsReviewed?: number }) => {
+          acc[String(row.reviewerId)] = row.markedAsReviewed === 1;
+          return acc;
+        },
+        {} as Record<string, boolean>,
+      );
+    })(),
+    noteReviewMarksRaw: (() => {
+      const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
+      return Array.isArray(arr) ? (arr as any) : undefined;
+    })(),
   };
 };
 
@@ -104,18 +123,19 @@ const SingleNoteAudit = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { id: noteId } = useParams<{ id: string }>();
-  const { selectedAgentId } = useAppSelector(state => state.agents);
-  const { practitionersLoaded } = useAppSelector(state => state.filterOptions);
+  const { selectedAgentId, agents } = useAppSelector(state => state.agents);
+  const { practitionersLoaded, cptCodesLoaded } = useAppSelector(state => state.filterOptions);
   const { errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded, errorTypes, issueRelatedTo } = useAppSelector(
     state => state.smeConfig,
   );
   const user = useAppSelector(state => state.auth.user);
-  const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
+  // const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
   const [reviews, setReviews] = useState<Review[]>([]);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
   const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
+  const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
@@ -211,8 +231,20 @@ const SingleNoteAudit = () => {
         console.error('Error loading practitioners:', error);
       }
     };
+
+    const loadCptCodes = async () => {
+      if (cptCodesLoaded) return; // Skip if already loaded
+      try {
+        const cptCodesData = await fetchCptCodes();
+        dispatch(setCptCodes(cptCodesData));
+      } catch (error) {
+        console.error('Error loading CPT codes:', error);
+      }
+    };
+
     loadPractitioners();
-  }, [practitionersLoaded, dispatch]);
+    loadCptCodes();
+  }, [practitionersLoaded, cptCodesLoaded, dispatch]);
 
   // Load SME config data if needed
   useEffect(() => {
@@ -260,8 +292,9 @@ const SingleNoteAudit = () => {
   const loggedInUserId = user?.id ?? null;
 
   const handleSMEIssueCreatedFromTemplate = useCallback(
-    (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => {
+    (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number, createdForReviewerId?: number) => {
       if (!loggedInUserId) return;
+      const reviewerIdForIssue = createdForReviewerId ?? loggedInUserId;
       // Optimistically update noteDetail.webhookVersions.smeIssues (include issueDescription so dropdown disables immediately)
       setNoteDetail(prev => {
         if (!prev) return prev;
@@ -273,7 +306,7 @@ const SingleNoteAudit = () => {
 
         const newSmeIssue: SMEIssue = {
           id: response.id,
-          reviewerId: loggedInUserId,
+          reviewerId: reviewerIdForIssue,
           versionId,
           errorType: {
             id: errorTypeOption?.id ?? 0,
@@ -384,6 +417,22 @@ const SingleNoteAudit = () => {
     );
   }
 
+  if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
+    return (
+      <div>
+        <Button onClick={() => navigate(-1)} className="mb-2">
+          <ArrowLeft />
+        </Button>
+        <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
+          <p className="text-base">No agent configured. Create an agent first, then come back to create chat.</p>
+          <Button asChild>
+            <Link to="/settings">Go to Settings to create an agent</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     noteDetail && (
       <div>
@@ -404,28 +453,38 @@ const SingleNoteAudit = () => {
               aiStatusId={noteDetail.aiStatus?.id ?? 1}
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
             />
-            <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} />
+            <PreviousSessionCard
+              webhookVersions={noteDetail.webhookVersions}
+              previousNote={noteDetail.previousNote}
+              onVersionChange={setSelectedVersionId}
+              noteId={noteId}
+              versionId={selectedVersionId}
+              reviewerId={reviewerId ?? loggedInUserId}
+              practitionerId={practitionerId ?? 0}
+              aiStatusId={noteDetail.aiStatus?.id ?? 1}
+              priorityId={noteDetail.priority?.id ?? 1}
+              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+            />
+            {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
 
           {/* Right Content */}
           <div className="space-y-4">
             <AuditScoreCard noteDetail={noteDetail} />
-            <ModelInformation modelDetail={noteDetail.modelDetail} />
-            <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />
-            <IssuesIdentifiedCard
-              issues={noteDetail.issues}
-              onCategoryClick={category => {
-                const sectionId = mapCategoryToSectionId(category);
-                setOpenSectionId(sectionId);
-              }}
-            />
+            {/* <ModelInformation modelDetail={noteDetail.modelDetail} /> */}
+            {/* <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} /> */}
+            <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />
             <SMEReview
               reviews={reviews}
               setReviews={setReviews}
               auditScore={noteDetail?.auditScore || 0}
               versionId={selectedVersionId}
               webhookVersions={noteDetail.webhookVersions || []}
+              noteReviewMarks={noteDetail.noteReviewMarks}
+              noteReviewMarksRaw={noteDetail.noteReviewMarksRaw}
               aiStatusId={noteDetail.aiStatus?.id || 1}
               priorityId={noteDetail.priority?.id || 1}
               practitionerId={practitionerId || 0}
@@ -434,6 +493,7 @@ const SingleNoteAudit = () => {
               onSMEIssueDeleted={onSMEIssueDeleted}
               onSMEReviewDeleted={onSMEReviewDeleted}
               onSMEIssueUpdated={onSMEIssueUpdated}
+              onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
@@ -457,9 +517,9 @@ const SingleNoteAudit = () => {
               versionId={selectedVersionId}
             />
             <AuditHistoryCard chats={auditHistory} />
-            <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
-            <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />
-            <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
+            {/* <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} /> */}
+            {/* <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} /> */}
+            {/* <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} /> */}
           </div>
         </div>
       </div>

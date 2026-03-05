@@ -5,6 +5,11 @@ export interface ManagerNote {
   noteId: string;
   practitioner: string;
   date: string;
+  emailSendDate: string;
+  /** Version associated with the reviewer / review record (optional, used for display only) */
+  reviewerVersion?: string;
+  /** Current note/session version (optional, used for display only) */
+  noteVersion?: string;
   aiScore: number;
   humanScore: number | null;
   reviewer: string;
@@ -92,6 +97,9 @@ export interface ChatInfo {
 
 export interface ManagerReviewApiItem {
   id: number;
+  practitionerNotifiedAt: string | null;
+  versionLabel: string | null;
+  noteVersion: string | null;
   chat_count: number;
   managerId: number;
   reviewId: number;
@@ -160,6 +168,7 @@ export interface ManagerIssue {
   issuesRelatedToId?: number;
   issueDescriptionId?: number;
   noteId?: string;
+  comment?: string;
   errorType?: {
     id: number;
     name: string;
@@ -191,6 +200,30 @@ export interface ManagerIssue {
   category?: string;
   description?: string;
   points?: number;
+}
+
+export interface ManagerBulkIssueItem {
+  id: string;
+  errorType: string;
+  relatedTo: string;
+  description: string;
+  comment: string | null;
+  points: number | null;
+}
+
+export interface ManagerBulkSendNoteItem {
+  id: string;
+  noteId: string;
+  practitionerName: string;
+  practitionerEmail: string | null;
+  practitionerId: number | null;
+  reviewerId: number | null;
+  reviewerName: string;
+  versionId: number | null;
+  date: string;
+  aiScore: number;
+  humanScore: number | null;
+  issues: ManagerBulkIssueItem[];
 }
 
 export interface ManagerNoteDetail {

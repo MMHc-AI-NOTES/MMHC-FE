@@ -33,7 +33,7 @@ export interface NavItem {
 export const routeAccess: Record<string, UserRole[]> = {
   '/dashboard': [UserRoleEnum.superAdmin, UserRoleEnum.user, UserRoleEnum.practitioner, UserRoleEnum.sme_reviewer],
   '/notes-queue': [UserRoleEnum.superAdmin, UserRoleEnum.practitioner, UserRoleEnum.sme_reviewer],
-  '/admin-review-queue': [UserRoleEnum.superAdmin, UserRoleEnum.sme_reviewer],
+  '/admin-review-queue': [UserRoleEnum.sme_reviewer],
   '/blacklisted-notes': [UserRoleEnum.superAdmin],
   '/manager-review': [UserRoleEnum.superAdmin],
   '/ai-logs': [UserRoleEnum.superAdmin],

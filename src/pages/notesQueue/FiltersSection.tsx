@@ -1,16 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Search } from 'lucide-react';
+import { useAppSelector } from '@/store/store';
 import {
-  AiStatusEnum,
-  WorkflowEnum,
-  PriorityEnum,
+  // AiStatusEnum,
+  // WorkflowEnum,
+  // PriorityEnum,
   SessionTypeEnum,
-  AiStatusLabels,
-  WorkflowLabels,
-  PriorityLabels,
+  // AiStatusLabels,
+  // WorkflowLabels,
+  // PriorityLabels,
   SessionTypeLabels,
+  UserRoleEnum,
 } from '@/constants/common';
 import { PractitionerOption, CptCodeOption } from '@/types/notes';
 import { getEnumValues } from '@/utils/helper';
@@ -29,11 +32,12 @@ interface FiltersSectionProps {
     manager: string;
     workflow: string;
     search: string;
+    reviewedByMe: boolean;
   };
   practitioners: PractitionerOption[];
   cptCodes: CptCodeOption[];
   loading: boolean;
-  onFilterChange: (key: string, value: string) => void;
+  onFilterChange: (key: string, value: string | boolean) => void;
   onApplyFilters: () => void;
   onClearFilters: () => void;
 }
@@ -47,11 +51,13 @@ export const FiltersSection = ({
   onApplyFilters,
   onClearFilters,
 }: FiltersSectionProps) => {
+  const user = useAppSelector(state => state.auth.user);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Row 1: Status, Note Type, Practitioner */}
-        <div className="w-full">
+        {/* <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Status</label>
           <Select value={filters.aiStatus} onValueChange={value => onFilterChange('aiStatus', value)}>
             <SelectTrigger className="w-full">
@@ -66,7 +72,7 @@ export const FiltersSection = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Note Type</label>
@@ -101,10 +107,26 @@ export const FiltersSection = ({
             </SelectContent>
           </Select>
         </div>
+        <div className="w-full">
+          <label className="mb-2 block text-sm font-medium text-gray-500">Date Range</label>
+          <Select value={filters.dateRange} onValueChange={value => onFilterChange('dateRange', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="last_7_days">Last 7 Days</SelectItem>
+              <SelectItem value="last_30_days">Last 30 Days</SelectItem>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* Row 2: Review Stage, Priority, Date Range */}
+      {/* Row 2: Review Stage, Priority, Date Range */}
+      {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 
         <div className="w-full">
           <label className="mb-2 block text-sm font-medium text-gray-500">Workflow</label>
@@ -156,7 +178,7 @@ export const FiltersSection = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Row 3: CPT Code, Search */}
@@ -190,6 +212,29 @@ export const FiltersSection = ({
           </div>
         </div>
       </div>
+
+      {/* Checkbox Filter */}
+      {user?.type === UserRoleEnum.sme_reviewer && (
+        <div className="flex items-center space-x-2">
+          <div
+            className={`flex items-center gap-3 rounded-md border-2 px-4 py-2.5 hover:border-[#B0E490] hover:bg-green-50 ${filters.reviewedByMe ? 'border-[#B0E490] bg-green-50' : 'border-gray-200 bg-white'}`}
+          >
+            <Checkbox
+              id="reviewed-by-me"
+              className="border-gray-300 data-[state=checked]:border-transparent data-[state=checked]:bg-[#B0E490] [&_svg]:!size-4"
+              checked={filters.reviewedByMe}
+              onCheckedChange={checked => onFilterChange('reviewedByMe', checked === true)}
+            />
+            <label
+              htmlFor="reviewed-by-me"
+              className={`cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${filters.reviewedByMe ? 'text-primary' : 'text-gray-500'}`}
+            >
+              Show only notes not reviewed by me
+            </label>
+          </div>
+          {user?.fullName && <span className="text-muted-foreground text-xs">(Logged in as: {user.fullName})</span>}
+        </div>
+      )}
 
       {/* Apply and Clear Buttons */}
       <div className="flex justify-end gap-3">

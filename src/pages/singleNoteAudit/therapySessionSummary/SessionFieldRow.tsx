@@ -19,6 +19,7 @@ interface SessionFieldRowProps {
   hasTemplates: boolean;
   userType?: number;
   showSMEActions: boolean;
+  disableAddButton?: boolean;
   onToggleForm: (fieldKey: string) => void;
   onTemplateChange: (value: number | '') => void;
   onSave: (fieldKey: string, comment?: string) => void;
@@ -40,6 +41,7 @@ export function SessionFieldRow({
   hasTemplates,
   userType,
   showSMEActions,
+  disableAddButton = false,
   onToggleForm,
   onTemplateChange,
   onSave,
@@ -49,7 +51,10 @@ export function SessionFieldRow({
     <div className="mb-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h4 className="text-primary font-semibold">{displayName}:</h4>
+          <h4 className="text-primary font-semibold">
+            {displayName}
+            {fieldKey === 'overall' ? '' : ':'}
+          </h4>
           {isChanged && <Badge className="bg-gradient-light text-primary rounded-sm text-xs font-semibold">CHANGED</Badge>}
         </div>
         {showSMEActions && (
@@ -61,6 +66,7 @@ export function SessionFieldRow({
               <Button
                 variant="ghost"
                 size="icon"
+                disabled={disableAddButton}
                 className="text-primary hover:bg-primary/10 h-7 w-7"
                 onClick={() => onToggleForm(fieldKey)}
                 title="Add SME issue from template"

@@ -1,6 +1,5 @@
 import axios from 'axios';
-import moment from 'moment';
-import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { handleCatchMessages, handleErrorMessages, formatDate, formatDateTime } from '@/utils/helper';
 import { showToast } from '@/lib/toast';
 import {
   ManagerNote,
@@ -51,7 +50,9 @@ const formatManagerReviewData = (data: ManagerReviewApiItem[]): ManagerNote[] =>
       id: item.id,
       noteId: item.noteId,
       practitioner: item.practitioner?.fullName || 'Unknown',
-      date: item.createdAt ? moment(item.createdAt).format('MMM D, YYYY') : 'N/A',
+      date: item.createdAt ? formatDate(item.createdAt) : 'N/A',
+      emailSendDate: item.practitionerNotifiedAt ? formatDateTime(item.practitionerNotifiedAt) : '-',
+      noteVersion: item.versionLabel || undefined,
       aiScore: item.aiScore || item.session?.aiScore || 0,
       humanScore,
       reviewer: item.manager?.fullName || 'Unknown',
@@ -141,6 +142,23 @@ export const applyManagerDecision = async (id: number, payload: ManagerDecisionP
       handleErrorMessages(response);
       return false;
     }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
+
+/** Bulk send selected manager reviews to practitioners (notify by manager review ids) */
+export const bulkSendToPractitioner = async (ids: number[]): Promise<boolean> => {
+  try {
+    const response = await axios.post<ApiResponse<unknown>>('/manager-reviews/bulk-notify-practitioner', { manager_review_ids: ids });
+
+    if (response?.status) {
+      showToast.success(ids.length === 1 ? 'Sent to practitioner successfully' : `Sent ${ids.length} notes to practitioners successfully`);
+      return true;
+    }
+    handleErrorMessages(response);
+    return false;
   } catch (error: any) {
     handleCatchMessages(error);
     return false;

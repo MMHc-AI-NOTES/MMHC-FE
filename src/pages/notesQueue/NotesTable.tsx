@@ -1,21 +1,23 @@
 // @/components/notes/NotesTable.tsx
-import { ArrowRight, CircleQuestionMark } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormattedNote } from '@/types/notes';
 import {
-  AiStatusLabels,
-  HumanReviewLabels,
-  ManagerLabels,
-  WorkflowLabels,
-  PriorityLabels,
-  ReviewCycleLabels,
-  AiStatusEnum,
-  HumanReviewEnum,
-  ManagerEnum,
-  WorkflowEnum,
-  PriorityEnum,
-  ReviewCycleEnum,
+  // AiStatusLabels,
+  // HumanReviewLabels,
+  // ManagerLabels,
+  // WorkflowLabels,
+  // PriorityLabels,
+  // ReviewCycleLabels,
+  // AiStatusEnum,
+  // HumanReviewEnum,
+  // ManagerEnum,
+  // WorkflowEnum,
+  // PriorityEnum,
+  // ReviewCycleEnum,
+  ReviewStatusEnum,
+  ReviewStatusLabels,
 } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientBadge } from '@/shared/GradientBadge';
@@ -24,101 +26,116 @@ import { useAppSelector } from '@/store/store';
 interface NotesTableProps {
   notes: FormattedNote[];
   onViewNote: (noteId: string) => void;
+  page?: number;
+  pageSize?: number;
 }
 
 // Helper functions to get gradient CSS classes for badges
-const getAiStatusGradient = (status: number): string => {
-  switch (status) {
-    case AiStatusEnum.passed:
-      return 'bg-gradient-ai-passed';
-    case AiStatusEnum.failed:
-      return 'bg-gradient-ai-failed';
-    case AiStatusEnum.warning:
-      return 'bg-gradient-ai-warning';
-    case AiStatusEnum.needs_review:
-      return 'bg-gradient-ai-needs-review';
-    case AiStatusEnum.not_reviewed:
-      return 'bg-gradient-ai-not-reviewed';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
+// const getAiStatusGradient = (status: number): string => {
+//   switch (status) {
+//     case AiStatusEnum.passed:
+//       return 'bg-gradient-ai-passed';
+//     case AiStatusEnum.failed:
+//       return 'bg-gradient-ai-failed';
+//     case AiStatusEnum.warning:
+//       return 'bg-gradient-ai-warning';
+//     case AiStatusEnum.needs_review:
+//       return 'bg-gradient-ai-needs-review';
+//     case AiStatusEnum.not_reviewed:
+//       return 'bg-gradient-ai-not-reviewed';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
 
-const getHumanReviewGradient = (status: number): string => {
-  switch (status) {
-    case HumanReviewEnum.pending:
-      return 'bg-gradient-human-pending';
-    case HumanReviewEnum.completed:
-      return 'bg-gradient-human-completed';
-    case HumanReviewEnum.not_needed:
-      return 'bg-gradient-human-not-needed';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
+// const getHumanReviewGradient = (status: number): string => {
+//   switch (status) {
+//     case HumanReviewEnum.pending:
+//       return 'bg-gradient-human-pending';
+//     case HumanReviewEnum.completed:
+//       return 'bg-gradient-human-completed';
+//     case HumanReviewEnum.not_needed:
+//       return 'bg-gradient-human-not-needed';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
 
-const getManagerGradient = (status: number): string => {
-  switch (status) {
-    case ManagerEnum.pending:
-      return 'bg-gradient-manager-pending';
-    case ManagerEnum.in_progress:
-      return 'bg-gradient-manager-in-progress';
-    case ManagerEnum.completed:
-      return 'bg-gradient-manager-completed';
-    case ManagerEnum.not_needed:
-      return 'bg-gradient-manager-not-needed';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
+// const getManagerGradient = (status: number): string => {
+//   switch (status) {
+//     case ManagerEnum.pending:
+//       return 'bg-gradient-manager-pending';
+//     case ManagerEnum.in_progress:
+//       return 'bg-gradient-manager-in-progress';
+//     case ManagerEnum.completed:
+//       return 'bg-gradient-manager-completed';
+//     case ManagerEnum.not_needed:
+//       return 'bg-gradient-manager-not-needed';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
 
-const getWorkflowGradient = (status: number): string => {
-  switch (status) {
-    case WorkflowEnum.in_queue:
-      return 'bg-gradient-workflow-in-queue';
-    case WorkflowEnum.returned:
-      return 'bg-gradient-workflow-returned';
-    case WorkflowEnum.blacklisted:
-      return 'bg-gradient-workflow-blacklisted';
-    case WorkflowEnum.completed:
-      return 'bg-gradient-workflow-completed';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
+// const getWorkflowGradient = (status: number): string => {
+//   switch (status) {
+//     case WorkflowEnum.in_queue:
+//       return 'bg-gradient-workflow-in-queue';
+//     case WorkflowEnum.returned:
+//       return 'bg-gradient-workflow-returned';
+//     case WorkflowEnum.blacklisted:
+//       return 'bg-gradient-workflow-blacklisted';
+//     case WorkflowEnum.completed:
+//       return 'bg-gradient-workflow-completed';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
 
-const getPriorityGradient = (priority: number): string => {
-  switch (priority) {
-    case PriorityEnum.high:
-      return 'bg-gradient-priority-high';
-    case PriorityEnum.medium:
-      return 'bg-gradient-priority-medium';
-    case PriorityEnum.low:
-      return 'bg-gradient-priority-low';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
+// const getPriorityGradient = (priority: number): string => {
+//   switch (priority) {
+//     case PriorityEnum.high:
+//       return 'bg-gradient-priority-high';
+//     case PriorityEnum.medium:
+//       return 'bg-gradient-priority-medium';
+//     case PriorityEnum.low:
+//       return 'bg-gradient-priority-low';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
 
 // REVIEW CYCLE gradients (commented out for now)
-const getReviewCycleGradient = (cycle: number): string => {
-  switch (cycle) {
-    case ReviewCycleEnum.cycle_1:
-      return 'bg-gradient-review-cycle-1';
-    case ReviewCycleEnum.cycle_2:
-      return 'bg-gradient-review-cycle-2';
-    case ReviewCycleEnum.cycle_3:
-      return 'bg-gradient-review-cycle-3';
-    case ReviewCycleEnum.blacklisted:
-      return 'bg-gradient-review-cycle-blacklisted';
+// const getReviewCycleGradient = (cycle: number): string => {
+//   switch (cycle) {
+//     case ReviewCycleEnum.cycle_1:
+//       return 'bg-gradient-review-cycle-1';
+//     case ReviewCycleEnum.cycle_2:
+//       return 'bg-gradient-review-cycle-2';
+//     case ReviewCycleEnum.cycle_3:
+//       return 'bg-gradient-review-cycle-3';
+//     case ReviewCycleEnum.blacklisted:
+//       return 'bg-gradient-review-cycle-blacklisted';
+//     default:
+//       return 'bg-gradient-neutral';
+//   }
+// };
+
+const getSmeReviewGradient = (status: number): string => {
+  switch (status) {
+    case ReviewStatusEnum.pending:
+      return 'bg-gradient-human-pending';
+    case ReviewStatusEnum.in_progress:
+      return 'bg-gradient-manager-in-progress';
+    case ReviewStatusEnum.returned:
+      return 'bg-gradient-human-returned';
     default:
       return 'bg-gradient-neutral';
   }
 };
 
-export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
+export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60 }: NotesTableProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
-  const columnCount = 11;
+  const columnCount = 15;
 
   if (notes.length === 0) {
     return (
@@ -127,13 +144,15 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">No.</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+                <TableHead className="text-primary min-w-[200px] text-center font-semibold">SME REVIEW</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">TYPE</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+                {/* <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
                 <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
@@ -167,7 +186,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </TooltipProvider>
                   </div>
                 </TableHead>
-                {/* REVIEW CYCLE Column - Commented out for now */}
                 <TableHead className="text-primary min-w-[140px]">
                   <div className="text-primary flex items-center justify-center gap-1">
                     REVIEW CYCLE
@@ -182,7 +200,7 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                </TableHead>
+                </TableHead> */}
                 <TableHead className="text-primary sticky right-0 z-10 bg-white text-center">ACTION</TableHead>
               </TableRow>
             </TableHeader>
@@ -205,14 +223,16 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
+              <TableHead className="text-primary pl-4 text-left font-semibold">No.</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+              <TableHead className="text-primary min-w-[200px] text-center font-semibold">SME REVIEW</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">TYPE</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+              {/* <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead> */}
+              {/* <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
               <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">
@@ -251,7 +271,6 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                   </TooltipProvider>
                 </div>
               </TableHead>
-              {/* REVIEW CYCLE Column - Commented out for now */}
               <TableHead className="text-primary min-w-[140px]">
                 <div className="flex items-center justify-center gap-1">
                   REVIEW CYCLE
@@ -269,21 +288,79 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </TableHead>
+              </TableHead> */}
               <TableHead className="text-primary sticky right-0 z-10 bg-white text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
-                <TableCell className="text-left font-medium">{note.id}</TableCell>
-                <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
+                <TableCell className="text-left font-medium">{(page - 1) * pageSize + index + 1}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.client}</TableCell>
                 <TableCell>{note.date}</TableCell>
-                <TableCell>{note.type}</TableCell>
-                <TableCell className="font-semibold">{note.aiScore}</TableCell>
                 <TableCell>
+                  <div className="flex items-center justify-center gap-1.5">
+                    {note.smeReviewers && note.smeReviewers.length > 0 ? (
+                      <>
+                        <div className="flex flex-nowrap items-center gap-1.5">
+                          {note.smeReviewers.slice(0, 2).map((reviewer, idx) => (
+                            <TooltipProvider key={idx}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span>
+                                    <GradientBadge
+                                      label={reviewer}
+                                      gradient="bg-slate-200"
+                                      className="max-w-[110px] min-w-[90px] cursor-default uppercase"
+                                    />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs font-medium uppercase">{reviewer}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ))}
+                        </div>
+                        {note.smeReviewers.length > 2 && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex-shrink-0 cursor-pointer">
+                                  <GradientBadge
+                                    label={`+${note.smeReviewers.length - 2}`}
+                                    gradient="bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm"
+                                    className="!font-bold tracking-widest"
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1">
+                                  {note.smeReviewers.slice(2).map((reviewer, idx) => (
+                                    <p key={idx} className="text-xs font-medium uppercase">
+                                      {reviewer}
+                                    </p>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </>
+                    ) : (
+                      <GradientBadge
+                        label={ReviewStatusLabels[note.smeReview] || 'Pending'}
+                        gradient={getSmeReviewGradient(note.smeReview)}
+                      />
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>{note.type}</TableCell>
+                <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
+                <TableCell className="font-medium">{note.noteId}</TableCell>
+                {/* <TableCell className="font-semibold">{note.aiScore}</TableCell> */}
+                {/* <TableCell>
                   <GradientBadge label={AiStatusLabels[note.aiStatus]} gradient={getAiStatusGradient(note.aiStatus)} />
                 </TableCell>
                 <TableCell>
@@ -304,11 +381,11 @@ export const NotesTable = ({ notes, onViewNote }: NotesTableProps) => {
                   ) : (
                     <span className="text-muted-foreground text-sm">-</span>
                   )}
-                </TableCell>
+                </TableCell> */}
                 <TableCell className="border-border sticky right-0 z-10 bg-white">
                   <Button
                     variant="outline"
-                    onClick={() => onViewNote(note.id)}
+                    onClick={() => onViewNote(note.noteId)}
                     className="border-primary text-primary hover:bg-primary h-9 bg-transparent text-[13px] hover:text-white"
                   >
                     Open

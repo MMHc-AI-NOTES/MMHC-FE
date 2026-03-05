@@ -2,11 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BlacklistedNote } from '@/types/blacklistedNotes';
 import { FileText } from 'lucide-react';
 import { BlacklistStatusLabels } from '@/constants/common';
-import moment from 'moment';
 import { GradientBadge } from '@/shared/GradientBadge';
 import { getStatusIcon } from './SharedComponents';
 import { cn } from '@/lib/utils';
 import { getStatusBadgeStyles } from './SharedComponents';
+import { formatDate } from '@/utils/helper';
 
 interface NoteMetadataCardProps {
   note: BlacklistedNote;
@@ -46,7 +46,7 @@ export const NoteMetadataCard = ({ note }: NoteMetadataCardProps) => {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-500">Date:</span>
-            <span className="text-sm text-gray-500">{moment(note.date).format('MMM D, YYYY')}</span>
+            <span className="text-sm text-gray-500">{formatDate(note.date)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-500">Note Type:</span>
