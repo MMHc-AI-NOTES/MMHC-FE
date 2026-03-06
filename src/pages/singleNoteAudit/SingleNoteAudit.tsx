@@ -19,7 +19,7 @@ import LoadingSkeleton from './LoadingSkeleton';
 import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail, Chat, SMEIssue } from '@/types/notes';
+import { NoteDetail, ApiNoteDetail, SMEIssue } from '@/types/notes';
 import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
@@ -138,7 +138,6 @@ const SingleNoteAudit = () => {
   const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
-  const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
 
@@ -168,8 +167,6 @@ const SingleNoteAudit = () => {
 
         setNoteDetail(formattedNoteDetail);
         setPractitionerId(apiNoteDetail.practitionerId);
-        // Store all chats for audit history
-        setAuditHistory(apiNoteDetail.chats || []);
       } finally {
         setLoading(false);
       }
@@ -516,7 +513,7 @@ const SingleNoteAudit = () => {
               noteId={noteId}
               versionId={selectedVersionId}
             />
-            <AuditHistoryCard chats={auditHistory} />
+            {noteId && <AuditHistoryCard noteId={noteId} />}
             {/* <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} /> */}
             {/* <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} /> */}
             {/* <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} /> */}
