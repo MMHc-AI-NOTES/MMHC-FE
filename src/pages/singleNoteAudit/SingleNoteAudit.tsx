@@ -4,7 +4,11 @@ import { useDispatch } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
-  //  MessageCircleMore, Sparkles, UserRoundCog, UserRoundPen
+  MessageCircleMore,
+  Sparkles,
+  UserRoundCog,
+  UserRoundPen,
+  //  MessageCircleMore, UserRoundCog, UserRoundPen
 } from 'lucide-react';
 
 // Components
@@ -24,16 +28,17 @@ import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
-// import SummaryCard from './SummaryCard';
+import SummaryCard from './SummaryCard';
 import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import PreviousSessionCard from './PreviousSessionCard';
-// import ModelInformation from './ModelInformation';
+import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
 import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
 import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
+import { featureFlags } from '@/config/featureFlags';
 import type { Review, IssueForm } from './components/types';
 import { formatDate, formatDateTime } from '@/utils/helper';
 
@@ -96,7 +101,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     rawResponse: bedrockResponse?.raw_response || '',
     aiStatus: apiData.aiStatus,
     priority: apiData.priority,
-    modelDetail: { modelVersion: latestChat.modelId, auditRunId: latestChat.id, lastRun: formattedDateTime },
+    modelDetail: { modelVersion: latestChat?.modelId || '', auditRunId: latestChat?.id || '', lastRun: formattedDateTime },
     webhookVersions: apiData.webhookVersions || [],
     previousNote: apiData.previous_note,
     noteReviewMarks: (() => {
@@ -145,6 +150,8 @@ const SingleNoteAudit = () => {
   const chatId = location.state?.chatId;
   const reviewerId = location.state?.reviewerId || null;
   const isManagerReviewing = location.state?.isManagerReviewing || false;
+  const from = location.state?.from as string | undefined;
+  const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -411,7 +418,7 @@ const SingleNoteAudit = () => {
         <LoadingSkeleton />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
-          {!isManagerReviewing && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
+          {!isManagerReviewing && featureFlags.actionButtons && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
         </div>
       </div>
     );
@@ -473,10 +480,10 @@ const SingleNoteAudit = () => {
 
           {/* Right Content */}
           <div className="space-y-4">
-            <AuditScoreCard noteDetail={noteDetail} />
-            {/* <ModelInformation modelDetail={noteDetail.modelDetail} /> */}
-            {/* <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} /> */}
-            <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />
+            {featureFlags.showAuditScoreCard && <AuditScoreCard noteDetail={noteDetail} />}
+            {featureFlags.showModelInformation && <ModelInformation modelDetail={noteDetail.modelDetail} />}
+            {featureFlags.showAiSummary && <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />}
+            {featureFlags.showIssuesIdentifiedCard && <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />}
             <SMEReview
               reviews={reviews}
               setReviews={setReviews}
@@ -490,6 +497,7 @@ const SingleNoteAudit = () => {
               practitionerId={practitionerId || 0}
               reviewerId={reviewerId}
               isManagerReviewing={isManagerReviewing}
+              onlyShowLoggedInUserReviews={onlyShowLoggedInUserReviews}
               onSMEIssueDeleted={onSMEIssueDeleted}
               onSMEReviewDeleted={onSMEReviewDeleted}
               onSMEIssueUpdated={onSMEIssueUpdated}
@@ -508,18 +516,26 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            <ActionButtons
-              onReRunAudit={loadNoteDetail}
-              isManagerReviewing={isManagerReviewing}
-              reviewerId={reviewerId}
-              practitionerId={practitionerId}
-              noteId={noteId}
-              versionId={selectedVersionId}
-            />
-            <AuditHistoryCard chats={auditHistory} />
-            {/* <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} /> */}
-            {/* <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} /> */}
-            {/* <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} /> */}
+            {featureFlags.actionButtons && (
+              <ActionButtons
+                onReRunAudit={loadNoteDetail}
+                isManagerReviewing={isManagerReviewing}
+                reviewerId={reviewerId}
+                practitionerId={practitionerId}
+                noteId={noteId}
+                versionId={selectedVersionId}
+              />
+            )}
+            {featureFlags.showAuditHistory && <AuditHistoryCard chats={auditHistory} />}
+            {featureFlags.showPrompt && (
+              <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
+            )}
+            {featureFlags.showPromptData && (
+              <SummaryCard title="Prompt Data" summary={noteDetail.promptData} icon={UserRoundCog} showCopyButton={true} />
+            )}
+            {featureFlags.showRawResponse && (
+              <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
+            )}
           </div>
         </div>
       </div>
