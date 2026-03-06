@@ -345,10 +345,9 @@ const ReviewCard = ({
               className="bg-gradient-light text-primary w-40 border-0 shadow-sm"
               disabled={
                 readOnly ||
-                (isMarkedForReview && !hasIssuesChangedSinceMark) ||
                 isMarkingForReview ||
-                // In "no review" mode, always disable if we already have a marked date
-                (isNoReviewMode && !!markedAtLabel)
+                // If there are changes, always enable so user can mark again (changes take priority)
+                (!hasIssuesChangedSinceMark && (isMarkedForReview || (isNoReviewMode && !!markedAtLabel)))
               }
               onClick={onMarkForReview}
             >

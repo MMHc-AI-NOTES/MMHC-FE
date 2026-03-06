@@ -159,11 +159,12 @@ const SMEReview = ({
       for (const review of ownReviews) {
         const fromStorage = getMarkedFromStorage(noteId, review.reviewerId);
         const marked = fromStorage !== undefined ? fromStorage : (noteReviewMarks?.[review.reviewerId] ?? false);
-        const baseline = getIssuesSignature(review.issues);
+        // Only set baseline when already marked; otherwise no baseline so first-issue enables the button
+        const baseline = marked ? getIssuesSignature(review.issues) : undefined;
         next[review.id] = {
           ...(prev[review.id] ?? { marked: false }),
           marked,
-          issuesBaseline: baseline,
+          ...(baseline != null && { issuesBaseline: baseline }),
         };
         if (fromStorage === undefined && marked) setMarkedInStorage(noteId, review.reviewerId, true);
       }
@@ -359,7 +360,8 @@ const SMEReview = ({
     (review: Review): boolean => {
       const state = reviewMarkState[review.id];
       const baseline = state?.issuesBaseline;
-      if (baseline == null) return false;
+      // No baseline yet (e.g. first issue on new review): having any issues counts as "changes" so button enables
+      if (baseline == null) return review.issues.length > 0;
       return getIssuesSignature(review.issues) !== baseline;
     },
     [reviewMarkState, getIssuesSignature],
