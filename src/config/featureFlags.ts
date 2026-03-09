@@ -1,0 +1,13 @@
+export const featureFlags = {
+  // Single Note Audit page
+  showAuditScoreCard: false,
+  showIssuesIdentifiedCard: false,
+  showModelInformation: false,
+  showAuditHistory: true,
+  showPrompt: false,
+  showPromptData: false,
+  showRawResponse: false,
+  showAiSummary: false,
+  actionButtons: { reRunAudit: false, sendToPractitioner: true },
+  createChatOnLoad: false,
+} as const;

@@ -11,7 +11,7 @@ import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
-import { deleteSMEReview, markNoteForReview, type NoteReviewMarkPayload } from './singleNoteApiCalls';
+import { deleteSMEReview, markNoteForReview, assignToManager, type NoteReviewMarkPayload } from './singleNoteApiCalls';
 import { UserRoleEnum } from '@/constants/common';
 import { formatDate } from '@/utils/helper';
 
@@ -64,6 +64,8 @@ interface SMEReviewProps {
   practitionerId: number;
   reviewerId?: number | null;
   isManagerReviewing?: boolean;
+  /** When true, only show reviews for the logged-in user (used for Admin Review Queue). */
+  onlyShowLoggedInUserReviews?: boolean;
   onSMEIssueDeleted?: (versionId: number, smeIssueId: number) => void;
   onSMEReviewDeleted?: (versionId: number | null, reviewerId: number) => void;
   onSMEIssueUpdated?: (
@@ -88,6 +90,7 @@ const SMEReview = ({
   practitionerId,
   reviewerId,
   isManagerReviewing = false,
+  onlyShowLoggedInUserReviews = false,
   onSMEIssueDeleted,
   onSMEReviewDeleted,
   onSMEIssueUpdated,
@@ -156,11 +159,12 @@ const SMEReview = ({
       for (const review of ownReviews) {
         const fromStorage = getMarkedFromStorage(noteId, review.reviewerId);
         const marked = fromStorage !== undefined ? fromStorage : (noteReviewMarks?.[review.reviewerId] ?? false);
-        const baseline = getIssuesSignature(review.issues);
+        // Only set baseline when already marked; otherwise no baseline so first-issue enables the button
+        const baseline = marked ? getIssuesSignature(review.issues) : undefined;
         next[review.id] = {
           ...(prev[review.id] ?? { marked: false }),
           marked,
-          issuesBaseline: baseline,
+          ...(baseline != null && { issuesBaseline: baseline }),
         };
         if (fromStorage === undefined && marked) setMarkedInStorage(noteId, review.reviewerId, true);
       }
@@ -291,7 +295,7 @@ const SMEReview = ({
   };
 
   const handleMarkForReview = useCallback(
-    async (reviewId: string) => {
+    async (reviewId: string, alsoAssignManager: boolean = false) => {
       const review = reviews.find(r => r.id === reviewId);
 
       setMarkingReviewId(reviewId);
@@ -307,15 +311,48 @@ const SMEReview = ({
           const baseline = getIssuesSignature(review?.issues ?? []);
           setReviewMarkState(prev => ({
             ...prev,
-            [reviewId]: { ...(prev[reviewId] ?? { marked: false }), marked: true, issuesBaseline: baseline },
+            [reviewId]: { ...(prev[reviewId] ?? { marked: true }), marked: true, issuesBaseline: baseline },
           }));
           setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
+
+          // In "no review" mode from Admin Review Queue, also auto-assign to manager (super admin)
+          if (
+            alsoAssignManager &&
+            noteId &&
+            versionId != null &&
+            practitionerId &&
+            priorityId &&
+            loggedInUserId != null &&
+            user?.type === UserRoleEnum.superAdmin
+          ) {
+            const versionLabel = versionOrderForApi != null ? `V${versionOrderForApi}` : undefined;
+            await assignToManager({
+              note_id: noteId,
+              version_id: versionId,
+              practitioner_id: practitionerId,
+              ai_score: auditScore,
+              reviewer_id: loggedInUserId,
+              priority: priorityId,
+              version_label: versionLabel,
+            });
+          }
         }
       } finally {
         setMarkingReviewId(null);
       }
     },
-    [reviews, noteId, loggedInUserId, versionId, getIssuesSignature],
+    [
+      reviews,
+      noteId,
+      loggedInUserId,
+      versionId,
+      getIssuesSignature,
+      practitionerId,
+      priorityId,
+      auditScore,
+      versionOrderForApi,
+      user?.type,
+    ],
   );
 
   // Derive "issues changed" from baseline: any new issue or updated issue enables the button (higher priority than id matched)
@@ -323,7 +360,8 @@ const SMEReview = ({
     (review: Review): boolean => {
       const state = reviewMarkState[review.id];
       const baseline = state?.issuesBaseline;
-      if (baseline == null) return false;
+      // No baseline yet (e.g. first issue on new review): having any issues counts as "changes" so button enables
+      if (baseline == null) return review.issues.length > 0;
       return getIssuesSignature(review.issues) !== baseline;
     },
     [reviewMarkState, getIssuesSignature],
@@ -438,6 +476,14 @@ const SMEReview = ({
             return true;
           });
 
+          // If we should only show logged-in user's reviews (Admin Review Queue), filter by logged-in user id
+          if (onlyShowLoggedInUserReviews && loggedInUserId != null) {
+            filteredReviews = filteredReviews.filter(review => {
+              const reviewReviewerId = review.reviewerId ? Number(review.reviewerId) : null;
+              return reviewReviewerId === loggedInUserId;
+            });
+          }
+
           // If manager is reviewing, filter by reviewer_id
           if (isManagerReviewing && reviewerId !== null && reviewerId !== undefined) {
             filteredReviews = filteredReviews.filter(review => {
@@ -449,20 +495,34 @@ const SMEReview = ({
           // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible (not for admin – admin can't add review)
           const hasCurrentUserReview = filteredReviews.some(r => r.reviewerId != null && Number(r.reviewerId) === loggedInUserId);
           const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
+
+          let displayReviews = filteredReviews;
+          let placeholderId: string | null = null;
+          let isNoReviewMode = false;
+
           const showPlaceholder =
             !isAdmin &&
             loggedInUserId != null &&
             versionId != null &&
             !hasCurrentUserReview &&
             (!isManagerReviewing || reviewerId === loggedInUserId);
-          const placeholderReview: Review = {
-            id: `new-review-${loggedInUserId}`,
-            reviewerId: String(loggedInUserId),
-            reviewerName: user?.fullName?.trim() || user?.email || 'You',
-            issues: [],
-            _versionId: versionId,
-          };
-          const displayReviews = showPlaceholder ? [placeholderReview, ...filteredReviews] : filteredReviews;
+
+          if (showPlaceholder) {
+            const placeholderReview: Review = {
+              id: `new-review-${loggedInUserId}`,
+              reviewerId: String(loggedInUserId),
+              reviewerName: user?.fullName?.trim() || user?.email || 'You',
+              issues: [],
+              _versionId: versionId,
+            };
+            placeholderId = placeholderReview.id;
+            displayReviews = [placeholderReview, ...filteredReviews];
+
+            // "No review" mode: there are no real reviews yet; only the placeholder exists
+            if (filteredReviews.length === 0) {
+              isNoReviewMode = true;
+            }
+          }
 
           if (displayReviews.length === 0) {
             return (
@@ -475,41 +535,47 @@ const SMEReview = ({
 
           const isCurrentVersion = !versionId || versionNumber === 'Current';
 
-          return displayReviews.map(review => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              auditScore={auditScore}
-              activeIssueForms={activeIssueForms}
-              savingIssueId={savingIssueId}
-              noteId={noteId}
-              versionId={versionId}
-              versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
-              practitionerId={practitionerId}
-              priorityId={priorityId}
-              onDeleteIssue={handleDeleteIssueClick}
-              onSaveIssue={handleSaveIssue}
-              onCancelEdit={handleCancelEdit}
-              onDeleteReview={handleDeleteReviewClick}
-              onRemoveReview={handleRemoveReview}
-              isMarkedForReview={reviewMarkState[review.id]?.marked ?? false}
-              hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
-              onMarkForReview={() => handleMarkForReview(review.id)}
-              isMarkingForReview={markingReviewId === review.id}
-              readOnly={!isCurrentVersion}
-              markedAtLabel={(() => {
-                const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
-                if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
-                const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
-                  m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
-                );
-                if (!mark) return null;
-                const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
-                if (!ts) return null;
-                return formatDate(ts);
-              })()}
-            />
-          ));
+          return displayReviews.map(review => {
+            const isPlaceholder = placeholderId != null && review.id === placeholderId;
+            const shouldAlsoAssignManager = isNoReviewMode && isPlaceholder;
+
+            return (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                auditScore={auditScore}
+                activeIssueForms={activeIssueForms}
+                savingIssueId={savingIssueId}
+                noteId={noteId}
+                versionId={versionId}
+                versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
+                practitionerId={practitionerId}
+                priorityId={priorityId}
+                onDeleteIssue={handleDeleteIssueClick}
+                onSaveIssue={handleSaveIssue}
+                onCancelEdit={handleCancelEdit}
+                onDeleteReview={handleDeleteReviewClick}
+                onRemoveReview={handleRemoveReview}
+                isMarkedForReview={reviewMarkState[review.id]?.marked ?? false}
+                hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
+                onMarkForReview={() => handleMarkForReview(review.id, shouldAlsoAssignManager)}
+                isMarkingForReview={markingReviewId === review.id}
+                readOnly={!isCurrentVersion}
+                isNoReviewMode={shouldAlsoAssignManager}
+                markedAtLabel={(() => {
+                  const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
+                  if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
+                  const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
+                    m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
+                  );
+                  if (!mark) return null;
+                  const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
+                  if (!ts) return null;
+                  return formatDate(ts);
+                })()}
+              />
+            );
+          });
         })()}
       </CardContent>
 

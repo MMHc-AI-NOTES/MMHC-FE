@@ -146,3 +146,38 @@ export const onboardInvitedUser = async (payload: OnboardingPayload): Promise<bo
     dispatch(setHideBeatLoader());
   }
 };
+
+export const requestForgotPassword = async (email: string): Promise<boolean> => {
+  try {
+    const response = (await axios.post('/forgot-password', { email })) as unknown as { status?: boolean; message?: string };
+    if (response?.status) {
+      return true;
+    }
+    handleErrorMessages(response);
+    return false;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};
+
+interface ResetPasswordPayload {
+  token: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export const resetPassword = async (payload: ResetPasswordPayload): Promise<boolean> => {
+  try {
+    const response = (await axios.post('/reset-password', payload)) as unknown as { status?: boolean; message?: string };
+    if (response?.status) {
+      showToast.success(response?.message || 'Password reset successfully.');
+      return true;
+    }
+    handleErrorMessages(response);
+    return false;
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return false;
+  }
+};

@@ -4,8 +4,8 @@ export const SLIDER_CONFIGS = {
   TOP_K: { min: 0, max: 1000, step: 100 },
 } as const;
 
-// Standard date/time display formats (DD-MM-YYYY 13:43:00)
-export const DATE_FORMAT = 'DD-MM-YYYY';
+// Standard date/time display formats
+export const DATE_FORMAT = 'MM-DD-YYYY';
 export const TIME_FORMAT = 'HH:mm:ss';
 export const DATE_TIME_FORMAT = `${DATE_FORMAT} ${TIME_FORMAT}`;
 
@@ -225,6 +225,22 @@ export const ChatResultLabels: Record<number, string> = {
   [ChatResultEnum.pass]: 'Pass',
   [ChatResultEnum.fail]: 'Fail',
   [ChatResultEnum.error]: 'Error',
+};
+
+export const AuditActionEnum = {
+  chatCreated: 'chat_created',
+  emailSmeIssues: 'email_sme_issues',
+  emailBulkSmeIssues: 'email_bulk_sme_issues',
+  emailMissingFields: 'email_missing_fields',
+  webhookSessionReceived: 'webhook_session_received',
+} as const;
+
+export const AuditActionLabels: Record<(typeof AuditActionEnum)[keyof typeof AuditActionEnum], string> = {
+  [AuditActionEnum.chatCreated]: 'Chat Created',
+  [AuditActionEnum.emailSmeIssues]: 'Email Sent to Practitioner',
+  [AuditActionEnum.emailBulkSmeIssues]: 'Bulk Email Sent',
+  [AuditActionEnum.emailMissingFields]: 'Missing Fields Email',
+  [AuditActionEnum.webhookSessionReceived]: 'Webhook Session Received',
 };
 
 export const HumanReviewResultEnum = {
