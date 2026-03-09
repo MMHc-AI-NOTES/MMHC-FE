@@ -52,6 +52,7 @@ const Login = () => {
               type={formik.values.showPassword ? 'text' : 'password'}
               label="Password"
               placeholder="••••••••"
+              labelExtraParams
               formik={formik}
               icon={
                 <button
