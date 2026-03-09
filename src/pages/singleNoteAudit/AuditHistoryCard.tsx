@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { History, Bot, RotateCcw } from 'lucide-react';
+import { History, Bot, ListX } from 'lucide-react';
 import moment from 'moment';
 import { Chat } from '@/types/notes';
 import { formatDateTime } from '@/utils/helper';
@@ -65,9 +65,9 @@ const AuditHistoryCard = ({ chats }: AuditHistoryCardProps) => {
           })
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <RotateCcw className="mb-3 h-12 w-12 text-gray-300" />
+            <ListX className="mb-3 h-12 w-12 text-gray-300" />
             <p className="text-sm font-medium text-gray-500">No audit history available</p>
-            <p className="mt-1 text-xs text-gray-400">Run an audit to see the history</p>
+            {/* <p className="mt-1 text-xs text-gray-400">Run an audit to see the history</p> */}
           </div>
         )}
       </CardContent>

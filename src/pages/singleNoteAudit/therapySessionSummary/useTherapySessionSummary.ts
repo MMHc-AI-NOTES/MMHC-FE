@@ -30,7 +30,7 @@ export interface UseTherapySessionSummaryProps {
     descriptionId?: number,
     createdForReviewerId?: number,
   ) => void;
-  /** Called when an issue is created so SME Review can re-enable "Mark For Review" */
+  /** Called when an issue is created so SME Review can re-enable "Marked For Review" */
   onReviewerIssuesChanged?: (reviewerId: number) => void;
   initialVersionIndex?: number;
   /** When true, session data comes from latest version's previous_note (for Previous Session card) */
