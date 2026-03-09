@@ -23,7 +23,7 @@ import LoadingSkeleton from './LoadingSkeleton';
 import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail, Chat, SMEIssue } from '@/types/notes';
+import { NoteDetail, ApiNoteDetail, SMEIssue } from '@/types/notes';
 import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
@@ -33,7 +33,7 @@ import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
-import { SessionTypeLabels } from '@/constants/common';
+import { SessionTypeLabels, UserRoleEnum } from '@/constants/common';
 import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
@@ -143,7 +143,6 @@ const SingleNoteAudit = () => {
   const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
-  const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
 
@@ -175,8 +174,6 @@ const SingleNoteAudit = () => {
 
         setNoteDetail(formattedNoteDetail);
         setPractitionerId(apiNoteDetail.practitionerId);
-        // Store all chats for audit history
-        setAuditHistory(apiNoteDetail.chats || []);
       } finally {
         setLoading(false);
       }
@@ -516,7 +513,7 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {featureFlags.actionButtons && (
+            {user?.type === UserRoleEnum.superAdmin && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
                 isManagerReviewing={isManagerReviewing}
@@ -526,7 +523,7 @@ const SingleNoteAudit = () => {
                 versionId={selectedVersionId}
               />
             )}
-            {featureFlags.showAuditHistory && <AuditHistoryCard chats={auditHistory} />}
+            {featureFlags.showAuditHistory && <AuditHistoryCard noteId={noteId} />}
             {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             )}

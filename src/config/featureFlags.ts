@@ -3,11 +3,11 @@ export const featureFlags = {
   showAuditScoreCard: false,
   showIssuesIdentifiedCard: false,
   showModelInformation: false,
-  showAuditHistory: false,
+  showAuditHistory: true,
   showPrompt: false,
   showPromptData: false,
   showRawResponse: false,
   showAiSummary: false,
-  actionButtons: false,
+  actionButtons: { reRunAudit: false, sendToPractitioner: true },
   createChatOnLoad: false,
 } as const;
