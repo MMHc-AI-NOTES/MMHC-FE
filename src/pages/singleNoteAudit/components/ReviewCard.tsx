@@ -42,6 +42,8 @@ interface ReviewCardProps {
   isMarkingForReview?: boolean;
   readOnly?: boolean;
   markedAtLabel?: string | null;
+  /** True when this is the placeholder "no review yet" card (Admin Review flow). */
+  isNoReviewMode?: boolean;
 }
 
 const ReviewCard = ({
@@ -65,6 +67,7 @@ const ReviewCard = ({
   isMarkingForReview = false,
   readOnly = false,
   markedAtLabel = null,
+  isNoReviewMode = false,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -339,34 +342,43 @@ const ReviewCard = ({
           <div className="flex items-center justify-end gap-2">
             <Button
               size="sm"
-              className="bg-gradient-light text-primary w-36 border-0 shadow-sm"
-              disabled={readOnly || (isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
+              className="bg-gradient-light text-primary w-40 border-0 shadow-sm"
+              disabled={
+                readOnly ||
+                isMarkingForReview ||
+                // If there are changes, always enable so user can mark again (changes take priority)
+                (!hasIssuesChangedSinceMark && (isMarkedForReview || (isNoReviewMode && !!markedAtLabel)))
+              }
               onClick={onMarkForReview}
             >
               <FileCheck />
-              {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
+              {isMarkingForReview ? 'Marking...' : 'Marked For Review'}
             </Button>
-            <Button
-              onClick={handleAssignToManager}
-              size="sm"
-              className="bg-gradient-light text-primary border-0 shadow-sm"
-              disabled={readOnly || review.issues.length === 0}
-            >
-              <User />
-              Assign To Manager
-            </Button>
+            {!isNoReviewMode && (
+              <>
+                <Button
+                  onClick={handleAssignToManager}
+                  size="sm"
+                  className="bg-gradient-light text-primary border-0 shadow-sm"
+                  disabled={readOnly || review.issues.length === 0}
+                >
+                  <User />
+                  Assign To Manager
+                </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRemoveOrDelete}
-              disabled={readOnly || review.issues.length === 0}
-              className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
-              title={isReviewSaved ? 'Delete review' : 'Remove review'}
-              type="button"
-            >
-              <Trash2 />
-            </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveOrDelete}
+                  disabled={readOnly || review.issues.length === 0}
+                  className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
+                  title={isReviewSaved ? 'Delete review' : 'Remove review'}
+                  type="button"
+                >
+                  <Trash2 />
+                </Button>
+              </>
+            )}
           </div>
           {markedAtLabel && <div className="text-xs text-gray-600">Marked done on {markedAtLabel}</div>}
         </div>

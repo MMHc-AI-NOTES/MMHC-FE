@@ -133,7 +133,7 @@ export const ManagerBulkSendDialog = ({ open, onOpenChange, notes, isSending, on
                                     <span>Date:</span>
                                     <span className="text-foreground font-medium">{note.date || 'N/A'}</span>
                                   </p>
-                                  <p className="flex items-baseline gap-1">
+                                  {/* <p className="flex items-baseline gap-1">
                                     <span>AI Score:</span>
                                     <span className="text-foreground font-medium">{note.aiScore}</span>
                                   </p>
@@ -144,7 +144,7 @@ export const ManagerBulkSendDialog = ({ open, onOpenChange, notes, isSending, on
                                   <p className="flex items-baseline gap-1 sm:col-span-2">
                                     <span>Version ID:</span>
                                     <span className="text-foreground font-medium">{note.versionId ?? 'Missing'}</span>
-                                  </p>
+                                  </p> */}
                                 </div>
 
                                 <div className="space-y-2 border-t pt-2">
@@ -154,7 +154,7 @@ export const ManagerBulkSendDialog = ({ open, onOpenChange, notes, isSending, on
                                     <div className="space-y-2">
                                       {note.issues.map(issue => (
                                         <div key={issue.id} className="rounded border border-gray-200 bg-gray-50 p-2.5">
-                                          <p className="text-xs font-medium text-gray-900">{issue.errorType}</p>
+                                          {/* <p className="text-xs font-medium text-gray-900">{issue.errorType}</p> */}
                                           <p className="text-xs text-gray-600">Related to: {issue.relatedTo}</p>
                                           <p className="text-xs text-gray-700">{issue.description}</p>
                                           {issue.comment ? (
