@@ -1,3 +1,6 @@
+// Global table pagination defaults
+export const DEFAULT_ITEMS_PER_PAGE = 20;
+
 export const SLIDER_CONFIGS = {
   TEMPERATURE: { min: 0, max: 1, step: 0.1 },
   TOP_P: { min: 0, max: 1, step: 0.1 },

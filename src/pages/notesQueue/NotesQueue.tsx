@@ -1,7 +1,6 @@
 // @/pages/notesQueue/NotesQueue.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
@@ -19,13 +18,16 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueOverviewCard } from './QueueOverviewCard';
 import { WorkloadCard } from './WorkloadCard';
-import { useAppSelector } from '@/store/store';
+import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
+import { clearSelectedClientId } from '@/store/slices/selectedClientSlice';
 import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorKey } from './ColorKey';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+
+const itemsPerPage = 60; // Fixed at 60 as per requirement
 
 const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
@@ -35,15 +37,15 @@ const NotesQueue = () => {
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
   const [workload, setWorkload] = useState<Workload | null>(null);
   const user = useAppSelector(state => state.auth.user);
+  const selectedClientId = useAppSelector(state => state.selectedClient.selectedClientId);
 
   // Get filter options from Redux
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { practitioners, cptCodes, practitionersLoaded, cptCodesLoaded } = useAppSelector(state => state.filterOptions);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 60; // Fixed at 60 as per requirement
 
   // Filter states with persistence
   const defaultFilters = {
@@ -179,6 +181,12 @@ const NotesQueue = () => {
 
   // Load notes - apply saved filters if they exist
   useEffect(() => {
+    // If a client was selected from the Clients page, skip the initial unfiltered load.
+    // The selected-client effect below will handle the first load instead.
+    if (selectedClientId) {
+      return;
+    }
+
     const loadNotes = async () => {
       try {
         setNotesLoading(true);
@@ -251,9 +259,51 @@ const NotesQueue = () => {
       }
     };
 
-    loadNotes();
+    void loadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
+
+  // If a client is selected from the Clients page, prefill the search filter and load notes for that client
+  useEffect(() => {
+    const applySelectedClientFilter = async () => {
+      if (!selectedClientId) return;
+
+      try {
+        setNotesLoading(true);
+        setCurrentPage(1);
+
+        // Prefill the search filter so the FiltersSection shows the client identifier
+        setFilters({
+          ...filters,
+          search: selectedClientId,
+        });
+
+        const payload: NotesPayload = {
+          page: 1,
+          pageSize: itemsPerPage,
+          filters: [
+            {
+              columnName: 'search',
+              type: 'like',
+              value: selectedClientId,
+            },
+          ],
+        };
+
+        const notesResponse = await fetchNotes(payload);
+        setNotes(notesResponse.data);
+        setTotalItems(notesResponse.totalCount || 0);
+      } catch (error) {
+        console.error('Error applying selected client filter:', error);
+      } finally {
+        setNotesLoading(false);
+        dispatch(clearSelectedClientId());
+      }
+    };
+
+    void applySelectedClientFilter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientId]);
 
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string | boolean) => {

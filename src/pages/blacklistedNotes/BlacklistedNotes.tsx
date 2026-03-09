@@ -14,6 +14,7 @@ import { useAppSelector } from '@/store/store';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { useDispatch } from 'react-redux';
+import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
 
 const BlacklistedNotes = () => {
   const dispatch = useDispatch();
@@ -25,7 +26,7 @@ const BlacklistedNotes = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20;
+  const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
   // Get practitioners from Redux store
   const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
