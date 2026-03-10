@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { History, Bot, Mail, Webhook, ListX } from 'lucide-react';
+import { History, Bot, Mail, Webhook, ListX, CheckCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import moment from 'moment';
 import axios from 'axios';
@@ -19,9 +19,13 @@ interface NoteActivityItem {
 
 interface AuditHistoryCardProps {
   noteId?: string;
+  /** Optional local timestamp used to optimistically show a \"Note Marked For Review\" SME action */
+  markedForReviewAt?: string;
+  /** Optional local timestamp used to optimistically show a \"Email Sent to Practitioner\" Manager action */
+  emailSentAt?: string;
 }
 
-const AuditHistoryCard = ({ noteId }: AuditHistoryCardProps) => {
+const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt }: AuditHistoryCardProps) => {
   const [activities, setActivities] = useState<NoteActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
   const { agents } = useAppSelector(state => state.agents);
@@ -69,10 +73,33 @@ const AuditHistoryCard = ({ noteId }: AuditHistoryCardProps) => {
     };
   }, [noteId]);
 
-  // const sortedActivities = [...activities].sort((a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf());
+  // Build list including any temporary local \"marked for review\" activity
+  const baseActivities = [...activities];
+
+  if (markedForReviewAt && noteId) {
+    baseActivities.push({
+      id: 'local_note_marked_reviewed',
+      action: AuditActionEnum.noteMarkedReviewed,
+      noteId,
+      createdAt: markedForReviewAt,
+      description: 'Note marked as reviewed',
+      metadata: {},
+    });
+  }
+
+  if (emailSentAt && noteId) {
+    baseActivities.push({
+      id: 'local_email_sme_issues',
+      action: AuditActionEnum.emailSmeIssues,
+      noteId,
+      createdAt: emailSentAt,
+      description: 'SME issues email sent to practitioner',
+      metadata: {},
+    });
+  }
 
   // Sort activities by date (newest first), exclude chat_created for now
-  const sortedActivities = [...activities]
+  const sortedActivities = baseActivities
     .filter(a => a.action !== AuditActionEnum.chatCreated)
     .sort((a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf());
 
@@ -92,6 +119,8 @@ const AuditHistoryCard = ({ noteId }: AuditHistoryCardProps) => {
         return <Mail className="text-primary h-5 w-5" />;
       case AuditActionEnum.webhookSessionReceived:
         return <Webhook className="text-primary h-5 w-5" />;
+      case AuditActionEnum.noteMarkedReviewed:
+        return <CheckCircle className="text-primary h-5 w-5" />;
       default:
         return <History className="text-primary h-5 w-5" />;
     }
@@ -106,7 +135,13 @@ const AuditHistoryCard = ({ noteId }: AuditHistoryCardProps) => {
         pillClass: 'bg-green-light text-green text-sm px-2.5 py-0.5 rounded',
       };
     }
-
+    if (action === AuditActionEnum.noteMarkedReviewed) {
+      return {
+        segmentLabel: 'SME Action',
+        dotClass: 'bg-primary ring-primary',
+        pillClass: 'bg-primary text-white text-sm px-2.5 py-0.5 rounded',
+      };
+    }
     if (
       action === AuditActionEnum.emailSmeIssues ||
       action === AuditActionEnum.emailBulkSmeIssues ||

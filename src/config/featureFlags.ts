@@ -10,4 +10,5 @@ export const featureFlags = {
   showAiSummary: false,
   actionButtons: { reRunAudit: false, sendToPractitioner: true },
   createChatOnLoad: false,
+  showScoreComparison: false,
 } as const;

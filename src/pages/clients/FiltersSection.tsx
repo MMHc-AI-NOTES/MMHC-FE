@@ -35,7 +35,7 @@ export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilter
             Clear
           </Button>
           <Button onClick={onApplyFilters} disabled={loading} size="lg">
-            Search
+            Apply
           </Button>
         </div>
       </div>

@@ -75,6 +75,8 @@ interface SMEReviewProps {
   ) => void;
   /** Ref SingleNoteAudit sets so we can notify when an issue is created from summary cards */
   onReviewerIssuesChangedRef?: React.MutableRefObject<((reviewerId: number) => void) | null>;
+  /** Optional callback so parent can optimistically add an audit history item when a note is marked for review */
+  onMarkedForReview?: (timestamp: string) => void;
 }
 
 const SMEReview = ({
@@ -95,6 +97,7 @@ const SMEReview = ({
   onSMEReviewDeleted,
   onSMEIssueUpdated,
   onReviewerIssuesChangedRef,
+  onMarkedForReview,
 }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
@@ -315,16 +318,13 @@ const SMEReview = ({
           }));
           setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
 
-          // In "no review" mode from Admin Review Queue, also auto-assign to manager (super admin)
-          if (
-            alsoAssignManager &&
-            noteId &&
-            versionId != null &&
-            practitionerId &&
-            priorityId &&
-            loggedInUserId != null &&
-            user?.type === UserRoleEnum.superAdmin
-          ) {
+          // Optimistically notify parent so it can add a temporary SME action to audit history
+          if (onMarkedForReview) {
+            onMarkedForReview(new Date().toISOString());
+          }
+
+          // When there are issues on this review (alsoAssignManager = true), also auto-assign to manager
+          if (alsoAssignManager && noteId && versionId != null && practitionerId && priorityId && loggedInUserId != null) {
             const versionLabel = versionOrderForApi != null ? `V${versionOrderForApi}` : undefined;
             await assignToManager({
               note_id: noteId,
@@ -351,7 +351,7 @@ const SMEReview = ({
       priorityId,
       auditScore,
       versionOrderForApi,
-      user?.type,
+      onMarkedForReview,
     ],
   );
 
@@ -366,29 +366,6 @@ const SMEReview = ({
     },
     [reviewMarkState, getIssuesSignature],
   );
-
-  // When any issue is created/updated/deleted: set persisted state to false (button enabled) and update baseline so we don't re-trigger (avoids infinite loop)
-  useEffect(() => {
-    if (!noteId) return;
-    const toClear: { id: string; baseline: string }[] = [];
-    for (const review of reviews) {
-      if (review.reviewerId && Number(review.reviewerId) !== loggedInUserId) continue;
-      const changed = getHasIssuesChangedSinceMark(review);
-      if (changed) {
-        setMarkedInStorage(noteId, review.reviewerId, false);
-        toClear.push({ id: review.id, baseline: getIssuesSignature(review.issues) });
-      }
-    }
-    if (toClear.length > 0) {
-      setReviewMarkState(prev => {
-        const next = { ...prev };
-        for (const { id, baseline } of toClear) {
-          next[id] = { ...(next[id] ?? { marked: false }), marked: false, issuesBaseline: baseline };
-        }
-        return next;
-      });
-    }
-  }, [noteId, reviews, loggedInUserId, getHasIssuesChangedSinceMark, getIssuesSignature]);
 
   // Register callback so parent can notify when an issue is created from summary cards (no-op now; we derive from baseline)
   useEffect(() => {
@@ -497,7 +474,6 @@ const SMEReview = ({
           const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
 
           let displayReviews = filteredReviews;
-          let placeholderId: string | null = null;
           let isNoReviewMode = false;
 
           const showPlaceholder =
@@ -515,7 +491,6 @@ const SMEReview = ({
               issues: [],
               _versionId: versionId,
             };
-            placeholderId = placeholderReview.id;
             displayReviews = [placeholderReview, ...filteredReviews];
 
             // "No review" mode: there are no real reviews yet; only the placeholder exists
@@ -536,8 +511,10 @@ const SMEReview = ({
           const isCurrentVersion = !versionId || versionNumber === 'Current';
 
           return displayReviews.map(review => {
-            const isPlaceholder = placeholderId != null && review.id === placeholderId;
-            const shouldAlsoAssignManager = isNoReviewMode && isPlaceholder;
+            // New behavior:
+            // - If there are no issues yet (placeholder / empty review), Marked For Review only runs the mark API.
+            // - If there are any issues on this review, Marked For Review will also assign to manager.
+            const shouldAlsoAssignManager = review.issues.length > 0;
 
             return (
               <ReviewCard
@@ -561,7 +538,7 @@ const SMEReview = ({
                 onMarkForReview={() => handleMarkForReview(review.id, shouldAlsoAssignManager)}
                 isMarkingForReview={markingReviewId === review.id}
                 readOnly={!isCurrentVersion}
-                isNoReviewMode={shouldAlsoAssignManager}
+                isNoReviewMode={isNoReviewMode}
                 markedAtLabel={(() => {
                   const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
                   if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
