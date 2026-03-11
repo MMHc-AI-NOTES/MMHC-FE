@@ -47,6 +47,14 @@ const NotesQueue = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Sorting state
+  const [sorts, setSorts] = useState<
+    {
+      columnName: string;
+      orderBy: 'asc' | 'desc';
+    }[]
+  >([{ columnName: 'session_time', orderBy: 'desc' }]);
+
   // Filter states with persistence
   const defaultFilters = {
     status: 'all',
@@ -61,7 +69,7 @@ const NotesQueue = () => {
     manager: 'all',
     workflow: 'all',
     search: '',
-    reviewedByMe: false,
+    notReviewedByMe: false,
   };
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('notesQueueFilters', defaultFilters);
 
@@ -115,11 +123,11 @@ const NotesQueue = () => {
     }
 
     // Reviewed By Me filter
-    if (filters.reviewedByMe) {
+    if (filters.notReviewedByMe) {
       filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
     }
 
-    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
   };
 
   // Load initial data - each API call has its own loading state
@@ -206,7 +214,7 @@ const NotesQueue = () => {
           filters.manager !== 'all' ||
           filters.workflow !== 'all' ||
           filters.search !== '' ||
-          filters.reviewedByMe;
+          filters.notReviewedByMe;
 
         let payload: NotesPayload;
         if (hasActive) {
@@ -240,13 +248,13 @@ const NotesQueue = () => {
               filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
             }
           }
-          if (filters.reviewedByMe) {
-            filterArray.push({ columnName: 'reviewed_by_me', type: 'exact', value: true });
+          if (filters.notReviewedByMe) {
+            filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: true });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray, sorts };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+          payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
         }
 
         const notesResponse = await fetchNotes(payload);
@@ -288,6 +296,7 @@ const NotesQueue = () => {
               value: selectedClientId,
             },
           ],
+          sorts,
         };
 
         const notesResponse = await fetchNotes(payload);
@@ -335,7 +344,7 @@ const NotesQueue = () => {
 
     try {
       setNotesLoading(true);
-      const payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+      const payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
       const response = await fetchNotes(payload);
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
@@ -367,6 +376,53 @@ const NotesQueue = () => {
 
   const handleViewNote = (noteId: string) => {
     navigate(`/notes-queue/single-note-audit/${noteId}`);
+  };
+
+  // Handle sorting changes from table header
+  const handleSortChange = async (columnName: string) => {
+    // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
+    const existing = sorts.find(sort => sort.columnName === columnName);
+
+    let nextSorts:
+      | {
+          columnName: string;
+          orderBy: 'asc' | 'desc';
+        }[]
+      | [] = [];
+
+    if (!existing) {
+      // Currently unsorted → apply desc
+      nextSorts = [{ columnName, orderBy: 'desc' }];
+    } else if (existing.orderBy === 'desc') {
+      // Desc → asc
+      nextSorts = [{ columnName, orderBy: 'asc' }];
+    } else {
+      // Asc → unsorted (empty array so backend uses default sort)
+      nextSorts = [];
+    }
+
+    // Update state so icons reflect the new sort
+    setSorts(nextSorts);
+
+    try {
+      setNotesLoading(true);
+      setCurrentPage(1);
+
+      const basePayload = buildFilterPayload();
+      const payload: NotesPayload = {
+        ...basePayload,
+        page: 1,
+        sorts: nextSorts,
+      };
+
+      const response = await fetchNotes(payload);
+      setNotes(response.data);
+      setTotalItems(response.totalCount || 0);
+    } catch (error) {
+      console.error('Error applying sort:', error);
+    } finally {
+      setNotesLoading(false);
+    }
   };
 
   return (
@@ -416,7 +472,14 @@ const NotesQueue = () => {
               </div>
             ) : (
               <>
-                <NotesTable notes={notes} onViewNote={handleViewNote} page={currentPage} pageSize={itemsPerPage} />
+                <NotesTable
+                  notes={notes}
+                  onViewNote={handleViewNote}
+                  page={currentPage}
+                  pageSize={itemsPerPage}
+                  sorts={sorts}
+                  onSortChange={handleSortChange}
+                />
 
                 {/* Pagination */}
                 {notes.length > 0 && (

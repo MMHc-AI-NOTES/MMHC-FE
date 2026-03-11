@@ -36,7 +36,7 @@ export interface NotesPayload {
 
 const DEFAULT_NOTES_SORTS: SortItem[] = [
   { columnName: 'session_time', orderBy: 'desc' },
-  // { columnName: 'id', orderBy: 'desc' },
+  { columnName: 'id', orderBy: 'desc' },
 ];
 
 interface NotesResponse {
@@ -109,7 +109,10 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
 
 export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> => {
   try {
-    const body = { ...payload, sorts: DEFAULT_NOTES_SORTS };
+    const body = {
+      ...payload,
+      sorts: payload.sorts && payload.sorts.length > 0 ? payload.sorts : DEFAULT_NOTES_SORTS,
+    };
     const response = await axios.post<ApiResponse<any>>('/notes/listing', body);
 
     if (response?.status) {
