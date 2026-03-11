@@ -7,16 +7,12 @@ import { Hash, User, Calendar, ClipboardList, Code, Bot, RefreshCw, UserSearch, 
 
 interface NoteInformationProps {
   noteDetail: NoteDetail;
+  handleNoteIdClick: () => void;
 }
 
-const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
+const NoteInformation = ({ noteDetail, handleNoteIdClick }: NoteInformationProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const cptCode = cptCodes.find(cptCode => cptCode.id === noteDetail.cptCode)?.code || '-';
-
-  const handleNoteIdClick = () => {
-    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${noteDetail.id}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
 
   const getReviewCycleGradient = (cycle: number): string => {
     switch (cycle) {

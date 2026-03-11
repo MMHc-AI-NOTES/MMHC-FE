@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Stethoscope } from 'lucide-react';
+import { ExternalLink, Stethoscope } from 'lucide-react';
 import { WebhookVersion, PreviousNote } from '@/types/notes';
 import type { IssueForm } from './components/types';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
@@ -18,6 +18,7 @@ interface TherapySessionSummaryCardProps {
   priorityId?: number;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
   onReviewerIssuesChanged?: (reviewerId: number) => void;
+  handleNoteIdClick: () => void;
 }
 
 const PreviousSessionCard = ({
@@ -32,6 +33,7 @@ const PreviousSessionCard = ({
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
+  handleNoteIdClick,
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
@@ -117,6 +119,13 @@ const PreviousSessionCard = ({
               formatDate={formatDate}
             />
           </div> */}
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="text-primary text-sm">Note ID:</p>
+          <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+            <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
+            <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+          </div>
         </div>
       </CardHeader>
 

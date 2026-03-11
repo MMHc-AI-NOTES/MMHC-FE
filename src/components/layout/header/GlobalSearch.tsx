@@ -122,7 +122,7 @@ const GlobalSearch = () => {
               {results.map(note => (
                 <li key={note.id}>
                   <button
-                    onClick={() => handleResultClick(note.id)}
+                    onClick={() => handleResultClick(note.noteId)}
                     className={cn(
                       'flex w-full items-start gap-1 px-3 py-1 text-left transition-colors',
                       'hover:bg-muted focus:bg-muted focus:outline-none',
@@ -132,7 +132,7 @@ const GlobalSearch = () => {
                       <FileText className="text-primary h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-primary text-xs font-medium">Note Id: {note.id}</div>
+                      <div className="text-primary text-xs font-medium">Note Id: {note.noteId}</div>
                       <div className="text-muted-foreground text-xs">Practitioner: {note.practitioner}</div>
                       <div className="text-muted-foreground text-xs">Client Id: {note.client}</div>
                       <div className="text-muted-foreground text-xs">Date: {note.date}</div>

@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AdminReviewColorKey } from './AdminReviewColorKey';
 import { FiltersSection } from './FiltersSection';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
 
 const AdminReviewQueue = () => {
   const [notes, setNotes] = useState<HumanReviewNote[]>([]);
@@ -33,7 +34,7 @@ const AdminReviewQueue = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20; // Fixed at 20 as per requirement
+  const itemsPerPage = DEFAULT_ITEMS_PER_PAGE; // Fixed at global default
 
   // Filter states with persistence
   const defaultFilters = { status: 'all', priority: 'all', reviewer: 'all', search: '' };

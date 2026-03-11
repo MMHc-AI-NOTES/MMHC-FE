@@ -145,6 +145,8 @@ const SingleNoteAudit = () => {
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
+  const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
+  const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
 
   const chatId = location.state?.chatId;
   const reviewerId = location.state?.reviewerId || null;
@@ -437,6 +439,12 @@ const SingleNoteAudit = () => {
     );
   }
 
+  const handleNoteIdClick = () => {
+    if (!noteDetail) return;
+    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${noteDetail.id}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     noteDetail && (
       <div>
@@ -446,7 +454,7 @@ const SingleNoteAudit = () => {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
-            <NoteInformation noteDetail={noteDetail} />
+            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={handleNoteIdClick} />
             <TherapySessionSummaryCard
               webhookVersions={noteDetail.webhookVersions}
               onVersionChange={setSelectedVersionId}
@@ -458,6 +466,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+              handleNoteIdClick={handleNoteIdClick}
             />
             <PreviousSessionCard
               webhookVersions={noteDetail.webhookVersions}
@@ -471,6 +480,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+              handleNoteIdClick={handleNoteIdClick}
             />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
@@ -499,6 +509,7 @@ const SingleNoteAudit = () => {
               onSMEReviewDeleted={onSMEReviewDeleted}
               onSMEIssueUpdated={onSMEIssueUpdated}
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
+              onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
@@ -521,9 +532,12 @@ const SingleNoteAudit = () => {
                 practitionerId={practitionerId}
                 noteId={noteId}
                 versionId={selectedVersionId}
+                onEmailSent={timestamp => setEmailSentAt(timestamp)}
               />
             )}
-            {featureFlags.showAuditHistory && <AuditHistoryCard noteId={noteId} />}
+            {featureFlags.showAuditHistory && (
+              <AuditHistoryCard noteId={noteId} markedForReviewAt={markedForReviewAt ?? undefined} emailSentAt={emailSentAt ?? undefined} />
+            )}
             {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             )}
