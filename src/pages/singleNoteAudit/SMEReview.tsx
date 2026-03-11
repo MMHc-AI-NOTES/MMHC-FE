@@ -21,6 +21,10 @@ function getMarkedForReviewStorageKey(noteId: string, reviewerId: string): strin
   return `${MARKED_FOR_REVIEW_STORAGE_PREFIX}_${noteId}_${reviewerId}`;
 }
 
+function getBaselineStorageKey(noteId: string, reviewerId: string): string {
+  return `${MARKED_FOR_REVIEW_STORAGE_PREFIX}_baseline_${noteId}_${reviewerId}`;
+}
+
 /** Returns true/false from storage; undefined when key not set (use API then). */
 function getMarkedFromStorage(noteId: string, reviewerId: string): boolean | undefined {
   if (typeof window === 'undefined' || !window.localStorage) return undefined;
@@ -38,6 +42,27 @@ function setMarkedInStorage(noteId: string, reviewerId: string, marked: boolean)
   try {
     const key = getMarkedForReviewStorageKey(noteId, reviewerId);
     window.localStorage.setItem(key, marked ? '1' : '0');
+  } catch {
+    // ignore
+  }
+}
+
+/** Returns baseline string from storage; undefined when key not set. */
+function getBaselineFromStorage(noteId: string, reviewerId: string): string | undefined {
+  if (typeof window === 'undefined' || !window.localStorage) return undefined;
+  try {
+    const raw = window.localStorage.getItem(getBaselineStorageKey(noteId, reviewerId));
+    return raw === null ? undefined : raw;
+  } catch {
+    return undefined;
+  }
+}
+
+function setBaselineInStorage(noteId: string, reviewerId: string, baseline: string): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const key = getBaselineStorageKey(noteId, reviewerId);
+    window.localStorage.setItem(key, baseline);
   } catch {
     // ignore
   }
@@ -140,6 +165,7 @@ const SMEReview = ({
   const [reviewMarkState, setReviewMarkState] = useState<Record<string, ReviewMarkState>>({});
   const [markingReviewId, setMarkingReviewId] = useState<string | null>(null);
   const lastSeededNoteIdRef = useRef<string | null>(null);
+  const [localMarkedAtByReviewer, setLocalMarkedAtByReviewer] = useState<Record<string, string>>({});
 
   // Stable signature for comparing issues (new/updated/removed)
   const getIssuesSignature = useCallback((issues: IssueForm[]): string => {
@@ -162,8 +188,20 @@ const SMEReview = ({
       for (const review of ownReviews) {
         const fromStorage = getMarkedFromStorage(noteId, review.reviewerId);
         const marked = fromStorage !== undefined ? fromStorage : (noteReviewMarks?.[review.reviewerId] ?? false);
-        // Only set baseline when already marked; otherwise no baseline so first-issue enables the button
-        const baseline = marked ? getIssuesSignature(review.issues) : undefined;
+        const storedBaseline = getBaselineFromStorage(noteId, review.reviewerId);
+
+        // Baseline rules:
+        // - Prefer any baseline already stored in local state for this session.
+        // - Otherwise, if storage has a baseline for this reviewer, use it.
+        // - Otherwise, if reviewer is marked but we have no stored baseline yet,
+        //   derive baseline from current issues snapshot (or empty when no issues),
+        //   and persist it so that reloads see "no change" until user edits again.
+        let baseline = prev[review.id]?.issuesBaseline ?? storedBaseline;
+        if (marked && baseline == null) {
+          baseline = review.issues.length > 0 ? getIssuesSignature(review.issues) : '';
+          setBaselineInStorage(noteId, review.reviewerId, baseline);
+        }
+
         next[review.id] = {
           ...(prev[review.id] ?? { marked: false }),
           marked,
@@ -316,12 +354,22 @@ const SMEReview = ({
             ...prev,
             [reviewId]: { ...(prev[reviewId] ?? { marked: true }), marked: true, issuesBaseline: baseline },
           }));
-          setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
+          const effectiveReviewerId = review?.reviewerId || String(loggedInUserId);
+          setMarkedInStorage(noteId || '', effectiveReviewerId, true);
+          setBaselineInStorage(noteId || '', effectiveReviewerId, baseline);
 
           // Optimistically notify parent so it can add a temporary SME action to audit history
           if (onMarkedForReview) {
             onMarkedForReview(new Date().toISOString());
           }
+
+          // Also store a local display date so the "Marked done on" label
+          // shows immediately without waiting for a refetch.
+          const displayDate = formatDate(new Date().toISOString());
+          setLocalMarkedAtByReviewer(prev => ({
+            ...prev,
+            [effectiveReviewerId]: displayDate,
+          }));
 
           // When there are issues on this review (alsoAssignManager = true), also auto-assign to manager
           if (alsoAssignManager && noteId && versionId != null && practitionerId && priorityId && loggedInUserId != null) {
@@ -511,6 +559,17 @@ const SMEReview = ({
           const isCurrentVersion = !versionId || versionNumber === 'Current';
 
           return displayReviews.map(review => {
+            const markState = reviewMarkState[review.id];
+            const effectiveReviewerIdStr = review.reviewerId ?? (loggedInUserId != null ? String(loggedInUserId) : undefined);
+            const apiMarked = effectiveReviewerIdStr && noteReviewMarks ? noteReviewMarks[effectiveReviewerIdStr] === true : false;
+            const isMarkedForReview = markState?.marked ?? apiMarked ?? false;
+
+            // Derive "issues changed" from baseline as before.
+            // This is still useful for future enhancements, but the
+            // button's disabled logic will now primarily look at whether
+            // there are *any* issues when already marked.
+            const hasIssuesChanged = getHasIssuesChangedSinceMark(review);
+
             // New behavior:
             // - If there are no issues yet (placeholder / empty review), Marked For Review only runs the mark API.
             // - If there are any issues on this review, Marked For Review will also assign to manager.
@@ -533,17 +592,24 @@ const SMEReview = ({
                 onCancelEdit={handleCancelEdit}
                 onDeleteReview={handleDeleteReviewClick}
                 onRemoveReview={handleRemoveReview}
-                isMarkedForReview={reviewMarkState[review.id]?.marked ?? false}
-                hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
+                isMarkedForReview={isMarkedForReview}
+                hasIssuesChangedSinceMark={hasIssuesChanged}
                 onMarkForReview={() => handleMarkForReview(review.id, shouldAlsoAssignManager)}
                 isMarkingForReview={markingReviewId === review.id}
                 readOnly={!isCurrentVersion}
                 isNoReviewMode={isNoReviewMode}
                 markedAtLabel={(() => {
-                  const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
-                  if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
+                  const effectiveReviewerIdNum = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
+                  if (!effectiveReviewerIdNum) return null;
+
+                  // 1) Prefer local optimistic date if present (set right after mark).
+                  const localDate = localMarkedAtByReviewer[String(effectiveReviewerIdNum)];
+                  if (localDate) return localDate;
+
+                  // 2) Fall back to API-provided marks.
+                  if (!noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
                   const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
-                    m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
+                    m => m.reviewerId === effectiveReviewerIdNum && m.markedAsReviewed === 1,
                   );
                   if (!mark) return null;
                   const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
