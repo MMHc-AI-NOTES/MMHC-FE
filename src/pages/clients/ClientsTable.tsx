@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronRight } from 'lucide-react';
-import type { Client } from './clientsApiCalls';
+import { ChevronRight, ArrowDownUp, ArrowUp, ArrowDown } from 'lucide-react';
+import type { Client, ClientsPayload } from './clientsApiCalls';
 
 interface ClientsTableProps {
   clients: Client[];
@@ -10,9 +10,25 @@ interface ClientsTableProps {
   pageSize: number;
   onViewClientNotes: (client: Client) => void;
   onNoteClick: (noteId: string) => void;
+  sorts?: ClientsPayload['sorts'];
+  onSortChange?: (columnName: 'client_id' | 'note_count') => void;
 }
 
-export const ClientsTable = ({ clients, page, pageSize, onViewClientNotes, onNoteClick }: ClientsTableProps) => {
+const getSortIcon = (columnName: 'client_id' | 'note_count', sorts?: ClientsPayload['sorts']) => {
+  const activeSort = sorts?.find(sort => sort?.columnName === columnName);
+
+  if (!activeSort) {
+    return <ArrowDownUp className="text-muted-foreground h-3.5 w-3.5" />;
+  }
+
+  if (activeSort.orderBy === 'asc') {
+    return <ArrowUp className="h-3.5 w-3.5" />;
+  }
+
+  return <ArrowDown className="h-3.5 w-3.5" />;
+};
+
+export const ClientsTable = ({ clients, page, pageSize, onViewClientNotes, onNoteClick, sorts, onSortChange }: ClientsTableProps) => {
   const columnCount = 4;
 
   if (!clients.length) {
@@ -23,8 +39,26 @@ export const ClientsTable = ({ clients, page, pageSize, onViewClientNotes, onNot
             <TableHeader>
               <TableRow>
                 <TableHead className="text-primary pl-4 text-left font-semibold">No</TableHead>
-                <TableHead className="text-primary min-w-[160px] font-semibold">Client</TableHead>
-                <TableHead className="text-primary min-w-[140px] font-semibold">Notes Count</TableHead>
+                <TableHead className="text-primary min-w-[160px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start gap-1"
+                    onClick={() => onSortChange?.('client_id')}
+                  >
+                    <span>Client</span>
+                    {getSortIcon('client_id', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start gap-1"
+                    onClick={() => onSortChange?.('note_count')}
+                  >
+                    <span>Notes Count</span>
+                    {getSortIcon('note_count', sorts)}
+                  </button>
+                </TableHead>
                 <TableHead className="text-primary text-center font-semibold">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -48,8 +82,22 @@ export const ClientsTable = ({ clients, page, pageSize, onViewClientNotes, onNot
           <TableHeader>
             <TableRow>
               <TableHead className="text-primary pl-4 text-left font-semibold">No</TableHead>
-              <TableHead className="text-primary min-w-[160px] pl-8 text-left font-semibold">Client</TableHead>
-              <TableHead className="text-primary min-w-[140px] font-semibold">Notes Count</TableHead>
+              <TableHead className="text-primary min-w-[160px] pl-8 text-left font-semibold">
+                <button type="button" className="flex w-full items-center gap-1" onClick={() => onSortChange?.('client_id')}>
+                  <span>Client</span>
+                  {getSortIcon('client_id', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('note_count')}
+                >
+                  <span>Notes Count</span>
+                  {getSortIcon('note_count', sorts)}
+                </button>
+              </TableHead>
               <TableHead className="text-primary text-center font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>

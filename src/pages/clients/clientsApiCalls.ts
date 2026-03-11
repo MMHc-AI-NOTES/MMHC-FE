@@ -23,6 +23,10 @@ export interface ClientsPayload {
   page: number;
   pageSize: number;
   filters: FilterItem[];
+  sorts?: {
+    columnName: string;
+    orderBy: 'asc' | 'desc';
+  }[];
 }
 
 export interface ClientSession {

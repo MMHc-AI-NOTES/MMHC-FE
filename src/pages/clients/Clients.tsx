@@ -12,7 +12,7 @@ import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
 
 const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
-const buildPayload = (page: number, search: string): ClientsPayload => {
+const buildPayload = (page: number, search: string, sorts: ClientsPayload['sorts']): ClientsPayload => {
   const filters: ClientsPayload['filters'] = [];
 
   if (search.trim()) {
@@ -27,6 +27,7 @@ const buildPayload = (page: number, search: string): ClientsPayload => {
     page,
     pageSize: itemsPerPage,
     filters,
+    sorts,
   };
 };
 
@@ -40,10 +41,35 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalItems, setTotalItems] = useState<number>(0);
 
-  const loadClients = async (page: number, searchValue: string) => {
+  // Sorting state: default unsorted (backend default)
+  const [sorts, setSorts] = useState<ClientsPayload['sorts']>([]);
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      try {
+        setLoading(true);
+        const payload = buildPayload(1, '', sorts);
+        const response = await fetchClients(payload);
+
+        setClients(response.data);
+        setTotalItems(response.totalCount);
+        setCurrentPage(response.page);
+      } catch (error) {
+        console.error('Error loading clients:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initialLoad();
+    // We only want this to run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadClients = async (page: number, searchValue: string, nextSorts: ClientsPayload['sorts'] = sorts) => {
     try {
       setLoading(true);
-      const payload = buildPayload(page, searchValue);
+      const payload = buildPayload(page, searchValue, nextSorts);
       const response = await fetchClients(payload);
 
       setClients(response.data);
@@ -56,11 +82,6 @@ const Clients = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    // Initial load
-    loadClients(1, '');
-  }, []);
 
   const handleFilterChange = (key: string, value: string) => {
     setSearch(key === 'search' ? value : search);
@@ -77,6 +98,25 @@ const Clients = () => {
 
   const handlePageChange = async (page: number) => {
     await loadClients(page, search);
+  };
+
+  // Handle sorting for Client and Notes Count columns
+  const handleSortChange = async (columnName: 'client_id' | 'note_count') => {
+    // 3-state cycle: unsorted -> desc -> asc -> unsorted
+    const existing = sorts?.find(sort => sort.columnName === columnName);
+
+    let nextSorts: ClientsPayload['sorts'] = [];
+
+    if (!existing) {
+      nextSorts = [{ columnName, orderBy: 'desc' }];
+    } else if (existing.orderBy === 'desc') {
+      nextSorts = [{ columnName, orderBy: 'asc' }];
+    } else {
+      nextSorts = [];
+    }
+
+    setSorts(nextSorts);
+    await loadClients(1, search, nextSorts);
   };
 
   const handleViewClientNotes = (client: Client) => {
@@ -130,6 +170,8 @@ const Clients = () => {
                     pageSize={itemsPerPage}
                     onViewClientNotes={handleViewClientNotes}
                     onNoteClick={handleNoteClick}
+                    sorts={sorts}
+                    onSortChange={handleSortChange}
                   />
 
                   {clients.length > 0 && (
