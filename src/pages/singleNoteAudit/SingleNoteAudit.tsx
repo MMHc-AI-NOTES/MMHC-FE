@@ -148,10 +148,19 @@ const SingleNoteAudit = () => {
   const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
   const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
 
-  const chatId = location.state?.chatId;
-  const reviewerId = location.state?.reviewerId || null;
-  const isManagerReviewing = location.state?.isManagerReviewing || false;
-  const from = location.state?.from as string | undefined;
+  const searchParams = new URLSearchParams(location.search);
+
+  const chatIdFromQuery = searchParams.get('chatId');
+  const fromQuery = searchParams.get('from');
+  const reviewerIdFromQuery = searchParams.get('reviewerId');
+  const isManagerReviewingFromQuery = searchParams.get('isManagerReviewing');
+
+  const chatId = chatIdFromQuery ? Number(chatIdFromQuery) : location.state?.chatId;
+  const reviewerId = reviewerIdFromQuery ? Number(reviewerIdFromQuery) : location.state?.reviewerId || null;
+  const isManagerReviewing =
+    isManagerReviewingFromQuery != null ? isManagerReviewingFromQuery === 'true' : location.state?.isManagerReviewing || false;
+  const from = (fromQuery as string | undefined) ?? (location.state?.from as string | undefined);
+
   const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 

@@ -128,7 +128,21 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
                     <Button
                       size="lg"
                       variant="outline"
-                      onClick={() => onReviewNote(note.id)}
+                      onClick={event => {
+                        const url = `/admin-review-queue/single-note-audit/${note.id}`;
+                        const params = new URLSearchParams();
+                        params.set('from', 'admin-review-queue');
+                        if ((note as any).chatId) {
+                          params.set('chatId', String((note as any).chatId));
+                        }
+                        const fullUrl = `${url}?${params.toString()}`;
+
+                        if (event.metaKey || event.ctrlKey || event.button === 1) {
+                          window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                        } else {
+                          onReviewNote(note.id);
+                        }
+                      }}
                       className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
                     >
                       Review Note

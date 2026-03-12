@@ -185,7 +185,24 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                         size="lg"
                         variant="outline"
                         className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
-                        onClick={() => onReview(note)}
+                        onClick={event => {
+                          const reviewerId = note.rawData?.smeIssues?.[0]?.reviewerId || note.rawData?.smeIssues?.[0]?.reviewer?.id || null;
+
+                          const url = `/manager-review/single-note-audit/${note.noteId}`;
+                          const params = new URLSearchParams();
+                          if (reviewerId != null) {
+                            params.set('reviewerId', String(reviewerId));
+                          }
+                          params.set('isManagerReviewing', 'true');
+                          params.set('from', 'manager-review-queue');
+                          const fullUrl = `${url}?${params.toString()}`;
+
+                          if (event.metaKey || event.ctrlKey || event.button === 1) {
+                            window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                          } else {
+                            onReview(note);
+                          }
+                        }}
                       >
                         Review
                       </Button>
