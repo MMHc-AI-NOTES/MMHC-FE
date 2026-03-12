@@ -33,7 +33,7 @@ import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
-import { SessionTypeLabels, UserRoleEnum } from '@/constants/common';
+import { SessionTypeLabels } from '@/constants/common';
 import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
@@ -524,7 +524,7 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {user?.type === UserRoleEnum.superAdmin && (
+            {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
                 isManagerReviewing={isManagerReviewing}
