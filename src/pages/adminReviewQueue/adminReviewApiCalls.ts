@@ -19,10 +19,18 @@ interface FilterItem {
   value?: any;
 }
 
+type SortOrder = 'asc' | 'desc';
+
+interface SortItem {
+  columnName: string;
+  orderBy: SortOrder;
+}
+
 interface HumanReviewPayload {
   page: number;
   pageSize: number;
   filters: FilterItem[];
+  sorts?: SortItem[];
 }
 
 interface HumanReviewResponse {
@@ -38,8 +46,10 @@ const formatHumanReviewData = (data: any[]): HumanReviewNote[] => {
     id: item.noteId || item.id?.toString(),
     chatId: item.chatId || 0,
     practitioner: item.practitioner?.fullName || 'Unknown',
+    client: item.patient?.clientId || item.note?.patient?.clientId || 'Unknown',
     date: item.createdAt ? formatDate(item.createdAt) : 'N/A',
-    score: item.note?.aiScore || 0,
+    reviewDate: item.reviewer?.createdAt ? formatDate(item.reviewer.createdAt) : 'N/A',
+    score: item.human_review_score || '-',
     aiStatus: item.aiStatus?.id || 1,
     reviewStatus: item.note?.humanReview?.id || 1,
     reviewer: item.reviewer?.fullName || undefined,
