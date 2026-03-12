@@ -9,6 +9,8 @@ import { GradientBadge } from '@/shared/GradientBadge';
 interface AdminReviewTableProps {
   notes: HumanReviewNote[];
   onReviewNote: (noteId: string) => void;
+  page?: number;
+  pageSize?: number;
 }
 
 // Helper functions to get gradient CSS classes for badges
@@ -55,8 +57,8 @@ const getPriorityGradient = (priority: number): string => {
   }
 };
 
-export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps) => {
-  const columnCount = 9;
+export const AdminReviewTable = ({ notes, onReviewNote, page = 1, pageSize = 20 }: AdminReviewTableProps) => {
+  const columnCount = 10;
 
   if (notes.length === 0) {
     return (
@@ -65,6 +67,7 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="text-primary min-w-[80px] font-semibold">No.</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
                 <TableHead className="text-primary min-w-[140px] font-semibold">PRACTITIONER</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
@@ -95,6 +98,7 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="text-primary pl-4 text-left font-semibold">No.</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
               <TableHead className="text-primary min-w-[140px] font-semibold">PRACTITIONER</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
@@ -109,7 +113,8 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
-                <TableCell className="text-left font-medium">{note.id}</TableCell>
+                <TableCell className="text-left font-medium">{(page - 1) * pageSize + index + 1}</TableCell>
+                <TableCell className="font-medium">{note.id}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.date}</TableCell>
                 <TableCell className="font-semibold">{note.score}</TableCell>

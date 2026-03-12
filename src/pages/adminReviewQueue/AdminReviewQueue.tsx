@@ -266,7 +266,7 @@ const AdminReviewQueue = () => {
               </div>
             ) : (
               <>
-                <AdminReviewTable notes={notes} onReviewNote={handleReviewNote} />
+                <AdminReviewTable notes={notes} onReviewNote={handleReviewNote} page={currentPage} pageSize={itemsPerPage} />
 
                 {/* Pagination */}
                 {notes.length > 0 && (

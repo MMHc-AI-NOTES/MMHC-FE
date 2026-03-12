@@ -237,6 +237,7 @@ export const AuditActionEnum = {
   emailMissingFields: 'email_missing_fields',
   webhookSessionReceived: 'webhook_session_received',
   noteMarkedReviewed: 'note_marked_reviewed',
+  smeAssignedToManager: 'sme_assigned_to_manager',
 } as const;
 
 export const AuditActionLabels: Record<(typeof AuditActionEnum)[keyof typeof AuditActionEnum], string> = {
@@ -246,6 +247,7 @@ export const AuditActionLabels: Record<(typeof AuditActionEnum)[keyof typeof Aud
   [AuditActionEnum.emailMissingFields]: 'Missing Fields Email',
   [AuditActionEnum.webhookSessionReceived]: 'Webhook Session Received',
   [AuditActionEnum.noteMarkedReviewed]: 'Note Marked For Review',
+  [AuditActionEnum.smeAssignedToManager]: 'Assigned to Manager',
 };
 
 export const HumanReviewResultEnum = {

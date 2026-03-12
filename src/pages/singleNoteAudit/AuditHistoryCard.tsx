@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { History, Bot, Mail, Webhook, ListX, CheckCircle } from 'lucide-react';
+import { History, Bot, Mail, Webhook, ListX, CheckCircle, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import moment from 'moment';
 import axios from 'axios';
@@ -19,13 +19,15 @@ interface NoteActivityItem {
 
 interface AuditHistoryCardProps {
   noteId?: string;
-  /** Optional local timestamp used to optimistically show a \"Note Marked For Review\" SME action */
+  /** Optional local timestamp used to optimistically show a "Note Marked For Review" SME action */
   markedForReviewAt?: string;
-  /** Optional local timestamp used to optimistically show a \"Email Sent to Practitioner\" Manager action */
+  /** Optional local timestamp used to optimistically show an "Email Sent to Practitioner" Manager action */
   emailSentAt?: string;
+  /** Optional local timestamp used to optimistically show an "Assigned to Manager" SME→Manager action */
+  assignedToManagerAt?: string;
 }
 
-const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt }: AuditHistoryCardProps) => {
+const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToManagerAt }: AuditHistoryCardProps) => {
   const [activities, setActivities] = useState<NoteActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
   const { agents } = useAppSelector(state => state.agents);
@@ -98,6 +100,17 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt }: AuditHisto
     });
   }
 
+  if (assignedToManagerAt && noteId) {
+    baseActivities.push({
+      id: 'local_sme_assigned_to_manager',
+      action: AuditActionEnum.smeAssignedToManager,
+      noteId,
+      createdAt: assignedToManagerAt,
+      description: 'Note assigned to manager for review',
+      metadata: {},
+    });
+  }
+
   // Sort activities by date (newest first), exclude chat_created for now
   const sortedActivities = baseActivities
     .filter(a => a.action !== AuditActionEnum.chatCreated)
@@ -121,6 +134,8 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt }: AuditHisto
         return <Webhook className="text-primary h-5 w-5" />;
       case AuditActionEnum.noteMarkedReviewed:
         return <CheckCircle className="text-primary h-5 w-5" />;
+      case AuditActionEnum.smeAssignedToManager:
+        return <User className="text-primary h-5 w-5" />;
       default:
         return <History className="text-primary h-5 w-5" />;
     }
@@ -140,6 +155,13 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt }: AuditHisto
         segmentLabel: 'SME Action',
         dotClass: 'bg-primary ring-primary',
         pillClass: 'bg-primary text-white text-sm px-2.5 py-0.5 rounded',
+      };
+    }
+    if (action === AuditActionEnum.smeAssignedToManager) {
+      return {
+        segmentLabel: 'Assign Action',
+        dotClass: 'bg-gradient-manager-in-progress ring-gradient-manager-in-progress',
+        pillClass: 'bg-gradient-manager-in-progress text-white text-sm px-2.5 py-0.5 rounded',
       };
     }
     if (

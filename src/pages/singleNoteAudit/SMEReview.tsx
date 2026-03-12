@@ -102,6 +102,8 @@ interface SMEReviewProps {
   onReviewerIssuesChangedRef?: React.MutableRefObject<((reviewerId: number) => void) | null>;
   /** Optional callback so parent can optimistically add an audit history item when a note is marked for review */
   onMarkedForReview?: (timestamp: string) => void;
+  /** Optional callback so parent can optimistically add an audit history item when a note is assigned to manager */
+  onAssignedToManager?: (timestamp: string) => void;
 }
 
 const SMEReview = ({
@@ -123,6 +125,7 @@ const SMEReview = ({
   onSMEIssueUpdated,
   onReviewerIssuesChangedRef,
   onMarkedForReview,
+  onAssignedToManager,
 }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
@@ -383,6 +386,9 @@ const SMEReview = ({
               priority: priorityId,
               version_label: versionLabel,
             });
+            if (onAssignedToManager) {
+              onAssignedToManager(new Date().toISOString());
+            }
           }
         }
       } finally {
@@ -395,11 +401,12 @@ const SMEReview = ({
       loggedInUserId,
       versionId,
       getIssuesSignature,
+      onMarkedForReview,
       practitionerId,
       priorityId,
-      auditScore,
       versionOrderForApi,
-      onMarkedForReview,
+      auditScore,
+      onAssignedToManager,
     ],
   );
 
@@ -616,6 +623,7 @@ const SMEReview = ({
                   if (!ts) return null;
                   return formatDate(ts);
                 })()}
+                onAssignedToManager={onAssignedToManager}
               />
             );
           });

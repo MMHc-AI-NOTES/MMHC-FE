@@ -69,7 +69,7 @@ const NotesQueue = () => {
     manager: 'all',
     workflow: 'all',
     search: '',
-    notReviewedByMe: false,
+    notReviewedByMe: true,
   };
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('notesQueueFilters', defaultFilters);
 
@@ -118,7 +118,7 @@ const NotesQueue = () => {
     if (filters.dateRange && filters.dateRange !== 'all') {
       const dateRange = getDateRange(filters.dateRange);
       if (dateRange) {
-        filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
+        filterArray.push({ columnName: 'session_time', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
       }
     }
 
@@ -245,11 +245,11 @@ const NotesQueue = () => {
           if (filters.dateRange && filters.dateRange !== 'all') {
             const dateRange = getDateRange(filters.dateRange);
             if (dateRange) {
-              filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
+              filterArray.push({ columnName: 'session_time', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
             }
           }
           if (filters.notReviewedByMe) {
-            filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: true });
+            filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
           }
 
           payload = { page: 1, pageSize: itemsPerPage, filters: filterArray, sorts };
@@ -337,15 +337,22 @@ const NotesQueue = () => {
     }
   };
 
-  // Clear filters - resets all filters and fetches unfiltered data
+  // Clear filters - resets all filters to defaults and fetches data
   const handleClearFilters = async () => {
-    clearPersistedFilters();
-    setCurrentPage(1);
-
     try {
       setNotesLoading(true);
-      const payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
-      const response = await fetchNotes(payload);
+      clearPersistedFilters();
+      setCurrentPage(1);
+
+      const resetFilters = { ...defaultFilters };
+      setFilters(resetFilters);
+
+      const filterArray: any[] = [];
+      if (resetFilters.notReviewedByMe) {
+        filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
+      }
+
+      const response = await fetchNotes({ page: 1, pageSize: itemsPerPage, filters: filterArray, sorts });
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
     } catch (error) {

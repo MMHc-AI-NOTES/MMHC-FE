@@ -44,6 +44,8 @@ interface ReviewCardProps {
   markedAtLabel?: string | null;
   /** True when this is the placeholder "no review yet" card (Admin Review flow). */
   isNoReviewMode?: boolean;
+  /** Optional callback so parent can optimistically add an audit history item when a note is assigned to manager */
+  onAssignedToManager?: (timestamp: string) => void;
 }
 
 const ReviewCard = ({
@@ -68,6 +70,7 @@ const ReviewCard = ({
   readOnly = false,
   markedAtLabel = null,
   isNoReviewMode = false,
+  onAssignedToManager,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -320,6 +323,10 @@ const ReviewCard = ({
         priority: priorityId,
         version_label: versionLabel,
       });
+
+      if (onAssignedToManager) {
+        onAssignedToManager(new Date().toISOString());
+      }
 
       // Reset form after successful assignment
       setShowAssignManagerForm(false);
