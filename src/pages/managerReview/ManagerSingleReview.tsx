@@ -130,7 +130,7 @@ export const ManagerSingleReview = () => {
   if (loading || !noteDetail) {
     return (
       <div>
-        <LoadingSkeleton />
+        <LoadingSkeleton hideBack={false} />
       </div>
     );
   }

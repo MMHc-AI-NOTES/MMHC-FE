@@ -135,6 +135,7 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
                         if ((note as any).chatId) {
                           params.set('chatId', String((note as any).chatId));
                         }
+                        params.set('hideBack', '1');
                         const fullUrl = `${url}?${params.toString()}`;
 
                         if (event.metaKey || event.ctrlKey || event.button === 1) {

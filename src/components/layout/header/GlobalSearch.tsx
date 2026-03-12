@@ -76,12 +76,13 @@ const GlobalSearch = () => {
   };
 
   const handleResultClick = (event: React.MouseEvent<HTMLButtonElement>, noteId: string) => {
-    const url = `/notes-queue/single-note-audit/${noteId}`;
+    const baseUrl = `/notes-queue/single-note-audit/${noteId}`;
 
     if (event.metaKey || event.ctrlKey || event.button === 1) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const urlWithHideBack = `${baseUrl}?hideBack=1`;
+      window.open(urlWithHideBack, '_blank', 'noopener,noreferrer');
     } else {
-      navigate(url);
+      navigate(baseUrl);
     }
 
     setSearchText('');

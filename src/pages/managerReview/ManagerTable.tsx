@@ -195,6 +195,7 @@ export const ManagerTable = ({ notes, onReview, selectedIds, onToggleRow, onTogg
                           }
                           params.set('isManagerReviewing', 'true');
                           params.set('from', 'manager-review-queue');
+                          params.set('hideBack', '1');
                           const fullUrl = `${url}?${params.toString()}`;
 
                           if (event.metaKey || event.ctrlKey || event.button === 1) {

@@ -4,14 +4,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const LoadingSkeleton = () => {
+const LoadingSkeleton = ({ hideBack }: { hideBack: boolean }) => {
   const navigate = useNavigate();
 
   return (
     <div>
-      <Button onClick={() => navigate('/notes-queue')} className="mb-2">
-        <ArrowLeft />
-      </Button>
+      {!hideBack && (
+        <Button onClick={() => navigate('/notes-queue')} className="mb-2">
+          <ArrowLeft />
+        </Button>
+      )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         <div className="space-y-4">
           <Card>
