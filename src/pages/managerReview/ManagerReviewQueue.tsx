@@ -206,6 +206,7 @@ export const ManagerReviewQueue = () => {
       state: {
         reviewerId,
         isManagerReviewing: true,
+        from: 'manager-review-queue',
       },
     });
   };

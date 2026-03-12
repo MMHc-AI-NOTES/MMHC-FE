@@ -494,7 +494,15 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, 
                 <TableCell className="border-border sticky right-0 z-10 bg-white">
                   <Button
                     variant="outline"
-                    onClick={() => onViewNote(note.noteId)}
+                    onClick={event => {
+                      const baseUrl = `/notes-queue/single-note-audit/${note.noteId}`;
+                      if (event.metaKey || event.ctrlKey || event.button === 1) {
+                        const urlWithHideBack = `${baseUrl}?hideBack=1`;
+                        window.open(urlWithHideBack, '_blank', 'noopener,noreferrer');
+                      } else {
+                        onViewNote(note.noteId);
+                      }
+                    }}
                     className="border-primary text-primary hover:bg-primary h-9 bg-transparent text-[13px] hover:text-white"
                   >
                     Open

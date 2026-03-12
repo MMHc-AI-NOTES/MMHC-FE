@@ -210,8 +210,12 @@ const AdminReviewQueue = () => {
   };
 
   const handleReviewNote = (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
     navigate(`/admin-review-queue/single-note-audit/${noteId}`, {
-      state: { from: 'admin-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
+      state: {
+        from: 'admin-review-queue',
+        chatId: note?.chatId,
+      },
     });
   };
 

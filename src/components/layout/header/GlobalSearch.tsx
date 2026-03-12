@@ -75,8 +75,16 @@ const GlobalSearch = () => {
     }
   };
 
-  const handleResultClick = (noteId: string) => {
-    navigate(`/notes-queue/single-note-audit/${noteId}`);
+  const handleResultClick = (event: React.MouseEvent<HTMLButtonElement>, noteId: string) => {
+    const baseUrl = `/notes-queue/single-note-audit/${noteId}`;
+
+    if (event.metaKey || event.ctrlKey || event.button === 1) {
+      const urlWithHideBack = `${baseUrl}?hideBack=1`;
+      window.open(urlWithHideBack, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(baseUrl);
+    }
+
     setSearchText('');
     setResults([]);
     setIsOpen(false);
@@ -122,7 +130,7 @@ const GlobalSearch = () => {
               {results.map(note => (
                 <li key={note.id}>
                   <button
-                    onClick={() => handleResultClick(note.noteId)}
+                    onClick={event => handleResultClick(event, note.noteId)}
                     className={cn(
                       'flex w-full items-start gap-1 px-3 py-1 text-left transition-colors',
                       'hover:bg-muted focus:bg-muted focus:outline-none',
