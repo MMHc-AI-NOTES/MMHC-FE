@@ -4,11 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
-import { FormattedNote, QueueOverview, Workload } from '@/types/notes';
+import {
+  FormattedNote,
+  QueueOverview,
+  // Workload
+} from '@/types/notes';
 import {
   fetchNotes,
   fetchQueueOverview,
-  fetchWorkload,
+  // fetchWorkload,
   fetchPractitioners,
   fetchCptCodes,
   getDateRange,
@@ -17,7 +21,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueOverviewCard } from './QueueOverviewCard';
-import { WorkloadCard } from './WorkloadCard';
+// import { WorkloadCard } from './WorkloadCard';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { clearSelectedClientId } from '@/store/slices/selectedClientSlice';
@@ -33,9 +37,9 @@ const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
   const [notesLoading, setNotesLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);
-  const [workloadLoading, setWorkloadLoading] = useState(true);
+  // const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
-  const [workload, setWorkload] = useState<Workload | null>(null);
+  // const [workload, setWorkload] = useState<Workload | null>(null);
   const user = useAppSelector(state => state.auth.user);
   const selectedClientId = useAppSelector(state => state.selectedClient.selectedClientId);
 
@@ -146,17 +150,17 @@ const NotesQueue = () => {
     };
 
     // Fetch workload
-    const loadWorkload = async () => {
-      try {
-        setWorkloadLoading(true);
-        const workloadData = await fetchWorkload();
-        setWorkload(workloadData);
-      } catch (error) {
-        console.error('Error loading workload:', error);
-      } finally {
-        setWorkloadLoading(false);
-      }
-    };
+    // const loadWorkload = async () => {
+    //   try {
+    //     setWorkloadLoading(true);
+    //     const workloadData = await fetchWorkload();
+    //     setWorkload(workloadData);
+    //   } catch (error) {
+    //     console.error('Error loading workload:', error);
+    //   } finally {
+    //     setWorkloadLoading(false);
+    //   }
+    // };
 
     // Fetch practitioners only if not already loaded in Redux
     const loadPractitioners = async () => {
@@ -182,7 +186,7 @@ const NotesQueue = () => {
 
     // Run non-note fetches in parallel
     loadQueueOverview();
-    loadWorkload();
+    // loadWorkload();
     loadPractitioners();
     loadCptCodes();
   }, [practitionersLoaded, cptCodesLoaded, dispatch]);
@@ -507,7 +511,7 @@ const NotesQueue = () => {
       {/* Right Column: Overview Cards */}
       <div className="space-y-6 lg:col-span-3">
         <QueueOverviewCard data={queueOverview} loading={overviewLoading} />
-        <WorkloadCard data={workload} loading={workloadLoading} />
+        {/* <WorkloadCard data={workload} loading={workloadLoading} /> */}
       </div>
     </div>
   );
