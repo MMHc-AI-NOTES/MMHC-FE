@@ -130,7 +130,7 @@ export const ManagerSingleReview = () => {
   if (loading || !noteDetail) {
     return (
       <div>
-        <LoadingSkeleton hideBack={false} />
+        <LoadingSkeleton backPath="/manager-review" />
       </div>
     );
   }

@@ -154,14 +154,15 @@ const SingleNoteAudit = () => {
   const fromQuery = searchParams.get('from');
   const reviewerIdFromQuery = searchParams.get('reviewerId');
   const isManagerReviewingFromQuery = searchParams.get('isManagerReviewing');
-  const hideBackFromQuery = searchParams.get('hideBack');
 
   const chatId = chatIdFromQuery ? Number(chatIdFromQuery) : location.state?.chatId;
   const reviewerId = reviewerIdFromQuery ? Number(reviewerIdFromQuery) : location.state?.reviewerId || null;
   const isManagerReviewing =
     isManagerReviewingFromQuery != null ? isManagerReviewingFromQuery === 'true' : location.state?.isManagerReviewing || false;
   const from = (fromQuery as string | undefined) ?? (location.state?.from as string | undefined);
-  const hideBack = hideBackFromQuery === '1' || hideBackFromQuery === 'true';
+
+  const backPath =
+    from === 'admin-review-queue' ? '/admin-review-queue' : from === 'manager-review-queue' ? '/manager-review' : '/notes-queue';
 
   const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
@@ -425,7 +426,7 @@ const SingleNoteAudit = () => {
   if (loading) {
     return (
       <div>
-        <LoadingSkeleton hideBack={hideBack} />
+        <LoadingSkeleton backPath={backPath} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
           {!isManagerReviewing && featureFlags.actionButtons && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
@@ -437,11 +438,9 @@ const SingleNoteAudit = () => {
   if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
     return (
       <div>
-        {!hideBack && (
-          <Button onClick={() => navigate(-1)} className="mb-2">
-            <ArrowLeft />
-          </Button>
-        )}
+        <Button onClick={() => navigate(backPath)} className="mb-2">
+          <ArrowLeft />
+        </Button>
         <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
           <p className="text-base">No agent configured. Create an agent first, then come back to create chat.</p>
           <Button asChild>
@@ -461,11 +460,9 @@ const SingleNoteAudit = () => {
   return (
     noteDetail && (
       <div>
-        {!hideBack && (
-          <Button onClick={() => navigate(-1)} className="mb-2">
-            <ArrowLeft />
-          </Button>
-        )}
+        <Button onClick={() => navigate(backPath)} className="mb-2">
+          <ArrowLeft />
+        </Button>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
