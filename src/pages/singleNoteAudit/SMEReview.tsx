@@ -12,7 +12,6 @@ import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
 import { deleteSMEReview, markNoteForReview, assignToManager, type NoteReviewMarkPayload } from './singleNoteApiCalls';
-import { UserRoleEnum } from '@/constants/common';
 import { formatDate } from '@/utils/helper';
 
 const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
@@ -524,19 +523,14 @@ const SMEReview = ({
             });
           }
 
-          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible (not for admin – admin can't add review)
+          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible
           const hasCurrentUserReview = filteredReviews.some(r => r.reviewerId != null && Number(r.reviewerId) === loggedInUserId);
-          const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
 
           let displayReviews = filteredReviews;
           let isNoReviewMode = false;
 
           const showPlaceholder =
-            !isAdmin &&
-            loggedInUserId != null &&
-            versionId != null &&
-            !hasCurrentUserReview &&
-            (!isManagerReviewing || reviewerId === loggedInUserId);
+            loggedInUserId != null && versionId != null && !hasCurrentUserReview && (!isManagerReviewing || reviewerId === loggedInUserId);
 
           if (showPlaceholder) {
             const placeholderReview: Review = {

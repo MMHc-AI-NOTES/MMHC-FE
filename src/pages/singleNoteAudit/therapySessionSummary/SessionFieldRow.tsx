@@ -62,7 +62,7 @@ export function SessionFieldRow({
             {issueCount > 0 && UserRoleEnum.superAdmin !== userType && (
               <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">{issueCount}</Badge>
             )}
-            {UserRoleEnum.sme_reviewer === userType && (
+            {(UserRoleEnum.sme_reviewer === userType || UserRoleEnum.superAdmin === userType) && (
               <Button
                 variant="ghost"
                 size="icon"
