@@ -33,6 +33,7 @@ interface FiltersSectionProps {
     workflow: string;
     search: string;
     notReviewedByMe: boolean;
+    notReviewedByAnyone: boolean;
   };
   practitioners: PractitionerOption[];
   cptCodes: CptCodeOption[];
@@ -213,28 +214,52 @@ export const FiltersSection = ({
         </div>
       </div>
 
-      {/* Checkbox Filter */}
-      {user?.type === UserRoleEnum.sme_reviewer && (
+      {/* Checkbox Filters */}
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center space-x-2">
           <div
-            className={`flex items-center gap-3 rounded-md border-2 px-4 py-2.5 hover:border-[#B0E490] hover:bg-green-50 ${filters.notReviewedByMe ? 'border-[#B0E490] bg-green-50' : 'border-gray-200 bg-white'}`}
+            className={`flex items-center gap-3 rounded-md border-2 px-4 py-2.5 hover:border-[#B0E490] hover:bg-green-50 ${filters.notReviewedByAnyone ? 'border-[#B0E490] bg-green-50' : 'border-gray-200 bg-white'}`}
           >
             <Checkbox
-              id="reviewed-by-me"
+              id="not-reviewed-by-anyone"
               className="border-gray-300 data-[state=checked]:border-transparent data-[state=checked]:bg-[#B0E490] [&_svg]:!size-4"
-              checked={filters.notReviewedByMe}
-              onCheckedChange={checked => onFilterChange('notReviewedByMe', checked === true)}
+              checked={filters.notReviewedByAnyone}
+              onCheckedChange={checked => onFilterChange('notReviewedByAnyone', checked === true)}
             />
             <label
-              htmlFor="reviewed-by-me"
-              className={`cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${filters.notReviewedByMe ? 'text-primary' : 'text-gray-500'}`}
+              htmlFor="not-reviewed-by-anyone"
+              className={`cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                filters.notReviewedByAnyone ? 'text-primary' : 'text-gray-500'
+              }`}
             >
-              Show only notes not reviewed by me
+              Notes not reviewed by anyone
             </label>
           </div>
-          {user?.fullName && <span className="text-muted-foreground text-xs">(Logged in as: {user.fullName})</span>}
         </div>
-      )}
+        {user?.type === UserRoleEnum.sme_reviewer && (
+          <div className="flex items-center space-x-2">
+            <div
+              className={`flex items-center gap-3 rounded-md border-2 px-4 py-2.5 hover:border-[#B0E490] hover:bg-green-50 ${filters.notReviewedByMe ? 'border-[#B0E490] bg-green-50' : 'border-gray-200 bg-white'}`}
+            >
+              <Checkbox
+                id="reviewed-by-me"
+                className="border-gray-300 data-[state=checked]:border-transparent data-[state=checked]:bg-[#B0E490] [&_svg]:!size-4"
+                checked={filters.notReviewedByMe}
+                onCheckedChange={checked => onFilterChange('notReviewedByMe', checked === true)}
+              />
+              <label
+                htmlFor="reviewed-by-me"
+                className={`cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                  filters.notReviewedByMe ? 'text-primary' : 'text-gray-500'
+                }`}
+              >
+                Show only notes not reviewed by me
+              </label>
+            </div>
+            {user?.fullName && <span className="text-muted-foreground text-xs">(Logged in as: {user.fullName})</span>}
+          </div>
+        )}
+      </div>
 
       {/* Apply and Clear Buttons */}
       <div className="flex justify-end gap-3">

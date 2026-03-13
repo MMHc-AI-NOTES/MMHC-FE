@@ -6,7 +6,7 @@ import NotificationTypesSection from './components/NotificationTypesSection';
 import DeliveryChannelsSection from './components/DeliveryChannelsSection';
 import EmailTemplatesSection from './components/EmailTemplatesSection';
 import EmailTemplateDialog from './components/EmailTemplateDialog';
-import { AVAILABLE_VARIABLES } from './constants';
+import { AVAILABLE_VARIABLES } from '@/constants/common';
 
 interface NotificationsTabProps {
   // For future API integration

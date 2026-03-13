@@ -74,6 +74,7 @@ const NotesQueue = () => {
     workflow: 'all',
     search: '',
     notReviewedByMe: true,
+    notReviewedByAnyone: false,
   };
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('notesQueueFilters', defaultFilters);
 
@@ -129,6 +130,11 @@ const NotesQueue = () => {
     // Reviewed By Me filter
     if (filters.notReviewedByMe) {
       filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
+    }
+
+    // Notes not reviewed by anyone filter
+    if (filters.notReviewedByAnyone) {
+      filterArray.push({ columnName: 'not_reviewed', value: true });
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
@@ -218,7 +224,8 @@ const NotesQueue = () => {
           filters.manager !== 'all' ||
           filters.workflow !== 'all' ||
           filters.search !== '' ||
-          filters.notReviewedByMe;
+          filters.notReviewedByMe ||
+          filters.notReviewedByAnyone;
 
         let payload: NotesPayload;
         if (hasActive) {
@@ -254,6 +261,9 @@ const NotesQueue = () => {
           }
           if (filters.notReviewedByMe) {
             filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
+          }
+          if (filters.notReviewedByAnyone) {
+            filterArray.push({ columnName: 'not_reviewed', value: true });
           }
 
           payload = { page: 1, pageSize: itemsPerPage, filters: filterArray, sorts };
@@ -320,7 +330,31 @@ const NotesQueue = () => {
 
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string | boolean) => {
-    setFilters({ ...filters, [key]: value });
+    // Special handling to keep review filters mutually exclusive
+    if (key === 'notReviewedByAnyone') {
+      const isChecked = value === true;
+      setFilters({
+        ...filters,
+        notReviewedByAnyone: isChecked,
+        notReviewedByMe: isChecked ? false : filters.notReviewedByMe,
+      });
+      return;
+    }
+
+    if (key === 'notReviewedByMe') {
+      const isChecked = value === true;
+      setFilters({
+        ...filters,
+        notReviewedByMe: isChecked,
+        notReviewedByAnyone: isChecked ? false : filters.notReviewedByAnyone,
+      });
+      return;
+    }
+
+    setFilters({
+      ...filters,
+      [key]: value,
+    });
   };
 
   // Apply filters - makes API call with current filter values
@@ -354,6 +388,9 @@ const NotesQueue = () => {
       const filterArray: any[] = [];
       if (resetFilters.notReviewedByMe) {
         filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
+      }
+      if (resetFilters.notReviewedByAnyone) {
+        filterArray.push({ columnName: 'not_reviewed', value: true });
       }
 
       const response = await fetchNotes({ page: 1, pageSize: itemsPerPage, filters: filterArray, sorts });
