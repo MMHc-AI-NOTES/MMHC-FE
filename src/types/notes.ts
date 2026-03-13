@@ -307,7 +307,9 @@ export interface HumanReviewNote {
   id: string;
   chatId: number;
   practitioner: string;
+  client: string;
   date: string;
+  reviewDate: string;
   score: number;
   aiStatus: number;
   reviewStatus: number;

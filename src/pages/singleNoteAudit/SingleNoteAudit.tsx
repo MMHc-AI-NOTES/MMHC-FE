@@ -147,6 +147,7 @@ const SingleNoteAudit = () => {
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
   const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
   const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
+  const [assignedToManagerAt, setAssignedToManagerAt] = useState<string | null>(null);
 
   const searchParams = new URLSearchParams(location.search);
 
@@ -522,6 +523,7 @@ const SingleNoteAudit = () => {
               onSMEIssueUpdated={onSMEIssueUpdated}
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
               onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
+              onAssignedToManager={timestamp => setAssignedToManagerAt(timestamp)}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
@@ -548,7 +550,12 @@ const SingleNoteAudit = () => {
               />
             )}
             {featureFlags.showAuditHistory && (
-              <AuditHistoryCard noteId={noteId} markedForReviewAt={markedForReviewAt ?? undefined} emailSentAt={emailSentAt ?? undefined} />
+              <AuditHistoryCard
+                noteId={noteId}
+                markedForReviewAt={markedForReviewAt ?? undefined}
+                emailSentAt={emailSentAt ?? undefined}
+                assignedToManagerAt={assignedToManagerAt ?? undefined}
+              />
             )}
             {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
