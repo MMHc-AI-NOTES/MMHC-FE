@@ -452,9 +452,10 @@ const SingleNoteAudit = () => {
     );
   }
 
-  const handleNoteIdClick = () => {
+  const handleNoteIdClick = (noteIdParam?: string | number) => {
     if (!noteDetail) return;
-    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${noteDetail.id}`;
+    const itemId = noteIdParam ?? noteDetail.id;
+    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${itemId}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -467,7 +468,7 @@ const SingleNoteAudit = () => {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
-            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={handleNoteIdClick} />
+            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)} />
             <TherapySessionSummaryCard
               webhookVersions={noteDetail.webhookVersions}
               onVersionChange={setSelectedVersionId}
@@ -479,13 +480,13 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={handleNoteIdClick}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
             />
             <PreviousSessionCard
               webhookVersions={noteDetail.webhookVersions}
               previousNote={noteDetail.previousNote}
               onVersionChange={setSelectedVersionId}
-              noteId={noteId}
+              noteId={noteDetail.previousNote?.noteId ?? '-'}
               versionId={selectedVersionId}
               reviewerId={reviewerId ?? loggedInUserId}
               practitionerId={practitionerId ?? 0}
@@ -493,7 +494,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={handleNoteIdClick}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId ?? '-')}
             />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
