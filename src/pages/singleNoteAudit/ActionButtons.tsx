@@ -22,6 +22,7 @@ interface ActionButtonsProps {
   practitionerId?: number | null;
   noteId?: string;
   versionId?: number | null;
+  onEmailSent?: (timestamp: string) => void;
 }
 
 const ActionButtons = ({
@@ -32,6 +33,7 @@ const ActionButtons = ({
   practitionerId,
   noteId,
   versionId,
+  onEmailSent,
 }: ActionButtonsProps) => {
   const dispatch = useDispatch();
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
@@ -61,6 +63,9 @@ const ActionButtons = ({
         version_id: versionId,
       });
       setIsNotifyDialogOpen(false);
+      if (onEmailSent) {
+        onEmailSent(new Date().toISOString());
+      }
     } catch (error) {
       console.error('Error notifying practitioner:', error);
     } finally {

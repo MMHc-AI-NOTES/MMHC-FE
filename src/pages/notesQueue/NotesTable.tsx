@@ -1,5 +1,5 @@
 // @/components/notes/NotesTable.tsx
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowDownUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormattedNote } from '@/types/notes';
@@ -22,12 +22,15 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientBadge } from '@/shared/GradientBadge';
 import { useAppSelector } from '@/store/store';
+import type { SortItem } from './notesApiCalls';
 
 interface NotesTableProps {
   notes: FormattedNote[];
   onViewNote: (noteId: string) => void;
   page?: number;
   pageSize?: number;
+  sorts?: SortItem[];
+  onSortChange?: (columnName: string) => void;
 }
 
 // Helper functions to get gradient CSS classes for badges
@@ -133,7 +136,21 @@ const getSmeReviewGradient = (status: number): string => {
   }
 };
 
-export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60 }: NotesTableProps) => {
+const getSortIcon = (columnName: string, sorts?: SortItem[]) => {
+  const activeSort = sorts?.find(sort => sort.columnName === columnName);
+
+  if (!activeSort) {
+    return <ArrowDownUp className="text-muted-foreground h-3.5 w-3.5" />;
+  }
+
+  if (activeSort.orderBy === 'asc') {
+    return <ArrowUp className="h-3.5 w-3.5" />;
+  }
+
+  return <ArrowDown className="h-3.5 w-3.5" />;
+};
+
+export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, onSortChange }: NotesTableProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const columnCount = 15;
 
@@ -145,13 +162,59 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60 }: Notes
             <TableHeader>
               <TableRow>
                 <TableHead className="text-primary min-w-[120px] font-semibold">No.</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start gap-1"
+                    onClick={() => onSortChange?.('practitioner_id')}
+                  >
+                    <span>PRACTITIONER</span>
+                    {getSortIcon('practitioner_id', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start gap-1"
+                    onClick={() => onSortChange?.('patient_id')}
+                  >
+                    <span>CLIENT</span>
+                    {getSortIcon('patient_id', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[100px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start gap-1"
+                    onClick={() => onSortChange?.('session_time')}
+                  >
+                    <span>DATE</span>
+                    {getSortIcon('session_time', sorts)}
+                  </button>
+                </TableHead>
                 <TableHead className="text-primary min-w-[200px] text-center font-semibold">SME REVIEW</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">TYPE</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
+                  <button type="button" className="flex w-full items-center justify-start gap-1" onClick={() => onSortChange?.('type')}>
+                    <span>TYPE</span>
+                    {getSortIcon('type', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start gap-1"
+                    onClick={() => onSortChange?.('cpt_code_id')}
+                  >
+                    <span>CPT CODE</span>
+                    {getSortIcon('cpt_code_id', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
+                  <button type="button" className="flex w-full items-center justify-start gap-1" onClick={() => onSortChange?.('note_id')}>
+                    <span>NOTE ID</span>
+                    {getSortIcon('note_id', sorts)}
+                  </button>
+                </TableHead>
                 {/* <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
                 <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
                 <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
@@ -224,13 +287,59 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60 }: Notes
           <TableHeader>
             <TableRow>
               <TableHead className="text-primary pl-4 text-left font-semibold">No.</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">PRACTITIONER</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">CLIENT</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('practitioner_id')}
+                >
+                  <span>PRACTITIONER</span>
+                  {getSortIcon('practitioner_id', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('patient_id')}
+                >
+                  <span>CLIENT</span>
+                  {getSortIcon('patient_id', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[100px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('session_time')}
+                >
+                  <span>DATE</span>
+                  {getSortIcon('session_time', sorts)}
+                </button>
+              </TableHead>
               <TableHead className="text-primary min-w-[200px] text-center font-semibold">SME REVIEW</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">TYPE</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">CPT CODE</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">NOTE ID</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
+                <button type="button" className="flex w-full items-center justify-center gap-1" onClick={() => onSortChange?.('type')}>
+                  <span>TYPE</span>
+                  {getSortIcon('type', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('cpt_code_id')}
+                >
+                  <span>CPT CODE</span>
+                  {getSortIcon('cpt_code_id', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
+                <button type="button" className="flex w-full items-center justify-center gap-1" onClick={() => onSortChange?.('note_id')}>
+                  <span>NOTE ID</span>
+                  {getSortIcon('note_id', sorts)}
+                </button>
+              </TableHead>
               {/* <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead> */}
               {/* <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
               <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
@@ -385,7 +494,15 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60 }: Notes
                 <TableCell className="border-border sticky right-0 z-10 bg-white">
                   <Button
                     variant="outline"
-                    onClick={() => onViewNote(note.noteId)}
+                    onClick={event => {
+                      const baseUrl = `/notes-queue/single-note-audit/${note.noteId}`;
+                      if (event.metaKey || event.ctrlKey || event.button === 1) {
+                        const urlWithHideBack = `${baseUrl}?hideBack=1`;
+                        window.open(urlWithHideBack, '_blank', 'noopener,noreferrer');
+                      } else {
+                        onViewNote(note.noteId);
+                      }
+                    }}
                     className="border-primary text-primary hover:bg-primary h-9 bg-transparent text-[13px] hover:text-white"
                   >
                     Open

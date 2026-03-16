@@ -33,7 +33,7 @@ import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
-import { SessionTypeLabels, UserRoleEnum } from '@/constants/common';
+import { SessionTypeLabels } from '@/constants/common';
 import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
@@ -145,11 +145,26 @@ const SingleNoteAudit = () => {
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
+  const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
+  const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
+  const [assignedToManagerAt, setAssignedToManagerAt] = useState<string | null>(null);
 
-  const chatId = location.state?.chatId;
-  const reviewerId = location.state?.reviewerId || null;
-  const isManagerReviewing = location.state?.isManagerReviewing || false;
-  const from = location.state?.from as string | undefined;
+  const searchParams = new URLSearchParams(location.search);
+
+  const chatIdFromQuery = searchParams.get('chatId');
+  const fromQuery = searchParams.get('from');
+  const reviewerIdFromQuery = searchParams.get('reviewerId');
+  const isManagerReviewingFromQuery = searchParams.get('isManagerReviewing');
+
+  const chatId = chatIdFromQuery ? Number(chatIdFromQuery) : location.state?.chatId;
+  const reviewerId = reviewerIdFromQuery ? Number(reviewerIdFromQuery) : location.state?.reviewerId || null;
+  const isManagerReviewing =
+    isManagerReviewingFromQuery != null ? isManagerReviewingFromQuery === 'true' : location.state?.isManagerReviewing || false;
+  const from = (fromQuery as string | undefined) ?? (location.state?.from as string | undefined);
+
+  const backPath =
+    from === 'admin-review-queue' ? '/admin-review-queue' : from === 'manager-review-queue' ? '/manager-review' : '/notes-queue';
+
   const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
@@ -412,7 +427,7 @@ const SingleNoteAudit = () => {
   if (loading) {
     return (
       <div>
-        <LoadingSkeleton />
+        <LoadingSkeleton backPath={backPath} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
           {!isManagerReviewing && featureFlags.actionButtons && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
@@ -424,7 +439,7 @@ const SingleNoteAudit = () => {
   if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
     return (
       <div>
-        <Button onClick={() => navigate(-1)} className="mb-2">
+        <Button onClick={() => navigate(backPath)} className="mb-2">
           <ArrowLeft />
         </Button>
         <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -437,16 +452,23 @@ const SingleNoteAudit = () => {
     );
   }
 
+  const handleNoteIdClick = (noteIdParam?: string | number) => {
+    if (!noteDetail) return;
+    const itemId = noteIdParam ?? noteDetail.id;
+    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${itemId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     noteDetail && (
       <div>
-        <Button onClick={() => navigate(-1)} className="mb-2">
+        <Button onClick={() => navigate(backPath)} className="mb-2">
           <ArrowLeft />
         </Button>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
-            <NoteInformation noteDetail={noteDetail} />
+            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)} />
             <TherapySessionSummaryCard
               webhookVersions={noteDetail.webhookVersions}
               onVersionChange={setSelectedVersionId}
@@ -458,12 +480,13 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
             />
             <PreviousSessionCard
               webhookVersions={noteDetail.webhookVersions}
               previousNote={noteDetail.previousNote}
               onVersionChange={setSelectedVersionId}
-              noteId={noteId}
+              noteId={noteDetail.previousNote?.noteId ?? '-'}
               versionId={selectedVersionId}
               reviewerId={reviewerId ?? loggedInUserId}
               practitionerId={practitionerId ?? 0}
@@ -471,6 +494,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId ?? '-')}
             />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
@@ -499,6 +523,8 @@ const SingleNoteAudit = () => {
               onSMEReviewDeleted={onSMEReviewDeleted}
               onSMEIssueUpdated={onSMEIssueUpdated}
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
+              onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
+              onAssignedToManager={timestamp => setAssignedToManagerAt(timestamp)}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
@@ -513,7 +539,7 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {user?.type === UserRoleEnum.superAdmin && (
+            {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
                 isManagerReviewing={isManagerReviewing}
@@ -521,9 +547,17 @@ const SingleNoteAudit = () => {
                 practitionerId={practitionerId}
                 noteId={noteId}
                 versionId={selectedVersionId}
+                onEmailSent={timestamp => setEmailSentAt(timestamp)}
               />
             )}
-            {featureFlags.showAuditHistory && <AuditHistoryCard noteId={noteId} />}
+            {featureFlags.showAuditHistory && (
+              <AuditHistoryCard
+                noteId={noteId}
+                markedForReviewAt={markedForReviewAt ?? undefined}
+                emailSentAt={emailSentAt ?? undefined}
+                assignedToManagerAt={assignedToManagerAt ?? undefined}
+              />
+            )}
             {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             )}

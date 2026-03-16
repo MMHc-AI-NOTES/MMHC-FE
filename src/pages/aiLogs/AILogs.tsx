@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import LogDetailsSection from './LogDetailsSection';
 import { FileText } from 'lucide-react';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
 
 const AILogs = () => {
   const [logs, setLogs] = useState<AILog[]>([]);
@@ -22,7 +23,7 @@ const AILogs = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20;
+  const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
   // Filter states with persistence
   const defaultFilters = { model: 'all', prompt: 'all', result: 'all', severity: 'all' };

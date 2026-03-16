@@ -20,6 +20,7 @@ import { DataTablePagination } from '@/shared/DataTablePagination';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { ManagerBulkSendDialog } from './ManagerBulkSendDialog';
 import { formatDateTime } from '@/utils/helper';
+import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
 
 const defaultFilters = {
   humanDecision: 'all',
@@ -73,7 +74,7 @@ export const ManagerReviewQueue = () => {
   // Pagination (dummy for now - client-side only, same shape as NotesQueue)
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20;
+  const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('managerReviewFilters', defaultFilters);
 
@@ -205,6 +206,7 @@ export const ManagerReviewQueue = () => {
       state: {
         reviewerId,
         isManagerReviewing: true,
+        from: 'manager-review-queue',
       },
     });
   };

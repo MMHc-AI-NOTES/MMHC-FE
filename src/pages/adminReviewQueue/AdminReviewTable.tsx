@@ -1,62 +1,41 @@
 // @/pages/adminReviewQueue/AdminReviewTable.tsx
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowDownUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { HumanReviewNote } from '@/types/notes';
-import { AiStatusLabels, PriorityLabels, AiStatusEnum, ReviewStatusEnum, PriorityEnum } from '@/constants/common';
-import { GradientBadge } from '@/shared/GradientBadge';
+
+type SortOrder = 'asc' | 'desc';
+
+interface SortItem {
+  columnName: string;
+  orderBy: SortOrder;
+}
 
 interface AdminReviewTableProps {
   notes: HumanReviewNote[];
   onReviewNote: (noteId: string) => void;
+  page?: number;
+  pageSize?: number;
+  sorts?: SortItem[];
+  onSortChange?: (columnName: string) => void;
 }
 
-// Helper functions to get gradient CSS classes for badges
-const getAiStatusGradient = (status: number): string => {
-  switch (status) {
-    case AiStatusEnum.passed:
-      return 'bg-gradient-ai-passed';
-    case AiStatusEnum.failed:
-      return 'bg-gradient-ai-failed';
-    case AiStatusEnum.warning:
-      return 'bg-gradient-ai-warning';
-    case AiStatusEnum.needs_review:
-      return 'bg-gradient-ai-needs-review';
-    case AiStatusEnum.not_reviewed:
-      return 'bg-gradient-ai-not-reviewed';
-    default:
-      return 'bg-gradient-neutral';
+const getSortIcon = (columnName: string, sorts?: SortItem[]) => {
+  const activeSort = sorts?.find(sort => sort.columnName === columnName);
+
+  if (!activeSort) {
+    return <ArrowDownUp className="text-muted-foreground h-3.5 w-3.5" />;
   }
+
+  if (activeSort.orderBy === 'asc') {
+    return <ArrowUp className="h-3.5 w-3.5" />;
+  }
+
+  return <ArrowDown className="h-3.5 w-3.5" />;
 };
 
-const getReviewStatusGradient = (status: number): string => {
-  switch (status) {
-    case ReviewStatusEnum.pending:
-      return 'bg-gradient-human-pending';
-    case ReviewStatusEnum.in_progress:
-      return 'bg-gradient-manager-in-progress';
-    case ReviewStatusEnum.returned:
-      return 'bg-gradient-human-returned';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
-
-const getPriorityGradient = (priority: number): string => {
-  switch (priority) {
-    case PriorityEnum.high:
-      return 'bg-gradient-priority-high';
-    case PriorityEnum.medium:
-      return 'bg-gradient-priority-medium';
-    case PriorityEnum.low:
-      return 'bg-gradient-priority-low';
-    default:
-      return 'bg-gradient-neutral';
-  }
-};
-
-export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps) => {
-  const columnCount = 9;
+export const AdminReviewTable = ({ notes, onReviewNote, page = 1, pageSize = 20, sorts, onSortChange }: AdminReviewTableProps) => {
+  const columnCount = 8;
 
   if (notes.length === 0) {
     return (
@@ -65,14 +44,35 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
-                <TableHead className="text-primary min-w-[140px] font-semibold">PRACTITIONER</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
-                <TableHead className="text-primary min-w-[80px] font-semibold">SCORE</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
-                <TableHead className="text-primary min-w-[140px] font-semibold">REVIEW STATUS</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
-                <TableHead className="text-primary min-w-[100px] font-semibold">PRIORITY</TableHead>
+                <TableHead className="text-primary min-w-[80px] font-semibold">No.</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-center gap-1"
+                    onClick={() => onSortChange?.('practitioner_id')}
+                  >
+                    <span>PRACTITIONER</span>
+                    {getSortIcon('practitioner_id', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[120px] font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-center gap-1"
+                    onClick={() => onSortChange?.('created_at')}
+                  >
+                    <span>DATE</span>
+                    {getSortIcon('created_at', sorts)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-primary min-w-[140px] text-center font-semibold">REVIEW DATE</TableHead>
+                <TableHead className="text-primary min-w-[140px] text-center font-semibold">HUMAN SCORE</TableHead>
+                <TableHead className="text-primary min-w-[140px] font-semibold">
+                  <button type="button" className="flex w-full items-center justify-center gap-1" onClick={() => onSortChange?.('note_id')}>
+                    <span>NOTE ID</span>
+                    {getSortIcon('note_id', sorts)}
+                  </button>
+                </TableHead>
                 <TableHead className="text-primary min-w-[140px] text-center font-semibold">ACTION</TableHead>
               </TableRow>
             </TableHeader>
@@ -95,40 +95,69 @@ export const AdminReviewTable = ({ notes, onReviewNote }: AdminReviewTableProps)
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
-              <TableHead className="text-primary min-w-[140px] font-semibold">PRACTITIONER</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">DATE</TableHead>
-              <TableHead className="text-primary min-w-[80px] font-semibold">SCORE</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
-              <TableHead className="text-primary min-w-[140px] font-semibold">REVIEW STATUS</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">REVIEWER</TableHead>
-              <TableHead className="text-primary min-w-[100px] font-semibold">PRIORITY</TableHead>
+              <TableHead className="text-primary pl-4 text-left font-semibold">No.</TableHead>
+              <TableHead className="text-primary min-w-[140px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('practitioner_id')}
+                >
+                  <span>PRACTITIONER</span>
+                  {getSortIcon('practitioner_id', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-1"
+                  onClick={() => onSortChange?.('created_at')}
+                >
+                  <span>DATE</span>
+                  {getSortIcon('created_at', sorts)}
+                </button>
+              </TableHead>
+              <TableHead className="text-primary min-w-[140px] text-center font-semibold">REVIEW DATE</TableHead>
+              <TableHead className="text-primary min-w-[140px] text-center font-semibold">HUMAN SCORE</TableHead>
+
+              <TableHead className="text-primary min-w-[140px] font-semibold">
+                <button type="button" className="flex w-full items-center justify-center gap-1" onClick={() => onSortChange?.('note_id')}>
+                  <span>NOTE ID</span>
+                  {getSortIcon('note_id', sorts)}
+                </button>
+              </TableHead>
               <TableHead className="text-primary min-w-[140px] text-center font-semibold">ACTION</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {notes.map((note, index) => (
               <TableRow key={index} className="group">
-                <TableCell className="text-left font-medium">{note.id}</TableCell>
+                <TableCell className="text-left font-medium">{(page - 1) * pageSize + index + 1}</TableCell>
                 <TableCell className="font-medium">{note.practitioner}</TableCell>
                 <TableCell>{note.date}</TableCell>
+                <TableCell>{note.reviewDate}</TableCell>
                 <TableCell className="font-semibold">{note.score}</TableCell>
-                <TableCell>
-                  <GradientBadge label={AiStatusLabels[note.aiStatus]} gradient={getAiStatusGradient(note.aiStatus)} />
-                </TableCell>
-                <TableCell>
-                  <GradientBadge label={'Pending'} gradient={getReviewStatusGradient(note.reviewStatus)} />
-                </TableCell>
-                <TableCell>{note.reviewer || 'Unassigned'}</TableCell>
-                <TableCell>
-                  <GradientBadge label={PriorityLabels[note.priority]} gradient={getPriorityGradient(note.priority)} />
-                </TableCell>
+                <TableCell className="font-medium">{note.id}</TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center">
                     <Button
                       size="lg"
                       variant="outline"
-                      onClick={() => onReviewNote(note.id)}
+                      onClick={event => {
+                        const url = `/admin-review-queue/single-note-audit/${note.id}`;
+                        const params = new URLSearchParams();
+                        params.set('from', 'admin-review-queue');
+                        if ((note as any).chatId) {
+                          params.set('chatId', String((note as any).chatId));
+                        }
+                        params.set('hideBack', '1');
+                        const fullUrl = `${url}?${params.toString()}`;
+
+                        if (event.metaKey || event.ctrlKey || event.button === 1) {
+                          window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                        } else {
+                          onReviewNote(note.id);
+                        }
+                      }}
                       className="border-primary text-primary hover:bg-primary h-9 gap-1 bg-transparent text-[13px] hover:text-white"
                     >
                       Review Note

@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, User, Save, FileCheck, Plus } from 'lucide-react';
+import { Pencil, Trash2, Save, FileCheck, Plus } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 // import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
@@ -44,6 +44,8 @@ interface ReviewCardProps {
   markedAtLabel?: string | null;
   /** True when this is the placeholder "no review yet" card (Admin Review flow). */
   isNoReviewMode?: boolean;
+  /** Optional callback so parent can optimistically add an audit history item when a note is assigned to manager */
+  onAssignedToManager?: (timestamp: string) => void;
 }
 
 const ReviewCard = ({
@@ -68,6 +70,7 @@ const ReviewCard = ({
   readOnly = false,
   markedAtLabel = null,
   isNoReviewMode = false,
+  onAssignedToManager,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -291,10 +294,6 @@ const ReviewCard = ({
     }
   };
 
-  const handleAssignToManager = () => {
-    setShowAssignManagerForm(true);
-  };
-
   const handleCancelAssign = () => {
     setShowAssignManagerForm(false);
     setSelectedManagerId('');
@@ -325,6 +324,10 @@ const ReviewCard = ({
         version_label: versionLabel,
       });
 
+      if (onAssignedToManager) {
+        onAssignedToManager(new Date().toISOString());
+      }
+
       // Reset form after successful assignment
       setShowAssignManagerForm(false);
       setSelectedManagerId('');
@@ -346,8 +349,8 @@ const ReviewCard = ({
               disabled={
                 readOnly ||
                 isMarkingForReview ||
-                // If there are changes, always enable so user can mark again (changes take priority)
-                (!hasIssuesChangedSinceMark && (isMarkedForReview || (isNoReviewMode && !!markedAtLabel)))
+                // If there are no changes since last mark and it's already marked, keep disabled.
+                (!hasIssuesChangedSinceMark && isMarkedForReview)
               }
               onClick={onMarkForReview}
             >
@@ -356,16 +359,6 @@ const ReviewCard = ({
             </Button>
             {!isNoReviewMode && (
               <>
-                <Button
-                  onClick={handleAssignToManager}
-                  size="sm"
-                  className="bg-gradient-light text-primary border-0 shadow-sm"
-                  disabled={readOnly || review.issues.length === 0}
-                >
-                  <User />
-                  Assign To Manager
-                </Button>
-
                 <Button
                   variant="ghost"
                   size="icon"

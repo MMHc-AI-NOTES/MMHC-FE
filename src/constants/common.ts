@@ -1,3 +1,8 @@
+import { AvailableVariable } from '@/types/settings';
+
+// Global table pagination defaults
+export const DEFAULT_ITEMS_PER_PAGE = 20;
+
 export const SLIDER_CONFIGS = {
   TEMPERATURE: { min: 0, max: 1, step: 0.1 },
   TOP_P: { min: 0, max: 1, step: 0.1 },
@@ -233,6 +238,8 @@ export const AuditActionEnum = {
   emailBulkSmeIssues: 'email_bulk_sme_issues',
   emailMissingFields: 'email_missing_fields',
   webhookSessionReceived: 'webhook_session_received',
+  noteMarkedReviewed: 'note_marked_reviewed',
+  smeAssignedToManager: 'sme_assigned_to_manager',
 } as const;
 
 export const AuditActionLabels: Record<(typeof AuditActionEnum)[keyof typeof AuditActionEnum], string> = {
@@ -241,6 +248,8 @@ export const AuditActionLabels: Record<(typeof AuditActionEnum)[keyof typeof Aud
   [AuditActionEnum.emailBulkSmeIssues]: 'Bulk Email Sent',
   [AuditActionEnum.emailMissingFields]: 'Missing Fields Email',
   [AuditActionEnum.webhookSessionReceived]: 'Webhook Session Received',
+  [AuditActionEnum.noteMarkedReviewed]: 'Note Marked For Review',
+  [AuditActionEnum.smeAssignedToManager]: 'Assigned to Manager',
 };
 
 export const HumanReviewResultEnum = {
@@ -456,3 +465,12 @@ export const SessionJsonFieldDisplayNames: Record<string, string> = {
   Progress: 'Progress',
   'Therapist Initials': 'Therapist Initials',
 };
+
+export const AVAILABLE_VARIABLES: AvailableVariable[] = [
+  { id: 'practitioner_name', name: '{{practitioner_name}}', displayName: 'Practitioner Name' },
+  { id: 'note_id', name: '{{note_id}}', displayName: 'Note ID' },
+  { id: 'ai_score', name: '{{ai_score}}', displayName: 'AI Score' },
+  { id: 'issues_list', name: '{{issues_list}}', displayName: 'Issues List' },
+  { id: 'date', name: '{{date}}', displayName: 'Date' },
+  { id: 'client_name', name: '{{client_name}}', displayName: 'Client Name' },
+];

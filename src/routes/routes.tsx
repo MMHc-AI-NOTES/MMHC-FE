@@ -13,6 +13,7 @@ const ImpersonateLogin = lazy(() => import('@/pages/auth/ImpersonateLogin'));
 const Signup = lazy(() => import('@/pages/auth/Signup'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const NotesQueue = lazy(() => import('@/pages/notesQueue/NotesQueue'));
+const Clients = lazy(() => import('@/pages/clients/Clients'));
 const SingleNoteAudit = lazy(() => import('@/pages/singleNoteAudit/SingleNoteAudit'));
 const AdminReviewQueue = lazy(() => import('@/pages/adminReviewQueue/AdminReviewQueue'));
 const Settings = lazy(() => import('@/pages/settings/Settings'));
@@ -48,6 +49,14 @@ const Routes = () => {
           element: (
             <RoleGuard>
               <NotesQueue />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: 'clients',
+          element: (
+            <RoleGuard>
+              <Clients />
             </RoleGuard>
           ),
         },

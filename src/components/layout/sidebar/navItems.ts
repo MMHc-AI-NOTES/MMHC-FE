@@ -10,12 +10,14 @@ import {
   FilePlus,
   UserCheck,
   Database,
+  Users,
 } from 'lucide-react';
 import { UserRoleEnum } from '@/constants/common';
 import type { UserRole } from '@/types/settings';
 
 export const allNavItems: NavItem[] = [
   { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard },
+  { path: '/clients', name: 'Clients', icon: Users },
   { path: '/notes-queue', name: 'Notes Queue', icon: FileText },
   // { path: '/single-note-audit', name: 'Single Note Audit', icon: FileSearch },
   { path: '/admin-review-queue', name: 'Admin Review Queue', icon: UserCheck },
@@ -46,6 +48,7 @@ export interface NavItem {
 export const routeAccess: Record<string, UserRole[]> = {
   '/dashboard': [UserRoleEnum.superAdmin, UserRoleEnum.user, UserRoleEnum.practitioner, UserRoleEnum.sme_reviewer],
   '/notes-queue': [UserRoleEnum.superAdmin, UserRoleEnum.practitioner, UserRoleEnum.sme_reviewer],
+  '/clients': [UserRoleEnum.superAdmin, UserRoleEnum.sme_reviewer],
   '/admin-review-queue': [UserRoleEnum.sme_reviewer],
   '/blacklisted-notes': [UserRoleEnum.superAdmin],
   '/manager-review': [UserRoleEnum.superAdmin],

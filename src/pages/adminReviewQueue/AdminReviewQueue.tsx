@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AdminReviewColorKey } from './AdminReviewColorKey';
 import { FiltersSection } from './FiltersSection';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
 
 const AdminReviewQueue = () => {
   const [notes, setNotes] = useState<HumanReviewNote[]>([]);
@@ -33,7 +34,15 @@ const AdminReviewQueue = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20; // Fixed at 20 as per requirement
+  const itemsPerPage = DEFAULT_ITEMS_PER_PAGE; // Fixed at global default
+
+  // Sorting state
+  const [sorts, setSorts] = useState<
+    {
+      columnName: string;
+      orderBy: 'asc' | 'desc';
+    }[]
+  >([{ columnName: 'created_at', orderBy: 'desc' }]);
 
   // Filter states with persistence
   const defaultFilters = { status: 'all', priority: 'all', reviewer: 'all', search: '' };
@@ -65,7 +74,7 @@ const AdminReviewQueue = () => {
       filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
     }
 
-    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
   };
 
   // // Load initial data
@@ -129,9 +138,9 @@ const AdminReviewQueue = () => {
             filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray, sorts };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+          payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
         }
 
         const notesResponse = await fetchHumanReviewNotes(payload);
@@ -178,7 +187,7 @@ const AdminReviewQueue = () => {
 
     try {
       setNotesLoading(true);
-      const payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+      const payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
       const response = await fetchHumanReviewNotes(payload);
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
@@ -209,9 +218,55 @@ const AdminReviewQueue = () => {
   };
 
   const handleReviewNote = (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
     navigate(`/admin-review-queue/single-note-audit/${noteId}`, {
-      state: { from: 'admin-review-queue', chatId: notes.find(note => note.id === noteId)?.chatId },
+      state: {
+        from: 'admin-review-queue',
+        chatId: note?.chatId,
+      },
     });
+  };
+
+  // Handle sorting changes from table header
+  const handleSortChange = async (columnName: string) => {
+    const existing = sorts.find(sort => sort.columnName === columnName);
+
+    let nextSorts:
+      | {
+          columnName: string;
+          orderBy: 'asc' | 'desc';
+        }[]
+      | [] = [];
+
+    if (!existing) {
+      nextSorts = [{ columnName, orderBy: 'desc' }];
+    } else if (existing.orderBy === 'desc') {
+      nextSorts = [{ columnName, orderBy: 'asc' }];
+    } else {
+      nextSorts = [];
+    }
+
+    setSorts(nextSorts);
+
+    try {
+      setNotesLoading(true);
+      setCurrentPage(1);
+
+      const basePayload = buildFilterPayload();
+      const payload = {
+        ...basePayload,
+        page: 1,
+        sorts: nextSorts,
+      };
+
+      const response = await fetchHumanReviewNotes(payload);
+      setNotes(response.data);
+      setTotalItems(response.totalCount || 0);
+    } catch (error) {
+      console.error('Error applying sort:', error);
+    } finally {
+      setNotesLoading(false);
+    }
   };
 
   return (
@@ -233,8 +288,8 @@ const AdminReviewQueue = () => {
           <div>
             <div className="mb-4 flex items-center justify-between px-6">
               <div>
-                <h3 className="text-primary text-lg font-semibold">Pending Admin Reviews</h3>
-                <p className="text-muted-foreground text-sm">{notes.length} notes requiring review</p>
+                <h3 className="text-primary text-lg font-semibold">Admin Reviews</h3>
+                <p className="text-muted-foreground text-sm"> Notes reviewed by you</p>
               </div>
               <Popover>
                 <PopoverTrigger asChild>
@@ -261,7 +316,14 @@ const AdminReviewQueue = () => {
               </div>
             ) : (
               <>
-                <AdminReviewTable notes={notes} onReviewNote={handleReviewNote} />
+                <AdminReviewTable
+                  notes={notes}
+                  onReviewNote={handleReviewNote}
+                  page={currentPage}
+                  pageSize={itemsPerPage}
+                  sorts={sorts}
+                  onSortChange={handleSortChange}
+                />
 
                 {/* Pagination */}
                 {notes.length > 0 && (
