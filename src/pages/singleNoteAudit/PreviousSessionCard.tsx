@@ -122,10 +122,14 @@ const PreviousSessionCard = ({
         </div>
         <div className="flex items-center gap-2">
           <p className="text-primary text-sm">Note ID:</p>
-          <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
-            <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
-            <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
-          </div>
+          {noteId ? (
+            <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+              <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
+              <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">N/A</p>
+          )}
         </div>
       </CardHeader>
 
