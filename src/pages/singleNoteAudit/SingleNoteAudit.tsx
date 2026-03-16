@@ -486,7 +486,7 @@ const SingleNoteAudit = () => {
               webhookVersions={noteDetail.webhookVersions}
               previousNote={noteDetail.previousNote}
               onVersionChange={setSelectedVersionId}
-              noteId={noteDetail.previousNote?.noteId ?? '-'}
+              noteId={noteDetail.previousNote?.noteId}
               versionId={selectedVersionId}
               reviewerId={reviewerId ?? loggedInUserId}
               practitionerId={practitionerId ?? 0}
@@ -494,7 +494,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId ?? '-')}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
             />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
