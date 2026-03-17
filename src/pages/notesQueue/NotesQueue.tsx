@@ -493,7 +493,11 @@ const NotesQueue = () => {
             <div className="mb-4 flex items-center justify-between px-6">
               <div>
                 <h3 className="text-primary text-lg font-semibold">All Notes</h3>
-                <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
+                {notesLoading ? (
+                  <Skeleton className="mt-1.5 h-3 w-32" />
+                ) : (
+                  <p className="text-muted-foreground text-sm">{totalItems} notes in queue</p>
+                )}
               </div>
               <Popover>
                 <PopoverTrigger asChild>
