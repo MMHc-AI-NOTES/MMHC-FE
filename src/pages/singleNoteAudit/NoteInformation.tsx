@@ -37,10 +37,14 @@ const NoteInformation = ({ noteDetail, handleNoteIdClick }: NoteInformationProps
             <Hash className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Note ID</p>
-              <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
-                <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteDetail.id}</span>
-                <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
-              </div>
+              {noteDetail.id ? (
+                <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+                  <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteDetail.id}</span>
+                  <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">N/A</p>
+              )}
             </div>
           </div>
 
