@@ -16,6 +16,7 @@ import { useAppSelector } from '@/store/store';
 import { setAgents } from '@/store/slices/agentsSlice';
 import { useAppDispatch } from '@/store/store';
 import type { Agent } from '@/types/agent';
+import { formatDate } from '@/utils/helper';
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
@@ -100,9 +101,9 @@ const Dashboard = () => {
                     <p className="text-primary text-3xl font-semibold [overflow-wrap:anywhere] whitespace-normal">{defaultAgent.name}</p>
                     <p className="mt-2 text-gray-400">
                       {defaultAgent.updated_at
-                        ? `Last updated ${new Date(defaultAgent.updated_at).toLocaleDateString()}`
+                        ? `Last updated ${formatDate(defaultAgent.updated_at)}`
                         : defaultAgent.created_at
-                          ? `Created ${new Date(defaultAgent.created_at).toLocaleDateString()}`
+                          ? `Created ${formatDate(defaultAgent.created_at)}`
                           : 'Default agent'}
                     </p>
                   </>
