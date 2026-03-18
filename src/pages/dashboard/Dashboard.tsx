@@ -97,7 +97,7 @@ const Dashboard = () => {
               if (defaultAgent) {
                 return (
                   <>
-                    <p className="text-primary text-3xl font-semibold">{defaultAgent.name}</p>
+                    <p className="text-primary text-3xl font-semibold [overflow-wrap:anywhere] whitespace-normal">{defaultAgent.name}</p>
                     <p className="mt-2 text-gray-400">
                       {defaultAgent.updated_at
                         ? `Last updated ${new Date(defaultAgent.updated_at).toLocaleDateString()}`
@@ -110,8 +110,8 @@ const Dashboard = () => {
               }
               return (
                 <>
-                  <p className="text-primary text-3xl font-semibold">Model v1.4 • Rules v1.0</p>
-                  <p className="mt-2 text-gray-400">Last updated 2 days ago</p>
+                  <p className="text-primary text-3xl font-semibold">No default agent found</p>
+                  <p className="mt-2 text-gray-400">Please create a default agent</p>
                 </>
               );
             })()}
