@@ -15,19 +15,19 @@ interface TemplateOption {
 
 interface AddIssueFromTemplateFormProps {
   fieldKey: string;
-  selectedTemplateId: number | '';
-  onTemplateChange: (value: number | '') => void;
+  selectedTemplateIds: number[];
+  onTemplateChange: (value: number[]) => void;
   options: TemplateOption[];
   alreadyUsedDescriptionIds: number[];
   isSaving: boolean;
   hasTemplates: boolean;
-  onSave: (fieldKey: string, comment?: string) => void;
+  onSave: (fieldKey: string, commentsByTemplateId?: Record<number, string>) => void;
   onClose: () => void;
 }
 
 export function AddIssueFromTemplateForm({
   fieldKey,
-  selectedTemplateId,
+  selectedTemplateIds,
   onTemplateChange,
   options,
   alreadyUsedDescriptionIds,
@@ -36,10 +36,16 @@ export function AddIssueFromTemplateForm({
   onSave,
   onClose,
 }: AddIssueFromTemplateFormProps) {
-  const [comment, setComment] = useState('');
+  const [commentsByTemplateId, setCommentsByTemplateId] = useState<Record<number, string>>({});
   const [open, setOpen] = useState(false);
 
-  const selectedTemplate = options.find(opt => opt.value === selectedTemplateId);
+  const selectedTemplates = options.filter(opt => selectedTemplateIds.includes(opt.value));
+
+  const handleCommentChange = (templateId: number, value: string) => {
+    setCommentsByTemplateId(prev => ({ ...prev, [templateId]: value }));
+  };
+
+  const getCommentForTemplate = (templateId: number): string => commentsByTemplateId[templateId] ?? '';
 
   if (!hasTemplates) {
     return (
@@ -74,7 +80,11 @@ export function AddIssueFromTemplateForm({
                 aria-expanded={open}
                 className="mt-1 w-full justify-between font-normal"
               >
-                <span className="truncate">{selectedTemplate?.label ?? 'Select a description'}</span>
+                <span className="truncate">{selectedTemplates.length > 0
+                    ? selectedTemplates.length > 2
+                      ? `${selectedTemplates.slice(0, 2).map(t => t.label).join(', ')} +${selectedTemplates.length - 2}`
+                      : selectedTemplates.map(t => t.label).join(', ')
+                    : 'Select a description'}</span>
                 <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -93,11 +103,14 @@ export function AddIssueFromTemplateForm({
                           disabled={alreadyUsed}
                           onSelect={() => {
                             if (alreadyUsed) return;
-                            onTemplateChange(opt.value);
-                            setOpen(false);
+                            const isSelected = selectedTemplateIds.includes(opt.value);
+                            const next = isSelected
+                              ? selectedTemplateIds.filter(id => id !== opt.value)
+                              : [...selectedTemplateIds, opt.value];
+                            onTemplateChange(next);
                           }}
                         >
-                          <Check className={cn('mr-2 h-4 w-4', selectedTemplateId === opt.value ? 'opacity-100' : 'opacity-0')} />
+                          <Check className={cn('mr-2 h-4 w-4', selectedTemplateIds.includes(opt.value) ? 'opacity-100' : 'opacity-0')} />
                           {opt.label}
                         </CommandItem>
                       );
@@ -107,18 +120,22 @@ export function AddIssueFromTemplateForm({
               </Command>
             </PopoverContent>
           </Popover>
-          {selectedTemplateId !== '' && (
-            <div className="mt-3">
-              <Label htmlFor={`template-comment-${fieldKey}`} className="text-sm font-medium">
-                Comment (Optional)
-              </Label>
-              <Textarea
-                id={`template-comment-${fieldKey}`}
-                className="mt-1 min-h-[80px] w-full"
-                placeholder="Add additional notes or context about this issue..."
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-              />
+          {selectedTemplateIds.length > 0 && (
+            <div className="mt-3 space-y-3">
+              {selectedTemplates.map(t => (
+                <div key={t.value}>
+                  <Label htmlFor={`template-comment-${fieldKey}-${t.value}`}>
+                    Comment (Optional) <span className="text-[12px] font-bold">({t.label})</span>
+                  </Label>
+                  <Textarea
+                    id={`template-comment-${fieldKey}-${t.value}`}
+                    className="mt-1 min-h-[80px] w-full"
+                    placeholder="Add additional notes or context about this issue..."
+                    value={getCommentForTemplate(t.value)}
+                    onChange={e => handleCommentChange(t.value, e.target.value)}
+                  />
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -128,8 +145,8 @@ export function AddIssueFromTemplateForm({
           </Button>
           <Button
             className="bg-gradient-light text-primary border-0"
-            disabled={isSaving || selectedTemplateId === '' || !options.length}
-            onClick={() => onSave(fieldKey, comment.trim())}
+            disabled={isSaving || selectedTemplateIds.length === 0 || !options.length}
+            onClick={() => onSave(fieldKey, commentsByTemplateId)}
           >
             <Save className="h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save'}

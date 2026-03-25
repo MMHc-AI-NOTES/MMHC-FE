@@ -62,7 +62,7 @@ export function useTherapySessionSummary({
   const user = useAppSelector(state => state.auth.user);
 
   const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | ''>('');
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(initialVersionIndex);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -270,21 +270,16 @@ export function useTherapySessionSummary({
       if (!templates?.length) return [];
       if (!issueDescriptions || !Array.isArray(issueDescriptions)) {
         return templates.map(t => {
-          const errorType = errorTypes?.find(e => e.id === t.error_type_id);
-          const pointsStr = errorType?.points != null ? ` (${errorType.points} pts)` : '';
-          return { value: t.id, label: `Template ${t.id}${pointsStr}` };
+          return { value: t.id, label: `Template ${t.id}` };
         });
       }
       const uniqueDescriptionIds = [...new Set(templates.map(t => t.issue_description_id).filter(id => id != null))];
       const matchingDescriptions = issueDescriptions.filter(desc => desc.id != null && uniqueDescriptionIds.includes(desc.id));
       return matchingDescriptions.map(desc => {
         const matchingTemplate = templates.find(t => t.issue_description_id === desc.id);
-        const errorType = errorTypes?.find(e => e.id === matchingTemplate?.error_type_id);
-        const pointsStr = errorType?.points != null ? ` (${errorType.points} pts)` : '';
-        const baseLabel = desc.description ?? `Description ${desc.id}`;
         return {
           value: matchingTemplate?.id ?? 0,
-          label: `${baseLabel}${pointsStr}`,
+          label: desc.description ?? `Description ${desc.id}`,
           descriptionId: desc.id ?? undefined,
         };
       });
@@ -335,54 +330,53 @@ export function useTherapySessionSummary({
 
   const toggleFieldForm = useCallback((fieldKey: string) => {
     setExpandedFieldKey(prev => (prev === fieldKey ? null : fieldKey));
-    setSelectedTemplateId('');
+    setSelectedTemplateIds([]);
   }, []);
 
   const handleSaveFromTemplate = useCallback(
-    async (fieldKey: string, comment?: string) => {
-      if (!noteId || !versionId || !fieldKey || selectedTemplateId === '' || typeof selectedTemplateId !== 'number' || reviewerId == null)
-        return;
+    async (fieldKey: string, commentsByTemplateId?: Record<number, string>) => {
+      if (!noteId || !versionId || !fieldKey || selectedTemplateIds.length === 0 || reviewerId == null) return;
       const revId = typeof reviewerId === 'number' ? reviewerId : null;
       if (revId == null) return;
 
       setIsSaving(true);
       try {
         const isCurrentVersion = sortedVersions.length > 0 && sortedVersions[0].id === versionId;
-        const res = await createSMEIssueFromTemplate({
-          note_id: noteId,
-          reviewer_id: revId,
-          practitioner_id: practitionerId,
-          is_current_version: isCurrentVersion ? 1 : 0,
-          version_id: versionId,
-          template_id: selectedTemplateId,
-          ai_status: aiStatusId,
-          priority: priorityId,
-          comment: (comment ?? '').trim(),
-        });
-        if (!res?.id) return;
+        for (const templateId of selectedTemplateIds) {
+          const res = await createSMEIssueFromTemplate({
+            note_id: noteId,
+            reviewer_id: revId,
+            practitioner_id: practitionerId,
+            is_current_version: isCurrentVersion ? 1 : 0,
+            version_id: versionId,
+            template_id: templateId,
+            ai_status: aiStatusId,
+            priority: priorityId,
+            comment: (commentsByTemplateId?.[templateId] ?? '').trim(),
+          });
+          if (!res?.id) continue;
 
-        const template = smeTemplates.find(t => t.id === selectedTemplateId);
-        if (!template || !onSMEIssueCreatedFromTemplate) {
-          setExpandedFieldKey(null);
-          setSelectedTemplateId('');
-          return;
+          const template = smeTemplates.find(t => t.id === templateId);
+          if (!template || !onSMEIssueCreatedFromTemplate) {
+            continue;
+          }
+          const et = errorTypes.find(e => e.id === template.error_type_id);
+          const irt = issueRelatedTo.find(i => i.id === template.issues_related_to_id);
+          const desc = issueDescriptions.find(d => d.id === template.issue_description_id);
+          const issueForm: IssueForm = {
+            id: `version-issue-${res.id}`,
+            errorType: et?.name ?? '',
+            issueRelatedTo: irt?.fieldId ?? '',
+            issueDescription: desc?.description ?? '',
+            comment: (commentsByTemplateId?.[templateId] ?? '').trim(),
+            _smeIssueId: res.id,
+            _isVersionIssue: true,
+          };
+          onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined, revId);
+          onReviewerIssuesChanged?.(revId);
         }
-        const et = errorTypes.find(e => e.id === template.error_type_id);
-        const irt = issueRelatedTo.find(i => i.id === template.issues_related_to_id);
-        const desc = issueDescriptions.find(d => d.id === template.issue_description_id);
-        const issueForm: IssueForm = {
-          id: `version-issue-${res.id}`,
-          errorType: et?.name ?? '',
-          issueRelatedTo: irt?.fieldId ?? '',
-          issueDescription: desc?.description ?? '',
-          comment: (comment ?? '').trim(),
-          _smeIssueId: res.id,
-          _isVersionIssue: true,
-        };
-        onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined, revId);
-        onReviewerIssuesChanged?.(revId);
         setExpandedFieldKey(null);
-        setSelectedTemplateId('');
+        setSelectedTemplateIds([]);
       } catch (e) {
         console.error('Create SME issue from template:', e);
       } finally {
@@ -392,7 +386,7 @@ export function useTherapySessionSummary({
     [
       noteId,
       versionId,
-      selectedTemplateId,
+      selectedTemplateIds,
       reviewerId,
       practitionerId,
       sortedVersions,
@@ -409,7 +403,7 @@ export function useTherapySessionSummary({
 
   const closeTemplateForm = useCallback(() => {
     setExpandedFieldKey(null);
-    setSelectedTemplateId('');
+    setSelectedTemplateIds([]);
   }, []);
 
   // Previous overall method – overall now uses same flow as other fields (handleSaveFromTemplate)
@@ -472,8 +466,8 @@ export function useTherapySessionSummary({
     isFirstVersion,
     isLastVersion,
     expandedFieldKey,
-    selectedTemplateId,
-    setSelectedTemplateId,
+    selectedTemplateIds,
+    setSelectedTemplateIds,
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,

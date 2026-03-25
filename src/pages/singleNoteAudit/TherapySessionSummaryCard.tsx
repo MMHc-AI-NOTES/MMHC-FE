@@ -64,8 +64,8 @@ const TherapySessionSummaryCard = ({
     isFirstVersion,
     isLastVersion,
     expandedFieldKey,
-    selectedTemplateId,
-    setSelectedTemplateId,
+    selectedTemplateIds,
+    setSelectedTemplateIds,
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,
@@ -223,7 +223,7 @@ const TherapySessionSummaryCard = ({
               previousValue={null}
               issueCount={overallIssueCount}
               isExpanded={expandedFieldKey === overallFieldKey}
-              selectedTemplateId={selectedTemplateId}
+              selectedTemplateIds={selectedTemplateIds}
               templateOptions={getTemplateDropdownOptions(overallFieldKey)}
               alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(overallFieldKey)}
               isSaving={isSaving}
@@ -232,7 +232,7 @@ const TherapySessionSummaryCard = ({
               showSMEActions={showSMEActions}
               disableAddButton={isHistoricalVersion}
               onToggleForm={toggleFieldForm}
-              onTemplateChange={setSelectedTemplateId}
+              onTemplateChange={setSelectedTemplateIds}
               onSave={handleSaveFromTemplate}
               onCloseForm={closeTemplateForm}
             />
@@ -254,7 +254,7 @@ const TherapySessionSummaryCard = ({
                   previousValue={previousValue ?? null}
                   issueCount={issueCount}
                   isExpanded={expandedFieldKey === key}
-                  selectedTemplateId={selectedTemplateId}
+                  selectedTemplateIds={selectedTemplateIds}
                   templateOptions={getTemplateDropdownOptions(key)}
                   alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(key)}
                   isSaving={isSaving}
@@ -263,7 +263,7 @@ const TherapySessionSummaryCard = ({
                   showSMEActions={showSMEActions}
                   disableAddButton={isHistoricalVersion}
                   onToggleForm={toggleFieldForm}
-                  onTemplateChange={setSelectedTemplateId}
+                  onTemplateChange={setSelectedTemplateIds}
                   onSave={handleSaveFromTemplate}
                   onCloseForm={closeTemplateForm}
                 />
