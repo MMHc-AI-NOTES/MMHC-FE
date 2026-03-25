@@ -56,8 +56,8 @@ const PreviousSessionCard = ({
     currentSessionData,
     hasPreviousSessionData,
     expandedFieldKey,
-    selectedTemplateId,
-    setSelectedTemplateId,
+    selectedTemplateIds,
+    setSelectedTemplateIds,
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,
@@ -170,7 +170,7 @@ const PreviousSessionCard = ({
                     previousValue={null}
                     issueCount={issueCount}
                     isExpanded={expandedFieldKey === key}
-                    selectedTemplateId={selectedTemplateId}
+                    selectedTemplateIds={selectedTemplateIds}
                     templateOptions={getTemplateDropdownOptions(key)}
                     alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(key)}
                     isSaving={isSaving}
@@ -178,7 +178,7 @@ const PreviousSessionCard = ({
                     userType={user?.type}
                     showSMEActions={showSMEActions}
                     onToggleForm={toggleFieldForm}
-                    onTemplateChange={setSelectedTemplateId}
+                    onTemplateChange={setSelectedTemplateIds}
                     onSave={handleSaveFromTemplate}
                     onCloseForm={closeTemplateForm}
                   />
