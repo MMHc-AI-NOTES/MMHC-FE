@@ -1,23 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Zap } from 'lucide-react';
-import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys, AgentModelDisplayNames } from '@/constants/common';
-import { SessionMetadata, PractitionerDetails, AuditControls, PreAuditCheckResult } from '@/types/noteSubmission';
-import { submitNoteForAudit, estimateTokens, runPreAuditChecks } from './noteSubmissionApiCalls';
-import AdvancedOptionsSection from './AdvancedOptionsSection';
-import PreAuditChecksSection from './PreAuditChecksSection';
+import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys } from '@/constants/common';
+import { SessionMetadata, PractitionerDetails, AuditControls } from '@/types/noteSubmission';
+import { submitNoteForAudit } from './noteSubmissionApiCalls';
 import ImportantGuidelinesSection from './ImportantGuidelinesSection';
 import SubmissionFormSelects from './SubmissionFormSelects';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import { fetchAgents } from '../settings/settingsApiCalls';
-
-type AdvancedTab = 'session-metadata' | 'practitioner-details' | 'audit-controls';
 
 const NoteSubmission: React.FC = () => {
   // const navigate = useNavigate();
@@ -26,13 +22,11 @@ const NoteSubmission: React.FC = () => {
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
 
   // Form state
-  const [noteType, setNoteType] = useState<number>(NoteTypeEnum.progress_note);
   const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
-  const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
+  const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
 
   // Advanced options state
-  const [advancedTab, setAdvancedTab] = useState<AdvancedTab>('session-metadata');
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata>({
     sessionLength: '',
     clientInitials: '',
@@ -51,34 +45,10 @@ const NoteSubmission: React.FC = () => {
   });
 
   // UI state
-  const [preAuditResults, setPreAuditResults] = useState<PreAuditCheckResult | null>(null);
-  const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
-  const [expectedAuditTime, setExpectedAuditTime] = useState<string>('~2-4 seconds');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  // Debounced content analysis
-  const analyzeContent = useCallback(async (content: string) => {
-    if (content.length > 0) {
-      const [tokenResult, checkResult] = await Promise.all([estimateTokens(content), runPreAuditChecks(content)]);
-      setEstimatedTokens(tokenResult.estimatedTokens);
-      setExpectedAuditTime(tokenResult.expectedAuditTime);
-      setPreAuditResults(checkResult);
-    } else {
-      setEstimatedTokens(null);
-      setPreAuditResults(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      analyzeContent(progressNoteContent);
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [progressNoteContent, analyzeContent]);
-
   const handleClear = () => {
     setProgressNoteContent('');
+    setPreviousSessionContent('');
     setSessionMetadata({
       sessionLength: '',
       clientInitials: '',
@@ -95,8 +65,6 @@ const NoteSubmission: React.FC = () => {
       enableDebugMode: false,
       includeTokenUsageReport: false,
     });
-    setPreAuditResults(null);
-    setEstimatedTokens(null);
   };
 
   const handleSubmit = async () => {
@@ -105,7 +73,7 @@ const NoteSubmission: React.FC = () => {
     setIsSubmitting(true);
     try {
       const formData = {
-        noteType: noteType as (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum],
+        noteType: NoteTypeEnum.progress_note as (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum],
         modelVersion: modelVersion,
         promptAgent: selectedAgentId,
         sessionMetadata,
@@ -162,8 +130,6 @@ const NoteSubmission: React.FC = () => {
 
           {/* Form Selects */}
           <SubmissionFormSelects
-            noteType={noteType}
-            onNoteTypeChange={setNoteType}
             modelVersion={modelVersion}
             onModelVersionChange={setModelVersion}
             selectedAgentId={selectedAgentId}
@@ -172,25 +138,13 @@ const NoteSubmission: React.FC = () => {
           />
 
           {/* Advanced Options */}
-          <AdvancedOptionsSection
-            activeTab={advancedTab}
-            setActiveTab={setAdvancedTab}
-            sessionMetadata={sessionMetadata}
-            setSessionMetadata={setSessionMetadata}
-            practitionerDetails={practitionerDetails}
-            setPractitionerDetails={setPractitionerDetails}
-            auditControls={auditControls}
-            setAuditControls={setAuditControls}
-            selectedModelLabel={AgentModelDisplayNames[modelVersion as keyof typeof AgentModelDisplayNames]}
-            selectedAgentLabel={selectedAgent?.name || ''}
-          />
 
-          {/* Progress Note Content */}
+          {/* Current Session */}
           <div className="space-y-1">
-            <Label className="text-sm text-gray-700">Progress Note Content</Label>
+            <Label className="text-sm text-gray-700">Current Session</Label>
             <div className="relative">
               <Textarea
-                placeholder="Paste the progress note content here..."
+                placeholder="Paste the current session content here..."
                 value={progressNoteContent}
                 onChange={e => setProgressNoteContent(e.target.value)}
                 className="min-h-52 bg-white shadow"
@@ -201,22 +155,25 @@ const NoteSubmission: React.FC = () => {
             </div>
           </div>
 
-          {/* Token Estimation & Info Bar */}
-          <div className="flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3 text-xs text-gray-400">
-            <span>
-              Estimated Tokens: <span className="text-gray-700">{estimatedTokens ?? '—'}</span>
-            </span>
-            <span>|</span>
-            <span>
-              Expected Audit Time: <span className="text-gray-700">{expectedAuditTime}</span>
-            </span>
-            <span className="ml-auto">
-              Score Threshold: <span className="text-gray-700">Notes below 75 auto-flag for human review</span>
-            </span>
+          {/* Previous Session */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Previous Session</Label>
+            <div className="relative">
+              <Textarea
+                placeholder="Paste the previous session content here..."
+                value={previousSessionContent}
+                onChange={e => setPreviousSessionContent(e.target.value)}
+                className="min-h-52 bg-white shadow"
+              />
+              {previousSessionContent.length > 0 && (
+                <span className="absolute right-2 bottom-2 text-xs text-gray-400">{previousSessionContent.length} characters</span>
+              )}
+            </div>
           </div>
 
+          {/* Token Estimation & Info Bar */}
+
           {/* Pre-Audit Checks */}
-          <PreAuditChecksSection preAuditResults={preAuditResults} />
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 pt-2">
@@ -234,8 +191,17 @@ const NoteSubmission: React.FC = () => {
             </Button>
           </div>
 
-          {/* Redirect Notice */}
-          <p className="text-center text-xs text-gray-500">After auditing completes, you will be redirected to the AI Audit Summary.</p>
+          {/* Session Report */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Session Report</Label>
+            <Textarea
+              placeholder="Session Report will appear here..."
+              value=""
+              readOnly
+              className="min-h-40 bg-gray-50 shadow"
+            />
+          </div>
+
         </CardContent>
       </Card>
 
