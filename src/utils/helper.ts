@@ -204,3 +204,22 @@ export const getHumanReviewDecisionOptions = () =>
     value,
     label: HumanReviewDecisionLabels[value],
   }));
+
+export const formatJsonToText = (jsonString: string | undefined): string => {
+  if (!jsonString) return '';
+  try {
+    const parsed = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+    if (typeof parsed === 'object' && parsed !== null) {
+      return Object.entries(parsed)
+        .map(([key, value]) => {
+          const strValue = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+          const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          return `${formattedKey}:\n${strValue}`;
+        })
+        .join('\n\n');
+    }
+    return String(jsonString);
+  } catch {
+    return String(jsonString);
+  }
+};

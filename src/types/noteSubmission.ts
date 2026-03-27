@@ -56,3 +56,18 @@ export interface TokenEstimation {
   estimatedTokens: number;
   expectedAuditTime: string;
 }
+
+export interface SessionReviewPayload {
+  model_id: string;
+  prompt: string;
+  current_note: string;
+  previous_note?: string;
+  temperature?: number;
+  top_p?: number;
+  top_k?: number;
+}
+
+export interface SessionReviewData {
+  output_text: string;
+  content?: unknown[];
+}
