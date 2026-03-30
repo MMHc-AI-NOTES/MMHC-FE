@@ -414,17 +414,19 @@ export const StructureQualityLabels: Record<number, string> = {
 };
 
 export const AgentModelKeys = {
-  // Free/Low-cost models (on-demand support)
   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
-  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0', // Inference profile format
-  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0', // Inference profile format
-  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', // Claude Sonnet 4.5
-  CLAUDE_4_6_SONNET: 'us.anthropic.claude-sonnet-4-6', // Claude Sonnet 4.6 (inference profile)
-  LLAMA_4_SCOUT_17B: 'meta.llama4-scout-17b-instruct-v1:0', // Llama 4 Scout 17B
-  GPT_OSS_SAFEGUARD_120B: 'openai.gpt-oss-safeguard-120b', // GPT OSS Safeguard 120B
-  NOVA_PREMIER: 'us.amazon.nova-premier-v1:0', // Nova Premier (inference profile)
-  CUSTOM_DEPLOYMENT_Y5K4: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+  CLAUDE_4_6_SONNET: 'us.anthropic.claude-sonnet-4-6',
+  LLAMA_4_SCOUT_17B: 'meta.llama4-scout-17b-instruct-v1:0',
+  GPT_OSS_SAFEGUARD_120B: 'openai.gpt-oss-safeguard-120b',
+  NOVA_PREMIER: 'us.amazon.nova-premier-v1:0',
+  CUSTOM_DEPLOYMENT_V1_15032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
+  CUSTOM_DEPLOYMENT_V2_28032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/sugrzn0ke8p6',
 } as const;
+
+export const agentModelKeys = {} as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
   CLAUDE_3_HAIKU: 'Claude 3 Haiku',
@@ -435,7 +437,8 @@ export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string>
   LLAMA_4_SCOUT_17B: 'Llama 4 Scout',
   GPT_OSS_SAFEGUARD_120B: 'GPT OSS Safeguard',
   NOVA_PREMIER: 'Nova Premier',
-  CUSTOM_DEPLOYMENT_Y5K4: 'Custom Fine-tuned Model',
+  CUSTOM_DEPLOYMENT_V1_15032026: 'Custom Fine-tuned Model V1 15032026',
+  CUSTOM_DEPLOYMENT_V2_28032026: 'Custom Fine-tuned Model V2 28032026',
 };
 
 export const AgentTypes = {
