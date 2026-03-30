@@ -197,7 +197,7 @@ const NoteSubmission: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await fetchClients({ page: 1, pageSize: 200, filters: [] });
+        const { data } = await fetchClients({ page: 1, pageSize: 10000, filters: [] });
         const filteredClients = data.filter(c => c.notesCount > 0);
         setClients(filteredClients);
       } catch (err) {
@@ -222,7 +222,9 @@ const NoteSubmission: React.FC = () => {
 
           {/* Client Select for Autofill */}
           <div className="space-y-1">
-            <Label className="text-sm text-gray-700">Select Client (Autofill Notes) {isFetchingClientData && <span className="text-xs text-blue-500 ml-2">Loading notes...</span>}</Label>
+            <Label className="text-sm text-gray-700">
+              Select Client (Autofill Notes) {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
+            </Label>
             <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -254,12 +256,7 @@ const NoteSubmission: React.FC = () => {
                             setClientDropdownOpen(false);
                           }}
                         >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
+                          <Check className={cn('mr-2 h-4 w-4', selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0')} />
                           {client.clientId} ({client.notesCount} notes)
                         </CommandItem>
                       ))}
@@ -287,7 +284,7 @@ const NoteSubmission: React.FC = () => {
                 placeholder="Paste the current session content here..."
                 value={progressNoteContent}
                 onChange={e => setProgressNoteContent(e.target.value)}
-                className="h-52 overflow-y-auto resize-none bg-white shadow"
+                className="h-52 resize-none overflow-y-auto bg-white shadow"
               />
               {progressNoteContent.length > 0 && (
                 <span className="absolute right-2 bottom-2 text-xs text-gray-400">{progressNoteContent.length} characters</span>
@@ -303,7 +300,7 @@ const NoteSubmission: React.FC = () => {
                 placeholder="Paste the previous session content here..."
                 value={previousSessionContent}
                 onChange={e => setPreviousSessionContent(e.target.value)}
-                className="h-52 overflow-y-auto resize-none bg-white shadow"
+                className="h-52 resize-none overflow-y-auto bg-white shadow"
               />
               {previousSessionContent.length > 0 && (
                 <span className="absolute right-2 bottom-2 text-xs text-gray-400">{previousSessionContent.length} characters</span>
@@ -335,7 +332,7 @@ const NoteSubmission: React.FC = () => {
                 placeholder="Session report will appear here..."
                 value=""
                 readOnly
-                className="h-40 overflow-y-auto resize-none bg-gray-50 shadow"
+                className="h-40 resize-none overflow-y-auto bg-gray-50 shadow"
               />
             ) : typeof sessionReport === 'object' ? (
               <div className="rounded-lg border bg-white p-4 shadow-sm">
@@ -344,7 +341,8 @@ const NoteSubmission: React.FC = () => {
                   <span className="text-primary ml-1 font-semibold">AI Audit</span>
                 </div>
                 <div className="rounded-lg bg-gray-50 px-4 py-3">
-                  <span className="font-medium text-gray-700">AI Score:</span> <span className="font-bold text-gray-900">{sessionReport.score ?? 'N/A'}</span>
+                  <span className="font-medium text-gray-700">AI Score:</span>{' '}
+                  <span className="font-bold text-gray-900">{sessionReport.score ?? 'N/A'}</span>
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -352,11 +350,12 @@ const NoteSubmission: React.FC = () => {
                   {sessionReport.issues && sessionReport.issues.length > 0 ? (
                     sessionReport.issues.map((issue: any, index: number) => {
                       const severityUpper = (issue.severity || '').toUpperCase();
-                      const badgeClass = severityUpper === 'CRITICAL'
-                        ? 'bg-gradient-red'
-                        : severityUpper === 'MODERATE'
-                          ? 'bg-gradient-severity-moderate'
-                          : 'bg-gradient-severity-minor';
+                      const badgeClass =
+                        severityUpper === 'CRITICAL'
+                          ? 'bg-gradient-red'
+                          : severityUpper === 'MODERATE'
+                            ? 'bg-gradient-severity-moderate'
+                            : 'bg-gradient-severity-minor';
 
                       return (
                         <div key={index} className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
@@ -366,14 +365,13 @@ const NoteSubmission: React.FC = () => {
                             </Badge>
                           </div>
                           <div>
-                            <p className="mt-1 text-sm font-bold text-red-600">
-                              -{issue.points_deducted || 0} points
-                            </p>
+                            <p className="mt-1 text-sm font-bold text-red-600">-{issue.points_deducted || 0} points</p>
                             <p className="mt-2 text-xs leading-relaxed text-gray-600">
                               <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                              <span className="font-medium">Description:</span> {issue.justification || issue.description || 'No description provided'}
+                              <span className="font-medium">Description:</span>{' '}
+                              {issue.justification || issue.description || 'No description provided'}
                             </p>
                           </div>
                         </div>
@@ -387,18 +385,11 @@ const NoteSubmission: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <Textarea
-                value={sessionReport as string}
-                readOnly
-                className="min-h-40 overflow-y-auto bg-gray-50 shadow"
-              />
+              <Textarea value={sessionReport as string} readOnly className="min-h-40 overflow-y-auto bg-gray-50 shadow" />
             )}
           </div>
-
-
         </CardContent>
       </Card>
-
     </div>
   );
 };
