@@ -216,7 +216,7 @@ const NoteSubmission: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await fetchClients({ page: 1, pageSize: 200, filters: [] });
+        const { data } = await fetchClients({ page: 1, pageSize: 10000, filters: [] });
         const filteredClients = data.filter(c => c.notesCount > 0);
         setClients(filteredClients);
       } catch (err) {
