@@ -1,23 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Zap } from 'lucide-react';
-import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys, AgentModelDisplayNames } from '@/constants/common';
-import { SessionMetadata, PractitionerDetails, AuditControls, PreAuditCheckResult } from '@/types/noteSubmission';
-import { submitNoteForAudit, estimateTokens, runPreAuditChecks } from './noteSubmissionApiCalls';
-import AdvancedOptionsSection from './AdvancedOptionsSection';
-import PreAuditChecksSection from './PreAuditChecksSection';
-import ImportantGuidelinesSection from './ImportantGuidelinesSection';
+import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys } from '@/constants/common';
+import { SessionMetadata, PractitionerDetails, AuditControls } from '@/types/noteSubmission';
+import { submitNoteForAudit, invokeSessionReview } from './noteSubmissionApiCalls';
 import SubmissionFormSelects from './SubmissionFormSelects';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import { fetchAgents } from '../settings/settingsApiCalls';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { fetchClients, Client } from '../clients/clientsApiCalls';
+import { fetchNoteDetail } from '../singleNoteAudit/singleNoteApiCalls';
+import { formatJsonToText } from '@/utils/helper';
+import { Badge } from '@/components/ui/badge';
 
-type AdvancedTab = 'session-metadata' | 'practitioner-details' | 'audit-controls';
+type SessionReviewResult = {
+  output_text?: string;
+};
 
 const NoteSubmission: React.FC = () => {
   // const navigate = useNavigate();
@@ -25,14 +32,20 @@ const NoteSubmission: React.FC = () => {
 
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
 
+  // Client autofill state
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [isFetchingClientData, setIsFetchingClientData] = useState<boolean>(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+
   // Form state
-  const [noteType, setNoteType] = useState<number>(NoteTypeEnum.progress_note);
   const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
+  const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
+  const [sessionReport, setSessionReport] = useState<any | null>(null);
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
   // Advanced options state
-  const [advancedTab, setAdvancedTab] = useState<AdvancedTab>('session-metadata');
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata>({
     sessionLength: '',
     clientInitials: '',
@@ -51,34 +64,12 @@ const NoteSubmission: React.FC = () => {
   });
 
   // UI state
-  const [preAuditResults, setPreAuditResults] = useState<PreAuditCheckResult | null>(null);
-  const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
-  const [expectedAuditTime, setExpectedAuditTime] = useState<string>('~2-4 seconds');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  // Debounced content analysis
-  const analyzeContent = useCallback(async (content: string) => {
-    if (content.length > 0) {
-      const [tokenResult, checkResult] = await Promise.all([estimateTokens(content), runPreAuditChecks(content)]);
-      setEstimatedTokens(tokenResult.estimatedTokens);
-      setExpectedAuditTime(tokenResult.expectedAuditTime);
-      setPreAuditResults(checkResult);
-    } else {
-      setEstimatedTokens(null);
-      setPreAuditResults(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      analyzeContent(progressNoteContent);
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [progressNoteContent, analyzeContent]);
 
   const handleClear = () => {
     setProgressNoteContent('');
+    setPreviousSessionContent('');
+    setSessionReport(null);
     setSessionMetadata({
       sessionLength: '',
       clientInitials: '',
@@ -95,17 +86,78 @@ const NoteSubmission: React.FC = () => {
       enableDebugMode: false,
       includeTokenUsageReport: false,
     });
-    setPreAuditResults(null);
-    setEstimatedTokens(null);
+    setSelectedClientId('');
+  };
+
+  const handleClientSelect = async (clientId: string) => {
+    setSelectedClientId(clientId);
+    const client = clients.find(c => c.clientId === clientId);
+    if (!client || !client.sessions || client.sessions.length === 0) return;
+
+    try {
+      setIsFetchingClientData(true);
+      const latestSession = client.sessions[0];
+      const noteDetail = await fetchNoteDetail(latestSession.noteId);
+
+      if (noteDetail) {
+        setProgressNoteContent(formatJsonToText(noteDetail.session));
+
+        if (noteDetail.previous_note && noteDetail.previous_note.session) {
+          setPreviousSessionContent(formatJsonToText(noteDetail.previous_note.session));
+        } else if (client.sessions.length > 1) {
+          const prevNoteDetail = await fetchNoteDetail(client.sessions[1].noteId);
+          setPreviousSessionContent(formatJsonToText(prevNoteDetail.session));
+        } else {
+          setPreviousSessionContent('');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch client notes:', e);
+    } finally {
+      setIsFetchingClientData(false);
+    }
   };
 
   const handleSubmit = async () => {
     if (!progressNoteContent.trim() || !selectedAgentId) return;
 
     setIsSubmitting(true);
+    setSessionReport(null);
     try {
+      const payload = {
+        model_id: modelVersion,
+        prompt: selectedAgent?.prompt || '',
+        current_note: progressNoteContent,
+        temperature: selectedAgent?.temperature ?? 0.7,
+        top_p: selectedAgent?.top_p ?? 0.9,
+        top_k: selectedAgent?.top_k ?? 250,
+        ...(previousSessionContent.trim() ? { previous_note: previousSessionContent } : {}),
+      };
+
+      const data = (await invokeSessionReview(payload)) as SessionReviewResult | null;
+      if (data?.output_text) {
+        // Strip markdown codeblocks if they exist (e.g. ```json \n { ... } \n ```)
+        let cleanOutput = data.output_text.trim();
+        if (cleanOutput.startsWith('```')) {
+          const firstLineBreak = cleanOutput.indexOf('\n');
+          if (firstLineBreak !== -1) {
+            cleanOutput = cleanOutput.substring(firstLineBreak + 1);
+          }
+        }
+        if (cleanOutput.endsWith('```')) {
+          cleanOutput = cleanOutput.substring(0, cleanOutput.lastIndexOf('```')).trim();
+        }
+        try {
+          const parsedObj = JSON.parse(cleanOutput);
+          setSessionReport(parsedObj);
+        } catch {
+          setSessionReport(cleanOutput);
+        }
+      }
+
+      // Keep existing flow for audit submission if needed later
       const formData = {
-        noteType: noteType as (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum],
+        noteType: NoteTypeEnum.progress_note as (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum],
         modelVersion: modelVersion,
         promptAgent: selectedAgentId,
         sessionMetadata,
@@ -114,12 +166,7 @@ const NoteSubmission: React.FC = () => {
         progressNoteContent,
       };
 
-      const response = await submitNoteForAudit(formData);
-
-      if (response.success) {
-        // Navigate to AI Audit Summary or show success
-        // navigate(`/notes-queue/single-note-audit/${response.auditId}`);
-      }
+      await submitNoteForAudit(formData);
     } catch (error) {
       console.error('Error submitting note:', error);
     } finally {
@@ -146,6 +193,19 @@ const NoteSubmission: React.FC = () => {
     })();
   }, [dispatch]);
 
+  // Fetch clients for the dropdown
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await fetchClients({ page: 1, pageSize: 200, filters: [] });
+        const filteredClients = data.filter(c => c.notesCount > 0);
+        setClients(filteredClients);
+      } catch (err) {
+        console.error('Error fetching clients for dropdown:', err);
+      }
+    })();
+  }, []);
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
       {/* Main Form Card */}
@@ -160,10 +220,58 @@ const NoteSubmission: React.FC = () => {
             </p>
           </div>
 
+          {/* Client Select for Autofill */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Select Client (Autofill Notes) {isFetchingClientData && <span className="text-xs text-blue-500 ml-2">Loading notes...</span>}</Label>
+            <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={clientDropdownOpen}
+                  className="w-full justify-between bg-white font-normal"
+                >
+                  <span className="truncate">
+                    {selectedClientId
+                      ? `${selectedClientId} (${clients.find(c => c.clientId === selectedClientId)?.notesCount} notes)`
+                      : 'Select a client to autofill previous and current sessions'}
+                  </span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command className="w-full">
+                  <CommandInput placeholder="Search client..." />
+                  <CommandList>
+                    <CommandEmpty>No client found.</CommandEmpty>
+                    <CommandGroup>
+                      {clients.map(client => (
+                        <CommandItem
+                          key={client.id}
+                          value={client.clientId}
+                          onSelect={() => {
+                            handleClientSelect(client.clientId);
+                            setClientDropdownOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0'
+                            )}
+                          />
+                          {client.clientId} ({client.notesCount} notes)
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Form Selects */}
           <SubmissionFormSelects
-            noteType={noteType}
-            onNoteTypeChange={setNoteType}
             modelVersion={modelVersion}
             onModelVersionChange={setModelVersion}
             selectedAgentId={selectedAgentId}
@@ -171,29 +279,15 @@ const NoteSubmission: React.FC = () => {
             agents={agents}
           />
 
-          {/* Advanced Options */}
-          <AdvancedOptionsSection
-            activeTab={advancedTab}
-            setActiveTab={setAdvancedTab}
-            sessionMetadata={sessionMetadata}
-            setSessionMetadata={setSessionMetadata}
-            practitionerDetails={practitionerDetails}
-            setPractitionerDetails={setPractitionerDetails}
-            auditControls={auditControls}
-            setAuditControls={setAuditControls}
-            selectedModelLabel={AgentModelDisplayNames[modelVersion as keyof typeof AgentModelDisplayNames]}
-            selectedAgentLabel={selectedAgent?.name || ''}
-          />
-
-          {/* Progress Note Content */}
+          {/* Current Session */}
           <div className="space-y-1">
-            <Label className="text-sm text-gray-700">Progress Note Content</Label>
+            <Label className="text-sm text-gray-700">Current Session</Label>
             <div className="relative">
               <Textarea
-                placeholder="Paste the progress note content here..."
+                placeholder="Paste the current session content here..."
                 value={progressNoteContent}
                 onChange={e => setProgressNoteContent(e.target.value)}
-                className="min-h-52 bg-white shadow"
+                className="h-52 overflow-y-auto resize-none bg-white shadow"
               />
               {progressNoteContent.length > 0 && (
                 <span className="absolute right-2 bottom-2 text-xs text-gray-400">{progressNoteContent.length} characters</span>
@@ -201,22 +295,21 @@ const NoteSubmission: React.FC = () => {
             </div>
           </div>
 
-          {/* Token Estimation & Info Bar */}
-          <div className="flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3 text-xs text-gray-400">
-            <span>
-              Estimated Tokens: <span className="text-gray-700">{estimatedTokens ?? '—'}</span>
-            </span>
-            <span>|</span>
-            <span>
-              Expected Audit Time: <span className="text-gray-700">{expectedAuditTime}</span>
-            </span>
-            <span className="ml-auto">
-              Score Threshold: <span className="text-gray-700">Notes below 75 auto-flag for human review</span>
-            </span>
+          {/* Previous Session */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Previous Session</Label>
+            <div className="relative">
+              <Textarea
+                placeholder="Paste the previous session content here..."
+                value={previousSessionContent}
+                onChange={e => setPreviousSessionContent(e.target.value)}
+                className="h-52 overflow-y-auto resize-none bg-white shadow"
+              />
+              {previousSessionContent.length > 0 && (
+                <span className="absolute right-2 bottom-2 text-xs text-gray-400">{previousSessionContent.length} characters</span>
+              )}
+            </div>
           </div>
-
-          {/* Pre-Audit Checks */}
-          <PreAuditChecksSection preAuditResults={preAuditResults} />
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 pt-2">
@@ -234,13 +327,78 @@ const NoteSubmission: React.FC = () => {
             </Button>
           </div>
 
-          {/* Redirect Notice */}
-          <p className="text-center text-xs text-gray-500">After auditing completes, you will be redirected to the AI Audit Summary.</p>
+          {/* Session Report */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Session Report</Label>
+            {!sessionReport ? (
+              <Textarea
+                placeholder="Session report will appear here..."
+                value=""
+                readOnly
+                className="h-40 overflow-y-auto resize-none bg-gray-50 shadow"
+              />
+            ) : typeof sessionReport === 'object' ? (
+              <div className="rounded-lg border bg-white p-4 shadow-sm">
+                <div className="mb-4 text-sm text-gray-600">
+                  <span className="font-medium">Reviewer:</span>
+                  <span className="text-primary ml-1 font-semibold">AI Audit</span>
+                </div>
+                <div className="rounded-lg bg-gray-50 px-4 py-3">
+                  <span className="font-medium text-gray-700">AI Score:</span> <span className="font-bold text-gray-900">{sessionReport.score ?? 'N/A'}</span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
+                  {sessionReport.issues && sessionReport.issues.length > 0 ? (
+                    sessionReport.issues.map((issue: any, index: number) => {
+                      const severityUpper = (issue.severity || '').toUpperCase();
+                      const badgeClass = severityUpper === 'CRITICAL'
+                        ? 'bg-gradient-red'
+                        : severityUpper === 'MODERATE'
+                          ? 'bg-gradient-severity-moderate'
+                          : 'bg-gradient-severity-minor';
+
+                      return (
+                        <div key={index} className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
+                          <div className="flex items-center">
+                            <Badge className={`px-3 py-1 text-xs font-semibold text-white uppercase ${badgeClass}`}>
+                              {severityUpper} (-{issue.points_deducted || 0} PTS)
+                            </Badge>
+                          </div>
+                          <div>
+                            <p className="mt-1 text-sm font-bold text-red-600">
+                              -{issue.points_deducted || 0} points
+                            </p>
+                            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                              <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                              <span className="font-medium">Description:</span> {issue.justification || issue.description || 'No description provided'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-lg border bg-gray-50 p-4 text-center text-sm text-gray-500">
+                      No issues found. Perfect score!
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Textarea
+                value={sessionReport as string}
+                readOnly
+                className="min-h-40 overflow-y-auto bg-gray-50 shadow"
+              />
+            )}
+          </div>
+
+
         </CardContent>
       </Card>
 
-      {/* Important Guidelines Section */}
-      <ImportantGuidelinesSection />
     </div>
   );
 };

@@ -12,7 +12,7 @@ interface SessionFieldRowProps {
   previousValue: string | null;
   issueCount: number;
   isExpanded: boolean;
-  selectedTemplateId: number | '';
+  selectedTemplateIds: number[];
   templateOptions: { value: number; label: string; descriptionId?: number }[];
   alreadyUsedDescriptionIds: number[];
   isSaving: boolean;
@@ -21,8 +21,8 @@ interface SessionFieldRowProps {
   showSMEActions: boolean;
   disableAddButton?: boolean;
   onToggleForm: (fieldKey: string) => void;
-  onTemplateChange: (value: number | '') => void;
-  onSave: (fieldKey: string, comment?: string) => void;
+  onTemplateChange: (value: number[]) => void;
+  onSave: (fieldKey: string, commentsByTemplateId?: Record<number, string>) => void;
   onCloseForm: () => void;
 }
 
@@ -34,7 +34,7 @@ export function SessionFieldRow({
   previousValue,
   issueCount,
   isExpanded,
-  selectedTemplateId,
+  selectedTemplateIds,
   templateOptions,
   alreadyUsedDescriptionIds,
   isSaving,
@@ -81,7 +81,7 @@ export function SessionFieldRow({
       {isExpanded && (
         <AddIssueFromTemplateForm
           fieldKey={fieldKey}
-          selectedTemplateId={selectedTemplateId}
+          selectedTemplateIds={selectedTemplateIds}
           onTemplateChange={onTemplateChange}
           options={templateOptions}
           alreadyUsedDescriptionIds={alreadyUsedDescriptionIds}
