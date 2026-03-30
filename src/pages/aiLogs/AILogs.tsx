@@ -13,6 +13,7 @@ import LogDetailsSection from './LogDetailsSection';
 import { FileText } from 'lucide-react';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const AILogs = () => {
   const [logs, setLogs] = useState<AILog[]>([]);
@@ -20,8 +21,9 @@ const AILogs = () => {
   const [selectedLog, setSelectedLog] = useState<AILog | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination states with persistence
+  const [pagination, setPagination] = usePaginationPersistence('aiLogsPagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
@@ -75,7 +77,6 @@ const AILogs = () => {
     const loadLogs = async () => {
       try {
         setLoading(true);
-        setCurrentPage(1);
         setSelectedLog(null);
 
         // Check if filters are active (not all defaults)
@@ -99,9 +100,9 @@ const AILogs = () => {
             filterArray.push({ columnName: 'severity', type: 'exact', value: parseInt(filters.severity) });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: [] };
         }
 
         const response = await fetchAILogs(payload);
@@ -127,7 +128,7 @@ const AILogs = () => {
   const handleApplyFilters = async () => {
     try {
       setLoading(true);
-      setCurrentPage(1);
+      setPagination({ ...pagination, currentPage: 1 });
       setSelectedLog(null);
 
       const payload = buildFilterPayload();
@@ -146,7 +147,7 @@ const AILogs = () => {
   // Clear filters - resets all filters and fetches unfiltered data
   const handleClearFilters = async () => {
     clearPersistedFilters();
-    setCurrentPage(1);
+    setPagination({ ...pagination, currentPage: 1 });
     setSelectedLog(null);
 
     try {
@@ -164,7 +165,7 @@ const AILogs = () => {
 
   // Handle page change
   const handlePageChange = async (page: number) => {
-    setCurrentPage(page);
+    setPagination({ ...pagination, currentPage: page });
     setSelectedLog(null);
 
     try {

@@ -9,6 +9,7 @@ import { fetchClients, type Client, type ClientsPayload } from './clientsApiCall
 import { useAppDispatch } from '@/store/store';
 import { setSelectedClientId } from '@/store/slices/selectedClientSlice';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
@@ -38,7 +39,8 @@ const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pagination, setPagination] = usePaginationPersistence('clientsPagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState<number>(0);
 
   // Sorting state: default unsorted (backend default)
@@ -48,12 +50,12 @@ const Clients = () => {
     const initialLoad = async () => {
       try {
         setLoading(true);
-        const payload = buildPayload(1, '', sorts);
+        const payload = buildPayload(currentPage, '', sorts);
         const response = await fetchClients(payload);
 
         setClients(response.data);
         setTotalItems(response.totalCount);
-        setCurrentPage(response.page);
+        setPagination({ ...pagination, currentPage: response.page });
       } catch (error) {
         console.error('Error loading clients:', error);
       } finally {
@@ -74,7 +76,7 @@ const Clients = () => {
 
       setClients(response.data);
       setTotalItems(response.totalCount);
-      setCurrentPage(response.page);
+      setPagination({ ...pagination, currentPage: response.page });
     } catch (error) {
       // Errors are already handled in fetchClients
       console.error('Error loading clients:', error);
@@ -88,11 +90,13 @@ const Clients = () => {
   };
 
   const handleApplyFilters = async () => {
+    setPagination({ ...pagination, currentPage: 1 });
     await loadClients(1, search);
   };
 
   const handleClearFilters = async () => {
     setSearch('');
+    setPagination({ ...pagination, currentPage: 1 });
     await loadClients(1, '');
   };
 
