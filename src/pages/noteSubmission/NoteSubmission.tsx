@@ -198,8 +198,7 @@ const NoteSubmission: React.FC = () => {
     (async () => {
       try {
         const { data } = await fetchClients({ page: 1, pageSize: 200, filters: [] });
-        const filteredClients = data.filter(c => c.notesCount > 0);
-        setClients(filteredClients);
+        setClients(data);
       } catch (err) {
         console.error('Error fetching clients for dropdown:', err);
       }
