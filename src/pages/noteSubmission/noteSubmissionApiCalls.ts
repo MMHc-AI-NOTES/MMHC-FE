@@ -1,5 +1,41 @@
-import { NoteSubmissionFormData, NoteSubmissionResponse, PreAuditCheckResult, TokenEstimation } from '@/types/noteSubmission';
+import axios from 'axios';
+import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import {
+  NoteSubmissionFormData,
+  NoteSubmissionResponse,
+  PreAuditCheckResult,
+  TokenEstimation,
+  SessionReviewPayload,
+  SessionReviewData
+} from '@/types/noteSubmission';
 import { PreAuditCheckStatusEnum, StructureQualityEnum } from '@/constants/common';
+
+interface ApiResponse<T> {
+  status: boolean;
+  message?: string;
+  data?: T;
+  errors?: any;
+}
+
+export const invokeSessionReview = async (payload: SessionReviewPayload): Promise<SessionReviewData | null> => {
+  try {
+    const response = await axios.post<ApiResponse<SessionReviewData>>('/session-reviews/invoke', payload);
+    if (response?.data?.status) {
+      return response.data.data ?? null;
+    }
+
+    // Handle case where API does not wrap in ApiResponse
+    if ('output_text' in response.data) {
+      return response.data as unknown as SessionReviewData;
+    }
+
+    handleErrorMessages(response.data);
+    return null;
+  } catch (error) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
 
 // Dummy API call to submit note for audit
 export const submitNoteForAudit = async (formData: NoteSubmissionFormData): Promise<NoteSubmissionResponse> => {
