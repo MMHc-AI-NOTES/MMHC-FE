@@ -278,6 +278,12 @@ export interface QueueOverview {
   blacklist: number;
 }
 
+// SME Reviewers Count Data
+export interface SmeReviewerCountItem {
+  reviewer_name: string;
+  count: number;
+}
+
 // Workload Data
 export interface Workload {
   assign_notes: number;

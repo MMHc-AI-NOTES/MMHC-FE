@@ -1,7 +1,16 @@
 // @/services/notesService.ts
 import { formatDate, formatDateTime, getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
-import { RawApiNote, FormattedNote, DataFormatterProps, QueueOverview, Workload, PractitionerOption, CptCodeOption } from '@/types/notes';
+import {
+  RawApiNote,
+  FormattedNote,
+  DataFormatterProps,
+  QueueOverview,
+  Workload,
+  PractitionerOption,
+  CptCodeOption,
+  SmeReviewerCountItem,
+} from '@/types/notes';
 import moment from 'moment';
 
 interface ApiResponse<T> {
@@ -210,5 +219,27 @@ export const fetchCptCodes = async (): Promise<CptCodeOption[]> => {
   } catch (error: any) {
     handleCatchMessages(error);
     return [];
+  }
+};
+
+export const fetchSmeReviewersCount = async (): Promise<SmeReviewerCountItem[] | null> => {
+  try {
+    const response = await axios.get('note-review-marks/sme-reviewers');
+
+    if (response?.status && response.data) {
+      const mapped: SmeReviewerCountItem[] = response.data.map((item: any) => {
+        const reviewer_name = item?.reviewer_full_name ?? '-';
+        const count = item?.reviewed_notes_count ?? 0;
+        return { reviewer_name, count };
+      });
+
+      return mapped;
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
   }
 };

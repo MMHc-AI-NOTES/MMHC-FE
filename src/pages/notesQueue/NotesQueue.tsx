@@ -7,11 +7,13 @@ import { DataTablePagination } from '@/shared/DataTablePagination';
 import {
   FormattedNote,
   QueueOverview,
+  SmeReviewerCountItem,
   // Workload
 } from '@/types/notes';
 import {
   fetchNotes,
   fetchQueueOverview,
+  fetchSmeReviewersCount,
   // fetchWorkload,
   fetchPractitioners,
   fetchCptCodes,
@@ -21,6 +23,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueOverviewCard } from './QueueOverviewCard';
+import { SmeReviewersCountCard } from './SmeReviewersCountCard';
 // import { WorkloadCard } from './WorkloadCard';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
@@ -37,8 +40,10 @@ const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
   const [notesLoading, setNotesLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);
+  const [smeReviewersCountLoading, setSmeReviewersCountLoading] = useState(true);
   // const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
+  const [smeReviewersCount, setSmeReviewersCount] = useState<SmeReviewerCountItem[] | null>(null);
   // const [workload, setWorkload] = useState<Workload | null>(null);
   const user = useAppSelector(state => state.auth.user);
   const selectedClientId = useAppSelector(state => state.selectedClient.selectedClientId);
@@ -155,6 +160,18 @@ const NotesQueue = () => {
       }
     };
 
+    const loadSmeReviewersCount = async () => {
+      try {
+        setSmeReviewersCountLoading(true);
+        const result = await fetchSmeReviewersCount();
+        setSmeReviewersCount(result);
+      } catch (error) {
+        console.error('Error loading SME reviewers count:', error);
+      } finally {
+        setSmeReviewersCountLoading(false);
+      }
+    };
+
     // Fetch workload
     // const loadWorkload = async () => {
     //   try {
@@ -192,6 +209,7 @@ const NotesQueue = () => {
 
     // Run non-note fetches in parallel
     loadQueueOverview();
+    loadSmeReviewersCount();
     // loadWorkload();
     loadPractitioners();
     loadCptCodes();
@@ -559,6 +577,7 @@ const NotesQueue = () => {
       {/* Right Column: Overview Cards */}
       <div className="space-y-6 lg:col-span-3">
         <QueueOverviewCard data={queueOverview} loading={overviewLoading} />
+        <SmeReviewersCountCard data={smeReviewersCount} loading={smeReviewersCountLoading} />
         {/* <WorkloadCard data={workload} loading={workloadLoading} /> */}
       </div>
     </div>
