@@ -424,6 +424,7 @@ export const AgentModelKeys = {
   NOVA_PREMIER: 'us.amazon.nova-premier-v1:0',
   CUSTOM_DEPLOYMENT_V1_15032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
   CUSTOM_DEPLOYMENT_V2_28032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/sugrzn0ke8p6',
+  CUSTOM_DEPLOYMENT_V1_SAGEMAKER:   'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-compliance-fixed-CORRECT',
 } as const;
 
 export const agentModelKeys = {} as const;
@@ -439,6 +440,7 @@ export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string>
   NOVA_PREMIER: 'Nova Premier',
   CUSTOM_DEPLOYMENT_V1_15032026: 'Custom Fine-tuned Model V1 15032026',
   CUSTOM_DEPLOYMENT_V2_28032026: 'Custom Fine-tuned Model V2 28032026',
+  CUSTOM_DEPLOYMENT_V1_SAGEMAKER: 'Custom Fine-tuned Model V1 Sagemaker',
 };
 
 export const AgentTypes = {
