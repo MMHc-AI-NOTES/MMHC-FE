@@ -13,6 +13,7 @@ import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import { fetchAgents } from '../settings/settingsApiCalls';
+import { fetchErrorTypes } from '../settings/settingsApiCalls';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check, ChevronDown } from 'lucide-react';
@@ -21,6 +22,9 @@ import { fetchClients, Client } from '../clients/clientsApiCalls';
 import { fetchNoteDetail } from '../singleNoteAudit/singleNoteApiCalls';
 import { formatJsonToText } from '@/utils/helper';
 import { Badge } from '@/components/ui/badge';
+import { calculateSMEScore } from '../singleNoteAudit/components/reviewUtils';
+import { IssueForm } from '../singleNoteAudit/components/types';
+import { setErrorTypes } from '@/store/slices/smeConfigSlice';
 
 type SessionReviewResult = {
   output_text?: string;
@@ -31,6 +35,7 @@ const NoteSubmission: React.FC = () => {
   const dispatch = useDispatch();
 
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
+  const { errorTypes, errorTypesLoaded } = useAppSelector(state => state.smeConfig);
 
   // Client autofill state
   const [clients, setClients] = useState<Client[]>([]);
@@ -193,6 +198,20 @@ const NoteSubmission: React.FC = () => {
     })();
   }, [dispatch]);
 
+  useEffect(() => {
+    const loadErrorTypes = async () => {
+      if (errorTypesLoaded) return;
+      try {
+        const errorTypesData = await fetchErrorTypes();
+        dispatch(setErrorTypes(errorTypesData));
+      } catch (error) {
+        console.error('Error loading error types:', error);
+      }
+    };
+
+    void loadErrorTypes();
+  }, [dispatch, errorTypesLoaded]);
+
   // Fetch clients for the dropdown
   useEffect(() => {
     (async () => {
@@ -205,6 +224,17 @@ const NoteSubmission: React.FC = () => {
       }
     })();
   }, []);
+
+  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReport?.issues)
+    ? sessionReport.issues.map((issue: any, index: number) => ({
+        id: `ai-issue-${index}`,
+        reviewerName: 'AI Audit',
+        errorType: String(issue?.severity || '').toLowerCase(),
+        issueRelatedTo: String(issue?.section || 'overall'),
+        issueDescription: String(issue?.justification || issue?.description || ''),
+      }))
+    : [];
+  const calculatedAIScore = mappedSessionIssues.length > 0 ? calculateSMEScore(mappedSessionIssues, errorTypes) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
@@ -342,7 +372,7 @@ const NoteSubmission: React.FC = () => {
                 </div>
                 <div className="rounded-lg bg-gray-50 px-4 py-3">
                   <span className="font-medium text-gray-700">AI Score:</span>{' '}
-                  <span className="font-bold text-gray-900">{sessionReport.score ?? 'N/A'}</span>
+                  <span className="font-bold text-gray-900">{calculatedAIScore ?? '-'}</span>
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -370,8 +400,7 @@ const NoteSubmission: React.FC = () => {
                               <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                              <span className="font-medium">Description:</span>{' '}
-                              {issue.justification || issue.description || 'No description provided'}
+                              <span className="font-medium">Description:</span> {issue.severity_details || '-'}
                             </p>
                           </div>
                         </div>

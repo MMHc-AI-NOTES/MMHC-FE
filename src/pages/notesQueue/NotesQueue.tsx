@@ -33,6 +33,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorKey } from './ColorKey';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const itemsPerPage = 60; // Fixed at 60 as per requirement
 
@@ -52,8 +53,9 @@ const NotesQueue = () => {
   const dispatch = useAppDispatch();
   const { practitioners, cptCodes, practitionersLoaded, cptCodesLoaded } = useAppSelector(state => state.filterOptions);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination states with persistence
+  const [pagination, setPagination] = usePaginationPersistence('notesQueuePagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState(0);
 
   // Sorting state
@@ -226,8 +228,6 @@ const NotesQueue = () => {
     const loadNotes = async () => {
       try {
         setNotesLoading(true);
-        setCurrentPage(1);
-
         // Check if filters are active (not all defaults)
         const hasActive =
           filters.status !== 'all' ||
@@ -284,9 +284,9 @@ const NotesQueue = () => {
             filterArray.push({ columnName: 'not_reviewed', value: true });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray, sorts };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: [], sorts };
         }
 
         const notesResponse = await fetchNotes(payload);
@@ -310,7 +310,7 @@ const NotesQueue = () => {
 
       try {
         setNotesLoading(true);
-        setCurrentPage(1);
+        setPagination({ ...pagination, currentPage: 1 });
 
         // Prefill the search filter so the FiltersSection shows the client identifier
         setFilters({
@@ -379,9 +379,10 @@ const NotesQueue = () => {
   const handleApplyFilters = async () => {
     try {
       setNotesLoading(true);
-      setCurrentPage(1); // Reset to first page on filter apply
+      setPagination({ ...pagination, currentPage: 1 }); // Reset to first page on filter apply
 
       const payload = buildFilterPayload();
+      payload.page = 1;
       const response = await fetchNotes(payload);
 
       setNotes(response.data);
@@ -398,7 +399,7 @@ const NotesQueue = () => {
     try {
       setNotesLoading(true);
       clearPersistedFilters();
-      setCurrentPage(1);
+      setPagination({ ...pagination, currentPage: 1 });
 
       const resetFilters = { ...defaultFilters };
       setFilters(resetFilters);
@@ -423,7 +424,7 @@ const NotesQueue = () => {
 
   // Handle page change
   const handlePageChange = async (page: number) => {
-    setCurrentPage(page);
+    setPagination({ ...pagination, currentPage: page });
 
     try {
       setNotesLoading(true);
@@ -472,7 +473,7 @@ const NotesQueue = () => {
 
     try {
       setNotesLoading(true);
-      setCurrentPage(1);
+      setPagination({ ...pagination, currentPage: 1 });
 
       const basePayload = buildFilterPayload();
       const payload: NotesPayload = {

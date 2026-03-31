@@ -22,6 +22,7 @@ import { AdminReviewColorKey } from './AdminReviewColorKey';
 import { FiltersSection } from './FiltersSection';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const AdminReviewQueue = () => {
   const [notes, setNotes] = useState<HumanReviewNote[]>([]);
@@ -31,8 +32,9 @@ const AdminReviewQueue = () => {
   // const [reviewerOverview, setReviewerOverview] = useState<ReviewerOverview | null>(null);
   // const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination states with persistence
+  const [pagination, setPagination] = usePaginationPersistence('adminReviewQueuePagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = DEFAULT_ITEMS_PER_PAGE; // Fixed at global default
 
@@ -115,8 +117,6 @@ const AdminReviewQueue = () => {
     const loadNotes = async () => {
       try {
         setNotesLoading(true);
-        setCurrentPage(1);
-
         // Check if filters are active (not all defaults)
         const hasActive = filters.status !== 'all' || filters.priority !== 'all' || filters.reviewer !== 'all' || filters.search !== '';
 
@@ -138,9 +138,9 @@ const AdminReviewQueue = () => {
             filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray, sorts };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [], sorts };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: [], sorts };
         }
 
         const notesResponse = await fetchHumanReviewNotes(payload);
@@ -166,9 +166,10 @@ const AdminReviewQueue = () => {
   const handleApplyFilters = async () => {
     try {
       setNotesLoading(true);
-      setCurrentPage(1);
+      setPagination({ ...pagination, currentPage: 1 });
 
       const payload = buildFilterPayload();
+      payload.page = 1;
       const response = await fetchHumanReviewNotes(payload);
 
       setNotes(response.data);
@@ -183,7 +184,7 @@ const AdminReviewQueue = () => {
   // Clear filters
   const handleClearFilters = async () => {
     clearPersistedFilters();
-    setCurrentPage(1);
+    setPagination({ ...pagination, currentPage: 1 });
 
     try {
       setNotesLoading(true);
@@ -200,7 +201,7 @@ const AdminReviewQueue = () => {
 
   // Handle page change
   const handlePageChange = async (page: number) => {
-    setCurrentPage(page);
+    setPagination({ ...pagination, currentPage: page });
 
     try {
       setNotesLoading(true);
@@ -250,7 +251,7 @@ const AdminReviewQueue = () => {
 
     try {
       setNotesLoading(true);
-      setCurrentPage(1);
+      setPagination({ ...pagination, currentPage: 1 });
 
       const basePayload = buildFilterPayload();
       const payload = {

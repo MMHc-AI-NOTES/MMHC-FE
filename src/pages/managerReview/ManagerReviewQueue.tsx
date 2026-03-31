@@ -21,6 +21,7 @@ import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { ManagerBulkSendDialog } from './ManagerBulkSendDialog';
 import { formatDateTime } from '@/utils/helper';
 import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const defaultFilters = {
   humanDecision: 'all',
@@ -71,8 +72,9 @@ export const ManagerReviewQueue = () => {
   const [isBulkSendDialogOpen, setIsBulkSendDialogOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // Pagination (dummy for now - client-side only, same shape as NotesQueue)
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination state with persistence
+  const [pagination, setPagination] = usePaginationPersistence('managerReviewQueuePagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
@@ -140,8 +142,6 @@ export const ManagerReviewQueue = () => {
       try {
         setLoading(true);
         // setOverviewLoading(true);
-        setCurrentPage(1);
-
         // Check if filters are active (not all defaults)
         const hasActiveFilters =
           filters.humanDecision !== 'all' ||
@@ -175,9 +175,9 @@ export const ManagerReviewQueue = () => {
             filterArray.push({ columnName: 'search', type: 'like', value: filters.search });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: [] };
         }
 
         const [notesResponse] = await Promise.all([fetchManagerNotes(payload)]);
@@ -217,11 +217,13 @@ export const ManagerReviewQueue = () => {
 
   const handleApplyFilters = async () => {
     setLoading(true);
+    setPagination({ ...pagination, currentPage: 1 });
     const payload = buildFilterPayload();
+    payload.page = 1;
     const response = await fetchManagerNotes(payload);
     setNotes(response.data);
     setTotalItems(response.totalCount);
-    setCurrentPage(response.page);
+    setPagination({ ...pagination, currentPage: response.page });
     setSelectedIds([]);
     setIsBulkSendDialogOpen(false);
     setLoading(false);
@@ -233,7 +235,7 @@ export const ManagerReviewQueue = () => {
     const response = await fetchManagerNotes({ page: 1, pageSize: itemsPerPage, filters: [] });
     setNotes(response.data);
     setTotalItems(response.totalCount);
-    setCurrentPage(response.page);
+    setPagination({ ...pagination, currentPage: response.page });
     setSelectedIds([]);
     setIsBulkSendDialogOpen(false);
     setLoading(false);
@@ -258,7 +260,7 @@ export const ManagerReviewQueue = () => {
     const response = await fetchManagerNotes(payload);
     setNotes(response.data);
     setTotalItems(response.totalCount);
-    setCurrentPage(response.page);
+    setPagination({ ...pagination, currentPage: response.page });
 
     return response;
   };
