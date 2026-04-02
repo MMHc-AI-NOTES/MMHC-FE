@@ -425,7 +425,7 @@ export const AgentModelKeys = {
   CUSTOM_DEPLOYMENT_V1_15032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
   CUSTOM_DEPLOYMENT_V2_28032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/sugrzn0ke8p6',
   CUSTOM_DEPLOYMENT_V1_SAGEMAKER: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-compliance-fixed-CORRECT',
-  CUSTOM_DEPLOYMENT_V2_SAGEMAKER: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-compliance-V2',
+  CUSTOM_DEPLOYMENT_V2_SAGEMAKER: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-compliance-V5',
 } as const;
 
 export const agentModelKeys = {} as const;

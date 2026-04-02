@@ -58,16 +58,21 @@ export interface TokenEstimation {
 }
 
 export interface SessionReviewPayload {
+  note_id: string;
+  prompt_id: number;
   model_id: string;
-  prompt: string;
-  current_note: string;
-  previous_note?: string;
-  temperature?: number;
-  top_p?: number;
-  top_k?: number;
 }
 
 export interface SessionReviewData {
-  output_text: string;
+  output_text?: string;
+  score?: number;
+  pass?: boolean;
+  issues?: unknown[];
+  raw_response?: string;
+  validation_result?: {
+    isValid: boolean;
+    status?: string;
+    message?: string;
+  };
   content?: unknown[];
 }

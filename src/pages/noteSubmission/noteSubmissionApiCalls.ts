@@ -20,16 +20,32 @@ interface ApiResponse<T> {
 export const invokeSessionReview = async (payload: SessionReviewPayload): Promise<SessionReviewData | null> => {
   try {
     const response = await axios.post<ApiResponse<SessionReviewData>>('/session-reviews/invoke', payload);
-    if (response?.data?.status) {
-      return response.data.data ?? null;
+    console.log('Session Review API Response:', response.data);
+    const responsePayload = response?.data?.status ? response.data.data : response.data;
+
+    if (!responsePayload || typeof responsePayload !== 'object') {
+      handleErrorMessages(response.data);
+      return null;
     }
 
-    // Handle case where API does not wrap in ApiResponse
-    if ('output_text' in response.data) {
-      return response.data as unknown as SessionReviewData;
+    // New backend shape: { ..., bedrockResponse: { ... , validation_result? } }
+    if ('bedrockResponse' in responsePayload && responsePayload.bedrockResponse && typeof responsePayload.bedrockResponse === 'object') {
+      const bedrockResponse = responsePayload.bedrockResponse as SessionReviewData;
+      return {
+        ...bedrockResponse,
+        output_text: bedrockResponse.output_text ?? bedrockResponse.raw_response,
+        validation_result:
+          bedrockResponse.validation_result ??
+          ((responsePayload as { validation_result?: SessionReviewData['validation_result'] }).validation_result ?? undefined),
+      };
     }
 
-    handleErrorMessages(response.data);
+    // Legacy shape returned directly
+    if ('output_text' in responsePayload || 'issues' in responsePayload) {
+      return responsePayload as SessionReviewData;
+    }
+
+    handleErrorMessages(responsePayload);
     return null;
   } catch (error) {
     handleCatchMessages(error);

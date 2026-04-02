@@ -22,12 +22,19 @@ import { fetchClients, Client } from '../clients/clientsApiCalls';
 import { fetchNoteDetail } from '../singleNoteAudit/singleNoteApiCalls';
 import { formatJsonToText } from '@/utils/helper';
 import { Badge } from '@/components/ui/badge';
-import { calculateSMEScore } from '../singleNoteAudit/components/reviewUtils';
-import { IssueForm } from '../singleNoteAudit/components/types';
 import { setErrorTypes } from '@/store/slices/smeConfigSlice';
 
 type SessionReviewResult = {
   output_text?: string;
+  raw_response?: string;
+  score?: number;
+  pass?: boolean;
+  issues?: any[];
+  validation_result?: {
+    isValid: boolean;
+    status?: string;
+    message?: string;
+  };
 };
 
 const NoteSubmission: React.FC = () => {
@@ -35,11 +42,12 @@ const NoteSubmission: React.FC = () => {
   const dispatch = useDispatch();
 
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
-  const { errorTypes, errorTypesLoaded } = useAppSelector(state => state.smeConfig);
+  const { errorTypesLoaded } = useAppSelector(state => state.smeConfig);
 
   // Client autofill state
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [isLoadingClients, setIsLoadingClients] = useState<boolean>(true);
   const [isFetchingClientData, setIsFetchingClientData] = useState<boolean>(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
@@ -48,6 +56,7 @@ const NoteSubmission: React.FC = () => {
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
   const [sessionReport, setSessionReport] = useState<any | null>(null);
+  const [noteId, setNoteId] = useState<string>('');
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
   // Advanced options state
@@ -71,10 +80,38 @@ const NoteSubmission: React.FC = () => {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  const tryParseSessionJson = (input?: string): any | null => {
+    if (!input || typeof input !== 'string') return null;
+
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    const textToParse = codeBlockMatch?.[1]?.trim() || trimmed;
+
+    const candidates = [textToParse];
+    const firstBrace = textToParse.indexOf('{');
+    const lastBrace = textToParse.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      candidates.push(textToParse.substring(firstBrace, lastBrace + 1));
+    }
+
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        // Keep trying other candidates.
+      }
+    }
+
+    return null;
+  };
+
   const handleClear = () => {
     setProgressNoteContent('');
     setPreviousSessionContent('');
     setSessionReport(null);
+    setNoteId('');
     setSessionMetadata({
       sessionLength: '',
       clientInitials: '',
@@ -105,6 +142,7 @@ const NoteSubmission: React.FC = () => {
       const noteDetail = await fetchNoteDetail(latestSession.noteId);
 
       if (noteDetail) {
+        setNoteId(latestSession.noteId);
         setProgressNoteContent(formatJsonToText(noteDetail.session));
 
         if (noteDetail.previous_note && noteDetail.previous_note.session) {
@@ -130,33 +168,28 @@ const NoteSubmission: React.FC = () => {
     setSessionReport(null);
     try {
       const payload = {
+        note_id: noteId,
+        prompt_id: selectedAgent?.id || 0,
         model_id: modelVersion,
-        prompt: selectedAgent?.prompt || '',
-        current_note: progressNoteContent,
-        temperature: selectedAgent?.temperature ?? 0.7,
-        top_p: selectedAgent?.top_p ?? 0.9,
-        top_k: selectedAgent?.top_k ?? 250,
-        ...(previousSessionContent.trim() ? { previous_note: previousSessionContent } : {}),
       };
 
       const data = (await invokeSessionReview(payload)) as SessionReviewResult | null;
-      if (data?.output_text) {
-        // Strip markdown codeblocks if they exist (e.g. ```json \n { ... } \n ```)
-        let cleanOutput = data.output_text.trim();
-        if (cleanOutput.startsWith('```')) {
-          const firstLineBreak = cleanOutput.indexOf('\n');
-          if (firstLineBreak !== -1) {
-            cleanOutput = cleanOutput.substring(firstLineBreak + 1);
+      if (data) {
+        const parsedFromOutput = tryParseSessionJson(data.output_text);
+        const parsedFromRawResponse = tryParseSessionJson(data.raw_response);
+        const parsedObj = parsedFromOutput || parsedFromRawResponse;
+
+        if (parsedObj && typeof parsedObj === 'object') {
+          const parsedIssues = (parsedObj as { issues?: unknown[] }).issues;
+          const hasNoIssues = Array.isArray(parsedIssues) && parsedIssues.length === 0;
+
+          if (hasNoIssues && data.raw_response) {
+            setSessionReport(data.raw_response);
+          } else {
+            setSessionReport(parsedObj);
           }
-        }
-        if (cleanOutput.endsWith('```')) {
-          cleanOutput = cleanOutput.substring(0, cleanOutput.lastIndexOf('```')).trim();
-        }
-        try {
-          const parsedObj = JSON.parse(cleanOutput);
-          setSessionReport(parsedObj);
-        } catch {
-          setSessionReport(cleanOutput);
+        } else {
+          setSessionReport(data.raw_response || data.output_text || data);
         }
       }
 
@@ -216,25 +249,24 @@ const NoteSubmission: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
+        setIsLoadingClients(true);
         const { data } = await fetchClients({ page: 1, pageSize: 10000, filters: [] });
         const filteredClients = data.filter(c => c.notesCount > 0);
         setClients(filteredClients);
       } catch (err) {
         console.error('Error fetching clients for dropdown:', err);
+      } finally {
+        setIsLoadingClients(false);
       }
     })();
   }, []);
 
-  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReport?.issues)
-    ? sessionReport.issues.map((issue: any, index: number) => ({
-        id: `ai-issue-${index}`,
-        reviewerName: 'AI Audit',
-        errorType: String(issue?.severity || '').toLowerCase(),
-        issueRelatedTo: String(issue?.section || 'overall'),
-        issueDescription: String(issue?.justification || issue?.description || ''),
-      }))
-    : [];
-  const calculatedAIScore = mappedSessionIssues.length > 0 ? calculateSMEScore(mappedSessionIssues, errorTypes) : null;
+  const calculatedScoreByUs = Array.isArray(sessionReport?.issues)
+    ? Math.max(
+        0,
+        100 - sessionReport.issues.reduce((sum: number, issue: any) => sum + Number(issue?.points_deducted || 0), 0),
+      )
+    : '-';
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
@@ -253,7 +285,9 @@ const NoteSubmission: React.FC = () => {
           {/* Client Select for Autofill */}
           <div className="space-y-1">
             <Label className="text-sm text-gray-700">
-              Select Client (Autofill Notes) {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
+              Select Client (Autofill Notes){' '}
+              {isLoadingClients && <span className="ml-2 text-xs text-blue-500">Loading clients...</span>}
+              {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
             </Label>
             <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
               <PopoverTrigger asChild>
@@ -266,31 +300,35 @@ const NoteSubmission: React.FC = () => {
                   <span className="truncate">
                     {selectedClientId
                       ? `${selectedClientId} (${clients.find(c => c.clientId === selectedClientId)?.notesCount} notes)`
-                      : 'Select a client to autofill previous and current sessions'}
+                      : isLoadingClients
+                        ? 'Loading clients...'
+                        : 'Select a client to autofill previous and current sessions'}
                   </span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                 <Command className="w-full">
-                  <CommandInput placeholder="Search client..." />
+                  <CommandInput placeholder={isLoadingClients ? 'Loading clients...' : 'Search client...'} disabled={isLoadingClients} />
                   <CommandList>
-                    <CommandEmpty>No client found.</CommandEmpty>
-                    <CommandGroup>
-                      {clients.map(client => (
-                        <CommandItem
-                          key={client.id}
-                          value={client.clientId}
-                          onSelect={() => {
-                            handleClientSelect(client.clientId);
-                            setClientDropdownOpen(false);
-                          }}
-                        >
-                          <Check className={cn('mr-2 h-4 w-4', selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0')} />
-                          {client.clientId} ({client.notesCount} notes)
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    <CommandEmpty>{isLoadingClients ? 'Loading clients...' : 'No client found.'}</CommandEmpty>
+                    {!isLoadingClients && (
+                      <CommandGroup>
+                        {clients.map(client => (
+                          <CommandItem
+                            key={client.id}
+                            value={client.clientId}
+                            onSelect={() => {
+                              handleClientSelect(client.clientId);
+                              setClientDropdownOpen(false);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0')} />
+                            {client.clientId} ({client.notesCount} notes)
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
                   </CommandList>
                 </Command>
               </PopoverContent>
@@ -371,8 +409,8 @@ const NoteSubmission: React.FC = () => {
                   <span className="text-primary ml-1 font-semibold">AI Audit</span>
                 </div>
                 <div className="rounded-lg bg-gray-50 px-4 py-3">
-                  <span className="font-medium text-gray-700">AI Score:</span>{' '}
-                  <span className="font-bold text-gray-900">{calculatedAIScore ?? '-'}</span>
+                  <span className="font-medium text-gray-700">Calculated Score:</span>{' '}
+                  <span className="font-bold text-gray-900">{calculatedScoreByUs}</span>
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -408,7 +446,7 @@ const NoteSubmission: React.FC = () => {
                     })
                   ) : (
                     <div className="rounded-lg border bg-gray-50 p-4 text-center text-sm text-gray-500">
-                      No issues found. Perfect score!
+                      {sessionReport.pass === true ? 'No issues found. Perfect score!' : 'No parsed issues returned from AI response.'}
                     </div>
                   )}
                 </div>
