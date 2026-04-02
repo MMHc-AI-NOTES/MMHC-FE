@@ -6,7 +6,7 @@ import {
   PreAuditCheckResult,
   TokenEstimation,
   SessionReviewPayload,
-  SessionReviewData
+  SessionReviewData,
 } from '@/types/noteSubmission';
 import { PreAuditCheckStatusEnum, StructureQualityEnum } from '@/constants/common';
 
@@ -20,7 +20,6 @@ interface ApiResponse<T> {
 export const invokeSessionReview = async (payload: SessionReviewPayload): Promise<SessionReviewData | null> => {
   try {
     const response = await axios.post<ApiResponse<SessionReviewData>>('/session-reviews/invoke', payload);
-    console.log('Session Review API Response:', response.data);
     const responsePayload = response?.data?.status ? response.data.data : response.data;
 
     if (!responsePayload || typeof responsePayload !== 'object') {
@@ -36,7 +35,8 @@ export const invokeSessionReview = async (payload: SessionReviewPayload): Promis
         output_text: bedrockResponse.output_text ?? bedrockResponse.raw_response,
         validation_result:
           bedrockResponse.validation_result ??
-          ((responsePayload as { validation_result?: SessionReviewData['validation_result'] }).validation_result ?? undefined),
+          (responsePayload as { validation_result?: SessionReviewData['validation_result'] }).validation_result ??
+          undefined,
       };
     }
 
