@@ -174,15 +174,16 @@ const NoteSubmission: React.FC = () => {
       };
 
       const data = (await invokeSessionReview(payload)) as SessionReviewResult | null;
+
       if (data) {
         const parsedFromOutput = tryParseSessionJson(data.output_text);
         const parsedFromRawResponse = tryParseSessionJson(data.raw_response);
         const parsedObj = parsedFromOutput || parsedFromRawResponse;
 
         if (parsedObj && typeof parsedObj === 'object') {
-          const parsedIssues = (parsedObj as { issues?: unknown[] }).issues;
+          const parsedIssues = (data as { issues?: unknown[] }).issues;
           const hasNoIssues = Array.isArray(parsedIssues) && parsedIssues.length === 0;
-
+          parsedObj.issues = parsedIssues || parsedObj.issues || [];
           if (hasNoIssues && data.raw_response) {
             setSessionReport(data.raw_response);
           } else {
@@ -262,10 +263,7 @@ const NoteSubmission: React.FC = () => {
   }, []);
 
   const calculatedScoreByUs = Array.isArray(sessionReport?.issues)
-    ? Math.max(
-        0,
-        100 - sessionReport.issues.reduce((sum: number, issue: any) => sum + Number(issue?.points_deducted || 0), 0),
-      )
+    ? Math.max(0, 100 - sessionReport.issues.reduce((sum: number, issue: any) => sum + Number(issue?.points_deducted || 0), 0))
     : '-';
 
   return (
@@ -285,8 +283,7 @@ const NoteSubmission: React.FC = () => {
           {/* Client Select for Autofill */}
           <div className="space-y-1">
             <Label className="text-sm text-gray-700">
-              Select Client (Autofill Notes){' '}
-              {isLoadingClients && <span className="ml-2 text-xs text-blue-500">Loading clients...</span>}
+              Select Client (Autofill Notes) {isLoadingClients && <span className="ml-2 text-xs text-blue-500">Loading clients...</span>}
               {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
             </Label>
             <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
@@ -415,7 +412,7 @@ const NoteSubmission: React.FC = () => {
 
                 <div className="mt-4 space-y-3">
                   <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
-                  {sessionReport.issues && sessionReport.issues.length > 0 ? (
+                  {sessionReport?.issues?.length ? (
                     sessionReport.issues.map((issue: any, index: number) => {
                       const severityUpper = (issue.severity || '').toUpperCase();
                       const badgeClass =
