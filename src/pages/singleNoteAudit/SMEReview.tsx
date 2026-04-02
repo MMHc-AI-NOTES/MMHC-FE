@@ -376,6 +376,9 @@ const SMEReview = ({
           // When there are issues on this review (alsoAssignManager = true), also auto-assign to manager
           if (alsoAssignManager && noteId && versionId != null && practitionerId && priorityId && loggedInUserId != null) {
             const versionLabel = versionOrderForApi != null ? `V${versionOrderForApi}` : undefined;
+            // Give the backend a moment to process the "mark for review" before assigning.
+            // This avoids race conditions where both actions are applied simultaneously.
+            await new Promise(resolve => setTimeout(resolve, 500));
             await assignToManager({
               note_id: noteId,
               version_id: versionId,

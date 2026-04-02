@@ -83,6 +83,12 @@ const DescriptionMappingSection: React.FC = () => {
 
   const toDelete = selectedIdToDelete ? smeTemplates.find(t => t.id === selectedIdToDelete) : null;
   const deleteLabel = toDelete ? display(toDelete).issueDescription : '';
+  const sortedMappings = [...smeTemplates].sort((a, b) => {
+    const aDisplay = display(a);
+    const bDisplay = display(b);
+
+    return aDisplay.issueRelatedTo.localeCompare(bDisplay.issueRelatedTo);
+  });
 
   return (
     <>
@@ -116,7 +122,7 @@ const DescriptionMappingSection: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    smeTemplates.map(m => {
+                    sortedMappings.map(m => {
                       const d = display(m);
                       return (
                         <TableRow key={m.id}>
