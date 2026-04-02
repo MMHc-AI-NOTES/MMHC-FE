@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { History, Bot, Mail, Webhook, ListX, CheckCircle, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,12 +30,23 @@ interface AuditHistoryCardProps {
 const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToManagerAt }: AuditHistoryCardProps) => {
   const [activities, setActivities] = useState<NoteActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [localActivities, setLocalActivities] = useState<NoteActivityItem[]>([]);
   const { agents } = useAppSelector(state => state.agents);
+
+  const lastMarkedForReviewAtRef = useRef<string | undefined>(undefined);
+  const lastEmailSentAtRef = useRef<string | undefined>(undefined);
+  const lastAssignedToManagerAtRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (!noteId) return;
 
     let cancelled = false;
+
+    // When switching notes, clear local optimistic history
+    setLocalActivities([]);
+    lastMarkedForReviewAtRef.current = undefined;
+    lastEmailSentAtRef.current = undefined;
+    lastAssignedToManagerAtRef.current = undefined;
 
     const loadActivity = async () => {
       setLoading(true);
@@ -75,41 +86,65 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToMa
     };
   }, [noteId]);
 
-  // Build list including any temporary local \"marked for review\" activity
-  const baseActivities = [...activities];
+  useEffect(() => {
+    if (!noteId) return;
+    if (markedForReviewAt && markedForReviewAt !== lastMarkedForReviewAtRef.current) {
+      lastMarkedForReviewAtRef.current = markedForReviewAt;
+      setLocalActivities(prev => [
+        ...prev,
+        {
+          id: `local_note_marked_reviewed_${noteId}_${markedForReviewAt}`,
+          action: AuditActionEnum.noteMarkedReviewed,
+          noteId,
+          createdAt: markedForReviewAt,
+          description: 'Note marked as reviewed',
+          metadata: {},
+        },
+      ]);
+    }
+  }, [markedForReviewAt, noteId]);
 
-  if (markedForReviewAt && noteId) {
-    baseActivities.push({
-      id: 'local_note_marked_reviewed',
-      action: AuditActionEnum.noteMarkedReviewed,
-      noteId,
-      createdAt: markedForReviewAt,
-      description: 'Note marked as reviewed',
-      metadata: {},
-    });
-  }
+  useEffect(() => {
+    if (!noteId) return;
+    if (emailSentAt && emailSentAt !== lastEmailSentAtRef.current) {
+      lastEmailSentAtRef.current = emailSentAt;
+      setLocalActivities(prev => [
+        ...prev,
+        {
+          id: `local_email_sme_issues_${noteId}_${emailSentAt}`,
+          action: AuditActionEnum.emailSmeIssues,
+          noteId,
+          createdAt: emailSentAt,
+          description: 'SME issues email sent to practitioner',
+          metadata: {},
+        },
+      ]);
+    }
+  }, [emailSentAt, noteId]);
 
-  if (emailSentAt && noteId) {
-    baseActivities.push({
-      id: 'local_email_sme_issues',
-      action: AuditActionEnum.emailSmeIssues,
-      noteId,
-      createdAt: emailSentAt,
-      description: 'SME issues email sent to practitioner',
-      metadata: {},
-    });
-  }
+  useEffect(() => {
+    if (!noteId) return;
+    if (assignedToManagerAt && assignedToManagerAt !== lastAssignedToManagerAtRef.current) {
+      lastAssignedToManagerAtRef.current = assignedToManagerAt;
+      setLocalActivities(prev => [
+        ...prev,
+        {
+          id: `local_sme_assigned_to_manager_${noteId}_${assignedToManagerAt}`,
+          action: AuditActionEnum.smeAssignedToManager,
+          noteId,
+          createdAt: assignedToManagerAt,
+          description: 'Note assigned to manager for review',
+          metadata: {},
+        },
+      ]);
+    }
+  }, [assignedToManagerAt, noteId]);
 
-  if (assignedToManagerAt && noteId) {
-    baseActivities.push({
-      id: 'local_sme_assigned_to_manager',
-      action: AuditActionEnum.smeAssignedToManager,
-      noteId,
-      createdAt: assignedToManagerAt,
-      description: 'Note assigned to manager for review',
-      metadata: {},
-    });
-  }
+  // Build list including any temporary local optimistic activities.
+  // If the server already returned the same action at the same time, don't duplicate it.
+  const activitySignatureSet = new Set(activities.map(a => `${a.action}|${moment(a.createdAt).valueOf()}`));
+  const dedupedLocalActivities = localActivities.filter(a => !activitySignatureSet.has(`${a.action}|${moment(a.createdAt).valueOf()}`));
+  const baseActivities = [...activities, ...dedupedLocalActivities];
 
   // Sort activities by date (newest first), exclude chat_created for now
   const sortedActivities = baseActivities
