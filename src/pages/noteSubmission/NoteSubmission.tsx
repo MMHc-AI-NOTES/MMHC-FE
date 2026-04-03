@@ -22,6 +22,8 @@ import { fetchClients, Client } from '../clients/clientsApiCalls';
 import { fetchNoteDetail } from '../singleNoteAudit/singleNoteApiCalls';
 import { formatJsonToText } from '@/utils/helper';
 import { Badge } from '@/components/ui/badge';
+import { calculateSMEScore } from '../singleNoteAudit/components/reviewUtils';
+import { IssueForm } from '../singleNoteAudit/components/types';
 import { setErrorTypes } from '@/store/slices/smeConfigSlice';
 
 type SessionReviewResult = {
@@ -42,7 +44,7 @@ const NoteSubmission: React.FC = () => {
   const dispatch = useDispatch();
 
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
-  const { errorTypesLoaded } = useAppSelector(state => state.smeConfig);
+  const { errorTypes, errorTypesLoaded } = useAppSelector(state => state.smeConfig);
 
   // Client autofill state
   const [clients, setClients] = useState<Client[]>([]);
@@ -232,6 +234,18 @@ const NoteSubmission: React.FC = () => {
     })();
   }, [dispatch]);
 
+  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReport?.issues)
+    ? sessionReport.issues.map((issue: any, index: number) => ({
+        id: `ai-issue-${index}`,
+        reviewerName: 'AI Audit',
+        errorType: String(issue?.severity || '').toLowerCase(),
+        issueRelatedTo: String(issue?.section || 'overall'),
+        issueDescription: String(issue?.justification || issue?.description || ''),
+      }))
+    : [];
+  const calculatedScoreByUs =
+    typeof sessionReport === 'object' && sessionReport ? calculateSMEScore(mappedSessionIssues, errorTypes || []) : '-';
+
   useEffect(() => {
     const loadErrorTypes = async () => {
       if (errorTypesLoaded) return;
@@ -261,10 +275,6 @@ const NoteSubmission: React.FC = () => {
       }
     })();
   }, []);
-
-  const calculatedScoreByUs = Array.isArray(sessionReport?.issues)
-    ? Math.max(0, 100 - sessionReport.issues.reduce((sum: number, issue: any) => sum + Number(issue?.points_deducted || 0), 0))
-    : '-';
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
