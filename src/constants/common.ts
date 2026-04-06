@@ -414,6 +414,7 @@ export const StructureQualityLabels: Record<number, string> = {
 };
 
 export const AgentModelKeys = {
+  CLAUDE_4_6_Opus: 'us.anthropic.claude-opus-4-6-v1',
   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
   CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
   CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
@@ -428,6 +429,7 @@ export const AgentModelKeys = {
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
+  CLAUDE_4_6_Opus: 'Claude 4.6 Opus',
   CLAUDE_3_HAIKU: 'Claude 3 Haiku',
   CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku',
   CLAUDE_4_5_HAIKU_V1: 'Claude 4.5 Haiku',
