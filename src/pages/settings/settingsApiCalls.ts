@@ -420,7 +420,7 @@ export const fetchSMETemplates = async (): Promise<SMETemplate[]> => {
   try {
     const response = await axios.post<SMETemplateListingResponse>('/sme-issues-templates/listing', {
       page: 1,
-      page_size: 1000,
+      page_size: 10000,
     });
 
     if (response.status) {
