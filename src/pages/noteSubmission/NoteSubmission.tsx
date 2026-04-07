@@ -31,12 +31,26 @@ type SessionReviewResult = {
   raw_response?: string;
   score?: number;
   pass?: boolean;
-  issues?: any[];
+  issues?: SessionIssue[];
   validation_result?: {
     isValid: boolean;
     status?: string;
     message?: string;
   };
+};
+
+type SessionIssue = {
+  severity?: string;
+  points_deducted?: number | string | null;
+  section?: string | null;
+  severity_details?: string;
+  description?: string;
+  justification?: string;
+};
+
+type SessionReport = {
+  pass?: boolean;
+  issues?: SessionIssue[];
 };
 
 const NoteSubmission: React.FC = () => {
@@ -58,7 +72,7 @@ const NoteSubmission: React.FC = () => {
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
   const [rawResponseText, setRawResponseText] = useState<string>('');
-  const [sessionReport, setSessionReport] = useState<any | null>(null);
+  const [sessionReport, setSessionReport] = useState<SessionReport | string | null>(null);
   const [noteId, setNoteId] = useState<string>('');
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
@@ -83,7 +97,7 @@ const NoteSubmission: React.FC = () => {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const tryParseSessionJson = (input?: string): any | null => {
+  const tryParseSessionJson = (input?: string): SessionReport | null => {
     if (!input || typeof input !== 'string') return null;
 
     const trimmed = input.trim();
@@ -101,7 +115,7 @@ const NoteSubmission: React.FC = () => {
 
     for (const candidate of candidates) {
       try {
-        return JSON.parse(candidate);
+        return JSON.parse(candidate) as SessionReport;
       } catch {
         // Keep trying other candidates.
       }
@@ -187,7 +201,7 @@ const NoteSubmission: React.FC = () => {
         const parsedObj = parsedFromOutput || parsedFromRawResponse;
 
         if (parsedObj && typeof parsedObj === 'object') {
-          const parsedIssues = (data as { issues?: unknown[] }).issues;
+          const parsedIssues = data.issues;
           const hasNoIssues = Array.isArray(parsedIssues) && parsedIssues.length === 0;
           parsedObj.issues = parsedIssues || parsedObj.issues || [];
           if (hasNoIssues && data.raw_response) {
@@ -238,8 +252,10 @@ const NoteSubmission: React.FC = () => {
     })();
   }, [dispatch]);
 
-  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReport?.issues)
-    ? sessionReport.issues.map((issue: any, index: number) => ({
+  const sessionReportObject = typeof sessionReport === 'object' && sessionReport ? sessionReport : null;
+
+  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReportObject?.issues)
+    ? sessionReportObject.issues.map((issue: SessionIssue, index: number) => ({
         id: `ai-issue-${index}`,
         reviewerName: 'AI Audit',
         errorType: String(issue?.severity || '').toLowerCase(),
@@ -247,8 +263,18 @@ const NoteSubmission: React.FC = () => {
         issueDescription: String(issue?.justification || issue?.description || ''),
       }))
     : [];
-  const calculatedScoreByUs =
-    typeof sessionReport === 'object' && sessionReport ? calculateSMEScore(mappedSessionIssues, errorTypes || []) : '-';
+  const calculatedScoreByUs = sessionReportObject ? calculateSMEScore(mappedSessionIssues, errorTypes || []) : '-';
+
+  const getIssueDeductionPoints = (issue: SessionIssue): number => {
+    const rawBackendPoints = Number(issue?.points_deducted);
+    if (Number.isFinite(rawBackendPoints) && rawBackendPoints !== 0) {
+      return Math.abs(rawBackendPoints);
+    }
+
+    const severityKey = String(issue?.severity || '').toLowerCase();
+    const manualPoints = errorTypes?.find(type => type.name === severityKey)?.points || 0;
+    return Math.abs(manualPoints);
+  };
 
   useEffect(() => {
     const loadErrorTypes = async () => {
@@ -427,8 +453,9 @@ const NoteSubmission: React.FC = () => {
                 <div className="mt-4 space-y-3">
                   <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
                   {sessionReport?.issues?.length ? (
-                    sessionReport.issues.map((issue: any, index: number) => {
+                    sessionReport.issues.map((issue: SessionIssue, index: number) => {
                       const severityUpper = (issue.severity || '').toUpperCase();
+                      const deductionPoints = getIssueDeductionPoints(issue);
                       const badgeClass =
                         severityUpper === 'CRITICAL'
                           ? 'bg-gradient-red'
@@ -440,11 +467,13 @@ const NoteSubmission: React.FC = () => {
                         <div key={index} className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
                           <div className="flex items-center">
                             <Badge className={`px-3 py-1 text-xs font-semibold text-white uppercase ${badgeClass}`}>
-                              {severityUpper} (-{issue.points_deducted || 0} PTS)
+                              {severityUpper} ({deductionPoints === 0 ? '0' : `-${deductionPoints}`} PTS)
                             </Badge>
                           </div>
                           <div>
-                            <p className="mt-1 text-sm font-bold text-red-600">-{issue.points_deducted || 0} points</p>
+                            <p className="mt-1 text-sm font-bold text-red-600">
+                              {deductionPoints === 0 ? '0 points' : `-${deductionPoints} points`}
+                            </p>
                             <p className="mt-2 text-xs leading-relaxed text-gray-600">
                               <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
                             </p>
