@@ -426,7 +426,7 @@ export const AgentModelKeys = {
   CUSTOM_DEPLOYMENT_V1_15032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
   CUSTOM_DEPLOYMENT_V2_28032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/sugrzn0ke8p6',
   CUSTOM_DEPLOYMENT_V3_02042026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/cxwsnnx1qsw8',
-  CUSTOM_DEPLOYMENT_V4_SageMaker: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-SageMaker-v5',
+  CUSTOM_DEPLOYMENT_V4_SageMaker: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-SageMaker-v6',
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {

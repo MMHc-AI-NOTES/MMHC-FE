@@ -57,6 +57,7 @@ const NoteSubmission: React.FC = () => {
   const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
+  const [rawResponseText, setRawResponseText] = useState<string>('');
   const [sessionReport, setSessionReport] = useState<any | null>(null);
   const [noteId, setNoteId] = useState<string>('');
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
@@ -112,6 +113,7 @@ const NoteSubmission: React.FC = () => {
   const handleClear = () => {
     setProgressNoteContent('');
     setPreviousSessionContent('');
+    setRawResponseText('');
     setSessionReport(null);
     setNoteId('');
     setSessionMetadata({
@@ -168,6 +170,7 @@ const NoteSubmission: React.FC = () => {
 
     setIsSubmitting(true);
     setSessionReport(null);
+    setRawResponseText('');
     try {
       const payload = {
         note_id: noteId,
@@ -178,6 +181,7 @@ const NoteSubmission: React.FC = () => {
       const data = (await invokeSessionReview(payload)) as SessionReviewResult | null;
 
       if (data) {
+        setRawResponseText(data.raw_response || '');
         const parsedFromOutput = tryParseSessionJson(data.output_text);
         const parsedFromRawResponse = tryParseSessionJson(data.raw_response);
         const parsedObj = parsedFromOutput || parsedFromRawResponse;
@@ -461,6 +465,11 @@ const NoteSubmission: React.FC = () => {
             ) : (
               <Textarea value={sessionReport as string} readOnly className="min-h-40 overflow-y-auto bg-gray-50 shadow" />
             )}
+          </div>
+          {/* Raw Response */}
+          <div className="height-[220px] space-y-1">
+            <Label className="text-sm text-gray-700">Raw Response</Label>
+            <Textarea value={rawResponseText} readOnly className="h-40 resize-none overflow-y-auto bg-gray-50 shadow" />
           </div>
         </CardContent>
       </Card>
