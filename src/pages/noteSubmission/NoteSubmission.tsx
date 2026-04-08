@@ -345,7 +345,12 @@ const NoteSubmission: React.FC = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                <Command className="w-full">
+                <Command
+                  className="w-full"
+                  filter={(value, search) => {
+                    return value.toLowerCase().startsWith(search.toLowerCase()) ? 1 : 0;
+                  }}
+                >
                   <CommandInput placeholder={isLoadingClients ? 'Loading clients...' : 'Search client...'} disabled={isLoadingClients} />
                   <CommandList>
                     <CommandEmpty>{isLoadingClients ? 'Loading clients...' : 'No client found.'}</CommandEmpty>
