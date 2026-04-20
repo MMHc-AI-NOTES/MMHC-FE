@@ -1,5 +1,5 @@
 // @/services/notesService.ts
-import { formatDate, formatDateTime, getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { formatDate, formatDateTime, getDefaultDateRangeNotesQueue, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
 import {
   RawApiNote,
@@ -148,7 +148,7 @@ export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> 
 export const fetchQueueOverview = async (startDate?: string, endDate?: string): Promise<QueueOverview | null> => {
   try {
     // Use provided dates or default to last 30 days
-    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRangeNotesQueue();
     const finalStartDate = startDate || defaultStart;
     const finalEndDate = endDate || defaultEnd;
 
@@ -171,7 +171,7 @@ export const fetchQueueOverview = async (startDate?: string, endDate?: string): 
 export const fetchWorkload = async (startDate?: string, endDate?: string): Promise<Workload | null> => {
   try {
     // Use provided dates or default to last 30 days
-    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRangeNotesQueue();
     const finalStartDate = startDate || defaultStart;
     const finalEndDate = endDate || defaultEnd;
 

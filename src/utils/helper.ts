@@ -166,6 +166,12 @@ export const getDefaultDateRange = () => {
   return { startDate, endDate };
 };
 
+export const getDefaultDateRangeNotesQueue = () => {
+  const endDate = moment().format('YYYY-MM-DD');
+  const startDate = moment().subtract(20, 'years').format('YYYY-MM-DD');
+  return { startDate, endDate };
+};
+
 // Map issue category to NoteSections accordion ID
 export const mapCategoryToSectionId = (category: string): string => {
   const categoryMap: Record<string, string> = {
