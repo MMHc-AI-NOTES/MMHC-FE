@@ -34,10 +34,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ColorKey } from './ColorKey';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
+import moment from 'moment';
 
 const itemsPerPage = 60; // Fixed at 60 as per requirement
 
 const NotesQueue = () => {
+  const endDate = moment().format('YYYY-MM-DD'); //for queue statistics
+  const startDate = moment().subtract(2, 'years').format('YYYY-MM-DD'); //for queue statistics
   const [notes, setNotes] = useState<FormattedNote[]>([]);
   const [notesLoading, setNotesLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);
@@ -153,7 +156,7 @@ const NotesQueue = () => {
     const loadQueueOverview = async () => {
       try {
         setOverviewLoading(true);
-        const overviewData = await fetchQueueOverview();
+        const overviewData = await fetchQueueOverview(startDate, endDate);
         setQueueOverview(overviewData);
       } catch (error) {
         console.error('Error loading queue overview:', error);

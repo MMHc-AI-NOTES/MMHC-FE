@@ -162,7 +162,7 @@ export const formatDateTime = (value: DateLike): string => {
 // Utility function to get default date range
 export const getDefaultDateRange = () => {
   const endDate = moment().format('YYYY-MM-DD');
-  const startDate = moment().subtract(2, 'years').format('YYYY-MM-DD');
+  const startDate = moment().subtract(30, 'days').format('YYYY-MM-DD');
   return { startDate, endDate };
 };
 
