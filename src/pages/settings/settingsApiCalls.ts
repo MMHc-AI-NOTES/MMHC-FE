@@ -418,7 +418,10 @@ export const fetchSMETemplates = async (): Promise<SMETemplate[]> => {
   const previousSMETemplates = getState().smeConfig.smeTemplates;
   if (previousSMETemplates.length) return previousSMETemplates;
   try {
-    const response = await axios.post<SMETemplateListingResponse>('/sme-issues-templates/listing', {});
+    const response = await axios.post<SMETemplateListingResponse>('/sme-issues-templates/listing', {
+      page: 1,
+      page_size: 10000,
+    });
 
     if (response.status) {
       const data = response.data?.data ?? response.data ?? [];

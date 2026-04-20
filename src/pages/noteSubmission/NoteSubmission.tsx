@@ -28,6 +28,29 @@ import { setErrorTypes } from '@/store/slices/smeConfigSlice';
 
 type SessionReviewResult = {
   output_text?: string;
+  raw_response?: string;
+  score?: number;
+  pass?: boolean;
+  issues?: SessionIssue[];
+  validation_result?: {
+    isValid: boolean;
+    status?: string;
+    message?: string;
+  };
+};
+
+type SessionIssue = {
+  severity?: string;
+  points_deducted?: number | string | null;
+  section?: string | null;
+  severity_details?: string;
+  description?: string;
+  justification?: string;
+};
+
+type SessionReport = {
+  pass?: boolean;
+  issues?: SessionIssue[];
 };
 
 const NoteSubmission: React.FC = () => {
@@ -40,6 +63,7 @@ const NoteSubmission: React.FC = () => {
   // Client autofill state
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [isLoadingClients, setIsLoadingClients] = useState<boolean>(true);
   const [isFetchingClientData, setIsFetchingClientData] = useState<boolean>(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
@@ -47,7 +71,9 @@ const NoteSubmission: React.FC = () => {
   const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
-  const [sessionReport, setSessionReport] = useState<any | null>(null);
+  const [rawResponseText, setRawResponseText] = useState<string>('');
+  const [sessionReport, setSessionReport] = useState<SessionReport | string | null>(null);
+  const [noteId, setNoteId] = useState<string>('');
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
   // Advanced options state
@@ -71,10 +97,39 @@ const NoteSubmission: React.FC = () => {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  const tryParseSessionJson = (input?: string): SessionReport | null => {
+    if (!input || typeof input !== 'string') return null;
+
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    const textToParse = codeBlockMatch?.[1]?.trim() || trimmed;
+
+    const candidates = [textToParse];
+    const firstBrace = textToParse.indexOf('{');
+    const lastBrace = textToParse.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      candidates.push(textToParse.substring(firstBrace, lastBrace + 1));
+    }
+
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate) as SessionReport;
+      } catch {
+        // Keep trying other candidates.
+      }
+    }
+
+    return null;
+  };
+
   const handleClear = () => {
     setProgressNoteContent('');
     setPreviousSessionContent('');
+    setRawResponseText('');
     setSessionReport(null);
+    setNoteId('');
     setSessionMetadata({
       sessionLength: '',
       clientInitials: '',
@@ -105,6 +160,7 @@ const NoteSubmission: React.FC = () => {
       const noteDetail = await fetchNoteDetail(latestSession.noteId);
 
       if (noteDetail) {
+        setNoteId(latestSession.noteId);
         setProgressNoteContent(formatJsonToText(noteDetail.session));
 
         if (noteDetail.previous_note && noteDetail.previous_note.session) {
@@ -128,35 +184,33 @@ const NoteSubmission: React.FC = () => {
 
     setIsSubmitting(true);
     setSessionReport(null);
+    setRawResponseText('');
     try {
       const payload = {
+        note_id: noteId,
+        prompt_id: selectedAgent?.id || 0,
         model_id: modelVersion,
-        prompt: selectedAgent?.prompt || '',
-        current_note: progressNoteContent,
-        temperature: selectedAgent?.temperature ?? 0.7,
-        top_p: selectedAgent?.top_p ?? 0.9,
-        top_k: selectedAgent?.top_k ?? 250,
-        ...(previousSessionContent.trim() ? { previous_note: previousSessionContent } : {}),
       };
 
       const data = (await invokeSessionReview(payload)) as SessionReviewResult | null;
-      if (data?.output_text) {
-        // Strip markdown codeblocks if they exist (e.g. ```json \n { ... } \n ```)
-        let cleanOutput = data.output_text.trim();
-        if (cleanOutput.startsWith('```')) {
-          const firstLineBreak = cleanOutput.indexOf('\n');
-          if (firstLineBreak !== -1) {
-            cleanOutput = cleanOutput.substring(firstLineBreak + 1);
+
+      if (data) {
+        setRawResponseText(data.raw_response || '');
+        const parsedFromOutput = tryParseSessionJson(data.output_text);
+        const parsedFromRawResponse = tryParseSessionJson(data.raw_response);
+        const parsedObj = parsedFromOutput || parsedFromRawResponse;
+
+        if (parsedObj && typeof parsedObj === 'object') {
+          const parsedIssues = data.issues;
+          const hasNoIssues = Array.isArray(parsedIssues) && parsedIssues.length === 0;
+          parsedObj.issues = parsedIssues || parsedObj.issues || [];
+          if (hasNoIssues && data.raw_response) {
+            setSessionReport(data.raw_response);
+          } else {
+            setSessionReport(parsedObj);
           }
-        }
-        if (cleanOutput.endsWith('```')) {
-          cleanOutput = cleanOutput.substring(0, cleanOutput.lastIndexOf('```')).trim();
-        }
-        try {
-          const parsedObj = JSON.parse(cleanOutput);
-          setSessionReport(parsedObj);
-        } catch {
-          setSessionReport(cleanOutput);
+        } else {
+          setSessionReport(data.raw_response || data.output_text || data);
         }
       }
 
@@ -198,6 +252,30 @@ const NoteSubmission: React.FC = () => {
     })();
   }, [dispatch]);
 
+  const sessionReportObject = typeof sessionReport === 'object' && sessionReport ? sessionReport : null;
+
+  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReportObject?.issues)
+    ? sessionReportObject.issues.map((issue: SessionIssue, index: number) => ({
+        id: `ai-issue-${index}`,
+        reviewerName: 'AI Audit',
+        errorType: String(issue?.severity || '').toLowerCase(),
+        issueRelatedTo: String(issue?.section || 'overall'),
+        issueDescription: String(issue?.justification || issue?.description || ''),
+      }))
+    : [];
+  const calculatedScoreByUs = sessionReportObject ? calculateSMEScore(mappedSessionIssues, errorTypes || []) : '-';
+
+  const getIssueDeductionPoints = (issue: SessionIssue): number => {
+    const rawBackendPoints = Number(issue?.points_deducted);
+    if (Number.isFinite(rawBackendPoints) && rawBackendPoints !== 0) {
+      return Math.abs(rawBackendPoints);
+    }
+
+    const severityKey = String(issue?.severity || '').toLowerCase();
+    const manualPoints = errorTypes?.find(type => type.name === severityKey)?.points || 0;
+    return Math.abs(manualPoints);
+  };
+
   useEffect(() => {
     const loadErrorTypes = async () => {
       if (errorTypesLoaded) return;
@@ -216,25 +294,17 @@ const NoteSubmission: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
+        setIsLoadingClients(true);
         const { data } = await fetchClients({ page: 1, pageSize: 10000, filters: [] });
         const filteredClients = data.filter(c => c.notesCount > 0);
         setClients(filteredClients);
       } catch (err) {
         console.error('Error fetching clients for dropdown:', err);
+      } finally {
+        setIsLoadingClients(false);
       }
     })();
   }, []);
-
-  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReport?.issues)
-    ? sessionReport.issues.map((issue: any, index: number) => ({
-        id: `ai-issue-${index}`,
-        reviewerName: 'AI Audit',
-        errorType: String(issue?.severity || '').toLowerCase(),
-        issueRelatedTo: String(issue?.section || 'overall'),
-        issueDescription: String(issue?.justification || issue?.description || ''),
-      }))
-    : [];
-  const calculatedAIScore = mappedSessionIssues.length > 0 ? calculateSMEScore(mappedSessionIssues, errorTypes) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
@@ -253,7 +323,8 @@ const NoteSubmission: React.FC = () => {
           {/* Client Select for Autofill */}
           <div className="space-y-1">
             <Label className="text-sm text-gray-700">
-              Select Client (Autofill Notes) {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
+              Select Client (Autofill Notes) {isLoadingClients && <span className="ml-2 text-xs text-blue-500">Loading clients...</span>}
+              {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
             </Label>
             <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
               <PopoverTrigger asChild>
@@ -266,31 +337,40 @@ const NoteSubmission: React.FC = () => {
                   <span className="truncate">
                     {selectedClientId
                       ? `${selectedClientId} (${clients.find(c => c.clientId === selectedClientId)?.notesCount} notes)`
-                      : 'Select a client to autofill previous and current sessions'}
+                      : isLoadingClients
+                        ? 'Loading clients...'
+                        : 'Select a client to autofill previous and current sessions'}
                   </span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                <Command className="w-full">
-                  <CommandInput placeholder="Search client..." />
+                <Command
+                  className="w-full"
+                  filter={(value, search) => {
+                    return value.toLowerCase().startsWith(search.toLowerCase()) ? 1 : 0;
+                  }}
+                >
+                  <CommandInput placeholder={isLoadingClients ? 'Loading clients...' : 'Search client...'} disabled={isLoadingClients} />
                   <CommandList>
-                    <CommandEmpty>No client found.</CommandEmpty>
-                    <CommandGroup>
-                      {clients.map(client => (
-                        <CommandItem
-                          key={client.id}
-                          value={client.clientId}
-                          onSelect={() => {
-                            handleClientSelect(client.clientId);
-                            setClientDropdownOpen(false);
-                          }}
-                        >
-                          <Check className={cn('mr-2 h-4 w-4', selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0')} />
-                          {client.clientId} ({client.notesCount} notes)
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    <CommandEmpty>{isLoadingClients ? 'Loading clients...' : 'No client found.'}</CommandEmpty>
+                    {!isLoadingClients && (
+                      <CommandGroup>
+                        {clients.map(client => (
+                          <CommandItem
+                            key={client.id}
+                            value={client.clientId}
+                            onSelect={() => {
+                              handleClientSelect(client.clientId);
+                              setClientDropdownOpen(false);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0')} />
+                            {client.clientId} ({client.notesCount} notes)
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
                   </CommandList>
                 </Command>
               </PopoverContent>
@@ -371,15 +451,16 @@ const NoteSubmission: React.FC = () => {
                   <span className="text-primary ml-1 font-semibold">AI Audit</span>
                 </div>
                 <div className="rounded-lg bg-gray-50 px-4 py-3">
-                  <span className="font-medium text-gray-700">AI Score:</span>{' '}
-                  <span className="font-bold text-gray-900">{calculatedAIScore ?? '-'}</span>
+                  <span className="font-medium text-gray-700">Calculated Score:</span>{' '}
+                  <span className="font-bold text-gray-900">{calculatedScoreByUs}</span>
                 </div>
 
                 <div className="mt-4 space-y-3">
                   <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
-                  {sessionReport.issues && sessionReport.issues.length > 0 ? (
-                    sessionReport.issues.map((issue: any, index: number) => {
+                  {sessionReport?.issues?.length ? (
+                    sessionReport.issues.map((issue: SessionIssue, index: number) => {
                       const severityUpper = (issue.severity || '').toUpperCase();
+                      const deductionPoints = getIssueDeductionPoints(issue);
                       const badgeClass =
                         severityUpper === 'CRITICAL'
                           ? 'bg-gradient-red'
@@ -391,11 +472,13 @@ const NoteSubmission: React.FC = () => {
                         <div key={index} className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
                           <div className="flex items-center">
                             <Badge className={`px-3 py-1 text-xs font-semibold text-white uppercase ${badgeClass}`}>
-                              {severityUpper} (-{issue.points_deducted || 0} PTS)
+                              {severityUpper} ({deductionPoints === 0 ? '0' : `-${deductionPoints}`} PTS)
                             </Badge>
                           </div>
                           <div>
-                            <p className="mt-1 text-sm font-bold text-red-600">-{issue.points_deducted || 0} points</p>
+                            <p className="mt-1 text-sm font-bold text-red-600">
+                              {deductionPoints === 0 ? '0 points' : `-${deductionPoints} points`}
+                            </p>
                             <p className="mt-2 text-xs leading-relaxed text-gray-600">
                               <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
                             </p>
@@ -408,7 +491,7 @@ const NoteSubmission: React.FC = () => {
                     })
                   ) : (
                     <div className="rounded-lg border bg-gray-50 p-4 text-center text-sm text-gray-500">
-                      No issues found. Perfect score!
+                      {sessionReport.pass === true ? 'No issues found. Perfect score!' : 'No parsed issues returned from AI response.'}
                     </div>
                   )}
                 </div>
@@ -416,6 +499,11 @@ const NoteSubmission: React.FC = () => {
             ) : (
               <Textarea value={sessionReport as string} readOnly className="min-h-40 overflow-y-auto bg-gray-50 shadow" />
             )}
+          </div>
+          {/* Raw Response */}
+          <div className="height-[220px] space-y-1">
+            <Label className="text-sm text-gray-700">Raw Response</Label>
+            <Textarea value={rawResponseText} readOnly className="h-40 resize-none overflow-y-auto bg-gray-50 shadow" />
           </div>
         </CardContent>
       </Card>
