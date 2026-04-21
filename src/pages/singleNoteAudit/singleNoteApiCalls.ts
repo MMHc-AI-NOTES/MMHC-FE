@@ -105,6 +105,11 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
     return noteDetail;
   }
 
+  // Re-run audit: ALWAYS create a new chat with the selected agent
+  if (featureFlags.createChatOnLoad && isRerun) {
+    await createChat({ note_id: noteId, prompt_id: promptId });
+  }
+
   noteDetail = await fetchNoteDetail(noteId);
   return noteDetail;
 };
