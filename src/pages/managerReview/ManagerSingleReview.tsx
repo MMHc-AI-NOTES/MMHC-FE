@@ -49,7 +49,7 @@ const transformToNoteDetail = (data: ManagerReviewApiItem): NoteDetail => {
     clientId: data.session?.patientId?.toString() || '—',
     noteType: SessionTypeLabels[data.session?.type?.id] || '-',
     aiReviews: data.chat_count || 0,
-    auditScore: data.aiScore || data.chat?.evaluationScore || 0,
+    auditScore: data.chat?.bedrockResponse?.score ?? data.aiScore ?? data.chat?.evaluationScore ?? 0,
     lastRun: data.chat?.createdAt ? formatDateTime(data.chat.createdAt) : 'N/A',
     aiSummary: bedrockResponse.summary || data.chat?.evaluation || '',
     therapySummary: data.session?.session || '',
