@@ -518,7 +518,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id || 1}
               practitionerId={practitionerId || 0}
               reviewerId={effectiveReviewerId}
-              isManagerReviewing={isManagerReviewing}
+              isManagerReviewing={isManagerReviewing && user?.type !== UserRoleEnum.superAdmin}
               onlyShowLoggedInUserReviews={onlyShowLoggedInUserReviews}
               onSMEIssueDeleted={onSMEIssueDeleted}
               onSMEReviewDeleted={onSMEReviewDeleted}

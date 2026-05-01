@@ -533,7 +533,11 @@ const SMEReview = ({
           let isNoReviewMode = false;
 
           const showPlaceholder =
-            loggedInUserId != null && versionId != null && !hasCurrentUserReview && (!isManagerReviewing || reviewerId === loggedInUserId);
+            onlyShowLoggedInUserReviews &&
+            loggedInUserId != null &&
+            versionId != null &&
+            !hasCurrentUserReview &&
+            (!isManagerReviewing || reviewerId === loggedInUserId);
 
           if (showPlaceholder) {
             const placeholderReview: Review = {
