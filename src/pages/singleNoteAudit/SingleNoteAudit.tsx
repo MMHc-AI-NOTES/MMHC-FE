@@ -33,7 +33,7 @@ import TherapySessionSummaryCard from './TherapySessionSummaryCard';
 import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
-import { SessionTypeLabels } from '@/constants/common';
+import { SessionTypeLabels, UserRoleEnum } from '@/constants/common';
 import { fetchPractitioners, fetchCptCodes } from '../notesQueue/notesApiCalls';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
@@ -161,11 +161,14 @@ const SingleNoteAudit = () => {
   const isManagerReviewing =
     isManagerReviewingFromQuery != null ? isManagerReviewingFromQuery === 'true' : location.state?.isManagerReviewing || false;
   const from = (fromQuery as string | undefined) ?? (location.state?.from as string | undefined);
+  const loggedInUserId = user?.id ?? null;
+  const shouldScopeReviewsToLoggedInUser = user?.type !== UserRoleEnum.superAdmin && loggedInUserId != null;
+  const effectiveReviewerId = shouldScopeReviewsToLoggedInUser ? loggedInUserId : reviewerId;
 
   const backPath =
     from === 'admin-review-queue' ? '/admin-review-queue' : from === 'manager-review-queue' ? '/manager-review' : '/notes-queue';
 
-  const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
+  const onlyShowLoggedInUserReviews = shouldScopeReviewsToLoggedInUser || from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -307,8 +310,6 @@ const SingleNoteAudit = () => {
       setNoteDetail(null);
     };
   }, []);
-
-  const loggedInUserId = user?.id ?? null;
 
   const handleSMEIssueCreatedFromTemplate = useCallback(
     (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number, createdForReviewerId?: number) => {
@@ -474,7 +475,7 @@ const SingleNoteAudit = () => {
               onVersionChange={setSelectedVersionId}
               noteId={noteId}
               versionId={selectedVersionId}
-              reviewerId={reviewerId ?? loggedInUserId}
+              reviewerId={effectiveReviewerId ?? loggedInUserId}
               practitionerId={practitionerId ?? 0}
               aiStatusId={noteDetail.aiStatus?.id ?? 1}
               priorityId={noteDetail.priority?.id ?? 1}
@@ -488,7 +489,7 @@ const SingleNoteAudit = () => {
               onVersionChange={setSelectedVersionId}
               noteId={noteDetail.previousNote?.noteId}
               versionId={selectedVersionId}
-              reviewerId={reviewerId ?? loggedInUserId}
+              reviewerId={effectiveReviewerId ?? loggedInUserId}
               practitionerId={practitionerId ?? 0}
               aiStatusId={noteDetail.aiStatus?.id ?? 1}
               priorityId={noteDetail.priority?.id ?? 1}
@@ -516,7 +517,7 @@ const SingleNoteAudit = () => {
               aiStatusId={noteDetail.aiStatus?.id || 1}
               priorityId={noteDetail.priority?.id || 1}
               practitionerId={practitionerId || 0}
-              reviewerId={reviewerId}
+              reviewerId={effectiveReviewerId}
               isManagerReviewing={isManagerReviewing}
               onlyShowLoggedInUserReviews={onlyShowLoggedInUserReviews}
               onSMEIssueDeleted={onSMEIssueDeleted}
@@ -543,7 +544,7 @@ const SingleNoteAudit = () => {
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
                 isManagerReviewing={isManagerReviewing}
-                reviewerId={reviewerId}
+                reviewerId={effectiveReviewerId}
                 practitionerId={practitionerId}
                 noteId={noteId}
                 versionId={selectedVersionId}
