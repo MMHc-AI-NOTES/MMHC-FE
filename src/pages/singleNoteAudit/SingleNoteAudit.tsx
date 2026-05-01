@@ -163,13 +163,13 @@ const SingleNoteAudit = () => {
     isManagerReviewingFromQuery != null ? isManagerReviewingFromQuery === 'true' : location.state?.isManagerReviewing || false;
   const from = (fromQuery as string | undefined) ?? (location.state?.from as string | undefined);
   const loggedInUserId = user?.id ?? null;
-  const shouldScopeReviewsToLoggedInUser = user?.type !== UserRoleEnum.superAdmin && loggedInUserId != null;
+  const shouldScopeReviewsToLoggedInUser = user?.type === UserRoleEnum.sme_reviewer && loggedInUserId != null;
   const effectiveReviewerId = shouldScopeReviewsToLoggedInUser ? loggedInUserId : reviewerId;
 
   const backPath =
     from === 'admin-review-queue' ? '/admin-review-queue' : from === 'manager-review-queue' ? '/manager-review' : '/notes-queue';
 
-  const onlyShowLoggedInUserReviews = shouldScopeReviewsToLoggedInUser || from === 'admin-review-queue';
+  const onlyShowLoggedInUserReviews = shouldScopeReviewsToLoggedInUser;
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
