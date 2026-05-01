@@ -6,7 +6,7 @@ import moment from 'moment';
 import axios from 'axios';
 import { useAppSelector } from '@/store/store';
 import { formatDateTime, handleCatchMessages } from '@/utils/helper';
-import { AuditActionEnum, AuditActionLabels } from '@/constants/common';
+import { AuditActionEnum } from '@/constants/common';
 
 interface NoteActivityItem {
   id: number | string;
@@ -146,10 +146,8 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToMa
   const dedupedLocalActivities = localActivities.filter(a => !activitySignatureSet.has(`${a.action}|${moment(a.createdAt).valueOf()}`));
   const baseActivities = [...activities, ...dedupedLocalActivities];
 
-  // Sort activities by date (newest first), exclude chat_created for now
-  const sortedActivities = baseActivities
-    .filter(a => a.action !== AuditActionEnum.chatCreated)
-    .sort((a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf());
+  // Sort activities by date (newest first)
+  const sortedActivities = baseActivities.sort((a, b) => moment(b.createdAt).valueOf() - moment(a.createdAt).valueOf());
 
   const getAgentName = (agentId?: number | null): string | null => {
     if (!agentId) return null;
@@ -251,7 +249,7 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToMa
             {sortedActivities.map((activity, index) => {
               const formattedDate = formatDateTime(activity.createdAt);
               const action = activity.action;
-              const title = AuditActionLabels[action as keyof typeof AuditActionLabels] ?? 'Activity';
+              // const title = AuditActionLabels[action as keyof typeof AuditActionLabels] ?? 'Activity';
               const description = activity.description;
               const meta = activity.metadata ?? {};
               const noteIdDisplay = activity.noteId ?? meta.note_id;
@@ -261,9 +259,9 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToMa
               if (action === AuditActionEnum.chatCreated) {
                 const agentId = meta.agent_id as number | undefined;
                 const agentName = getAgentName(agentId);
-                subtitle = [noteIdDisplay ? `Note ${noteIdDisplay}` : null, agentName ? `Agent: ${agentName}` : null]
-                  .filter(Boolean)
-                  .join(' • ');
+                const noteLine = noteIdDisplay ? `<span class="font-semibold">Note:</span> ${noteIdDisplay}` : null;
+                const agentLine = agentName ? `<span class="font-semibold">Processed by:</span> ${agentName}` : null;
+                subtitle = [noteLine, agentLine].filter(Boolean).join('<br />');
               } else if (action === AuditActionEnum.emailSmeIssues) {
                 const email = meta.practitioner_email as string | undefined;
                 const practitionerName = meta.practitioner_name as string | undefined;
@@ -301,9 +299,12 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToMa
                       </div>
                     </div>
 
-                    <div className="mt-1 text-sm font-semibold text-gray-900">{title}</div>
-                    {subtitle && <div className="text-xs text-gray-600">{subtitle}</div>}
-                    {description && (
+                    {/* <div className="mt-1 text-sm font-semibold text-gray-900">{title}</div> */}
+                    {subtitle && action === AuditActionEnum.chatCreated && (
+                      <div className="text-xs text-gray-600" dangerouslySetInnerHTML={{ __html: subtitle }} />
+                    )}
+                    {subtitle && action !== AuditActionEnum.chatCreated && <div className="text-xs text-gray-600">{subtitle}</div>}
+                    {description && action !== AuditActionEnum.chatCreated && (
                       <div className="bg-gray-light mt-2 rounded-md px-3 py-2 text-xs leading-relaxed text-gray-700">{description}</div>
                     )}
                   </div>

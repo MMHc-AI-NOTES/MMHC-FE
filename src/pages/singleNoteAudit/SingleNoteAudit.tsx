@@ -51,6 +51,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
   const extractedHumanReviewChat = apiData.chats?.find(chat => chat.id === chatId);
   const bedrockResponse = latestChat?.bedrockResponse;
   const formattedDateTime = latestChat?.createdAt ? formatDateTime(latestChat.createdAt) : '';
+  const auditScore = bedrockResponse?.score ?? latestChat?.evaluationScore ?? apiData.aiScore ?? 0;
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({
@@ -88,7 +89,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     clientId: apiData.patient?.clientId || '-',
     noteType: SessionTypeLabels[apiData.type.id],
     aiReviews: apiData.chat_count || 0,
-    auditScore: bedrockResponse?.score || 0,
+    auditScore,
     lastRun: formattedDateTime,
     humanReview: extractedHumanReviewChat?.humanReviews || null,
     aiSummary: bedrockResponse?.summary,
@@ -431,7 +432,6 @@ const SingleNoteAudit = () => {
         <LoadingSkeleton backPath={backPath} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
-          {!isManagerReviewing && featureFlags.actionButtons && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
         </div>
       </div>
     );
@@ -540,6 +540,9 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
+            {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
+              <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />
+            )}
             {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
