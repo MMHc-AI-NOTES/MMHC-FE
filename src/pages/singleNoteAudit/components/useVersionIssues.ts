@@ -44,8 +44,11 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
   }, [users.length, usersLoading, dispatch, usersQuery]);
 
   // Convert version issues to review format and group by reviewer
-  const versionIssuesByReviewer = useMemo(() => {
-    if (!currentVersion?.smeIssues || currentVersion.smeIssues.length === 0) return {};
+  const versionIssuesData = useMemo(() => {
+    const versionIssues = currentVersion?.smeIssues ?? (currentVersion as any)?.sme_issues ?? [];
+    if (!versionIssues || versionIssues.length === 0) {
+      return { grouped: {}, reviewerNameById: {} as Record<number, string> };
+    }
 
     const errorTypeIdToValue: Record<number, string> = {
       1: 'minor',
@@ -54,6 +57,7 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
     };
 
     const grouped: Record<number, IssueForm[]> = {};
+    const reviewerNameById: Record<number, string> = {};
 
     // Convert Redux data to format expected by components
     const issueRelatedToOptions = issueRelatedTo.map(opt => ({
@@ -61,10 +65,15 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
       name: opt.displayName,
     }));
 
-    currentVersion.smeIssues.forEach((issue: SMEIssue) => {
+    versionIssues.forEach((issue: SMEIssue) => {
       const reviewerId = issue.reviewerId;
       if (!grouped[reviewerId]) {
         grouped[reviewerId] = [];
+      }
+
+      const reviewerName = (issue as any)?.reviewer?.fullName || (issue as any)?.reviewer?.email || '';
+      if (reviewerName && !reviewerNameById[reviewerId]) {
+        reviewerNameById[reviewerId] = reviewerName;
       }
 
       // Convert SMEIssue to IssueForm format
@@ -94,7 +103,7 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
       });
     });
 
-    return grouped;
+    return { grouped, reviewerNameById };
   }, [currentVersion, errorTypes, issueRelatedTo]);
 
   // Use ref to track previous versionIssuesByReviewer to prevent infinite loops
@@ -103,12 +112,13 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
   // Update reviews when version issues change, but only after users are loaded
   useEffect(() => {
     // Don't process reviews if users haven't been loaded yet or are still loading
-    if (users.length === 0 || usersLoading) {
+    const hasReviewerNames = Object.keys(versionIssuesData.reviewerNameById).length > 0;
+    if ((users.length === 0 && usersLoading) || (users.length === 0 && !hasReviewerNames)) {
       return;
     }
 
     const currentVersionIssuesKey = JSON.stringify(
-      Object.entries(versionIssuesByReviewer).map(([reviewerId, issues]) => [
+      Object.entries(versionIssuesData.grouped).map(([reviewerId, issues]) => [
         reviewerId,
         issues.map(issue => ({
           id: issue.id,
@@ -126,8 +136,8 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
 
     prevVersionIssuesRef.current = currentVersionIssuesKey;
 
-    if (Object.keys(versionIssuesByReviewer).length > 0) {
-      const versionReviews = Object.entries(versionIssuesByReviewer)
+    if (Object.keys(versionIssuesData.grouped).length > 0) {
+      const versionReviews = Object.entries(versionIssuesData.grouped)
         .map(([reviewerId, issues]) => {
           const reviewId = `version-review-${reviewerId}`;
           const versionSpecificKey = versionId ? `version-review-${reviewerId}-v${versionId}` : reviewId;
@@ -137,10 +147,11 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
             return null;
           }
           const reviewer = users.find(u => u.id === Number(reviewerId));
+          const fallbackName = versionIssuesData.reviewerNameById[Number(reviewerId)] || '';
           return {
             id: reviewId,
             reviewerId: reviewerId,
-            reviewerName: reviewer?.fullName || '',
+            reviewerName: reviewer?.fullName || fallbackName,
             issues: issues,
           };
         })
@@ -153,7 +164,7 @@ export const useVersionIssues = ({ currentVersion, setReviews, deletedReviewIds 
     } else {
       setReviews(prevReviews => prevReviews.filter(r => !r.id.startsWith('version-review-')));
     }
-  }, [versionIssuesByReviewer, users, usersLoading, setReviews, deletedReviewIds, versionId]);
+  }, [versionIssuesData, users, usersLoading, setReviews, deletedReviewIds, versionId]);
 
-  return versionIssuesByReviewer;
+  return versionIssuesData.grouped;
 };
