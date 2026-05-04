@@ -25,7 +25,9 @@ const ModelInfoCard = ({ log }: ModelInfoCardProps) => {
             <FileCode className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Prompt Version</p>
-              <p className="text-sm text-black">{log.agent?.name || '-'}</p>
+              <p className="text-sm break-all text-black" title={log.agent?.name || '-'}>
+                {log.agent?.name || '-'}
+              </p>
             </div>
           </div>
         </div>
