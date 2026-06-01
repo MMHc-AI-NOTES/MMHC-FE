@@ -187,7 +187,9 @@ export const mapCategoryToSectionId = (category: string): string => {
 };
 
 // Clean and structure the summary
-export const cleanSummary = (text: string) => {
+export const cleanSummary = (text?: string | null) => {
+  if (!text) return '';
+
   // Remove the JSON structure markers
   let cleaned = text.replace(/\\n/g, '\n').replace(/ {2}\n\n/g, '\n\n');
 

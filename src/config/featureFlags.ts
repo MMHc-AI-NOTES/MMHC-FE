@@ -7,7 +7,7 @@ export const featureFlags = {
   showPrompt: false,
   showPromptData: false,
   showRawResponse: false,
-  showAiSummary: false,
+  showAiSummary: true,
   actionButtons: { reRunAudit: false, sendToPractitioner: true },
   createChatOnLoad: false,
   showScoreComparison: false,
