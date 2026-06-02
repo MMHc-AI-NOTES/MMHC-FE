@@ -18,31 +18,28 @@ interface SummaryCardProps {
 const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, className }: SummaryCardProps) => {
   const [copied, setCopied] = useState(false);
   const safeSummary = summary ?? '';
-  const hasTextSummary = safeSummary.trim().length > 0;
+  const displayText = cleanSummary(safeSummary);
 
-  // Check if summary is a JSON object
-  const parseSummary = () => {
+  const jsonData = (() => {
+    if (!safeSummary.trim()) return null;
+
     try {
-      // Try to parse as JSON
-      if (!safeSummary.trim()) return null;
-
       const parsed = JSON.parse(safeSummary);
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
         return parsed;
       }
     } catch {
-      // Not JSON, continue with normal processing
+      // Not JSON, continue with normal processing.
     }
+
     return null;
-  };
+  })();
 
-  const jsonData = parseSummary();
   const isJsonFormat = jsonData !== null;
-  const hasJsonContent = isJsonFormat && Object.keys(jsonData!).length > 0;
-
-  const displayText = cleanSummary(safeSummary);
-  const hasDisplayText = displayText.trim().length > 0;
+  const hasContent = isJsonFormat ? Object.keys(jsonData!).length > 0 : displayText.trim().length > 0;
   const lines = displayText.split('\n').filter(line => line.trim());
+
+  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   // Function to highlight EvaluationPromptKeys in text
   const highlightPromptKeys = (text: string) => {
@@ -50,7 +47,7 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
     let highlightedText = text;
 
     keys.forEach(key => {
-      const regex = new RegExp(`(${key})`, 'gi');
+      const regex = new RegExp(`(${escapeRegExp(key)})`, 'gi');
       highlightedText = highlightedText.replace(regex, match => {
         return `<span class="font-bold text-lg text-primary">${match}</span>`;
       });
@@ -67,7 +64,7 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
 
   const handleCopy = async () => {
     try {
-      if (!hasTextSummary && !isJsonFormat) {
+      if (!hasContent) {
         return;
       }
 
@@ -105,7 +102,7 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
       <CardContent>
         <div className="rounded-lg bg-[#F0F0F0] p-4">
           <div className="space-y-2 text-sm leading-relaxed text-gray-700">
-            {!hasTextSummary || (isJsonFormat && !hasJsonContent) ? (
+            {!hasContent ? (
               <p className="text-gray-500 italic">No summary</p>
             ) : isJsonFormat ? (
               // Render JSON format
@@ -155,7 +152,8 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
                   </div>
                 );
               })
-            ) : hasDisplayText ? ( // Render normal text format
+            ) : (
+              // Render normal text format
               lines.map((line, index) => {
                 if (!line.trim()) return null;
 
@@ -189,8 +187,6 @@ const SummaryCard = ({ title, summary, icon: Icon, showCopyButton = false, class
 
                 return <p key={index} className="text-gray-700" dangerouslySetInnerHTML={{ __html: highlightedLine }} />;
               })
-            ) : (
-              <p className="text-gray-500 italic">No summary</p>
             )}
           </div>
         </div>
