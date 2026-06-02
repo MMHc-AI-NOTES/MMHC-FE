@@ -92,7 +92,7 @@ export interface NoteDetail {
   aiReviews: number;
   auditScore: number;
   lastRun: string;
-  aiSummary: string;
+  aiSummary: string | null;
   therapySummary: string;
   bedrockResponse: object;
   prompt: string;
