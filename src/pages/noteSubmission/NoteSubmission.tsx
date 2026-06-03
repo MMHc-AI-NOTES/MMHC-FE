@@ -1,38 +1,82 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Zap } from 'lucide-react';
-import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys, AgentModelDisplayNames } from '@/constants/common';
-import { SessionMetadata, PractitionerDetails, AuditControls, PreAuditCheckResult } from '@/types/noteSubmission';
-import { submitNoteForAudit, estimateTokens, runPreAuditChecks } from './noteSubmissionApiCalls';
-import AdvancedOptionsSection from './AdvancedOptionsSection';
-import PreAuditChecksSection from './PreAuditChecksSection';
-import ImportantGuidelinesSection from './ImportantGuidelinesSection';
+import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys } from '@/constants/common';
+import { SessionMetadata, PractitionerDetails, AuditControls } from '@/types/noteSubmission';
+import { submitNoteForAudit, invokeSessionReview } from './noteSubmissionApiCalls';
 import SubmissionFormSelects from './SubmissionFormSelects';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import { fetchAgents } from '../settings/settingsApiCalls';
+import { fetchErrorTypes } from '../settings/settingsApiCalls';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { fetchClients, Client } from '../clients/clientsApiCalls';
+import { fetchNoteDetail } from '../singleNoteAudit/singleNoteApiCalls';
+import { formatJsonToText } from '@/utils/helper';
+import { Badge } from '@/components/ui/badge';
+import { calculateSMEScore } from '../singleNoteAudit/components/reviewUtils';
+import { IssueForm } from '../singleNoteAudit/components/types';
+import { setErrorTypes } from '@/store/slices/smeConfigSlice';
 
-type AdvancedTab = 'session-metadata' | 'practitioner-details' | 'audit-controls';
+type SessionReviewResult = {
+  output_text?: string;
+  raw_response?: string;
+  score?: number;
+  pass?: boolean;
+  issues?: SessionIssue[];
+  validation_result?: {
+    isValid: boolean;
+    status?: string;
+    message?: string;
+  };
+};
+
+type SessionIssue = {
+  severity?: string;
+  points_deducted?: number | string | null;
+  section?: string | null;
+  severity_details?: string;
+  description?: string;
+  justification?: string;
+};
+
+type SessionReport = {
+  pass?: boolean;
+  issues?: SessionIssue[];
+};
 
 const NoteSubmission: React.FC = () => {
   // const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
+  const { errorTypes, errorTypesLoaded } = useAppSelector(state => state.smeConfig);
+
+  // Client autofill state
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [isLoadingClients, setIsLoadingClients] = useState<boolean>(true);
+  const [isFetchingClientData, setIsFetchingClientData] = useState<boolean>(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   // Form state
-  const [noteType, setNoteType] = useState<number>(NoteTypeEnum.progress_note);
   const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
+  const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
+  const [rawResponseText, setRawResponseText] = useState<string>('');
+  const [sessionReport, setSessionReport] = useState<SessionReport | string | null>(null);
+  const [noteId, setNoteId] = useState<string>('');
   const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
   // Advanced options state
-  const [advancedTab, setAdvancedTab] = useState<AdvancedTab>('session-metadata');
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata>({
     sessionLength: '',
     clientInitials: '',
@@ -51,34 +95,41 @@ const NoteSubmission: React.FC = () => {
   });
 
   // UI state
-  const [preAuditResults, setPreAuditResults] = useState<PreAuditCheckResult | null>(null);
-  const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
-  const [expectedAuditTime, setExpectedAuditTime] = useState<string>('~2-4 seconds');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Debounced content analysis
-  const analyzeContent = useCallback(async (content: string) => {
-    if (content.length > 0) {
-      const [tokenResult, checkResult] = await Promise.all([estimateTokens(content), runPreAuditChecks(content)]);
-      setEstimatedTokens(tokenResult.estimatedTokens);
-      setExpectedAuditTime(tokenResult.expectedAuditTime);
-      setPreAuditResults(checkResult);
-    } else {
-      setEstimatedTokens(null);
-      setPreAuditResults(null);
+  const tryParseSessionJson = (input?: string): SessionReport | null => {
+    if (!input || typeof input !== 'string') return null;
+
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    const textToParse = codeBlockMatch?.[1]?.trim() || trimmed;
+
+    const candidates = [textToParse];
+    const firstBrace = textToParse.indexOf('{');
+    const lastBrace = textToParse.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      candidates.push(textToParse.substring(firstBrace, lastBrace + 1));
     }
-  }, []);
 
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      analyzeContent(progressNoteContent);
-    }, 500);
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate) as SessionReport;
+      } catch {
+        // Keep trying other candidates.
+      }
+    }
 
-    return () => clearTimeout(debounceTimer);
-  }, [progressNoteContent, analyzeContent]);
+    return null;
+  };
 
   const handleClear = () => {
     setProgressNoteContent('');
+    setPreviousSessionContent('');
+    setRawResponseText('');
+    setSessionReport(null);
+    setNoteId('');
     setSessionMetadata({
       sessionLength: '',
       clientInitials: '',
@@ -95,17 +146,77 @@ const NoteSubmission: React.FC = () => {
       enableDebugMode: false,
       includeTokenUsageReport: false,
     });
-    setPreAuditResults(null);
-    setEstimatedTokens(null);
+    setSelectedClientId('');
+  };
+
+  const handleClientSelect = async (clientId: string) => {
+    setSelectedClientId(clientId);
+    const client = clients.find(c => c.clientId === clientId);
+    if (!client || !client.sessions || client.sessions.length === 0) return;
+
+    try {
+      setIsFetchingClientData(true);
+      const latestSession = client.sessions[0];
+      const noteDetail = await fetchNoteDetail(latestSession.noteId);
+
+      if (noteDetail) {
+        setNoteId(latestSession.noteId);
+        setProgressNoteContent(formatJsonToText(noteDetail.session));
+
+        if (noteDetail.previous_note && noteDetail.previous_note.session) {
+          setPreviousSessionContent(formatJsonToText(noteDetail.previous_note.session));
+        } else if (client.sessions.length > 1) {
+          const prevNoteDetail = await fetchNoteDetail(client.sessions[1].noteId);
+          setPreviousSessionContent(formatJsonToText(prevNoteDetail.session));
+        } else {
+          setPreviousSessionContent('');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch client notes:', e);
+    } finally {
+      setIsFetchingClientData(false);
+    }
   };
 
   const handleSubmit = async () => {
     if (!progressNoteContent.trim() || !selectedAgentId) return;
 
     setIsSubmitting(true);
+    setSessionReport(null);
+    setRawResponseText('');
     try {
+      const payload = {
+        note_id: noteId,
+        prompt_id: selectedAgent?.id || 0,
+        model_id: modelVersion,
+      };
+
+      const data = (await invokeSessionReview(payload)) as SessionReviewResult | null;
+
+      if (data) {
+        setRawResponseText(data.raw_response || '');
+        const parsedFromOutput = tryParseSessionJson(data.output_text);
+        const parsedFromRawResponse = tryParseSessionJson(data.raw_response);
+        const parsedObj = parsedFromOutput || parsedFromRawResponse;
+
+        if (parsedObj && typeof parsedObj === 'object') {
+          const parsedIssues = data.issues;
+          const hasNoIssues = Array.isArray(parsedIssues) && parsedIssues.length === 0;
+          parsedObj.issues = parsedIssues || parsedObj.issues || [];
+          if (hasNoIssues && data.raw_response) {
+            setSessionReport(data.raw_response);
+          } else {
+            setSessionReport(parsedObj);
+          }
+        } else {
+          setSessionReport(data.raw_response || data.output_text || data);
+        }
+      }
+
+      // Keep existing flow for audit submission if needed later
       const formData = {
-        noteType: noteType as (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum],
+        noteType: NoteTypeEnum.progress_note as (typeof NoteTypeEnum)[keyof typeof NoteTypeEnum],
         modelVersion: modelVersion,
         promptAgent: selectedAgentId,
         sessionMetadata,
@@ -114,12 +225,7 @@ const NoteSubmission: React.FC = () => {
         progressNoteContent,
       };
 
-      const response = await submitNoteForAudit(formData);
-
-      if (response.success) {
-        // Navigate to AI Audit Summary or show success
-        // navigate(`/notes-queue/single-note-audit/${response.auditId}`);
-      }
+      await submitNoteForAudit(formData);
     } catch (error) {
       console.error('Error submitting note:', error);
     } finally {
@@ -146,6 +252,60 @@ const NoteSubmission: React.FC = () => {
     })();
   }, [dispatch]);
 
+  const sessionReportObject = typeof sessionReport === 'object' && sessionReport ? sessionReport : null;
+
+  const mappedSessionIssues: IssueForm[] = Array.isArray(sessionReportObject?.issues)
+    ? sessionReportObject.issues.map((issue: SessionIssue, index: number) => ({
+        id: `ai-issue-${index}`,
+        reviewerName: 'AI Audit',
+        errorType: String(issue?.severity || '').toLowerCase(),
+        issueRelatedTo: String(issue?.section || 'overall'),
+        issueDescription: String(issue?.justification || issue?.description || ''),
+      }))
+    : [];
+  const calculatedScoreByUs = sessionReportObject ? calculateSMEScore(mappedSessionIssues, errorTypes || []) : '-';
+
+  const getIssueDeductionPoints = (issue: SessionIssue): number => {
+    const rawBackendPoints = Number(issue?.points_deducted);
+    if (Number.isFinite(rawBackendPoints) && rawBackendPoints !== 0) {
+      return Math.abs(rawBackendPoints);
+    }
+
+    const severityKey = String(issue?.severity || '').toLowerCase();
+    const manualPoints = errorTypes?.find(type => type.name === severityKey)?.points || 0;
+    return Math.abs(manualPoints);
+  };
+
+  useEffect(() => {
+    const loadErrorTypes = async () => {
+      if (errorTypesLoaded) return;
+      try {
+        const errorTypesData = await fetchErrorTypes();
+        dispatch(setErrorTypes(errorTypesData));
+      } catch (error) {
+        console.error('Error loading error types:', error);
+      }
+    };
+
+    void loadErrorTypes();
+  }, [dispatch, errorTypesLoaded]);
+
+  // Fetch clients for the dropdown
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoadingClients(true);
+        const { data } = await fetchClients({ page: 1, pageSize: 10000, filters: [] });
+        const filteredClients = data.filter(c => c.notesCount > 0);
+        setClients(filteredClients);
+      } catch (err) {
+        console.error('Error fetching clients for dropdown:', err);
+      } finally {
+        setIsLoadingClients(false);
+      }
+    })();
+  }, []);
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-8">
       {/* Main Form Card */}
@@ -160,10 +320,65 @@ const NoteSubmission: React.FC = () => {
             </p>
           </div>
 
+          {/* Client Select for Autofill */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">
+              Select Client (Autofill Notes) {isLoadingClients && <span className="ml-2 text-xs text-blue-500">Loading clients...</span>}
+              {isFetchingClientData && <span className="ml-2 text-xs text-blue-500">Loading notes...</span>}
+            </Label>
+            <Popover open={clientDropdownOpen} onOpenChange={setClientDropdownOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={clientDropdownOpen}
+                  className="w-full justify-between bg-white font-normal"
+                >
+                  <span className="truncate">
+                    {selectedClientId
+                      ? `${selectedClientId} (${clients.find(c => c.clientId === selectedClientId)?.notesCount} notes)`
+                      : isLoadingClients
+                        ? 'Loading clients...'
+                        : 'Select a client to autofill previous and current sessions'}
+                  </span>
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command
+                  className="w-full"
+                  filter={(value, search) => {
+                    return value.toLowerCase().startsWith(search.toLowerCase()) ? 1 : 0;
+                  }}
+                >
+                  <CommandInput placeholder={isLoadingClients ? 'Loading clients...' : 'Search client...'} disabled={isLoadingClients} />
+                  <CommandList>
+                    <CommandEmpty>{isLoadingClients ? 'Loading clients...' : 'No client found.'}</CommandEmpty>
+                    {!isLoadingClients && (
+                      <CommandGroup>
+                        {clients.map(client => (
+                          <CommandItem
+                            key={client.id}
+                            value={client.clientId}
+                            onSelect={() => {
+                              handleClientSelect(client.clientId);
+                              setClientDropdownOpen(false);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', selectedClientId === client.clientId ? 'opacity-100' : 'opacity-0')} />
+                            {client.clientId} ({client.notesCount} notes)
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Form Selects */}
           <SubmissionFormSelects
-            noteType={noteType}
-            onNoteTypeChange={setNoteType}
             modelVersion={modelVersion}
             onModelVersionChange={setModelVersion}
             selectedAgentId={selectedAgentId}
@@ -171,29 +386,15 @@ const NoteSubmission: React.FC = () => {
             agents={agents}
           />
 
-          {/* Advanced Options */}
-          <AdvancedOptionsSection
-            activeTab={advancedTab}
-            setActiveTab={setAdvancedTab}
-            sessionMetadata={sessionMetadata}
-            setSessionMetadata={setSessionMetadata}
-            practitionerDetails={practitionerDetails}
-            setPractitionerDetails={setPractitionerDetails}
-            auditControls={auditControls}
-            setAuditControls={setAuditControls}
-            selectedModelLabel={AgentModelDisplayNames[modelVersion as keyof typeof AgentModelDisplayNames]}
-            selectedAgentLabel={selectedAgent?.name || ''}
-          />
-
-          {/* Progress Note Content */}
+          {/* Current Session */}
           <div className="space-y-1">
-            <Label className="text-sm text-gray-700">Progress Note Content</Label>
+            <Label className="text-sm text-gray-700">Current Session</Label>
             <div className="relative">
               <Textarea
-                placeholder="Paste the progress note content here..."
+                placeholder="Paste the current session content here..."
                 value={progressNoteContent}
                 onChange={e => setProgressNoteContent(e.target.value)}
-                className="min-h-52 bg-white shadow"
+                className="h-52 resize-none overflow-y-auto bg-white shadow"
               />
               {progressNoteContent.length > 0 && (
                 <span className="absolute right-2 bottom-2 text-xs text-gray-400">{progressNoteContent.length} characters</span>
@@ -201,22 +402,21 @@ const NoteSubmission: React.FC = () => {
             </div>
           </div>
 
-          {/* Token Estimation & Info Bar */}
-          <div className="flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3 text-xs text-gray-400">
-            <span>
-              Estimated Tokens: <span className="text-gray-700">{estimatedTokens ?? '—'}</span>
-            </span>
-            <span>|</span>
-            <span>
-              Expected Audit Time: <span className="text-gray-700">{expectedAuditTime}</span>
-            </span>
-            <span className="ml-auto">
-              Score Threshold: <span className="text-gray-700">Notes below 75 auto-flag for human review</span>
-            </span>
+          {/* Previous Session */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Previous Session</Label>
+            <div className="relative">
+              <Textarea
+                placeholder="Paste the previous session content here..."
+                value={previousSessionContent}
+                onChange={e => setPreviousSessionContent(e.target.value)}
+                className="h-52 resize-none overflow-y-auto bg-white shadow"
+              />
+              {previousSessionContent.length > 0 && (
+                <span className="absolute right-2 bottom-2 text-xs text-gray-400">{previousSessionContent.length} characters</span>
+              )}
+            </div>
           </div>
-
-          {/* Pre-Audit Checks */}
-          <PreAuditChecksSection preAuditResults={preAuditResults} />
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 pt-2">
@@ -234,13 +434,79 @@ const NoteSubmission: React.FC = () => {
             </Button>
           </div>
 
-          {/* Redirect Notice */}
-          <p className="text-center text-xs text-gray-500">After auditing completes, you will be redirected to the AI Audit Summary.</p>
+          {/* Session Report */}
+          <div className="space-y-1">
+            <Label className="text-sm text-gray-700">Session Report</Label>
+            {!sessionReport ? (
+              <Textarea
+                placeholder="Session report will appear here..."
+                value=""
+                readOnly
+                className="h-40 resize-none overflow-y-auto bg-gray-50 shadow"
+              />
+            ) : typeof sessionReport === 'object' ? (
+              <div className="rounded-lg border bg-white p-4 shadow-sm">
+                <div className="mb-4 text-sm text-gray-600">
+                  <span className="font-medium">Reviewer:</span>
+                  <span className="text-primary ml-1 font-semibold">AI Audit</span>
+                </div>
+                <div className="rounded-lg bg-gray-50 px-4 py-3">
+                  <span className="font-medium text-gray-700">Calculated Score:</span>{' '}
+                  <span className="font-bold text-gray-900">{calculatedScoreByUs}</span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
+                  {sessionReport?.issues?.length ? (
+                    sessionReport.issues.map((issue: SessionIssue, index: number) => {
+                      const severityUpper = (issue.severity || '').toUpperCase();
+                      const deductionPoints = getIssueDeductionPoints(issue);
+                      const badgeClass =
+                        severityUpper === 'CRITICAL'
+                          ? 'bg-gradient-red'
+                          : severityUpper === 'MODERATE'
+                            ? 'bg-gradient-severity-moderate'
+                            : 'bg-gradient-severity-minor';
+
+                      return (
+                        <div key={index} className="space-y-2 rounded-lg border border-gray-200 bg-white p-4">
+                          <div className="flex items-center">
+                            <Badge className={`px-3 py-1 text-xs font-semibold text-white uppercase ${badgeClass}`}>
+                              {severityUpper} ({deductionPoints === 0 ? '0' : `-${deductionPoints}`} PTS)
+                            </Badge>
+                          </div>
+                          <div>
+                            <p className="mt-1 text-sm font-bold text-red-600">
+                              {deductionPoints === 0 ? '0 points' : `-${deductionPoints} points`}
+                            </p>
+                            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                              <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                              <span className="font-medium">Description:</span> {issue.severity_details || '-'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-lg border bg-gray-50 p-4 text-center text-sm text-gray-500">
+                      {sessionReport.pass === true ? 'No issues found. Perfect score!' : 'No parsed issues returned from AI response.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Textarea value={sessionReport as string} readOnly className="min-h-40 overflow-y-auto bg-gray-50 shadow" />
+            )}
+          </div>
+          {/* Raw Response */}
+          <div className="height-[220px] space-y-1">
+            <Label className="text-sm text-gray-700">Raw Response</Label>
+            <Textarea value={rawResponseText} readOnly className="h-40 resize-none overflow-y-auto bg-gray-50 shadow" />
+          </div>
         </CardContent>
       </Card>
-
-      {/* Important Guidelines Section */}
-      <ImportantGuidelinesSection />
     </div>
   );
 };

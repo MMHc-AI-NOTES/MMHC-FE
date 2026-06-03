@@ -1,7 +1,16 @@
 // @/services/notesService.ts
-import { formatDate, formatDateTime, getDefaultDateRange, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import { formatDate, formatDateTime, getDefaultDateRangeNotesQueue, handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import axios from 'axios';
-import { RawApiNote, FormattedNote, DataFormatterProps, QueueOverview, Workload, PractitionerOption, CptCodeOption } from '@/types/notes';
+import {
+  RawApiNote,
+  FormattedNote,
+  DataFormatterProps,
+  QueueOverview,
+  Workload,
+  PractitionerOption,
+  CptCodeOption,
+  SmeReviewerCountItem,
+} from '@/types/notes';
 import moment from 'moment';
 
 interface ApiResponse<T> {
@@ -36,7 +45,7 @@ export interface NotesPayload {
 
 const DEFAULT_NOTES_SORTS: SortItem[] = [
   { columnName: 'session_time', orderBy: 'desc' },
-  // { columnName: 'id', orderBy: 'desc' },
+  { columnName: 'id', orderBy: 'desc' },
 ];
 
 interface NotesResponse {
@@ -109,7 +118,10 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
 
 export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> => {
   try {
-    const body = { ...payload, sorts: DEFAULT_NOTES_SORTS };
+    const body = {
+      ...payload,
+      sorts: payload.sorts && payload.sorts.length > 0 ? payload.sorts : DEFAULT_NOTES_SORTS,
+    };
     const response = await axios.post<ApiResponse<any>>('/notes/listing', body);
 
     if (response?.status) {
@@ -136,7 +148,7 @@ export const fetchNotes = async (payload: NotesPayload): Promise<NotesResponse> 
 export const fetchQueueOverview = async (startDate?: string, endDate?: string): Promise<QueueOverview | null> => {
   try {
     // Use provided dates or default to last 30 days
-    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRangeNotesQueue();
     const finalStartDate = startDate || defaultStart;
     const finalEndDate = endDate || defaultEnd;
 
@@ -159,7 +171,7 @@ export const fetchQueueOverview = async (startDate?: string, endDate?: string): 
 export const fetchWorkload = async (startDate?: string, endDate?: string): Promise<Workload | null> => {
   try {
     // Use provided dates or default to last 30 days
-    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRange();
+    const { startDate: defaultStart, endDate: defaultEnd } = getDefaultDateRangeNotesQueue();
     const finalStartDate = startDate || defaultStart;
     const finalEndDate = endDate || defaultEnd;
 
@@ -207,5 +219,27 @@ export const fetchCptCodes = async (): Promise<CptCodeOption[]> => {
   } catch (error: any) {
     handleCatchMessages(error);
     return [];
+  }
+};
+
+export const fetchSmeReviewersCount = async (): Promise<SmeReviewerCountItem[] | null> => {
+  try {
+    const response = await axios.get('note-review-marks/sme-reviewers');
+
+    if (response?.status && response.data) {
+      const mapped: SmeReviewerCountItem[] = response.data.map((item: any) => {
+        const reviewer_name = item?.reviewer_full_name ?? '-';
+        const count = item?.reviewed_notes_count ?? 0;
+        return { reviewer_name, count };
+      });
+
+      return mapped;
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error: any) {
+    handleCatchMessages(error);
+    return null;
   }
 };

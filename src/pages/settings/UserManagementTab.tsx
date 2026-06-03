@@ -21,6 +21,7 @@ import {
   type UsersQuery,
 } from '@/store/slices/usersSlice';
 import { Separator } from '@/components/ui/separator';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const defaultFilters = {
   search: '',
@@ -35,9 +36,10 @@ const UserManagementTab: React.FC = () => {
   const [filters, setFilters] = useState(defaultFilters);
   const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  // Pagination with persistence
+  const [pagination, setPagination] = usePaginationPersistence('userManagementPagination', { currentPage: 1, itemsPerPage: 100 });
+  const currentPage = pagination.currentPage;
+  const itemsPerPage = pagination.itemsPerPage;
 
   const query: UsersQuery = useMemo(
     () => ({
@@ -110,7 +112,7 @@ const UserManagementTab: React.FC = () => {
     };
     dispatch(fetchUsersListingThunk(nextQuery));
     setAppliedFilters(filters);
-    setCurrentPage(1);
+    setPagination({ ...pagination, currentPage: 1, itemsPerPage });
   };
 
   const handleClearFilters = async () => {
@@ -123,20 +125,19 @@ const UserManagementTab: React.FC = () => {
     dispatch(fetchUsersListingThunk(nextQuery));
     setFilters(defaultFilters);
     setAppliedFilters(defaultFilters);
-    setCurrentPage(1);
+    setPagination({ ...pagination, currentPage: 1, itemsPerPage });
   };
 
   const handlePageChange = (page: number) => {
     const nextQuery: UsersQuery = { ...query, page };
     dispatch(fetchUsersListingThunk(nextQuery));
-    setCurrentPage(page);
+    setPagination({ ...pagination, currentPage: page, itemsPerPage });
   };
 
   const handleItemsPerPageChange = (value: number) => {
     const nextQuery: UsersQuery = { ...query, page: 1, pageSize: value };
     dispatch(fetchUsersListingThunk(nextQuery));
-    setItemsPerPage(value);
-    setCurrentPage(1);
+    setPagination({ ...pagination, currentPage: 1, itemsPerPage: value });
   };
 
   const handleRequestUpdate = async (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => {

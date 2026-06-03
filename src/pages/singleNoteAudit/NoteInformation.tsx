@@ -7,16 +7,12 @@ import { Hash, User, Calendar, ClipboardList, Code, Bot, RefreshCw, UserSearch, 
 
 interface NoteInformationProps {
   noteDetail: NoteDetail;
+  handleNoteIdClick: () => void;
 }
 
-const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
+const NoteInformation = ({ noteDetail, handleNoteIdClick }: NoteInformationProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const cptCode = cptCodes.find(cptCode => cptCode.id === noteDetail.cptCode)?.code || '-';
-
-  const handleNoteIdClick = () => {
-    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${noteDetail.id}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
 
   const getReviewCycleGradient = (cycle: number): string => {
     switch (cycle) {
@@ -41,10 +37,14 @@ const NoteInformation = ({ noteDetail }: NoteInformationProps) => {
             <Hash className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Note ID</p>
-              <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
-                <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteDetail.id}</span>
-                <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
-              </div>
+              {noteDetail.id ? (
+                <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+                  <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteDetail.id}</span>
+                  <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">N/A</p>
+              )}
             </div>
           </div>
 

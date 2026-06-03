@@ -1,13 +1,10 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { NoteTypeEnum, NoteTypeLabels } from '@/constants/common';
 import { getAgentModelOptions } from '@/utils/helper';
 import { Agent } from '@/types/agent';
 
 interface SubmissionFormSelectsProps {
-  noteType: number;
-  onNoteTypeChange: (value: number) => void;
   modelVersion: string;
   onModelVersionChange: (value: string) => void;
   selectedAgentId: number | null;
@@ -16,43 +13,14 @@ interface SubmissionFormSelectsProps {
 }
 
 const SubmissionFormSelects: React.FC<SubmissionFormSelectsProps> = ({
-  noteType,
-  onNoteTypeChange,
   modelVersion,
   onModelVersionChange,
   selectedAgentId,
   onAgentChange,
   agents,
 }) => {
-  const isNoteTypeDisabled = (type: number) => {
-    return type !== NoteTypeEnum.progress_note;
-  };
-
   return (
     <>
-      {/* Note Type Select */}
-      <div className="space-y-1">
-        <Label className="text-sm text-gray-700">Note Type</Label>
-        <Select value={String(noteType)} onValueChange={value => onNoteTypeChange(Number(value))}>
-          <SelectTrigger className="w-full bg-white">
-            <SelectValue placeholder="Select note type" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(NoteTypeEnum).map(([key, value]) => (
-              <SelectItem
-                key={key}
-                value={String(value)}
-                disabled={isNoteTypeDisabled(value)}
-                className={isNoteTypeDisabled(value) ? 'text-gray-400' : ''}
-              >
-                {NoteTypeLabels[value]}
-                {isNoteTypeDisabled(value) && ' (Coming Soon)'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Model Version Select */}
       <div className="space-y-1">
         <Label className="text-sm text-gray-700">Model Version</Label>

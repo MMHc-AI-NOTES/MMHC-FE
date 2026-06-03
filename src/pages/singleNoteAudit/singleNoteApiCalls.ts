@@ -2,6 +2,7 @@ import axios from 'axios';
 import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import { ApiNoteDetail } from '@/types/notes';
 import { showToast } from '@/lib/toast';
+import { featureFlags } from '@/config/featureFlags';
 
 export interface HumanReviewPayload {
   note_id: string;
@@ -90,19 +91,26 @@ export const createChat = async (payload: { note_id?: string; prompt_id?: number
  * Enhanced function to get note detail with chat creation if needed
  */
 export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isRerun?: boolean): Promise<ApiNoteDetail> => {
-  // First attempt to get note detail
-  let noteDetail = null;
+  let noteDetail: ApiNoteDetail;
+
+  // Initial load: fetch detail first, then optionally create first chat if none exist
   if (!isRerun) {
     noteDetail = await fetchNoteDetail(noteId);
+
+    if (featureFlags.createChatOnLoad && (!noteDetail.chats || noteDetail.chats.length === 0)) {
+      await createChat({ note_id: noteId, prompt_id: promptId });
+      noteDetail = await fetchNoteDetail(noteId);
+    }
+
+    return noteDetail;
   }
 
-  // If no chats exist, create a new chat
-  if (!noteDetail?.chats || noteDetail?.chats.length === 0 || isRerun) {
+  // Re-run audit: ALWAYS create a new chat with the selected agent
+  if (featureFlags.createChatOnLoad && isRerun) {
     await createChat({ note_id: noteId, prompt_id: promptId });
-
-    noteDetail = await fetchNoteDetail(noteId);
   }
 
+  noteDetail = await fetchNoteDetail(noteId);
   return noteDetail;
 };
 

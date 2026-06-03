@@ -1,3 +1,4 @@
+import { featureFlags } from '@/config/featureFlags';
 import { calculateSMEScore, calculatePercentageMatch } from './reviewUtils';
 import { IssueForm } from './types';
 import { useAppSelector } from '@/store/store';
@@ -24,14 +25,18 @@ const ScoreComparison = ({ issues, auditScore }: ScoreComparisonProps) => {
         <span className="text-gray-600">SME Score:</span>
         <span className={`font-semibold ${smeScore < 0 ? 'text-red-600' : 'text-gray-900'}`}>{smeScore}</span>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-gray-600">AI Score:</span>
-        <span className="font-semibold text-gray-900">{auditScore}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-gray-600">Match:</span>
-        <span className={`font-semibold ${getPercentageColor()}`}>{percentage}%</span>
-      </div>
+      {featureFlags.showScoreComparison && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-600">AI Score:</span>
+            <span className="font-semibold text-gray-900">{auditScore}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-600">Match:</span>
+            <span className={`font-semibold ${getPercentageColor()}`}>{percentage}%</span>
+          </div>
+        </>
+      )}
     </div>
   );
 };

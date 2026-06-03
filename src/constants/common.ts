@@ -1,3 +1,8 @@
+import { AvailableVariable } from '@/types/settings';
+
+// Global table pagination defaults
+export const DEFAULT_ITEMS_PER_PAGE = 20;
+
 export const SLIDER_CONFIGS = {
   TEMPERATURE: { min: 0, max: 1, step: 0.1 },
   TOP_P: { min: 0, max: 1, step: 0.1 },
@@ -227,6 +232,26 @@ export const ChatResultLabels: Record<number, string> = {
   [ChatResultEnum.error]: 'Error',
 };
 
+export const AuditActionEnum = {
+  chatCreated: 'chat_created',
+  emailSmeIssues: 'email_sme_issues',
+  emailBulkSmeIssues: 'email_bulk_sme_issues',
+  emailMissingFields: 'email_missing_fields',
+  webhookSessionReceived: 'webhook_session_received',
+  noteMarkedReviewed: 'note_marked_reviewed',
+  smeAssignedToManager: 'sme_assigned_to_manager',
+} as const;
+
+export const AuditActionLabels: Record<(typeof AuditActionEnum)[keyof typeof AuditActionEnum], string> = {
+  [AuditActionEnum.chatCreated]: 'Chat Created',
+  [AuditActionEnum.emailSmeIssues]: 'Email Sent to Practitioner',
+  [AuditActionEnum.emailBulkSmeIssues]: 'Bulk Email Sent',
+  [AuditActionEnum.emailMissingFields]: 'Missing Fields Email',
+  [AuditActionEnum.webhookSessionReceived]: 'Webhook Session Received',
+  [AuditActionEnum.noteMarkedReviewed]: 'Note Marked For Review',
+  [AuditActionEnum.smeAssignedToManager]: 'Assigned to Manager',
+};
+
 export const HumanReviewResultEnum = {
   pass: 1,
   fail: 2,
@@ -389,19 +414,23 @@ export const StructureQualityLabels: Record<number, string> = {
 };
 
 export const AgentModelKeys = {
-  // Free/Low-cost models (on-demand support)
+  CLAUDE_4_6_Opus: 'us.anthropic.claude-opus-4-6-v1',
   CLAUDE_3_HAIKU: 'anthropic.claude-3-haiku-20240307-v1:0',
-  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0', // Inference profile format
-  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0', // Inference profile format
-  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', // Claude Sonnet 4.5
-  CLAUDE_4_6_SONNET: 'us.anthropic.claude-sonnet-4-6', // Claude Sonnet 4.6 (inference profile)
-  LLAMA_4_SCOUT_17B: 'meta.llama4-scout-17b-instruct-v1:0', // Llama 4 Scout 17B
-  GPT_OSS_SAFEGUARD_120B: 'openai.gpt-oss-safeguard-120b', // GPT OSS Safeguard 120B
-  NOVA_PREMIER: 'us.amazon.nova-premier-v1:0', // Nova Premier (inference profile)
-  CUSTOM_DEPLOYMENT_Y5K4: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
+  CLAUDE_3_5_HAIKU_V1: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+  CLAUDE_4_5_HAIKU_V1: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+  CLAUDE_4_5_SONNET_V1: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+  CLAUDE_4_6_SONNET: 'us.anthropic.claude-sonnet-4-6',
+  LLAMA_4_SCOUT_17B: 'meta.llama4-scout-17b-instruct-v1:0',
+  GPT_OSS_SAFEGUARD_120B: 'openai.gpt-oss-safeguard-120b',
+  NOVA_PREMIER: 'us.amazon.nova-premier-v1:0',
+  CUSTOM_DEPLOYMENT_V1_15032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/y5k4mxdxqxbx',
+  CUSTOM_DEPLOYMENT_V2_28032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/sugrzn0ke8p6',
+  CUSTOM_DEPLOYMENT_V3_02042026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/cxwsnnx1qsw8',
+  CUSTOM_DEPLOYMENT_V4_SageMaker: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-SageMaker-v6',
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
+  CLAUDE_4_6_Opus: 'Claude 4.6 Opus',
   CLAUDE_3_HAIKU: 'Claude 3 Haiku',
   CLAUDE_3_5_HAIKU_V1: 'Claude 3.5 Haiku',
   CLAUDE_4_5_HAIKU_V1: 'Claude 4.5 Haiku',
@@ -410,7 +439,10 @@ export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string>
   LLAMA_4_SCOUT_17B: 'Llama 4 Scout',
   GPT_OSS_SAFEGUARD_120B: 'GPT OSS Safeguard',
   NOVA_PREMIER: 'Nova Premier',
-  CUSTOM_DEPLOYMENT_Y5K4: 'Custom Fine-tuned Model',
+  CUSTOM_DEPLOYMENT_V1_15032026: 'Custom Fine-tuned Model V1 15032026',
+  CUSTOM_DEPLOYMENT_V2_28032026: 'Custom Fine-tuned Model V2 28032026',
+  CUSTOM_DEPLOYMENT_V3_02042026: 'Custom Fine-tuned Model V3 02042026',
+  CUSTOM_DEPLOYMENT_V4_SageMaker: 'Custom SageMaker Model V4',
 };
 
 export const AgentTypes = {
@@ -440,3 +472,12 @@ export const SessionJsonFieldDisplayNames: Record<string, string> = {
   Progress: 'Progress',
   'Therapist Initials': 'Therapist Initials',
 };
+
+export const AVAILABLE_VARIABLES: AvailableVariable[] = [
+  { id: 'practitioner_name', name: '{{practitioner_name}}', displayName: 'Practitioner Name' },
+  { id: 'note_id', name: '{{note_id}}', displayName: 'Note ID' },
+  { id: 'ai_score', name: '{{ai_score}}', displayName: 'AI Score' },
+  { id: 'issues_list', name: '{{issues_list}}', displayName: 'Issues List' },
+  { id: 'date', name: '{{date}}', displayName: 'Date' },
+  { id: 'client_name', name: '{{client_name}}', displayName: 'Client Name' },
+];

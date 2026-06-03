@@ -1,5 +1,57 @@
-import { NoteSubmissionFormData, NoteSubmissionResponse, PreAuditCheckResult, TokenEstimation } from '@/types/noteSubmission';
+import axios from 'axios';
+import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
+import {
+  NoteSubmissionFormData,
+  NoteSubmissionResponse,
+  PreAuditCheckResult,
+  TokenEstimation,
+  SessionReviewPayload,
+  SessionReviewData,
+} from '@/types/noteSubmission';
 import { PreAuditCheckStatusEnum, StructureQualityEnum } from '@/constants/common';
+
+interface ApiResponse<T> {
+  status: boolean;
+  message?: string;
+  data?: T;
+  errors?: any;
+}
+
+export const invokeSessionReview = async (payload: SessionReviewPayload): Promise<SessionReviewData | null> => {
+  try {
+    const response = await axios.post<ApiResponse<SessionReviewData>>('/session-reviews/invoke', payload);
+    const responsePayload = response?.data?.status ? response.data.data : response.data;
+
+    if (!responsePayload || typeof responsePayload !== 'object') {
+      handleErrorMessages(response.data);
+      return null;
+    }
+
+    // New backend shape: { ..., bedrockResponse: { ... , validation_result? } }
+    if ('bedrockResponse' in responsePayload && responsePayload.bedrockResponse && typeof responsePayload.bedrockResponse === 'object') {
+      const bedrockResponse = responsePayload.bedrockResponse as SessionReviewData;
+      return {
+        ...bedrockResponse,
+        output_text: bedrockResponse.output_text ?? bedrockResponse.raw_response,
+        validation_result:
+          bedrockResponse.validation_result ??
+          (responsePayload as { validation_result?: SessionReviewData['validation_result'] }).validation_result ??
+          undefined,
+      };
+    }
+
+    // Legacy shape returned directly
+    if ('output_text' in responsePayload || 'issues' in responsePayload) {
+      return responsePayload as SessionReviewData;
+    }
+
+    handleErrorMessages(responsePayload);
+    return null;
+  } catch (error) {
+    handleCatchMessages(error);
+    return null;
+  }
+};
 
 // Dummy API call to submit note for audit
 export const submitNoteForAudit = async (formData: NoteSubmissionFormData): Promise<NoteSubmissionResponse> => {

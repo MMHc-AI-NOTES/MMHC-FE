@@ -14,6 +14,8 @@ import { useAppSelector } from '@/store/store';
 import { fetchPractitioners } from '../notesQueue/notesApiCalls';
 import { setPractitioners } from '@/store/slices/filterOptionsSlice';
 import { useDispatch } from 'react-redux';
+import { DEFAULT_ITEMS_PER_PAGE } from '@/constants/common';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
 
 const BlacklistedNotes = () => {
   const dispatch = useDispatch();
@@ -22,10 +24,11 @@ const BlacklistedNotes = () => {
   const [selectedNote, setSelectedNote] = useState<BlacklistedNote | null>(null);
   const [selectedNoteIds, setSelectedNoteIds] = useState<number[]>([]);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination states with persistence
+  const [pagination, setPagination] = usePaginationPersistence('blacklistedNotesPagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 20;
+  const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
   // Get practitioners from Redux store
   const { practitioners, practitionersLoaded } = useAppSelector(state => state.filterOptions);
@@ -66,7 +69,6 @@ const BlacklistedNotes = () => {
     const loadNotes = async () => {
       try {
         setLoading(true);
-        setCurrentPage(1);
         setSelectedNote(null);
         setSelectedNoteIds([]);
 
@@ -77,9 +79,9 @@ const BlacklistedNotes = () => {
         let payload;
         if (hasActive) {
           payload = buildFilterPayload();
-          payload.page = 1;
+          payload.page = currentPage;
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: [] };
         }
 
         const response = await fetchBlacklistedNotes(payload);
@@ -105,7 +107,7 @@ const BlacklistedNotes = () => {
   const handleApplyFilters = async () => {
     try {
       setLoading(true);
-      setCurrentPage(1);
+      setPagination({ ...pagination, currentPage: 1 });
       setSelectedNote(null);
       setSelectedNoteIds([]);
 
@@ -125,7 +127,7 @@ const BlacklistedNotes = () => {
   // Clear filters - resets all filters and fetches unfiltered data
   const handleClearFilters = async () => {
     clearPersistedFilters();
-    setCurrentPage(1);
+    setPagination({ ...pagination, currentPage: 1 });
     setSelectedNote(null);
     setSelectedNoteIds([]);
 
@@ -144,7 +146,7 @@ const BlacklistedNotes = () => {
 
   // Handle page change
   const handlePageChange = async (page: number) => {
-    setCurrentPage(page);
+    setPagination({ ...pagination, currentPage: page });
     setSelectedNote(null);
     setSelectedNoteIds([]);
 

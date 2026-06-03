@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { FileText, CheckCircle, XCircle } from 'lucide-react';
 import { QueueOverview } from '@/types/notes';
 
 interface QueueOverviewCardProps {
@@ -13,21 +13,21 @@ export const QueueOverviewCard = ({ data, loading }: QueueOverviewCardProps) => 
     { icon: FileText, label: 'Total Notes', value: data?.total_notes || 0, bgColor: 'bg-green-50', iconColor: 'text-primary' },
     { icon: CheckCircle, label: 'AI Passed', value: data?.ai_passed || 0, bgColor: 'bg-green-50', iconColor: 'text-green-600' },
     { icon: XCircle, label: 'AI Failed', value: data?.ai_failed || 0, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
-    {
-      icon: Clock,
-      label: 'Pending Admin Review',
-      value: data?.pending_human_review || 0,
-      bgColor: 'bg-green-50',
-      iconColor: 'text-primary',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Pending Manager Review',
-      value: data?.pending_manager_review || 0,
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-orange-600',
-    },
-    { icon: AlertTriangle, label: 'Blacklisted', value: data?.blacklist || 0, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
+    // {
+    //   icon: Clock,
+    //   label: 'Pending Admin Review',
+    //   value: data?.pending_human_review || 0,
+    //   bgColor: 'bg-green-50',
+    //   iconColor: 'text-primary',
+    // },
+    // {
+    //   icon: TrendingUp,
+    //   label: 'Pending Manager Review',
+    //   value: data?.pending_manager_review || 0,
+    //   bgColor: 'bg-orange-50',
+    //   iconColor: 'text-orange-600',
+    // },
+    // { icon: AlertTriangle, label: 'Blacklisted', value: data?.blacklist || 0, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
   ];
 
   if (loading) {

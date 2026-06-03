@@ -11,14 +11,17 @@ import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
-import { deleteSMEReview, markNoteForReview, type NoteReviewMarkPayload } from './singleNoteApiCalls';
-import { UserRoleEnum } from '@/constants/common';
+import { deleteSMEReview, markNoteForReview, assignToManager, type NoteReviewMarkPayload } from './singleNoteApiCalls';
 import { formatDate } from '@/utils/helper';
 
 const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
 
 function getMarkedForReviewStorageKey(noteId: string, reviewerId: string): string {
   return `${MARKED_FOR_REVIEW_STORAGE_PREFIX}_${noteId}_${reviewerId}`;
+}
+
+function getBaselineStorageKey(noteId: string, reviewerId: string): string {
+  return `${MARKED_FOR_REVIEW_STORAGE_PREFIX}_baseline_${noteId}_${reviewerId}`;
 }
 
 /** Returns true/false from storage; undefined when key not set (use API then). */
@@ -38,6 +41,27 @@ function setMarkedInStorage(noteId: string, reviewerId: string, marked: boolean)
   try {
     const key = getMarkedForReviewStorageKey(noteId, reviewerId);
     window.localStorage.setItem(key, marked ? '1' : '0');
+  } catch {
+    // ignore
+  }
+}
+
+/** Returns baseline string from storage; undefined when key not set. */
+function getBaselineFromStorage(noteId: string, reviewerId: string): string | undefined {
+  if (typeof window === 'undefined' || !window.localStorage) return undefined;
+  try {
+    const raw = window.localStorage.getItem(getBaselineStorageKey(noteId, reviewerId));
+    return raw === null ? undefined : raw;
+  } catch {
+    return undefined;
+  }
+}
+
+function setBaselineInStorage(noteId: string, reviewerId: string, baseline: string): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const key = getBaselineStorageKey(noteId, reviewerId);
+    window.localStorage.setItem(key, baseline);
   } catch {
     // ignore
   }
@@ -64,6 +88,8 @@ interface SMEReviewProps {
   practitionerId: number;
   reviewerId?: number | null;
   isManagerReviewing?: boolean;
+  /** When true, only show reviews for the logged-in user (used for Admin Review Queue). */
+  onlyShowLoggedInUserReviews?: boolean;
   onSMEIssueDeleted?: (versionId: number, smeIssueId: number) => void;
   onSMEReviewDeleted?: (versionId: number | null, reviewerId: number) => void;
   onSMEIssueUpdated?: (
@@ -73,6 +99,10 @@ interface SMEReviewProps {
   ) => void;
   /** Ref SingleNoteAudit sets so we can notify when an issue is created from summary cards */
   onReviewerIssuesChangedRef?: React.MutableRefObject<((reviewerId: number) => void) | null>;
+  /** Optional callback so parent can optimistically add an audit history item when a note is marked for review */
+  onMarkedForReview?: (timestamp: string) => void;
+  /** Optional callback so parent can optimistically add an audit history item when a note is assigned to manager */
+  onAssignedToManager?: (timestamp: string) => void;
 }
 
 const SMEReview = ({
@@ -88,10 +118,13 @@ const SMEReview = ({
   practitionerId,
   reviewerId,
   isManagerReviewing = false,
+  onlyShowLoggedInUserReviews = false,
   onSMEIssueDeleted,
   onSMEReviewDeleted,
   onSMEIssueUpdated,
   onReviewerIssuesChangedRef,
+  onMarkedForReview,
+  onAssignedToManager,
 }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
@@ -134,6 +167,7 @@ const SMEReview = ({
   const [reviewMarkState, setReviewMarkState] = useState<Record<string, ReviewMarkState>>({});
   const [markingReviewId, setMarkingReviewId] = useState<string | null>(null);
   const lastSeededNoteIdRef = useRef<string | null>(null);
+  const [localMarkedAtByReviewer, setLocalMarkedAtByReviewer] = useState<Record<string, string>>({});
 
   // Stable signature for comparing issues (new/updated/removed)
   const getIssuesSignature = useCallback((issues: IssueForm[]): string => {
@@ -156,11 +190,24 @@ const SMEReview = ({
       for (const review of ownReviews) {
         const fromStorage = getMarkedFromStorage(noteId, review.reviewerId);
         const marked = fromStorage !== undefined ? fromStorage : (noteReviewMarks?.[review.reviewerId] ?? false);
-        const baseline = getIssuesSignature(review.issues);
+        const storedBaseline = getBaselineFromStorage(noteId, review.reviewerId);
+
+        // Baseline rules:
+        // - Prefer any baseline already stored in local state for this session.
+        // - Otherwise, if storage has a baseline for this reviewer, use it.
+        // - Otherwise, if reviewer is marked but we have no stored baseline yet,
+        //   derive baseline from current issues snapshot (or empty when no issues),
+        //   and persist it so that reloads see "no change" until user edits again.
+        let baseline = prev[review.id]?.issuesBaseline ?? storedBaseline;
+        if (marked && baseline == null) {
+          baseline = review.issues.length > 0 ? getIssuesSignature(review.issues) : '';
+          setBaselineInStorage(noteId, review.reviewerId, baseline);
+        }
+
         next[review.id] = {
           ...(prev[review.id] ?? { marked: false }),
           marked,
-          issuesBaseline: baseline,
+          ...(baseline != null && { issuesBaseline: baseline }),
         };
         if (fromStorage === undefined && marked) setMarkedInStorage(noteId, review.reviewerId, true);
       }
@@ -291,7 +338,7 @@ const SMEReview = ({
   };
 
   const handleMarkForReview = useCallback(
-    async (reviewId: string) => {
+    async (reviewId: string, alsoAssignManager: boolean = false) => {
       const review = reviews.find(r => r.id === reviewId);
 
       setMarkingReviewId(reviewId);
@@ -307,15 +354,62 @@ const SMEReview = ({
           const baseline = getIssuesSignature(review?.issues ?? []);
           setReviewMarkState(prev => ({
             ...prev,
-            [reviewId]: { ...(prev[reviewId] ?? { marked: false }), marked: true, issuesBaseline: baseline },
+            [reviewId]: { ...(prev[reviewId] ?? { marked: true }), marked: true, issuesBaseline: baseline },
           }));
-          setMarkedInStorage(noteId || '', review?.reviewerId || String(loggedInUserId), true);
+          const effectiveReviewerId = review?.reviewerId || String(loggedInUserId);
+          setMarkedInStorage(noteId || '', effectiveReviewerId, true);
+          setBaselineInStorage(noteId || '', effectiveReviewerId, baseline);
+
+          // Optimistically notify parent so it can add a temporary SME action to audit history
+          if (onMarkedForReview) {
+            onMarkedForReview(new Date().toISOString());
+          }
+
+          // Also store a local display date so the "Marked done on" label
+          // shows immediately without waiting for a refetch.
+          const displayDate = formatDate(new Date().toISOString());
+          setLocalMarkedAtByReviewer(prev => ({
+            ...prev,
+            [effectiveReviewerId]: displayDate,
+          }));
+
+          // When there are issues on this review (alsoAssignManager = true), also auto-assign to manager
+          if (alsoAssignManager && noteId && versionId != null && practitionerId && priorityId && loggedInUserId != null) {
+            const versionLabel = versionOrderForApi != null ? `V${versionOrderForApi}` : undefined;
+            // Give the backend a moment to process the "mark for review" before assigning.
+            // This avoids race conditions where both actions are applied simultaneously.
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await assignToManager({
+              note_id: noteId,
+              version_id: versionId,
+              practitioner_id: practitionerId,
+              ai_score: auditScore,
+              reviewer_id: loggedInUserId,
+              priority: priorityId,
+              version_label: versionLabel,
+            });
+            if (onAssignedToManager) {
+              onAssignedToManager(new Date().toISOString());
+            }
+          }
         }
       } finally {
         setMarkingReviewId(null);
       }
     },
-    [reviews, noteId, loggedInUserId, versionId, getIssuesSignature],
+    [
+      reviews,
+      noteId,
+      loggedInUserId,
+      versionId,
+      getIssuesSignature,
+      onMarkedForReview,
+      practitionerId,
+      priorityId,
+      versionOrderForApi,
+      auditScore,
+      onAssignedToManager,
+    ],
   );
 
   // Derive "issues changed" from baseline: any new issue or updated issue enables the button (higher priority than id matched)
@@ -323,34 +417,12 @@ const SMEReview = ({
     (review: Review): boolean => {
       const state = reviewMarkState[review.id];
       const baseline = state?.issuesBaseline;
-      if (baseline == null) return false;
+      // No baseline yet (e.g. first issue on new review): having any issues counts as "changes" so button enables
+      if (baseline == null) return review.issues.length > 0;
       return getIssuesSignature(review.issues) !== baseline;
     },
     [reviewMarkState, getIssuesSignature],
   );
-
-  // When any issue is created/updated/deleted: set persisted state to false (button enabled) and update baseline so we don't re-trigger (avoids infinite loop)
-  useEffect(() => {
-    if (!noteId) return;
-    const toClear: { id: string; baseline: string }[] = [];
-    for (const review of reviews) {
-      if (review.reviewerId && Number(review.reviewerId) !== loggedInUserId) continue;
-      const changed = getHasIssuesChangedSinceMark(review);
-      if (changed) {
-        setMarkedInStorage(noteId, review.reviewerId, false);
-        toClear.push({ id: review.id, baseline: getIssuesSignature(review.issues) });
-      }
-    }
-    if (toClear.length > 0) {
-      setReviewMarkState(prev => {
-        const next = { ...prev };
-        for (const { id, baseline } of toClear) {
-          next[id] = { ...(next[id] ?? { marked: false }), marked: false, issuesBaseline: baseline };
-        }
-        return next;
-      });
-    }
-  }, [noteId, reviews, loggedInUserId, getHasIssuesChangedSinceMark, getIssuesSignature]);
 
   // Register callback so parent can notify when an issue is created from summary cards (no-op now; we derive from baseline)
   useEffect(() => {
@@ -438,6 +510,14 @@ const SMEReview = ({
             return true;
           });
 
+          // If we should only show logged-in user's reviews (Admin Review Queue), filter by logged-in user id
+          if (onlyShowLoggedInUserReviews && loggedInUserId != null) {
+            filteredReviews = filteredReviews.filter(review => {
+              const reviewReviewerId = review.reviewerId ? Number(review.reviewerId) : null;
+              return reviewReviewerId === loggedInUserId;
+            });
+          }
+
           // If manager is reviewing, filter by reviewer_id
           if (isManagerReviewing && reviewerId !== null && reviewerId !== undefined) {
             filteredReviews = filteredReviews.filter(review => {
@@ -446,23 +526,30 @@ const SMEReview = ({
             });
           }
 
-          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible (not for admin – admin can't add review)
+          // When current user has no review (e.g. after delete or fresh load), show empty card so buttons + score always visible
           const hasCurrentUserReview = filteredReviews.some(r => r.reviewerId != null && Number(r.reviewerId) === loggedInUserId);
-          const isAdmin = Number(user?.type) === UserRoleEnum.superAdmin;
+
+          let displayReviews = filteredReviews;
+          let isNoReviewMode = false;
+
           const showPlaceholder =
-            !isAdmin &&
-            loggedInUserId != null &&
-            versionId != null &&
-            !hasCurrentUserReview &&
-            (!isManagerReviewing || reviewerId === loggedInUserId);
-          const placeholderReview: Review = {
-            id: `new-review-${loggedInUserId}`,
-            reviewerId: String(loggedInUserId),
-            reviewerName: user?.fullName?.trim() || user?.email || 'You',
-            issues: [],
-            _versionId: versionId,
-          };
-          const displayReviews = showPlaceholder ? [placeholderReview, ...filteredReviews] : filteredReviews;
+            loggedInUserId != null && versionId != null && !hasCurrentUserReview && (!isManagerReviewing || reviewerId === loggedInUserId);
+
+          if (showPlaceholder) {
+            const placeholderReview: Review = {
+              id: `new-review-${loggedInUserId}`,
+              reviewerId: String(loggedInUserId),
+              reviewerName: user?.fullName?.trim() || user?.email || 'You',
+              issues: [],
+              _versionId: versionId,
+            };
+            displayReviews = [placeholderReview, ...filteredReviews];
+
+            // "No review" mode: there are no real reviews yet; only the placeholder exists
+            if (filteredReviews.length === 0) {
+              isNoReviewMode = true;
+            }
+          }
 
           if (displayReviews.length === 0) {
             return (
@@ -475,41 +562,68 @@ const SMEReview = ({
 
           const isCurrentVersion = !versionId || versionNumber === 'Current';
 
-          return displayReviews.map(review => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              auditScore={auditScore}
-              activeIssueForms={activeIssueForms}
-              savingIssueId={savingIssueId}
-              noteId={noteId}
-              versionId={versionId}
-              versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
-              practitionerId={practitionerId}
-              priorityId={priorityId}
-              onDeleteIssue={handleDeleteIssueClick}
-              onSaveIssue={handleSaveIssue}
-              onCancelEdit={handleCancelEdit}
-              onDeleteReview={handleDeleteReviewClick}
-              onRemoveReview={handleRemoveReview}
-              isMarkedForReview={reviewMarkState[review.id]?.marked ?? false}
-              hasIssuesChangedSinceMark={getHasIssuesChangedSinceMark(review)}
-              onMarkForReview={() => handleMarkForReview(review.id)}
-              isMarkingForReview={markingReviewId === review.id}
-              readOnly={!isCurrentVersion}
-              markedAtLabel={(() => {
-                const effectiveReviewerId = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
-                if (!effectiveReviewerId || !noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
-                const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
-                  m => m.reviewerId === effectiveReviewerId && m.markedAsReviewed === 1,
-                );
-                if (!mark) return null;
-                const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
-                if (!ts) return null;
-                return formatDate(ts);
-              })()}
-            />
-          ));
+          return displayReviews.map(review => {
+            const markState = reviewMarkState[review.id];
+            const effectiveReviewerIdStr = review.reviewerId ?? (loggedInUserId != null ? String(loggedInUserId) : undefined);
+            const apiMarked = effectiveReviewerIdStr && noteReviewMarks ? noteReviewMarks[effectiveReviewerIdStr] === true : false;
+            const isMarkedForReview = markState?.marked ?? apiMarked ?? false;
+
+            // Derive "issues changed" from baseline as before.
+            // This is still useful for future enhancements, but the
+            // button's disabled logic will now primarily look at whether
+            // there are *any* issues when already marked.
+            const hasIssuesChanged = getHasIssuesChangedSinceMark(review);
+
+            // New behavior:
+            // - If there are no issues yet (placeholder / empty review), Marked For Review only runs the mark API.
+            // - If there are any issues on this review, Marked For Review will also assign to manager.
+            const shouldAlsoAssignManager = review.issues.length > 0;
+
+            return (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                auditScore={auditScore}
+                activeIssueForms={activeIssueForms}
+                savingIssueId={savingIssueId}
+                noteId={noteId}
+                versionId={versionId}
+                versionLabel={versionOrderForApi != null ? `V${versionOrderForApi}` : undefined}
+                practitionerId={practitionerId}
+                priorityId={priorityId}
+                onDeleteIssue={handleDeleteIssueClick}
+                onSaveIssue={handleSaveIssue}
+                onCancelEdit={handleCancelEdit}
+                onDeleteReview={handleDeleteReviewClick}
+                onRemoveReview={handleRemoveReview}
+                isMarkedForReview={isMarkedForReview}
+                hasIssuesChangedSinceMark={hasIssuesChanged}
+                onMarkForReview={() => handleMarkForReview(review.id, shouldAlsoAssignManager)}
+                isMarkingForReview={markingReviewId === review.id}
+                readOnly={!isCurrentVersion}
+                isNoReviewMode={isNoReviewMode}
+                markedAtLabel={(() => {
+                  const effectiveReviewerIdNum = review.reviewerId ? Number(review.reviewerId) : loggedInUserId;
+                  if (!effectiveReviewerIdNum) return null;
+
+                  // 1) Prefer local optimistic date if present (set right after mark).
+                  const localDate = localMarkedAtByReviewer[String(effectiveReviewerIdNum)];
+                  if (localDate) return localDate;
+
+                  // 2) Fall back to API-provided marks.
+                  if (!noteReviewMarksRaw || noteReviewMarksRaw.length === 0) return null;
+                  const mark = (noteReviewMarksRaw as NoteReviewMarkItem[]).find(
+                    m => m.reviewerId === effectiveReviewerIdNum && m.markedAsReviewed === 1,
+                  );
+                  if (!mark) return null;
+                  const ts = mark.markedAt || (mark as any).updatedAt || mark.createdAt;
+                  if (!ts) return null;
+                  return formatDate(ts);
+                })()}
+                onAssignedToManager={onAssignedToManager}
+              />
+            );
+          });
         })()}
       </CardContent>
 

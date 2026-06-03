@@ -28,7 +28,9 @@ const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
             <FileCode className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Prompt Version</p>
-              <p className="text-sm text-black">{selectedAgent?.name || '-'}</p>
+              <p className="text-sm break-all text-black" title={selectedAgent?.name || '-'}>
+                {selectedAgent?.name || '-'}
+              </p>
             </div>
           </div>
         </div>

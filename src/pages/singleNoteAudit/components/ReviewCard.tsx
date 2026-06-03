@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, User, Save, FileCheck, Plus } from 'lucide-react';
+import { Pencil, Trash2, Save, FileCheck, Plus } from 'lucide-react';
 import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 // import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
@@ -42,6 +42,10 @@ interface ReviewCardProps {
   isMarkingForReview?: boolean;
   readOnly?: boolean;
   markedAtLabel?: string | null;
+  /** True when this is the placeholder "no review yet" card (Admin Review flow). */
+  isNoReviewMode?: boolean;
+  /** Optional callback so parent can optimistically add an audit history item when a note is assigned to manager */
+  onAssignedToManager?: (timestamp: string) => void;
 }
 
 const ReviewCard = ({
@@ -65,6 +69,8 @@ const ReviewCard = ({
   isMarkingForReview = false,
   readOnly = false,
   markedAtLabel = null,
+  isNoReviewMode = false,
+  onAssignedToManager,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
@@ -288,10 +294,6 @@ const ReviewCard = ({
     }
   };
 
-  const handleAssignToManager = () => {
-    setShowAssignManagerForm(true);
-  };
-
   const handleCancelAssign = () => {
     setShowAssignManagerForm(false);
     setSelectedManagerId('');
@@ -322,6 +324,10 @@ const ReviewCard = ({
         version_label: versionLabel,
       });
 
+      if (onAssignedToManager) {
+        onAssignedToManager(new Date().toISOString());
+      }
+
       // Reset form after successful assignment
       setShowAssignManagerForm(false);
       setSelectedManagerId('');
@@ -339,34 +345,33 @@ const ReviewCard = ({
           <div className="flex items-center justify-end gap-2">
             <Button
               size="sm"
-              className="bg-gradient-light text-primary w-36 border-0 shadow-sm"
-              disabled={readOnly || (isMarkedForReview && !hasIssuesChangedSinceMark) || isMarkingForReview}
+              className="bg-gradient-light text-primary w-40 border-0 shadow-sm"
+              disabled={
+                readOnly ||
+                isMarkingForReview ||
+                // If there are no changes since last mark and it's already marked, keep disabled.
+                (!hasIssuesChangedSinceMark && isMarkedForReview)
+              }
               onClick={onMarkForReview}
             >
               <FileCheck />
-              {isMarkingForReview ? 'Marking...' : 'Mark For Review'}
+              {isMarkingForReview ? 'Marking...' : 'Marked For Review'}
             </Button>
-            <Button
-              onClick={handleAssignToManager}
-              size="sm"
-              className="bg-gradient-light text-primary border-0 shadow-sm"
-              disabled={readOnly || review.issues.length === 0}
-            >
-              <User />
-              Assign To Manager
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRemoveOrDelete}
-              disabled={readOnly || review.issues.length === 0}
-              className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
-              title={isReviewSaved ? 'Delete review' : 'Remove review'}
-              type="button"
-            >
-              <Trash2 />
-            </Button>
+            {!isNoReviewMode && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveOrDelete}
+                  disabled={readOnly || review.issues.length === 0}
+                  className={` ${isReviewSaved ? 'text-red-600' : 'text-gray-600'}`}
+                  title={isReviewSaved ? 'Delete review' : 'Remove review'}
+                  type="button"
+                >
+                  <Trash2 />
+                </Button>
+              </>
+            )}
           </div>
           {markedAtLabel && <div className="text-xs text-gray-600">Marked done on {markedAtLabel}</div>}
         </div>

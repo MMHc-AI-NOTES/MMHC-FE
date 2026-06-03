@@ -46,7 +46,7 @@ export const ManagerDecisionCard = ({ rawData, onReturnToQueue }: ManagerDecisio
       decision: selectedDecision,
       practitioner_id: rawData.practitionerId,
       manual_score: rawData.manualScore || rawData.review?.manualScore || 0,
-      ai_score: rawData.aiScore || rawData.chat?.evaluationScore || 0,
+      ai_score: rawData.chat?.bedrockResponse?.score ?? rawData.aiScore ?? rawData.chat?.evaluationScore ?? 0,
       disagreement: rawData.disagreement?.id || null,
       comment: comments,
       ai_status: rawData.aiStatus?.id || 1,

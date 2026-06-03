@@ -6,6 +6,7 @@ import filterOptionsReducer from './slices/filterOptionsSlice';
 import smeConfigReducer from './slices/smeConfigSlice';
 import usersReducer from './slices/usersSlice';
 import authReducer from './slices/authSlice';
+import selectedClientReducer from './slices/selectedClientSlice';
 import { useDispatch, useSelector } from 'react-redux';
 
 export const store = configureStore({
@@ -17,6 +18,7 @@ export const store = configureStore({
     filterOptions: filterOptionsReducer,
     smeConfig: smeConfigReducer,
     users: usersReducer,
+    selectedClient: selectedClientReducer,
   },
 });
 export const { dispatch, getState } = store;

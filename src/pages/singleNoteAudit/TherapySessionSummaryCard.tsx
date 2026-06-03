@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 // import { Badge } from '@/components/ui/badge';
-import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine } from 'lucide-react';
+import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine, ExternalLink } from 'lucide-react';
 import { WebhookVersion } from '@/types/notes';
 import type { IssueForm } from './components/types';
 // import { UserRoleEnum } from '@/constants/common';
@@ -22,6 +22,7 @@ interface TherapySessionSummaryCardProps {
   priorityId?: number;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
   onReviewerIssuesChanged?: (reviewerId: number) => void;
+  handleNoteIdClick: () => void;
 }
 
 const TherapySessionSummaryCard = ({
@@ -35,6 +36,7 @@ const TherapySessionSummaryCard = ({
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
+  handleNoteIdClick,
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
@@ -62,8 +64,8 @@ const TherapySessionSummaryCard = ({
     isFirstVersion,
     isLastVersion,
     expandedFieldKey,
-    selectedTemplateId,
-    setSelectedTemplateId,
+    selectedTemplateIds,
+    setSelectedTemplateIds,
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,
@@ -163,6 +165,17 @@ const TherapySessionSummaryCard = ({
             />
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <p className="text-primary text-sm">Note ID:</p>
+          {noteId ? (
+            <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+              <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
+              <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">N/A</p>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -210,7 +223,7 @@ const TherapySessionSummaryCard = ({
               previousValue={null}
               issueCount={overallIssueCount}
               isExpanded={expandedFieldKey === overallFieldKey}
-              selectedTemplateId={selectedTemplateId}
+              selectedTemplateIds={selectedTemplateIds}
               templateOptions={getTemplateDropdownOptions(overallFieldKey)}
               alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(overallFieldKey)}
               isSaving={isSaving}
@@ -219,7 +232,7 @@ const TherapySessionSummaryCard = ({
               showSMEActions={showSMEActions}
               disableAddButton={isHistoricalVersion}
               onToggleForm={toggleFieldForm}
-              onTemplateChange={setSelectedTemplateId}
+              onTemplateChange={setSelectedTemplateIds}
               onSave={handleSaveFromTemplate}
               onCloseForm={closeTemplateForm}
             />
@@ -241,7 +254,7 @@ const TherapySessionSummaryCard = ({
                   previousValue={previousValue ?? null}
                   issueCount={issueCount}
                   isExpanded={expandedFieldKey === key}
-                  selectedTemplateId={selectedTemplateId}
+                  selectedTemplateIds={selectedTemplateIds}
                   templateOptions={getTemplateDropdownOptions(key)}
                   alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(key)}
                   isSaving={isSaving}
@@ -250,7 +263,7 @@ const TherapySessionSummaryCard = ({
                   showSMEActions={showSMEActions}
                   disableAddButton={isHistoricalVersion}
                   onToggleForm={toggleFieldForm}
-                  onTemplateChange={setSelectedTemplateId}
+                  onTemplateChange={setSelectedTemplateIds}
                   onSave={handleSaveFromTemplate}
                   onCloseForm={closeTemplateForm}
                 />
