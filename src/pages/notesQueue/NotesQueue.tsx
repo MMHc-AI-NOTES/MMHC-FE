@@ -1,15 +1,20 @@
 // @/pages/notesQueue/NotesQueue.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
-import { FormattedNote, QueueOverview, Workload } from '@/types/notes';
+import {
+  FormattedNote,
+  QueueOverview,
+  SmeReviewerCountItem,
+  // Workload
+} from '@/types/notes';
 import {
   fetchNotes,
   fetchQueueOverview,
-  fetchWorkload,
+  fetchSmeReviewersCount,
+  // fetchWorkload,
   fetchPractitioners,
   fetchCptCodes,
   getDateRange,
@@ -18,32 +23,48 @@ import {
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QueueOverviewCard } from './QueueOverviewCard';
-import { WorkloadCard } from './WorkloadCard';
-import { useAppSelector } from '@/store/store';
+import { SmeReviewersCountCard } from './SmeReviewersCountCard';
+// import { WorkloadCard } from './WorkloadCard';
+import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
+import { clearSelectedClientId } from '@/store/slices/selectedClientSlice';
 import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorKey } from './ColorKey';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
+import { usePaginationPersistence } from '@/hooks/usePaginationPersistence';
+
+const itemsPerPage = 60; // Fixed at 60 as per requirement
 
 const NotesQueue = () => {
   const [notes, setNotes] = useState<FormattedNote[]>([]);
   const [notesLoading, setNotesLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);
-  const [workloadLoading, setWorkloadLoading] = useState(true);
+  const [smeReviewersCountLoading, setSmeReviewersCountLoading] = useState(true);
+  // const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
-  const [workload, setWorkload] = useState<Workload | null>(null);
+  const [smeReviewersCount, setSmeReviewersCount] = useState<SmeReviewerCountItem[] | null>(null);
+  // const [workload, setWorkload] = useState<Workload | null>(null);
   const user = useAppSelector(state => state.auth.user);
+  const selectedClientId = useAppSelector(state => state.selectedClient.selectedClientId);
 
   // Get filter options from Redux
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { practitioners, cptCodes, practitionersLoaded, cptCodesLoaded } = useAppSelector(state => state.filterOptions);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
+  // Pagination states with persistence
+  const [pagination, setPagination] = usePaginationPersistence('notesQueuePagination', { currentPage: 1 });
+  const currentPage = pagination.currentPage;
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 60; // Fixed at 60 as per requirement
+
+  // Sorting state
+  const [sorts, setSorts] = useState<
+    {
+      columnName: string;
+      orderBy: 'asc' | 'desc';
+    }[]
+  >([{ columnName: 'session_time', orderBy: 'desc' }]);
 
   // Filter states with persistence
   const defaultFilters = {
@@ -59,7 +80,8 @@ const NotesQueue = () => {
     manager: 'all',
     workflow: 'all',
     search: '',
-    reviewedByMe: false,
+    notReviewedByMe: true,
+    notReviewedByAnyone: false,
   };
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('notesQueueFilters', defaultFilters);
 
@@ -108,16 +130,21 @@ const NotesQueue = () => {
     if (filters.dateRange && filters.dateRange !== 'all') {
       const dateRange = getDateRange(filters.dateRange);
       if (dateRange) {
-        filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
+        filterArray.push({ columnName: 'session_time', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
       }
     }
 
     // Reviewed By Me filter
-    if (filters.reviewedByMe) {
+    if (filters.notReviewedByMe) {
       filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
     }
 
-    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
+    // Notes not reviewed by anyone filter
+    if (filters.notReviewedByAnyone) {
+      filterArray.push({ columnName: 'not_reviewed', value: true });
+    }
+
+    return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
   };
 
   // Load initial data - each API call has its own loading state
@@ -135,18 +162,30 @@ const NotesQueue = () => {
       }
     };
 
-    // Fetch workload
-    const loadWorkload = async () => {
+    const loadSmeReviewersCount = async () => {
       try {
-        setWorkloadLoading(true);
-        const workloadData = await fetchWorkload();
-        setWorkload(workloadData);
+        setSmeReviewersCountLoading(true);
+        const result = await fetchSmeReviewersCount();
+        setSmeReviewersCount(result);
       } catch (error) {
-        console.error('Error loading workload:', error);
+        console.error('Error loading SME reviewers count:', error);
       } finally {
-        setWorkloadLoading(false);
+        setSmeReviewersCountLoading(false);
       }
     };
+
+    // Fetch workload
+    // const loadWorkload = async () => {
+    //   try {
+    //     setWorkloadLoading(true);
+    //     const workloadData = await fetchWorkload();
+    //     setWorkload(workloadData);
+    //   } catch (error) {
+    //     console.error('Error loading workload:', error);
+    //   } finally {
+    //     setWorkloadLoading(false);
+    //   }
+    // };
 
     // Fetch practitioners only if not already loaded in Redux
     const loadPractitioners = async () => {
@@ -172,18 +211,23 @@ const NotesQueue = () => {
 
     // Run non-note fetches in parallel
     loadQueueOverview();
-    loadWorkload();
+    loadSmeReviewersCount();
+    // loadWorkload();
     loadPractitioners();
     loadCptCodes();
   }, [practitionersLoaded, cptCodesLoaded, dispatch]);
 
   // Load notes - apply saved filters if they exist
   useEffect(() => {
+    // If a client was selected from the Clients page, skip the initial unfiltered load.
+    // The selected-client effect below will handle the first load instead.
+    if (selectedClientId) {
+      return;
+    }
+
     const loadNotes = async () => {
       try {
         setNotesLoading(true);
-        setCurrentPage(1);
-
         // Check if filters are active (not all defaults)
         const hasActive =
           filters.status !== 'all' ||
@@ -198,7 +242,8 @@ const NotesQueue = () => {
           filters.manager !== 'all' ||
           filters.workflow !== 'all' ||
           filters.search !== '' ||
-          filters.reviewedByMe;
+          filters.notReviewedByMe ||
+          filters.notReviewedByAnyone;
 
         let payload: NotesPayload;
         if (hasActive) {
@@ -229,16 +274,19 @@ const NotesQueue = () => {
           if (filters.dateRange && filters.dateRange !== 'all') {
             const dateRange = getDateRange(filters.dateRange);
             if (dateRange) {
-              filterArray.push({ columnName: 'created_at', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
+              filterArray.push({ columnName: 'session_time', type: 'exact', startDate: dateRange.startDate, endDate: dateRange.endDate });
             }
           }
-          if (filters.reviewedByMe) {
-            filterArray.push({ columnName: 'reviewed_by_me', type: 'exact', value: true });
+          if (filters.notReviewedByMe) {
+            filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
+          }
+          if (filters.notReviewedByAnyone) {
+            filterArray.push({ columnName: 'not_reviewed', value: true });
           }
 
-          payload = { page: 1, pageSize: itemsPerPage, filters: filterArray };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
         } else {
-          payload = { page: 1, pageSize: itemsPerPage, filters: [] };
+          payload = { page: currentPage, pageSize: itemsPerPage, filters: [], sorts };
         }
 
         const notesResponse = await fetchNotes(payload);
@@ -251,22 +299,90 @@ const NotesQueue = () => {
       }
     };
 
-    loadNotes();
+    void loadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
+  // If a client is selected from the Clients page, prefill the search filter and load notes for that client
+  useEffect(() => {
+    const applySelectedClientFilter = async () => {
+      if (!selectedClientId) return;
+
+      try {
+        setNotesLoading(true);
+        setPagination({ ...pagination, currentPage: 1 });
+
+        // Prefill the search filter so the FiltersSection shows the client identifier
+        setFilters({
+          ...filters,
+          search: selectedClientId,
+        });
+
+        const payload: NotesPayload = {
+          page: 1,
+          pageSize: itemsPerPage,
+          filters: [
+            {
+              columnName: 'search',
+              type: 'like',
+              value: selectedClientId,
+            },
+          ],
+          sorts,
+        };
+
+        const notesResponse = await fetchNotes(payload);
+        setNotes(notesResponse.data);
+        setTotalItems(notesResponse.totalCount || 0);
+      } catch (error) {
+        console.error('Error applying selected client filter:', error);
+      } finally {
+        setNotesLoading(false);
+        dispatch(clearSelectedClientId());
+      }
+    };
+
+    void applySelectedClientFilter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientId]);
+
   // Handle filter changes (updates local state only)
   const handleFilterChange = (key: string, value: string | boolean) => {
-    setFilters({ ...filters, [key]: value });
+    // Special handling to keep review filters mutually exclusive
+    if (key === 'notReviewedByAnyone') {
+      const isChecked = value === true;
+      setFilters({
+        ...filters,
+        notReviewedByAnyone: isChecked,
+        notReviewedByMe: isChecked ? false : filters.notReviewedByMe,
+      });
+      return;
+    }
+
+    if (key === 'notReviewedByMe') {
+      const isChecked = value === true;
+      setFilters({
+        ...filters,
+        notReviewedByMe: isChecked,
+        notReviewedByAnyone: isChecked ? false : filters.notReviewedByAnyone,
+      });
+      return;
+    }
+
+    setFilters({
+      ...filters,
+      [key]: value,
+    });
   };
 
   // Apply filters - makes API call with current filter values
   const handleApplyFilters = async () => {
     try {
       setNotesLoading(true);
-      setCurrentPage(1); // Reset to first page on filter apply
+      setPagination({ ...pagination, currentPage: 1 }); // Reset to first page on filter apply
 
       const payload = buildFilterPayload();
+      payload.page = 1;
       const response = await fetchNotes(payload);
 
       setNotes(response.data);
@@ -278,15 +394,25 @@ const NotesQueue = () => {
     }
   };
 
-  // Clear filters - resets all filters and fetches unfiltered data
+  // Clear filters - resets all filters to defaults and fetches data
   const handleClearFilters = async () => {
-    clearPersistedFilters();
-    setCurrentPage(1);
-
     try {
       setNotesLoading(true);
-      const payload = { page: 1, pageSize: itemsPerPage, filters: [] };
-      const response = await fetchNotes(payload);
+      clearPersistedFilters();
+      setPagination({ ...pagination, currentPage: 1 });
+
+      const resetFilters = { ...defaultFilters };
+      setFilters(resetFilters);
+
+      const filterArray: any[] = [];
+      if (resetFilters.notReviewedByMe) {
+        filterArray.push({ columnName: 'not_reviewed_by_user_id', type: 'exact', value: user?.id ?? 0 });
+      }
+      if (resetFilters.notReviewedByAnyone) {
+        filterArray.push({ columnName: 'not_reviewed', value: true });
+      }
+
+      const response = await fetchNotes({ page: 1, pageSize: itemsPerPage, filters: filterArray, sorts });
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
     } catch (error) {
@@ -298,7 +424,7 @@ const NotesQueue = () => {
 
   // Handle page change
   const handlePageChange = async (page: number) => {
-    setCurrentPage(page);
+    setPagination({ ...pagination, currentPage: page });
 
     try {
       setNotesLoading(true);
@@ -317,6 +443,53 @@ const NotesQueue = () => {
 
   const handleViewNote = (noteId: string) => {
     navigate(`/notes-queue/single-note-audit/${noteId}`);
+  };
+
+  // Handle sorting changes from table header
+  const handleSortChange = async (columnName: string) => {
+    // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
+    const existing = sorts.find(sort => sort.columnName === columnName);
+
+    let nextSorts:
+      | {
+          columnName: string;
+          orderBy: 'asc' | 'desc';
+        }[]
+      | [] = [];
+
+    if (!existing) {
+      // Currently unsorted → apply desc
+      nextSorts = [{ columnName, orderBy: 'desc' }];
+    } else if (existing.orderBy === 'desc') {
+      // Desc → asc
+      nextSorts = [{ columnName, orderBy: 'asc' }];
+    } else {
+      // Asc → unsorted (empty array so backend uses default sort)
+      nextSorts = [];
+    }
+
+    // Update state so icons reflect the new sort
+    setSorts(nextSorts);
+
+    try {
+      setNotesLoading(true);
+      setPagination({ ...pagination, currentPage: 1 });
+
+      const basePayload = buildFilterPayload();
+      const payload: NotesPayload = {
+        ...basePayload,
+        page: 1,
+        sorts: nextSorts,
+      };
+
+      const response = await fetchNotes(payload);
+      setNotes(response.data);
+      setTotalItems(response.totalCount || 0);
+    } catch (error) {
+      console.error('Error applying sort:', error);
+    } finally {
+      setNotesLoading(false);
+    }
   };
 
   return (
@@ -339,7 +512,11 @@ const NotesQueue = () => {
             <div className="mb-4 flex items-center justify-between px-6">
               <div>
                 <h3 className="text-primary text-lg font-semibold">All Notes</h3>
-                <p className="text-muted-foreground text-sm">{notes.length} notes in queue</p>
+                {notesLoading ? (
+                  <Skeleton className="mt-1.5 h-3 w-32" />
+                ) : (
+                  <p className="text-muted-foreground text-sm">{totalItems} notes in queue</p>
+                )}
               </div>
               <Popover>
                 <PopoverTrigger asChild>
@@ -366,7 +543,14 @@ const NotesQueue = () => {
               </div>
             ) : (
               <>
-                <NotesTable notes={notes} onViewNote={handleViewNote} page={currentPage} pageSize={itemsPerPage} />
+                <NotesTable
+                  notes={notes}
+                  onViewNote={handleViewNote}
+                  page={currentPage}
+                  pageSize={itemsPerPage}
+                  sorts={sorts}
+                  onSortChange={handleSortChange}
+                />
 
                 {/* Pagination */}
                 {notes.length > 0 && (
@@ -394,7 +578,8 @@ const NotesQueue = () => {
       {/* Right Column: Overview Cards */}
       <div className="space-y-6 lg:col-span-3">
         <QueueOverviewCard data={queueOverview} loading={overviewLoading} />
-        <WorkloadCard data={workload} loading={workloadLoading} />
+        <SmeReviewersCountCard data={smeReviewersCount} loading={smeReviewersCountLoading} />
+        {/* <WorkloadCard data={workload} loading={workloadLoading} /> */}
       </div>
     </div>
   );

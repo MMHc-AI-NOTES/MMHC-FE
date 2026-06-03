@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Stethoscope } from 'lucide-react';
+import { ExternalLink, Stethoscope } from 'lucide-react';
 import { WebhookVersion, PreviousNote } from '@/types/notes';
 import type { IssueForm } from './components/types';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
@@ -18,6 +18,7 @@ interface TherapySessionSummaryCardProps {
   priorityId?: number;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
   onReviewerIssuesChanged?: (reviewerId: number) => void;
+  handleNoteIdClick: () => void;
 }
 
 const PreviousSessionCard = ({
@@ -32,6 +33,7 @@ const PreviousSessionCard = ({
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
+  handleNoteIdClick,
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
@@ -54,8 +56,8 @@ const PreviousSessionCard = ({
     currentSessionData,
     hasPreviousSessionData,
     expandedFieldKey,
-    selectedTemplateId,
-    setSelectedTemplateId,
+    selectedTemplateIds,
+    setSelectedTemplateIds,
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,
@@ -118,6 +120,17 @@ const PreviousSessionCard = ({
             />
           </div> */}
         </div>
+        <div className="flex items-center gap-2">
+          <p className="text-primary text-sm">Note ID:</p>
+          {noteId ? (
+            <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+              <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
+              <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">N/A</p>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -157,7 +170,7 @@ const PreviousSessionCard = ({
                     previousValue={null}
                     issueCount={issueCount}
                     isExpanded={expandedFieldKey === key}
-                    selectedTemplateId={selectedTemplateId}
+                    selectedTemplateIds={selectedTemplateIds}
                     templateOptions={getTemplateDropdownOptions(key)}
                     alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(key)}
                     isSaving={isSaving}
@@ -165,7 +178,7 @@ const PreviousSessionCard = ({
                     userType={user?.type}
                     showSMEActions={showSMEActions}
                     onToggleForm={toggleFieldForm}
-                    onTemplateChange={setSelectedTemplateId}
+                    onTemplateChange={setSelectedTemplateIds}
                     onSave={handleSaveFromTemplate}
                     onCloseForm={closeTemplateForm}
                   />

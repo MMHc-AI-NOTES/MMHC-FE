@@ -12,7 +12,7 @@ interface SessionFieldRowProps {
   previousValue: string | null;
   issueCount: number;
   isExpanded: boolean;
-  selectedTemplateId: number | '';
+  selectedTemplateIds: number[];
   templateOptions: { value: number; label: string; descriptionId?: number }[];
   alreadyUsedDescriptionIds: number[];
   isSaving: boolean;
@@ -21,8 +21,8 @@ interface SessionFieldRowProps {
   showSMEActions: boolean;
   disableAddButton?: boolean;
   onToggleForm: (fieldKey: string) => void;
-  onTemplateChange: (value: number | '') => void;
-  onSave: (fieldKey: string, comment?: string) => void;
+  onTemplateChange: (value: number[]) => void;
+  onSave: (fieldKey: string, commentsByTemplateId?: Record<number, string>) => void;
   onCloseForm: () => void;
 }
 
@@ -34,7 +34,7 @@ export function SessionFieldRow({
   previousValue,
   issueCount,
   isExpanded,
-  selectedTemplateId,
+  selectedTemplateIds,
   templateOptions,
   alreadyUsedDescriptionIds,
   isSaving,
@@ -62,7 +62,7 @@ export function SessionFieldRow({
             {issueCount > 0 && UserRoleEnum.superAdmin !== userType && (
               <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">{issueCount}</Badge>
             )}
-            {UserRoleEnum.sme_reviewer === userType && (
+            {(UserRoleEnum.sme_reviewer === userType || UserRoleEnum.superAdmin === userType) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -81,7 +81,7 @@ export function SessionFieldRow({
       {isExpanded && (
         <AddIssueFromTemplateForm
           fieldKey={fieldKey}
-          selectedTemplateId={selectedTemplateId}
+          selectedTemplateIds={selectedTemplateIds}
           onTemplateChange={onTemplateChange}
           options={templateOptions}
           alreadyUsedDescriptionIds={alreadyUsedDescriptionIds}

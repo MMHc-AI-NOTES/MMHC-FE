@@ -92,7 +92,7 @@ export interface NoteDetail {
   aiReviews: number;
   auditScore: number;
   lastRun: string;
-  aiSummary: string;
+  aiSummary: string | null;
   therapySummary: string;
   bedrockResponse: object;
   prompt: string;
@@ -244,6 +244,7 @@ export interface ApiNoteDetail {
   id: number;
   chat_count: number;
   type: { id: number; name: string };
+  aiScore: number | null;
   aiStatus: { id: number; name: string };
   priority: { id: number; name: string };
   noteId: string;
@@ -278,6 +279,12 @@ export interface QueueOverview {
   blacklist: number;
 }
 
+// SME Reviewers Count Data
+export interface SmeReviewerCountItem {
+  reviewer_name: string;
+  count: number;
+}
+
 // Workload Data
 export interface Workload {
   assign_notes: number;
@@ -307,7 +314,9 @@ export interface HumanReviewNote {
   id: string;
   chatId: number;
   practitioner: string;
+  client: string;
   date: string;
+  reviewDate: string;
   score: number;
   aiStatus: number;
   reviewStatus: number;

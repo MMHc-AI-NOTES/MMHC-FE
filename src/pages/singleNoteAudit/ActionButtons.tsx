@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { notifyPractitioner } from './singleNoteApiCalls';
 import { showToast } from '@/lib/toast';
+import { featureFlags } from '@/config/featureFlags';
 
 interface ActionButtonsProps {
   // onFlagReview: () => void;
@@ -21,6 +22,7 @@ interface ActionButtonsProps {
   practitionerId?: number | null;
   noteId?: string;
   versionId?: number | null;
+  onEmailSent?: (timestamp: string) => void;
 }
 
 const ActionButtons = ({
@@ -31,6 +33,7 @@ const ActionButtons = ({
   practitionerId,
   noteId,
   versionId,
+  onEmailSent,
 }: ActionButtonsProps) => {
   const dispatch = useDispatch();
   const { agents, selectedAgentId } = useAppSelector(state => state.agents);
@@ -60,6 +63,9 @@ const ActionButtons = ({
         version_id: versionId,
       });
       setIsNotifyDialogOpen(false);
+      if (onEmailSent) {
+        onEmailSent(new Date().toISOString());
+      }
     } catch (error) {
       console.error('Error notifying practitioner:', error);
     } finally {
@@ -71,56 +77,58 @@ const ActionButtons = ({
     <>
       <Card className="p-4">
         {!isManagerReviewing ? (
-          <>
-            {/* Agent Selection Dropdown */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Select Agent</p>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="focus:border-primary-light h-12 w-full justify-between bg-white shadow-sm"
-                  >
-                    {selectedAgent ? selectedAgent.name : 'Select agent...'}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                  <Command className="w-full">
-                    <CommandInput placeholder="Search agent..." />
-                    <CommandList>
-                      <CommandEmpty>No agent found.</CommandEmpty>
-                      <CommandGroup>
-                        {agents?.map(agent => (
-                          <CommandItem key={agent.id} value={agent.name} onSelect={() => handleSelectAgent(agent.id)}>
-                            <Check className={cn('mr-2 h-4 w-4', selectedAgentId === agent.id ? 'opacity-100' : 'opacity-0')} />
-                            {agent.name}
-                            {agent.is_default === 1 && (
-                              <span className="ml-2 rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">Default</span>
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+          featureFlags.actionButtons.reRunAudit && (
+            <>
+              {/* Agent Selection Dropdown */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Select Agent</p>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="focus:border-primary-light h-12 w-full justify-between bg-white shadow-sm"
+                    >
+                      {selectedAgent ? selectedAgent.name : 'Select agent...'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <Command className="w-full">
+                      <CommandInput placeholder="Search agent..." />
+                      <CommandList>
+                        <CommandEmpty>No agent found.</CommandEmpty>
+                        <CommandGroup>
+                          {agents?.map(agent => (
+                            <CommandItem key={agent.id} value={agent.name} onSelect={() => handleSelectAgent(agent.id)}>
+                              <Check className={cn('mr-2 h-4 w-4', selectedAgentId === agent.id ? 'opacity-100' : 'opacity-0')} />
+                              {agent.name}
+                              {agent.is_default === 1 && (
+                                <span className="ml-2 rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">Default</span>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-4">
-              <Button
-                className="bg-gradient-light text-primary h-12 w-full border-0 shadow-sm"
-                disabled={!selectedAgentId || isReRun}
-                onClick={() => onReRunAudit(true)}
-              >
-                <RefreshCcw className="mr-2" />
-                Re-Run Audit
-              </Button>
-            </div>
-          </>
+              {/* Action Buttons */}
+              <div className="space-y-4">
+                <Button
+                  className="bg-gradient-light text-primary h-12 w-full border-0 shadow-sm"
+                  disabled={!selectedAgentId || isReRun}
+                  onClick={() => onReRunAudit(true)}
+                >
+                  <RefreshCcw className="mr-2" />
+                  Re-Run Audit
+                </Button>
+              </div>
+            </>
+          )
         ) : (
           /* Manager Review Mode - Show Send to Practitioner Button */
           <div className="space-y-4">

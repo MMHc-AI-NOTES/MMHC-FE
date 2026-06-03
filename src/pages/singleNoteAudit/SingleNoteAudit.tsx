@@ -23,7 +23,7 @@ import LoadingSkeleton from './LoadingSkeleton';
 import AuditHistoryCard from './AuditHistoryCard';
 
 // Services and Types
-import { NoteDetail, ApiNoteDetail, Chat, SMEIssue } from '@/types/notes';
+import { NoteDetail, ApiNoteDetail, SMEIssue } from '@/types/notes';
 import { useAppSelector } from '@/store/store';
 import { getNoteDetailWithChat } from './singleNoteApiCalls';
 import { fetchAgents } from '../settings/settingsApiCalls';
@@ -51,6 +51,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
   const extractedHumanReviewChat = apiData.chats?.find(chat => chat.id === chatId);
   const bedrockResponse = latestChat?.bedrockResponse;
   const formattedDateTime = latestChat?.createdAt ? formatDateTime(latestChat.createdAt) : '';
+  const auditScore = bedrockResponse?.score ?? latestChat?.evaluationScore ?? apiData.aiScore ?? 0;
 
   // Convert API issues to the expected format
   const issues = bedrockResponse?.issues?.map((issue: any) => ({
@@ -88,7 +89,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     clientId: apiData.patient?.clientId || '-',
     noteType: SessionTypeLabels[apiData.type.id],
     aiReviews: apiData.chat_count || 0,
-    auditScore: bedrockResponse?.score || 0,
+    auditScore,
     lastRun: formattedDateTime,
     humanReview: extractedHumanReviewChat?.humanReviews || null,
     aiSummary: bedrockResponse?.summary,
@@ -143,14 +144,28 @@ const SingleNoteAudit = () => {
   const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
-  const [auditHistory, setAuditHistory] = useState<Chat[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
+  const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
+  const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
+  const [assignedToManagerAt, setAssignedToManagerAt] = useState<string | null>(null);
 
-  const chatId = location.state?.chatId;
-  const reviewerId = location.state?.reviewerId || null;
-  const isManagerReviewing = location.state?.isManagerReviewing || false;
-  const from = location.state?.from as string | undefined;
+  const searchParams = new URLSearchParams(location.search);
+
+  const chatIdFromQuery = searchParams.get('chatId');
+  const fromQuery = searchParams.get('from');
+  const reviewerIdFromQuery = searchParams.get('reviewerId');
+  const isManagerReviewingFromQuery = searchParams.get('isManagerReviewing');
+
+  const chatId = chatIdFromQuery ? Number(chatIdFromQuery) : location.state?.chatId;
+  const reviewerId = reviewerIdFromQuery ? Number(reviewerIdFromQuery) : location.state?.reviewerId || null;
+  const isManagerReviewing =
+    isManagerReviewingFromQuery != null ? isManagerReviewingFromQuery === 'true' : location.state?.isManagerReviewing || false;
+  const from = (fromQuery as string | undefined) ?? (location.state?.from as string | undefined);
+
+  const backPath =
+    from === 'admin-review-queue' ? '/admin-review-queue' : from === 'manager-review-queue' ? '/manager-review' : '/notes-queue';
+
   const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
@@ -175,8 +190,6 @@ const SingleNoteAudit = () => {
 
         setNoteDetail(formattedNoteDetail);
         setPractitionerId(apiNoteDetail.practitionerId);
-        // Store all chats for audit history
-        setAuditHistory(apiNoteDetail.chats || []);
       } finally {
         setLoading(false);
       }
@@ -415,10 +428,9 @@ const SingleNoteAudit = () => {
   if (loading) {
     return (
       <div>
-        <LoadingSkeleton />
+        <LoadingSkeleton backPath={backPath} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <div></div>
-          {!isManagerReviewing && featureFlags.actionButtons && <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />}
         </div>
       </div>
     );
@@ -427,7 +439,7 @@ const SingleNoteAudit = () => {
   if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
     return (
       <div>
-        <Button onClick={() => navigate(-1)} className="mb-2">
+        <Button onClick={() => navigate(backPath)} className="mb-2">
           <ArrowLeft />
         </Button>
         <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -440,16 +452,23 @@ const SingleNoteAudit = () => {
     );
   }
 
+  const handleNoteIdClick = (noteIdParam?: string | number) => {
+    if (!noteDetail) return;
+    const itemId = noteIdParam ?? noteDetail.id;
+    const url = `https://intakeq.com/#/client/${noteDetail.clientId}?type=2&itemId=${itemId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     noteDetail && (
       <div>
-        <Button onClick={() => navigate(-1)} className="mb-2">
+        <Button onClick={() => navigate(backPath)} className="mb-2">
           <ArrowLeft />
         </Button>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
-            <NoteInformation noteDetail={noteDetail} />
+            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)} />
             <TherapySessionSummaryCard
               webhookVersions={noteDetail.webhookVersions}
               onVersionChange={setSelectedVersionId}
@@ -461,12 +480,13 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
             />
             <PreviousSessionCard
               webhookVersions={noteDetail.webhookVersions}
               previousNote={noteDetail.previousNote}
               onVersionChange={setSelectedVersionId}
-              noteId={noteId}
+              noteId={noteDetail.previousNote?.noteId}
               versionId={selectedVersionId}
               reviewerId={reviewerId ?? loggedInUserId}
               practitionerId={practitionerId ?? 0}
@@ -474,6 +494,7 @@ const SingleNoteAudit = () => {
               priorityId={noteDetail.priority?.id ?? 1}
               onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
               onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
             />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
@@ -502,6 +523,8 @@ const SingleNoteAudit = () => {
               onSMEReviewDeleted={onSMEReviewDeleted}
               onSMEIssueUpdated={onSMEIssueUpdated}
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
+              onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
+              onAssignedToManager={timestamp => setAssignedToManagerAt(timestamp)}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
@@ -516,7 +539,10 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {featureFlags.actionButtons && (
+            {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
+              <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />
+            )}
+            {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
                 isManagerReviewing={isManagerReviewing}
@@ -524,9 +550,17 @@ const SingleNoteAudit = () => {
                 practitionerId={practitionerId}
                 noteId={noteId}
                 versionId={selectedVersionId}
+                onEmailSent={timestamp => setEmailSentAt(timestamp)}
               />
             )}
-            {featureFlags.showAuditHistory && <AuditHistoryCard chats={auditHistory} />}
+            {featureFlags.showAuditHistory && (
+              <AuditHistoryCard
+                noteId={noteId}
+                markedForReviewAt={markedForReviewAt ?? undefined}
+                emailSentAt={emailSentAt ?? undefined}
+                assignedToManagerAt={assignedToManagerAt ?? undefined}
+              />
+            )}
             {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             )}

@@ -166,6 +166,12 @@ export const getDefaultDateRange = () => {
   return { startDate, endDate };
 };
 
+export const getDefaultDateRangeNotesQueue = () => {
+  const endDate = moment().format('YYYY-MM-DD');
+  const startDate = moment().subtract(20, 'years').format('YYYY-MM-DD');
+  return { startDate, endDate };
+};
+
 // Map issue category to NoteSections accordion ID
 export const mapCategoryToSectionId = (category: string): string => {
   const categoryMap: Record<string, string> = {
@@ -181,7 +187,9 @@ export const mapCategoryToSectionId = (category: string): string => {
 };
 
 // Clean and structure the summary
-export const cleanSummary = (text: string) => {
+export const cleanSummary = (text?: string | null) => {
+  if (!text) return '';
+
   // Remove the JSON structure markers
   let cleaned = text.replace(/\\n/g, '\n').replace(/ {2}\n\n/g, '\n\n');
 
@@ -204,3 +212,22 @@ export const getHumanReviewDecisionOptions = () =>
     value,
     label: HumanReviewDecisionLabels[value],
   }));
+
+export const formatJsonToText = (jsonString: string | undefined): string => {
+  if (!jsonString) return '';
+  try {
+    const parsed = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+    if (typeof parsed === 'object' && parsed !== null) {
+      return Object.entries(parsed)
+        .map(([key, value]) => {
+          const strValue = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+          const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          return `${formattedKey}:\n${strValue}`;
+        })
+        .join('\n\n');
+    }
+    return String(jsonString);
+  } catch {
+    return String(jsonString);
+  }
+};
