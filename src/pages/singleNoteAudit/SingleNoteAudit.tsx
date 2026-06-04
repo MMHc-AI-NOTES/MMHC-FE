@@ -13,6 +13,8 @@ import {
 
 // Components
 import NoteInformation from './NoteInformation';
+import DiagnosisCard from './DiagnosisCard';
+import { parseDiagnosisFromApi } from './diagnosisUtils';
 // import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
 import IssuesIdentifiedCard from './IssuesIdentifiedCard';
@@ -120,6 +122,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
       const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
       return Array.isArray(arr) ? (arr as any) : undefined;
     })(),
+    diagnosis: parseDiagnosisFromApi(apiData),
   };
 };
 
@@ -469,6 +472,7 @@ const SingleNoteAudit = () => {
           {/* Left Sidebar */}
           <div className="space-y-4">
             <NoteInformation noteDetail={noteDetail} handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)} />
+            <DiagnosisCard diagnoses={noteDetail.diagnosis ?? []} />
             <TherapySessionSummaryCard
               webhookVersions={noteDetail.webhookVersions}
               onVersionChange={setSelectedVersionId}
