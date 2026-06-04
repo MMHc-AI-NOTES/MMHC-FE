@@ -78,6 +78,19 @@ export interface HumanReview {
   humanResult?: { id: number; name: string };
   reviewer?: { id: number; fullName: string };
 }
+
+export interface DiagnosisTimestamp {
+  seconds?: number;
+}
+
+export interface DiagnosisItem {
+  code: string;
+  date?: DiagnosisTimestamp;
+  description: string;
+  endDate?: DiagnosisTimestamp | Record<string, never>;
+  noteId?: string;
+}
+
 export interface NoteDetail {
   id: string;
   aiStatus: { id: number; name: string };
@@ -114,6 +127,8 @@ export interface NoteDetail {
   previousNote?: PreviousNote;
   /** Raw note review marks array from API, including timestamps */
   noteReviewMarksRaw?: NoteReviewMarkItem[];
+  /** Client diagnoses from note detail API */
+  diagnosis?: DiagnosisItem[];
 }
 
 export interface NoteSection {
@@ -267,6 +282,8 @@ export interface ApiNoteDetail {
   /** Note review marks from API (fetchNoteDetail) – array with reviewerId & markedAsReviewed */
   note_review_marks?: NoteReviewMarkItem[];
   noteReviewMarks?: NoteReviewMarkItem[];
+  Diagnosis?: DiagnosisItem[];
+  diagnosis?: DiagnosisItem[];
 }
 
 // Queue Overview Data

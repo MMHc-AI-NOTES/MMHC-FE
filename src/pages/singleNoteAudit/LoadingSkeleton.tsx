@@ -21,6 +21,11 @@ const LoadingSkeleton = ({ backPath }: { backPath: string }) => {
           </Card>
           <Card>
             <CardContent className="space-y-4">
+              <Skeleton className="h-40 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-4">
               <Skeleton className="h-72 w-full" />
             </CardContent>
           </Card>
