@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -6,7 +6,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { NoteDetail } from '@/types/notes';
-import { Info, CircleHelp, ThumbsUp, ThumbsDown, Save } from 'lucide-react';
+import { Info, CircleHelp, ThumbsUp, ThumbsDown, Save, Trash2 } from 'lucide-react';
+import { useAppSelector } from '@/store/store';
 
 interface IssuesIdentifiedCardProps {
   issues: NoteDetail['issues'];
@@ -18,9 +19,54 @@ interface FeedbackState {
   text: string;
 }
 
+interface IssueFeedbackData {
+  issueId: string; // sectionId
+  category: string;
+  status: 'up' | 'down';
+  comment: string;
+  timestamp: string;
+  reviewerName: string;
+}
+
 const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardProps) => {
   const [feedback, setFeedback] = useState<FeedbackState>({ issueIndex: null, text: '' });
   const [issueFeedback, setIssueFeedback] = useState<{ [key: number]: { status: 'up' | 'down'; comment?: string } | null }>({});
+  const [savedFeedbackData, setSavedFeedbackData] = useState<IssueFeedbackData[]>([]);
+  const authUser = useAppSelector(state => state.auth.user);
+  const reviewerName = authUser?.fullName ?? 'Current User';
+
+  // Load saved feedback from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('issues-feedback');
+      if (raw) {
+        const parsed: IssueFeedbackData[] = JSON.parse(raw);
+        setSavedFeedbackData(parsed);
+
+        // Build issueFeedback map from saved items (latest per issue)
+        const map: { [key: number]: { status: 'up' | 'down'; comment?: string } | null } = {};
+        parsed.forEach(item => {
+          const idx = displayIssues.findIndex(i => i.sectionId === item.issueId);
+          if (idx !== -1) {
+            map[idx] = { status: item.status, comment: item.comment };
+          }
+        });
+        setIssueFeedback(map);
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist saved feedback to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('issues-feedback', JSON.stringify(savedFeedbackData));
+    } catch {
+      // ignore
+    }
+  }, [savedFeedbackData]);
 
   // Mock data for issues if none are provided
   const mockIssues = [
@@ -121,11 +167,33 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
 
   const handleSaveFeedback = (index: number) => {
     if (feedback.issueIndex === index && feedback.text.trim()) {
+      const issue = displayIssues[index];
+
+      // Create feedback data object
+      const feedbackData: IssueFeedbackData = {
+        issueId: issue.sectionId,
+        category: issue.category,
+        status: 'down',
+        comment: feedback.text,
+        timestamp: new Date().toISOString(),
+        reviewerName: reviewerName,
+      };
+
+      // Add to saved feedback array (replace any existing feedback for same issue)
+      setSavedFeedbackData(prev => {
+        const filtered = prev.filter(p => p.issueId !== feedbackData.issueId);
+        return [...filtered, feedbackData];
+      });
+
+      // Update issue feedback state
       setIssueFeedback(prev => ({
         ...prev,
         [index]: { status: 'down', comment: feedback.text },
       }));
-      console.log(`Feedback for issue ${index}: ${feedback.text}`);
+
+      // Logging removed to satisfy lint rules
+
+      // Clear feedback input
       setFeedback({ issueIndex: null, text: '' });
     }
   };
@@ -139,6 +207,13 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
       }
     }
     setFeedback({ issueIndex: null, text: '' });
+  };
+
+  const handleDeleteFeedback = (index: number) => {
+    const issueId = displayIssues[index]?.sectionId;
+    if (!issueId) return;
+    setSavedFeedbackData(prev => prev.filter(item => item.issueId !== issueId));
+    setIssueFeedback(prev => ({ ...prev, [index]: null }));
   };
 
   return (
@@ -220,15 +295,15 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
                     </button>
                   </div>
 
-                  {/* Inline Feedback Section - Shows when thumbs down is selected */}
+                  {/* Feedback Input Form - Shows when thumbs down is selected */}
                   {feedback.issueIndex === index && issueFeedback[index]?.status === 'down' && (
-                    <div className="mt-4 space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <div className="mt-4 space-y-3 rounded-lg border border-gray-200 bg-white p-4">
                       <div className="text-sm font-medium text-gray-700">Send Feedback</div>
                       <Textarea
                         placeholder="Please let us know why you found this issue unhelpful. Your feedback helps us improve."
                         value={feedback.text}
                         onChange={e => setFeedback({ ...feedback, text: e.target.value })}
-                        className="min-h-20 resize-none border-red-200 focus:border-red-400"
+                        className="min-h-20 resize-none border-gray-200 focus:border-gray-400"
                       />
                       <div className="flex items-center gap-2">
                         <Button size="sm" variant="outline" onClick={handleCancelFeedback} className="gap-2">
@@ -244,12 +319,23 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
                           Save
                         </Button>
                       </div>
-                      {issueFeedback[index]?.comment && (
-                        <div className="rounded-md bg-gray-100 p-2">
-                          <p className="text-xs font-medium text-gray-700">Saved feedback:</p>
-                          <p className="mt-1 text-xs text-gray-600">{issueFeedback[index]?.comment}</p>
-                        </div>
-                      )}
+                    </div>
+                  )}
+
+                  {/* Saved Feedback Display - Shows always when feedback exists */}
+                  {issueFeedback[index]?.comment && (
+                    <div className="relative mt-4 rounded-lg border border-gray-200 bg-white p-3">
+                      <button
+                        onClick={() => handleDeleteFeedback(index)}
+                        className="absolute top-2 right-2 text-gray-400 transition-colors hover:text-red-600"
+                        title="Delete feedback"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <p className="text-xs font-medium text-black">Reviewer: {reviewerName}</p>
+                      <div className="mt-2 border-l-2 border-gray-400 bg-red-50 p-3">
+                        <p className="text-xs leading-relaxed text-black">{issueFeedback[index]?.comment}</p>
+                      </div>
                     </div>
                   )}
                 </div>
