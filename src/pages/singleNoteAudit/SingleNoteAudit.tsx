@@ -56,21 +56,15 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
   const auditScore = bedrockResponse?.score ?? latestChat?.evaluationScore ?? apiData.aiScore ?? 0;
 
   // Convert API issues to the expected format
-  const issues = bedrockResponse?.issues?.map((issue: any) => ({
-    severity: (issue.severity?.toUpperCase() as 'CRITICAL' | 'MODERATE' | 'MINOR') || 'MINOR',
-    category: issue.section || 'General',
-    points: issue.points_deducted || 0,
-    description: issue.severity_details || 'No description provided',
-    justification: issue.justification || 'No justification provided',
-    sectionId: issue.section_id || '',
-  })) || [
-    // Fallback to default issues if no chat data
+  const mockIssuesData = [
     {
       severity: 'CRITICAL' as const,
       category: 'Assessment & Therapeutic Intervention',
       points: 25,
       description:
         'Missing specific DSM-5 diagnostic criteria documentation. Clinical assessment lacks measurable symptoms or severity indicators required for medical necessity.',
+      justification:
+        'Per DSM-5 guidelines, documented symptoms must meet at least 5 criteria for major depressive disorder. Current note lists only 3 criteria.',
       sectionId: 'zad8-1',
     },
     {
@@ -79,9 +73,49 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
       points: 10,
       description:
         'Treatment plan lacks specific, measurable goals. Coordination with psychiatrist mentioned but no documentation of actual communication or consent for information sharing.',
-      sectionId: 'hwh-1',
+      justification:
+        'Treatment goals should be SMART (Specific, Measurable, Achievable, Relevant, Time-bound). Current goals are vague and lack timeframes.',
+      sectionId: 'hnfi-1',
+    },
+    {
+      severity: 'MODERATE' as const,
+      category: 'Objective',
+      points: 15,
+      description:
+        'Vital signs not documented in this session. Blood pressure, heart rate, and other relevant vitals should be recorded for baseline and monitoring purposes.',
+      justification: 'Standard practice requires vital signs documentation for all initial psychiatric evaluations.',
+      sectionId: 'rb2f-1',
+    },
+    {
+      severity: 'MINOR' as const,
+      category: 'Subjective Information',
+      points: 5,
+      description:
+        "Limited detail on patient's social support system. Documentation mentions family but lacks specifics about availability and support level.",
+      justification:
+        'Social support assessment is crucial for treatment planning and should include details about relationships, frequency of contact, and perceived helpfulness.',
+      sectionId: '6tx9-1',
+    },
+    {
+      severity: 'MINOR' as const,
+      category: 'Progress Monitoring',
+      points: 3,
+      description: 'No baseline measurements documented for symptom severity tracking across sessions.',
+      justification:
+        'Establishing baseline measurements (e.g., PHQ-9 score) enables objective progress monitoring and treatment efficacy assessment.',
+      sectionId: 'gm4p-1',
     },
   ];
+
+  const issues =
+    bedrockResponse?.issues?.map((issue: any) => ({
+      severity: (issue.severity?.toUpperCase() as 'CRITICAL' | 'MODERATE' | 'MINOR') || 'MINOR',
+      category: issue.section || 'General',
+      points: issue.points_deducted || 0,
+      description: issue.severity_details || 'No description provided',
+      justification: issue.justification || 'No justification provided',
+      sectionId: issue.section_id || '',
+    })) || mockIssuesData;
 
   return {
     id: apiData.noteId,
