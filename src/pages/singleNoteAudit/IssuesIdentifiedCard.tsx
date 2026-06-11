@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { NoteDetail } from '@/types/notes';
 import { Info, CircleHelp, ThumbsUp, ThumbsDown, Save, Trash2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
+import ConfirmationDialog from '@/shared/ConfirmationDialog';
 
 interface IssuesIdentifiedCardProps {
   issues: NoteDetail['issues'];
@@ -32,6 +33,8 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
   const [feedback, setFeedback] = useState<FeedbackState>({ issueIndex: null, text: '' });
   const [issueFeedback, setIssueFeedback] = useState<{ [key: number]: { status: 'up' | 'down'; comment?: string } | null }>({});
   const [savedFeedbackData, setSavedFeedbackData] = useState<IssueFeedbackData[]>([]);
+  const [isDeleteFeedbackDialogOpen, setIsDeleteFeedbackDialogOpen] = useState(false);
+  const [pendingDeleteFeedbackIndex, setPendingDeleteFeedbackIndex] = useState<number | null>(null);
   const authUser = useAppSelector(state => state.auth.user);
   const reviewerName = authUser?.fullName ?? 'Current User';
 
@@ -68,7 +71,6 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
     }
   }, [savedFeedbackData]);
 
-  // Mock data for issues if none are provided
   const mockIssues = [
     {
       severity: 'CRITICAL' as const,
@@ -120,7 +122,6 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
     },
   ];
 
-  // Use provided issues or fall back to mock data
   const displayIssues = issues && issues.length > 0 ? issues : mockIssues;
   const getSeverityTooltip = (severity: 'CRITICAL' | 'MODERATE' | 'MINOR') => {
     switch (severity) {
@@ -214,6 +215,20 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
     if (!issueId) return;
     setSavedFeedbackData(prev => prev.filter(item => item.issueId !== issueId));
     setIssueFeedback(prev => ({ ...prev, [index]: null }));
+  };
+
+  const openDeleteFeedbackDialog = (index: number) => {
+    setPendingDeleteFeedbackIndex(index);
+    setIsDeleteFeedbackDialogOpen(true);
+  };
+
+  const handleConfirmDeleteFeedback = () => {
+    if (pendingDeleteFeedbackIndex === null) {
+      return;
+    }
+    handleDeleteFeedback(pendingDeleteFeedbackIndex);
+    setPendingDeleteFeedbackIndex(null);
+    setIsDeleteFeedbackDialogOpen(false);
   };
 
   return (
@@ -326,7 +341,10 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
                   {issueFeedback[index]?.comment && (
                     <div className="relative mt-4 rounded-lg border border-gray-200 bg-white p-3">
                       <button
-                        onClick={() => handleDeleteFeedback(index)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          openDeleteFeedbackDialog(index);
+                        }}
                         className="absolute top-2 right-2 text-gray-400 transition-colors hover:text-red-600"
                         title="Delete feedback"
                       >
@@ -347,6 +365,19 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
           )}
         </CardContent>
       </Card>
+      <ConfirmationDialog
+        isOpen={isDeleteFeedbackDialogOpen}
+        onOpenChange={open => {
+          setIsDeleteFeedbackDialogOpen(open);
+          if (!open) {
+            setPendingDeleteFeedbackIndex(null);
+          }
+        }}
+        onConfirm={handleConfirmDeleteFeedback}
+        title="Delete Feedback"
+        description="Are you sure you want to delete this Feedback? This action cannot be undone."
+        confirmButtonText="Delete"
+      />
     </>
   );
 };
