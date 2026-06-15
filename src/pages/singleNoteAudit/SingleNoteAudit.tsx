@@ -32,7 +32,6 @@ import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
 import TherapySessionSummaryCard from './TherapySessionSummaryCard';
-import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
@@ -398,8 +397,8 @@ const SingleNoteAudit = () => {
 
   // Sync noteDetail when an SME issue is updated (e.g. description changed) so Therapy Session Summary dropdown disables immediately
   const onSMEIssueUpdated = useCallback(
-    (versionId: number, smeIssueId: number, payload: { issueDescriptionId?: number; issueDescriptionText?: string }) => {
-      const { issueDescriptionId, issueDescriptionText } = payload;
+    (versionId: number, smeIssueId: number, payload: { issueDescriptionId?: number; issueDescriptionText?: string; comment?: string }) => {
+      const { issueDescriptionId, issueDescriptionText, comment } = payload;
       setNoteDetail(prev => {
         if (!prev?.webhookVersions?.length) return prev;
         return {
@@ -413,6 +412,7 @@ const SingleNoteAudit = () => {
                   ? {
                       ...issue,
                       description: issueDescriptionText ?? issue.description,
+                      ...(comment !== undefined ? { comment } : {}),
                       issueDescription:
                         issueDescriptionId != null
                           ? { id: issueDescriptionId, description: issueDescriptionText ?? issue.issueDescription?.description ?? '' }
@@ -429,14 +429,7 @@ const SingleNoteAudit = () => {
   );
 
   if (loading) {
-    return (
-      <div>
-        <LoadingSkeleton backPath={backPath} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-          <div></div>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton backPath={backPath} />;
   }
 
   if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
@@ -464,42 +457,41 @@ const SingleNoteAudit = () => {
 
   return (
     noteDetail && (
-      <div>
-        <Button onClick={() => navigate(backPath)} className="mb-2">
+      <div className="space-y-4">
+        <Button onClick={() => navigate(backPath)} className="mb-2 w-fit">
           <ArrowLeft />
         </Button>
+
+        <NoteInformation
+          noteDetail={noteDetail}
+          handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
+          webhookVersions={noteDetail.webhookVersions}
+          selectedVersionId={selectedVersionId}
+          onVersionChange={setSelectedVersionId}
+        />
+
+        <TherapySessionSummaryCard
+          webhookVersions={noteDetail.webhookVersions}
+          previousNote={noteDetail.previousNote}
+          aiIssues={noteDetail.issues}
+          onVersionChange={setSelectedVersionId}
+          noteId={noteId}
+          versionId={selectedVersionId}
+          reviewerId={reviewerId ?? loggedInUserId}
+          practitionerId={practitionerId ?? 0}
+          aiStatusId={noteDetail.aiStatus?.id ?? 1}
+          priorityId={noteDetail.priority?.id ?? 1}
+          onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+          onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+          onSMEIssueDeleted={onSMEIssueDeleted}
+          onSMEIssueUpdated={onSMEIssueUpdated}
+          handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
+          handlePreviousNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
+        />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
-            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)} />
             <DiagnosisCard diagnoses={noteDetail.diagnosis ?? []} />
-            <TherapySessionSummaryCard
-              webhookVersions={noteDetail.webhookVersions}
-              onVersionChange={setSelectedVersionId}
-              noteId={noteId}
-              versionId={selectedVersionId}
-              reviewerId={reviewerId ?? loggedInUserId}
-              practitionerId={practitionerId ?? 0}
-              aiStatusId={noteDetail.aiStatus?.id ?? 1}
-              priorityId={noteDetail.priority?.id ?? 1}
-              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
-              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
-            />
-            <PreviousSessionCard
-              webhookVersions={noteDetail.webhookVersions}
-              previousNote={noteDetail.previousNote}
-              onVersionChange={setSelectedVersionId}
-              noteId={noteDetail.previousNote?.noteId}
-              versionId={selectedVersionId}
-              reviewerId={reviewerId ?? loggedInUserId}
-              practitionerId={practitionerId ?? 0}
-              aiStatusId={noteDetail.aiStatus?.id ?? 1}
-              priorityId={noteDetail.priority?.id ?? 1}
-              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
-              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
-            />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
 
