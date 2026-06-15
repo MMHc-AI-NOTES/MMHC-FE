@@ -11,7 +11,12 @@ import { createSMEIssueFromTemplate } from '../singleNoteApiCalls';
 import type { IssueForm } from '../components/types';
 import type { SMETemplate } from '@/pages/settings/settingsApiCalls';
 import type { NoteDetail } from '@/types/notes';
-import { formatSessionFieldValue, getAiIssuesForField } from './sessionFieldUtils';
+import {
+  formatSessionFieldValue,
+  getAiIssuesForField,
+  getDisplayableSessionFieldEntries,
+  getSessionFieldDisplayName,
+} from './sessionFieldUtils';
 
 const formatDate = (dateString: string) => moment(dateString).format(DATE_FORMAT);
 
@@ -122,6 +127,8 @@ export function useTherapySessionSummary({
     }
   }, [previousNoteFromDetail, latestVersion, sourcePreviousSessionFromNote, currentVersion.sessionJson]);
 
+  const displayableSessionFields = useMemo(() => getDisplayableSessionFieldEntries(currentSessionData), [currentSessionData]);
+
   const hasPreviousSessionData = useMemo(() => {
     if (sourcePreviousSessionFromNote) {
       if (previousNoteFromDetail) return true;
@@ -161,7 +168,7 @@ export function useTherapySessionSummary({
   const changedFields = useMemo(() => {
     if (!previousVersion) return [];
     const changes: Array<{ key: string; previous: string; current: string }> = [];
-    Object.keys(currentSessionData).forEach(key => {
+    displayableSessionFields.forEach(([key]) => {
       const currentValue = String(currentSessionData[key] || '').trim();
       const previousValue = String(previousSessionData[key] || '').trim();
       if (currentValue !== previousValue) {
@@ -169,7 +176,7 @@ export function useTherapySessionSummary({
       }
     });
     return changes;
-  }, [currentSessionData, previousSessionData, previousVersion]);
+  }, [currentSessionData, previousSessionData, previousVersion, displayableSessionFields]);
 
   const fieldKeyToIssueRelatedToIdMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -223,6 +230,8 @@ export function useTherapySessionSummary({
 
   const getFieldDisplayName = useCallback(
     (key: string) => {
+      const displayName = getSessionFieldDisplayName(key);
+      if (displayName) return displayName;
       const match = findIssueRelatedTo(key);
       return match?.displayName ?? normalizeFieldKey(key);
     },
@@ -507,6 +516,7 @@ export function useTherapySessionSummary({
     sortedVersions,
     currentVersion,
     currentSessionData,
+    displayableSessionFields,
     hasPreviousSessionData,
     previousNoteSessionData,
     hasPreviousNoteSessionData,

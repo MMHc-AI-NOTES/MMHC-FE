@@ -69,7 +69,7 @@ const TherapySessionSummaryCard = ({
     user,
     sortedVersions,
     currentVersion,
-    currentSessionData,
+    displayableSessionFields,
     changedFields,
     hasPreviousNoteSessionData,
     selectedVersionIndex,
@@ -125,7 +125,7 @@ const TherapySessionSummaryCard = ({
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
   const previousNoteId = previousNote?.noteId;
-  const changedFieldsFromPreviousNote = Object.keys(currentSessionData).filter(key => isFieldChangedFromPreviousNote(key));
+  const changedFieldsFromPreviousNote = displayableSessionFields.map(([key]) => key).filter(key => isFieldChangedFromPreviousNote(key));
 
   const renderFieldCard = (key: string, value: unknown) => {
     const displayName = getFieldDisplayName(key);
@@ -238,12 +238,12 @@ const TherapySessionSummaryCard = ({
         </div>
 
         <div className="space-y-4">
-          {Object.keys(currentSessionData).length === 0 ? (
+          {displayableSessionFields.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-[#F0F0F0] p-4">
               <p className="text-center text-sm text-gray-500">N/A</p>
             </div>
           ) : (
-            Object.entries(currentSessionData).map(([key, value]) => renderFieldCard(key, value))
+            displayableSessionFields.map(([key, value]) => renderFieldCard(key, value))
           )}
         </div>
 

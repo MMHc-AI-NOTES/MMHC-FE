@@ -194,6 +194,7 @@ export interface Practitioner {
 export interface SMEIssue {
   id: number;
   reviewerId: number;
+  reviewer?: { id: number; fullName: string; email?: string };
   versionId: number;
   errorType: {
     id: number;

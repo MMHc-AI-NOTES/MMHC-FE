@@ -48,6 +48,17 @@ export function SmeIssueFindingItem({
   onSMEIssueUpdated,
 }: SmeIssueFindingItemProps) {
   const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
+  const { user: authUser } = useAppSelector(state => state.auth);
+  const userEntities = useAppSelector(state => state.users.entities);
+
+  const reviewerName = useMemo(() => {
+    if (issue.reviewer?.fullName?.trim()) return issue.reviewer.fullName.trim();
+    const reviewerId = Number(issue.reviewerId);
+    if (loggedInUserId === reviewerId && authUser?.fullName?.trim()) {
+      return authUser.fullName.trim();
+    }
+    return Object.values(userEntities).find(u => u?.id === reviewerId)?.fullName ?? '';
+  }, [issue.reviewer, issue.reviewerId, loggedInUserId, authUser, userEntities]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [selectedDescriptionId, setSelectedDescriptionId] = useState<number | ''>('');
@@ -182,7 +193,10 @@ export function SmeIssueFindingItem({
         </div>
 
         <div className="flex items-start gap-2 pr-16">
-          <Badge className="bg-primary shrink-0 px-2 py-0.5 text-[10px] font-semibold text-white uppercase">SME Action</Badge>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <Badge className="bg-primary shrink-0 px-2 py-0.5 text-[10px] font-semibold text-white uppercase">SME Action</Badge>
+            <p className="text-sm font-semibold text-gray-900">{reviewerName}</p>
+          </div>
           <div className="min-w-0 flex-1 space-y-1">
             {!isEditing ? (
               <>
