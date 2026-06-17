@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Plus, type LucideIcon } from 'lucide-react';
 import { UserRoleEnum } from '@/constants/common';
 import type { NoteDetail, SMEIssue, WebhookVersion } from '@/types/notes';
@@ -97,16 +98,45 @@ export function SessionFieldCard({
                 <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">{issueCount}</Badge>
               )}
               {(UserRoleEnum.sme_reviewer === userType || UserRoleEnum.superAdmin === userType) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={disableAddButton}
-                  className="text-primary hover:bg-primary/10 h-7 w-7"
-                  onClick={() => onToggleForm(fieldKey)}
-                  title="Add SME issue from template"
+                <Popover
+                  open={isExpanded}
+                  onOpenChange={open => {
+                    if (!open) onCloseForm();
+                  }}
                 >
-                  <Plus className="h-4 w-4" />
-                </Button>
+                  <PopoverAnchor asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={disableAddButton}
+                      className="text-primary hover:bg-primary/10 h-7 w-7"
+                      onClick={() => onToggleForm(fieldKey)}
+                      title="Add SME issue from template"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </PopoverAnchor>
+                  <PopoverContent
+                    side="bottom"
+                    align="end"
+                    sideOffset={8}
+                    collisionPadding={16}
+                    className="w-[min(calc(100vw-2rem),40rem)] border-gray-200 p-0 shadow-lg"
+                  >
+                    <AddIssueFromTemplateForm
+                      fieldKey={fieldKey}
+                      selectedTemplateIds={selectedTemplateIds}
+                      onTemplateChange={onTemplateChange}
+                      options={templateOptions}
+                      alreadyUsedDescriptionIds={alreadyUsedDescriptionIds}
+                      isSaving={isSaving}
+                      hasTemplates={hasTemplates}
+                      onSave={onSave}
+                      onClose={onCloseForm}
+                      className="mt-0 border-0 shadow-none"
+                    />
+                  </PopoverContent>
+                </Popover>
               )}
             </>
           )}
@@ -138,22 +168,6 @@ export function SessionFieldCard({
         onSMEIssueDeleted={onSMEIssueDeleted}
         onSMEIssueUpdated={onSMEIssueUpdated}
       />
-
-      {isExpanded && (
-        <div className="border-t border-gray-200 px-4 pb-4">
-          <AddIssueFromTemplateForm
-            fieldKey={fieldKey}
-            selectedTemplateIds={selectedTemplateIds}
-            onTemplateChange={onTemplateChange}
-            options={templateOptions}
-            alreadyUsedDescriptionIds={alreadyUsedDescriptionIds}
-            isSaving={isSaving}
-            hasTemplates={hasTemplates}
-            onSave={onSave}
-            onClose={onCloseForm}
-          />
-        </div>
-      )}
     </div>
   );
 }
