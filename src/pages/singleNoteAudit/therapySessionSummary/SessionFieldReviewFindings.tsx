@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { useAppSelector } from '@/store/store';
-import { Save, ShieldCheck, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Save, ShieldCheck, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import type { NoteDetail, SMEIssue, WebhookVersion } from '@/types/notes';
 import { SmeIssueFindingItem } from './SmeIssueFindingItem';
 import { getSmeIssueDescription, getSmeIssueTitle } from './sessionFieldUtils';
@@ -72,6 +73,7 @@ export function SessionFieldReviewFindings({
   const [aiIssueFeedback, setAiIssueFeedback] = useState<Record<string, string>>({});
   const [savedAiIssueFeedback, setSavedAiIssueFeedback] = useState<Record<string, string>>({});
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState<Record<string, boolean>>({});
+  const [deleteFeedbackIssueKey, setDeleteFeedbackIssueKey] = useState<string | null>(null);
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
@@ -79,23 +81,58 @@ export function SessionFieldReviewFindings({
   const canManageSmeIssues = Boolean(noteId && versionId);
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
+  const clearIssueVoteState = (issueKey: string) => {
+    setAiIssueVotes(prev => {
+      const next = { ...prev };
+      delete next[issueKey];
+      return next;
+    });
+    setAiIssueFeedback(prev => {
+      const next = { ...prev };
+      delete next[issueKey];
+      return next;
+    });
+    setIsFeedbackFormOpen(prev => {
+      const next = { ...prev };
+      delete next[issueKey];
+      return next;
+    });
+  };
+
   const handleVote = (issueKey: string, vote: 'up' | 'down') => {
-    setAiIssueVotes(prev => ({ ...prev, [issueKey]: vote }));
     if (vote === 'up') {
+      setAiIssueVotes(prev => {
+        if (prev[issueKey] === 'up') {
+          const next = { ...prev };
+          delete next[issueKey];
+          return next;
+        }
+        return { ...prev, [issueKey]: 'up' };
+      });
       setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
-    } else {
-      setAiIssueFeedback(prev => ({ ...prev, [issueKey]: prev[issueKey] ?? savedAiIssueFeedback[issueKey] ?? '' }));
-      setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: true }));
+      return;
     }
+
+    setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
+    setAiIssueFeedback(prev => ({ ...prev, [issueKey]: prev[issueKey] ?? savedAiIssueFeedback[issueKey] ?? '' }));
+    setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: true }));
   };
 
   const handleCancelFeedback = (issueKey: string) => {
     const savedFeedback = savedAiIssueFeedback[issueKey];
-    setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
-    setAiIssueFeedback(prev => ({ ...prev, [issueKey]: savedFeedback ?? '' }));
-    if (!savedFeedback) {
-      setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'up' }));
+    setIsFeedbackFormOpen(prev => {
+      const next = { ...prev };
+      delete next[issueKey];
+      return next;
+    });
+
+    if (savedFeedback) {
+      setAiIssueFeedback(prev => ({ ...prev, [issueKey]: savedFeedback }));
+      setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
+      return;
     }
+
+    clearIssueVoteState(issueKey);
   };
 
   const handleSaveFeedback = (issueKey: string) => {
@@ -104,6 +141,17 @@ export function SessionFieldReviewFindings({
     setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
     setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
     setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+  };
+
+  const handleConfirmDeleteFeedback = () => {
+    if (!deleteFeedbackIssueKey) return;
+    clearIssueVoteState(deleteFeedbackIssueKey);
+    setSavedAiIssueFeedback(prev => {
+      const next = { ...prev };
+      delete next[deleteFeedbackIssueKey];
+      return next;
+    });
+    setDeleteFeedbackIssueKey(null);
   };
 
   return (
@@ -165,7 +213,18 @@ export function SessionFieldReviewFindings({
 
                   {savedFeedbackText && !showFeedbackForm && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
-                      <p className="text-sm text-gray-900">Reviewer: {user?.fullName?.trim() || 'Current User'}</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm text-gray-900">Reviewer: {user?.fullName?.trim() || 'Current User'}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-gray-600"
+                          onClick={() => setDeleteFeedbackIssueKey(issueKey)}
+                          title="Delete feedback"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <div className="mt-2 rounded-sm bg-red-50 p-3 text-sm text-gray-700">{savedFeedbackText}</div>
                     </div>
                   )}
@@ -235,6 +294,17 @@ export function SessionFieldReviewFindings({
           )}
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={deleteFeedbackIssueKey != null}
+        onOpenChange={open => {
+          if (!open) setDeleteFeedbackIssueKey(null);
+        }}
+        onConfirm={handleConfirmDeleteFeedback}
+        title="Delete Feedback"
+        description="Are you sure you want to delete this feedback? This action cannot be undone."
+        confirmButtonText="Delete"
+      />
     </div>
   );
 }
