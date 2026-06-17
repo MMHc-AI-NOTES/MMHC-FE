@@ -1,13 +1,14 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCcw, Check, ChevronsUpDown, Send } from 'lucide-react';
+// import { Check, ChevronsUpDown } from 'lucide-react';
+import { RefreshCcw, Send } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
-import { useDispatch } from 'react-redux';
+// import { useDispatch } from 'react-redux';
 import { useState } from 'react';
-import { setSelectedAgentId } from '@/store/slices/agentsSlice';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+// import { setSelectedAgentId } from '@/store/slices/agentsSlice';
+// import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+// import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+// import { cn } from '@/lib/utils';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { notifyPractitioner } from './singleNoteApiCalls';
 import { showToast } from '@/lib/toast';
@@ -35,18 +36,18 @@ const ActionButtons = ({
   versionId,
   onEmailSent,
 }: ActionButtonsProps) => {
-  const dispatch = useDispatch();
-  const { agents, selectedAgentId } = useAppSelector(state => state.agents);
-  const [open, setOpen] = useState(false);
+  // const dispatch = useDispatch();
+  const { selectedAgentId } = useAppSelector(state => state.agents);
+  // const [ setOpen] = useState(false);
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
 
-  const selectedAgent = agents?.find(agent => agent.id === selectedAgentId);
+  // const selectedAgent = agents?.find(agent => agent.id === selectedAgentId);
 
-  const handleSelectAgent = (agentId: number) => {
-    dispatch(setSelectedAgentId(agentId));
-    setOpen(false);
-  };
+  // const handleSelectAgent = (agentId: number) => {
+  //   dispatch(setSelectedAgentId(agentId));
+  //   setOpen(false);
+  // };
 
   const handleSendToPractitioner = async () => {
     if (!practitionerId || !noteId || !reviewerId || !versionId) {
@@ -80,7 +81,7 @@ const ActionButtons = ({
           featureFlags.actionButtons.reRunAudit && (
             <>
               {/* Agent Selection Dropdown */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <p className="text-sm font-medium">Select Agent</p>
                 <Popover open={open} onOpenChange={setOpen}>
                   <PopoverTrigger asChild>
@@ -114,7 +115,7 @@ const ActionButtons = ({
                     </Command>
                   </PopoverContent>
                 </Popover>
-              </div>
+              </div> */}
 
               {/* Action Buttons */}
               <div className="space-y-4">

@@ -65,7 +65,7 @@ export const getDateRange = (range: string): { startDate: string; endDate: strin
 
 export const fetchAILogs = async (payload: AILogsPayload): Promise<AILogsApiResponse> => {
   try {
-    const response = await axios.post<ApiResponse>('/chats/listing', payload);
+    const response = await axios.post<ApiResponse>('/mcp/chats/listing', payload);
 
     if (response?.status) {
       const responseData = response.data;

@@ -106,6 +106,8 @@ export interface NoteDetail {
     description: string;
     justification?: string;
     sectionId: string;
+    confidence?: number;
+    evidence?: string;
   }[];
   webhookVersions: WebhookVersion[];
   /** Reviewer id -> marked for review (from note detail API) */
@@ -146,6 +148,9 @@ export interface Chat {
       section_id: string;
       section: string;
       justification: string;
+      description: string;
+      confidence: number;
+      evidence: string;
     }>;
     summary: string;
     sentiment: string;

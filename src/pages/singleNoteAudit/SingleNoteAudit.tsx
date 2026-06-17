@@ -4,10 +4,10 @@ import { useDispatch } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
-  MessageCircleMore,
+  // MessageCircleMore,
   Sparkles,
-  UserRoundCog,
-  UserRoundPen,
+  // UserRoundCog,
+  // UserRoundPen,
   //  MessageCircleMore, UserRoundCog, UserRoundPen
 } from 'lucide-react';
 
@@ -61,6 +61,8 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     description: issue.severity_details || 'No description provided',
     justification: issue.justification || 'No justification provided',
     sectionId: issue.section_id || '',
+    confidence: issue.confidence || 0,
+    evidence: issue.evidence || '',
   })) || [
     // Fallback to default issues if no chat data
     {
@@ -185,7 +187,7 @@ const SingleNoteAudit = () => {
       setLoading(true);
 
       try {
-        const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentIdRef.current, isRerun);
+        const apiNoteDetail = await getNoteDetailWithChat(noteId, isRerun);
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);
@@ -561,7 +563,7 @@ const SingleNoteAudit = () => {
                 assignedToManagerAt={assignedToManagerAt ?? undefined}
               />
             )}
-            {featureFlags.showPrompt && (
+            {/* {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             )}
             {featureFlags.showPromptData && (
@@ -569,7 +571,7 @@ const SingleNoteAudit = () => {
             )}
             {featureFlags.showRawResponse && (
               <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
-            )}
+            )} */}
           </div>
         </div>
       </div>
