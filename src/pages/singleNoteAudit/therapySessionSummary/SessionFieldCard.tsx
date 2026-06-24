@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { Plus, type LucideIcon } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { UserRoleEnum } from '@/constants/common';
 import type { NoteDetail, SMEIssue, WebhookVersion } from '@/types/notes';
 import { AddIssueFromTemplateForm } from './AddIssueFromTemplateForm';
@@ -15,7 +15,6 @@ interface SessionFieldCardProps {
   isChanged: boolean;
   aiIssues: NoteDetail['issues'];
   smeIssues: SMEIssue[];
-  fieldIcon: LucideIcon;
   issueCount: number;
   isExpanded: boolean;
   selectedTemplateIds: number[];
@@ -53,7 +52,6 @@ export function SessionFieldCard({
   isChanged,
   aiIssues,
   smeIssues,
-  fieldIcon: FieldIcon,
   issueCount,
   isExpanded,
   selectedTemplateIds,
@@ -91,7 +89,7 @@ export function SessionFieldCard({
           {isChanged && <Badge className="bg-gradient-light text-primary rounded-sm text-xs font-semibold">CHANGED</Badge>}
         </div>
         <div className="flex items-center gap-2">
-          <FieldIcon className="text-primary h-4 w-4" />
+          {/* <FieldIcon className="text-primary h-4 w-4" /> */}
           {showSMEActions && (
             <>
               {issueCount > 0 && UserRoleEnum.superAdmin !== userType && (

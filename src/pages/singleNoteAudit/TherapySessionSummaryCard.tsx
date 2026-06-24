@@ -7,7 +7,7 @@ import type { IssueForm } from './components/types';
 import type { NoteDetail } from '@/types/notes';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { SessionFieldCard } from './therapySessionSummary/SessionFieldCard';
-import { formatSessionFieldValue, getFieldIcon } from './therapySessionSummary/sessionFieldUtils';
+import { formatSessionFieldValue } from './therapySessionSummary/sessionFieldUtils';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
@@ -145,7 +145,6 @@ const TherapySessionSummaryCard = ({
         isChanged={isChanged}
         aiIssues={getAiIssuesForSessionField(key)}
         smeIssues={getSmeIssuesForField(key)}
-        fieldIcon={getFieldIcon(displayName, key)}
         issueCount={issueCount}
         isExpanded={expandedFieldKey === key}
         selectedTemplateIds={selectedTemplateIds}

@@ -1,20 +1,6 @@
-import { MessageSquare, Eye, Target, Lightbulb, ListChecks, TrendingUp, Clock, Shield, Stethoscope, type LucideIcon } from 'lucide-react';
+// import { MessageSquare, Eye, Target, Lightbulb, ListChecks, TrendingUp, Clock, Shield, Stethoscope, type LucideIcon } from 'lucide-react';
 import { SessionJsonFieldDisplayNames } from '@/constants/common';
 import type { NoteDetail, SMEIssue } from '@/types/notes';
-
-const FIELD_ICON_MAP: { match: string; icon: LucideIcon }[] = [
-  { match: 'subjective', icon: MessageSquare },
-  { match: 'objective', icon: Eye },
-  { match: 'assessment', icon: Target },
-  { match: 'reaction', icon: Lightbulb },
-  { match: 'plan', icon: ListChecks },
-  { match: 'progress', icon: TrendingUp },
-  { match: 'session duration', icon: Clock },
-  { match: 'suicidality', icon: Shield },
-  { match: 'homicidality', icon: Shield },
-  { match: 'mental status', icon: Eye },
-  { match: 'overall', icon: Stethoscope },
-];
 
 const normalizeFieldKey = (key: string): string => {
   if (!key) return '';
@@ -47,12 +33,6 @@ export const getDisplayableSessionFieldEntries = (sessionData: Record<string, un
 export const formatSessionFieldValue = (value: unknown): string => {
   if (value === '' || value === null || value === undefined) return '-';
   return String(value);
-};
-
-export const getFieldIcon = (displayName: string, fieldKey: string): LucideIcon => {
-  const normalized = `${displayName} ${fieldKey}`.toLowerCase();
-  const found = FIELD_ICON_MAP.find(({ match }) => normalized.includes(match));
-  return found?.icon ?? MessageSquare;
 };
 
 export const fieldsMatch = (fieldDisplayName: string, fieldKey: string, target: string): boolean => {
