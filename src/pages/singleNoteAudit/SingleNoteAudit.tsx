@@ -4,10 +4,10 @@ import { useDispatch } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
-  // MessageCircleMore,
+  MessageCircleMore,
   Sparkles,
-  // UserRoundCog,
-  // UserRoundPen,
+  UserRoundCog,
+  UserRoundPen,
   //  MessageCircleMore, UserRoundCog, UserRoundPen
 } from 'lucide-react';
 
