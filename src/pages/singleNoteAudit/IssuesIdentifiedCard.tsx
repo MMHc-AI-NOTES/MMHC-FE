@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NoteDetail } from '@/types/notes';
-import { Info, CircleHelp } from 'lucide-react';
+import { Info, CircleHelp, HatGlasses, BookOpenCheck } from 'lucide-react';
 
 interface IssuesIdentifiedCardProps {
   issues: NoteDetail['issues'];
@@ -70,11 +70,63 @@ const IssuesIdentifiedCard = ({ issues, onCategoryClick }: IssuesIdentifiedCardP
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{issue.category}</h3>
+                  <div className="flex items-center gap-2">
+                    <p className="mt-1 text-sm font-bold text-red-600">–{issue.points} points</p>
+                    <div className="group relative inline-block">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-primary cursor-help rounded-[6px] border border-green-600 bg-green-50 px-2.5 py-1 text-xs font-semibold transition-all duration-200 hover:border-green-700 hover:bg-green-100 hover:shadow-sm">
+                              {issue.confidence?.toFixed(2)}
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>MCP confidence level</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
 
-                  <p className="mt-1 text-sm font-bold text-red-600">–{issue.points} points</p>
                   <p className="mt-2 text-xs leading-relaxed text-gray-600">{issue.description}</p>
-                  {issue.justification != null && issue.justification !== '' && (
-                    <p className="mt-2 rounded-md bg-gray-200 p-2 text-xs leading-relaxed text-gray-600">{issue.justification}</p>
+                  {(issue.justification || issue.evidence) && (
+                    <div className="mt-2 rounded-md bg-gray-200 p-2 text-xs leading-relaxed text-gray-600">
+                      {issue.justification && (
+                        <div>
+                          <div className="flex items-start gap-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Justification</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <span>{issue.justification}</span>
+                          </div>
+
+                          {issue.evidence && (
+                            <div className="mt-2 flex items-start gap-2">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HatGlasses className="mt-0.5 h-4 w-4 shrink-0 cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Evidence</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <span>{issue.evidence}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
