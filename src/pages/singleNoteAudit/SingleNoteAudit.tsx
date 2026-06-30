@@ -563,7 +563,7 @@ const SingleNoteAudit = () => {
                 assignedToManagerAt={assignedToManagerAt ?? undefined}
               />
             )}
-            {/* {featureFlags.showPrompt && (
+            {featureFlags.showPrompt && (
               <SummaryCard title="Prompt" summary={noteDetail.prompt} icon={UserRoundPen} showCopyButton={true} />
             )}
             {featureFlags.showPromptData && (
@@ -571,7 +571,7 @@ const SingleNoteAudit = () => {
             )}
             {featureFlags.showRawResponse && (
               <SummaryCard title="Raw Response" summary={noteDetail.rawResponse} icon={MessageCircleMore} showCopyButton={true} />
-            )} */}
+            )}
           </div>
         </div>
       </div>
