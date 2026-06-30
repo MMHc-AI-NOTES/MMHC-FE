@@ -77,7 +77,6 @@ export function SessionFieldRow({
           </div>
         )}
       </div>
-
       {isExpanded && (
         <AddIssueFromTemplateForm
           fieldKey={fieldKey}
@@ -91,7 +90,6 @@ export function SessionFieldRow({
           onClose={onCloseForm}
         />
       )}
-
       {isChanged && previousValue && (
         <div
           className="mt-1 ml-4 rounded-sm border-2 p-2"
@@ -103,7 +101,6 @@ export function SessionFieldRow({
           <p className="text-primary font-medium">{displayValue}</p>
         </div>
       )}
-
       {!isChanged && <p className="ml-4 text-gray-700">{displayValue}</p>}
     </div>
   );

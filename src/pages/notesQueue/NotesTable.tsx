@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormattedNote } from '@/types/notes';
 import {
-  // AiStatusLabels,
+  AiStatusLabels,
   // HumanReviewLabels,
   // ManagerLabels,
   // WorkflowLabels,
   // PriorityLabels,
   // ReviewCycleLabels,
-  // AiStatusEnum,
+  AiStatusEnum,
   // HumanReviewEnum,
   // ManagerEnum,
   // WorkflowEnum,
@@ -34,22 +34,22 @@ interface NotesTableProps {
 }
 
 // Helper functions to get gradient CSS classes for badges
-// const getAiStatusGradient = (status: number): string => {
-//   switch (status) {
-//     case AiStatusEnum.passed:
-//       return 'bg-gradient-ai-passed';
-//     case AiStatusEnum.failed:
-//       return 'bg-gradient-ai-failed';
-//     case AiStatusEnum.warning:
-//       return 'bg-gradient-ai-warning';
-//     case AiStatusEnum.needs_review:
-//       return 'bg-gradient-ai-needs-review';
-//     case AiStatusEnum.not_reviewed:
-//       return 'bg-gradient-ai-not-reviewed';
-//     default:
-//       return 'bg-gradient-neutral';
-//   }
-// };
+const getAiStatusGradient = (status: number): string => {
+  switch (status) {
+    case AiStatusEnum.passed:
+      return 'bg-gradient-ai-passed';
+    case AiStatusEnum.failed:
+      return 'bg-gradient-ai-failed';
+    case AiStatusEnum.warning:
+      return 'bg-gradient-ai-warning';
+    case AiStatusEnum.needs_review:
+      return 'bg-gradient-ai-needs-review';
+    case AiStatusEnum.not_reviewed:
+      return 'bg-gradient-ai-not-reviewed';
+    default:
+      return 'bg-gradient-neutral';
+  }
+};
 
 // const getHumanReviewGradient = (status: number): string => {
 //   switch (status) {
@@ -340,7 +340,9 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, 
                   {getSortIcon('note_id', sorts)}
                 </button>
               </TableHead>
-              {/* <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead> */}
+              <TableHead className="text-primary min-w-[100px] font-semibold">AI SCORE</TableHead>
+              <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
+              {/* <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead> */}
               {/* <TableHead className="text-primary min-w-[120px] font-semibold">AI STATUS</TableHead>
               <TableHead className="text-primary min-w-[140px] font-semibold">HUMAN REVIEW</TableHead>
               <TableHead className="text-primary min-w-[120px] font-semibold">MANAGER</TableHead>
@@ -468,7 +470,14 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, 
                 <TableCell>{note.type}</TableCell>
                 <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
                 <TableCell className="font-medium">{note.noteId}</TableCell>
-                {/* <TableCell className="font-semibold">{note.aiScore}</TableCell> */}
+                <TableCell className="font-semibold">{note.aiScore}</TableCell>
+                <TableCell>
+                  <GradientBadge label={AiStatusLabels[note.aiStatus]} gradient={getAiStatusGradient(note.aiStatus)} />
+                </TableCell>
+                {/* <TableCell>
+                  <GradientBadge label={HumanReviewLabels[note.humanReview]} gradient={getHumanReviewGradient(note.humanReview)} />
+                </TableCell> */}
+
                 {/* <TableCell>
                   <GradientBadge label={AiStatusLabels[note.aiStatus]} gradient={getAiStatusGradient(note.aiStatus)} />
                 </TableCell>

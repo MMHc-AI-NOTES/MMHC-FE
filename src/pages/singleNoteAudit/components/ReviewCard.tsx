@@ -1,16 +1,16 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+// import { Badge } from '@/components/ui/badge';
+// import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, Save, FileCheck, Plus } from 'lucide-react';
-import IssueFormCard, { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
+// import { Label } from '@/components/ui/label';
+// import { Textarea } from '@/components/ui/textarea';
+import { Trash2, FileCheck, Plus } from 'lucide-react';
+import { IssueFormValues as LocalIssueFormValues } from '../IssueFormCard';
 // import { OverallSummaryFlagForm } from '../therapySessionSummary/OverallSummaryFlagForm';
 import { useAppSelector, useAppDispatch } from '@/store/store';
-import { Review, IssueForm, ActiveIssueForm } from './types';
+import { Review, ActiveIssueForm } from './types';
 import ScoreComparison from './ScoreComparison';
 import { UserRoleEnum } from '@/constants/common';
 import { fetchUsersListingThunk, type UsersQuery } from '@/store/slices/usersSlice';
@@ -52,15 +52,14 @@ const ReviewCard = ({
   review,
   auditScore,
   activeIssueForms,
-  savingIssueId,
+  // savingIssueId,
   noteId,
   versionId,
   versionLabel,
   practitionerId,
   priorityId,
-  onDeleteIssue,
-  onSaveIssue,
-  onCancelEdit,
+  // onDeleteIssue,
+  // onSaveIssue,
   onDeleteReview,
   onRemoveReview,
   isMarkedForReview = false,
@@ -73,7 +72,7 @@ const ReviewCard = ({
   onAssignedToManager,
 }: ReviewCardProps) => {
   const dispatch = useAppDispatch();
-  const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
+  // const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
   const userEntities = useAppSelector(state => state.users.entities);
@@ -84,10 +83,10 @@ const ReviewCard = ({
   const [isAssigning, setIsAssigning] = useState(false);
 
   // State for inline edit form
-  const [editingIssueId, setEditingIssueId] = useState<string | null>(null);
-  const [selectedDescriptionId, setSelectedDescriptionId] = useState<number | ''>('');
-  const [isSavingDescription, setIsSavingDescription] = useState(false);
-  const [editingIssueComment, setEditingIssueComment] = useState<string>('');
+  // const [editingIssueId, setEditingIssueId] = useState<string | null>(null);
+  // const [selectedDescriptionId, setSelectedDescriptionId] = useState<number | ''>('');
+  // const [isSavingDescription, setIsSavingDescription] = useState(false);
+  // const [editingIssueComment, setEditingIssueComment] = useState<string>('');
 
   // Previous overall method – overall edit now same as others (description dropdown + comment)
   // const [overallEditForm, setOverallEditForm] = useState<{ issueId: string; errorTypeId: number; comment: string } | null>(null);
@@ -170,113 +169,113 @@ const ReviewCard = ({
   const issuesForScore = review.issues;
 
   // Convert Redux data to format expected by components
-  const errorTypeOptions = errorTypes.map(type => ({
-    value: type.name,
-    label: type.displayName,
-    points: type.points,
-  }));
-  const issueRelatedToOptions = issueRelatedTo.map(opt => ({
-    id: opt.fieldId,
-    name: opt.displayName,
-  }));
+  // const errorTypeOptions = errorTypes.map(type => ({
+  //   value: type.name,
+  //   label: type.displayName,
+  //   points: type.points,
+  // }));
+  // const issueRelatedToOptions = issueRelatedTo.map(opt => ({
+  //   id: opt.fieldId,
+  //   name: opt.displayName,
+  // }));
 
   // Get issueRelatedTo ID from fieldId
-  const getIssueRelatedToIdFromFieldId = (fieldId: string): number | null => {
-    const irt = issueRelatedTo.find(opt => opt.fieldId === fieldId);
-    return irt?.id ?? null;
-  };
+  // const getIssueRelatedToIdFromFieldId = (fieldId: string): number | null => {
+  //   const irt = issueRelatedTo.find(opt => opt.fieldId === fieldId);
+  //   return irt?.id ?? null;
+  // };
 
-  // Get templates for a specific issueRelatedTo ID
-  const getTemplatesForIssueRelatedToId = (issueRelatedToId: number): typeof smeTemplates => {
-    if (!smeTemplates || !Array.isArray(smeTemplates)) return [];
-    return smeTemplates.filter(t => t.issues_related_to_id === issueRelatedToId);
-  };
+  // // Get templates for a specific issueRelatedTo ID
+  // const getTemplatesForIssueRelatedToId = (issueRelatedToId: number): typeof smeTemplates => {
+  //   if (!smeTemplates || !Array.isArray(smeTemplates)) return [];
+  //   return smeTemplates.filter(t => t.issues_related_to_id === issueRelatedToId);
+  // };
 
   // Already-used description IDs for a field (so New Issue dropdown can disable them)
-  const getAlreadyUsedDescriptionIdsForField = useCallback(
-    (fieldId: string, excludeIssueId?: string): number[] => {
-      const issues = [...savedIssues, ...editingIssues].filter(
-        i => i.issueRelatedTo === fieldId && (excludeIssueId == null || i.id !== excludeIssueId),
-      );
-      const ids = issues
-        .map(i => issueDescriptions.find(d => d.description === i.issueDescription)?.id)
-        .filter((id): id is number => id != null);
-      return [...new Set(ids)];
-    },
-    [savedIssues, editingIssues, issueDescriptions],
-  );
+  // const getAlreadyUsedDescriptionIdsForField = useCallback(
+  //   (fieldId: string, excludeIssueId?: string): number[] => {
+  //     const issues = [...savedIssues, ...editingIssues].filter(
+  //       i => i.issueRelatedTo === fieldId && (excludeIssueId == null || i.id !== excludeIssueId),
+  //     );
+  //     const ids = issues
+  //       .map(i => issueDescriptions.find(d => d.description === i.issueDescription)?.id)
+  //       .filter((id): id is number => id != null);
+  //     return [...new Set(ids)];
+  //   },
+  //   [savedIssues, editingIssues, issueDescriptions],
+  // );
 
   // Get description options for an issue based on its issueRelatedTo
-  const getDescriptionOptionsForIssue = (issue: IssueForm) => {
-    const issueRelatedToId = getIssueRelatedToIdFromFieldId(issue.issueRelatedTo);
-    if (!issueRelatedToId) return [];
+  // const getDescriptionOptionsForIssue = (issue: IssueForm) => {
+  //   const issueRelatedToId = getIssueRelatedToIdFromFieldId(issue.issueRelatedTo);
+  //   if (!issueRelatedToId) return [];
 
-    const templates = getTemplatesForIssueRelatedToId(issueRelatedToId);
-    if (!templates || templates.length === 0) return [];
-    if (!issueDescriptions || !Array.isArray(issueDescriptions)) return [];
+  //   const templates = getTemplatesForIssueRelatedToId(issueRelatedToId);
+  //   if (!templates || templates.length === 0) return [];
+  //   if (!issueDescriptions || !Array.isArray(issueDescriptions)) return [];
 
-    // Get all unique issue_description_id from templates
-    const uniqueDescriptionIds = [...new Set(templates.map(t => t.issue_description_id).filter(id => id != null))];
+  //   // Get all unique issue_description_id from templates
+  //   const uniqueDescriptionIds = [...new Set(templates.map(t => t.issue_description_id).filter(id => id != null))];
 
-    // Find all descriptions matching those IDs
-    const matchingDescriptions = issueDescriptions.filter(desc => desc.id != null && uniqueDescriptionIds.includes(desc.id));
+  //   // Find all descriptions matching those IDs
+  //   const matchingDescriptions = issueDescriptions.filter(desc => desc.id != null && uniqueDescriptionIds.includes(desc.id));
 
-    // Return descriptions as options
-    return matchingDescriptions.map(desc => ({
-      value: desc.id!,
-      label: desc.description ?? `Description ${desc.id}`,
-    }));
-  };
+  //   // Return descriptions as options
+  //   return matchingDescriptions.map(desc => ({
+  //     value: desc.id!,
+  //     label: desc.description ?? `Description ${desc.id}`,
+  //   }));
+  // };
 
-  const handleEditIssueInline = (issue: IssueForm) => {
-    setEditingIssueId(issue.id);
-    // Find current description ID if it exists
-    const currentDesc = issueDescriptions.find(d => d.description === issue.issueDescription);
-    setSelectedDescriptionId(currentDesc?.id ?? '');
-    setEditingIssueComment(issue.comment ?? '');
-  };
+  // const handleEditIssueInline = (issue: IssueForm) => {
+  //   setEditingIssueId(issue.id);
+  //   // Find current description ID if it exists
+  //   const currentDesc = issueDescriptions.find(d => d.description === issue.issueDescription);
+  //   setSelectedDescriptionId(currentDesc?.id ?? '');
+  //   setEditingIssueComment(issue.comment ?? '');
+  // };
 
-  const handleCancelEditInline = () => {
-    setEditingIssueId(null);
-    setSelectedDescriptionId('');
-    setEditingIssueComment('');
-  };
+  // const handleCancelEditInline = () => {
+  //   setEditingIssueId(null);
+  //   setSelectedDescriptionId('');
+  //   setEditingIssueComment('');
+  // };
 
-  const handleSaveDescription = async (issue: IssueForm) => {
-    if (!selectedDescriptionId || typeof selectedDescriptionId !== 'number') return;
+  // const handleSaveDescription = async (issue: IssueForm) => {
+  //   if (!selectedDescriptionId || typeof selectedDescriptionId !== 'number') return;
 
-    setIsSavingDescription(true);
-    try {
-      const selectedDescription = issueDescriptions.find(d => d.id === selectedDescriptionId);
-      if (!selectedDescription) {
-        setIsSavingDescription(false);
-        return;
-      }
+  //   setIsSavingDescription(true);
+  //   try {
+  //     const selectedDescription = issueDescriptions.find(d => d.id === selectedDescriptionId);
+  //     if (!selectedDescription) {
+  //       setIsSavingDescription(false);
+  //       return;
+  //     }
 
-      // Update the issue with new description/comment
-      const updatedIssue: IssueForm = {
-        ...issue,
-        issueDescription: selectedDescription.description,
-        comment: editingIssueComment,
-      };
+  //     // Update the issue with new description/comment
+  //     const updatedIssue: IssueForm = {
+  //       ...issue,
+  //       issueDescription: selectedDescription.description,
+  //       comment: editingIssueComment,
+  //     };
 
-      // Wait for API to complete before closing the form
-      await onSaveIssue(review.id, issue.id, {
-        errorType: updatedIssue.errorType,
-        issueRelatedTo: updatedIssue.issueRelatedTo,
-        issueDescription: updatedIssue.issueDescription,
-        comment: editingIssueComment,
-      });
+  //     // Wait for API to complete before closing the form
+  //     await onSaveIssue(review.id, issue.id, {
+  //       errorType: updatedIssue.errorType,
+  //       issueRelatedTo: updatedIssue.issueRelatedTo,
+  //       issueDescription: updatedIssue.issueDescription,
+  //       comment: editingIssueComment,
+  //     });
 
-      setEditingIssueId(null);
-      setSelectedDescriptionId('');
-      setEditingIssueComment('');
-    } catch (error) {
-      console.error('Error saving description:', error);
-    } finally {
-      setIsSavingDescription(false);
-    }
-  };
+  //     setEditingIssueId(null);
+  //     setSelectedDescriptionId('');
+  //     setEditingIssueComment('');
+  //   } catch (error) {
+  //     console.error('Error saving description:', error);
+  //   } finally {
+  //     setIsSavingDescription(false);
+  //   }
+  // };
 
   const handleRemoveOrDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -421,7 +420,7 @@ const ReviewCard = ({
           <ScoreComparison issues={issuesForScore} auditScore={auditScore} />
         </div>
 
-        {/* Saved Issues List */}
+        {/* Saved Issues List
         {savedIssues.length > 0 && (
           <div className="space-y-1">
             <h3 className="text-sm font-semibold text-gray-700">Issues:</h3>
@@ -486,7 +485,7 @@ const ReviewCard = ({
                         </p>
                       )}
                     </div>
-                    {/* Inline edit form for description */}
+                    Inline edit form for description
                     {editingIssueId === savedIssue.id && isOwnReview && !readOnly && (
                       // (savedIssue.issueRelatedTo === 'overall' ? (
                       //   <OverallSummaryFlagForm
@@ -600,9 +599,10 @@ const ReviewCard = ({
             })}
           </div>
         )}
+        */}
 
         {/* Active Issue Forms */}
-        {editingIssues.length > 0 && (
+        {/* {editingIssues.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-700">
               {editingIssues.some(issue => savedIssues.some(saved => saved.id === issue.id)) ? 'Editing Issues' : 'New Issues'}
@@ -633,7 +633,7 @@ const ReviewCard = ({
               );
             })}
           </div>
-        )}
+        )} */}
 
         {savedIssues.length === 0 && editingIssues.length === 0 && (
           <div className="flex items-center justify-center gap-2 py-4 text-center text-sm text-gray-500">

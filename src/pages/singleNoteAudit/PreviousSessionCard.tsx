@@ -53,7 +53,7 @@ const PreviousSessionCard = ({
 
   const {
     user,
-    currentSessionData,
+    displayableSessionFields,
     hasPreviousSessionData,
     expandedFieldKey,
     selectedTemplateIds,
@@ -154,7 +154,7 @@ const PreviousSessionCard = ({
         ) : (
           <div className="rounded-lg bg-[#F0F0F0] p-4">
             <div className="space-y-3 text-sm leading-relaxed text-gray-700">
-              {Object.entries(currentSessionData).map(([key, value]) => {
+              {displayableSessionFields.map(([key, value]) => {
                 const displayName = getFieldDisplayName(key);
                 const displayValue = value === '' || value === null || value === undefined ? '-' : String(value);
                 const issueCount = getIssueCountForField(key);

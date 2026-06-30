@@ -1,18 +1,18 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-// import { Badge } from '@/components/ui/badge';
 import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine, ExternalLink } from 'lucide-react';
-import { WebhookVersion } from '@/types/notes';
+import { WebhookVersion, PreviousNote } from '@/types/notes';
 import type { IssueForm } from './components/types';
-// import { UserRoleEnum } from '@/constants/common';
+import type { NoteDetail } from '@/types/notes';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
-import { VersionHistoryPopover } from './therapySessionSummary/VersionHistoryPopover';
-import { SessionFieldRow } from './therapySessionSummary/SessionFieldRow';
-// import { OverallSummaryFlagForm } from './therapySessionSummary/OverallSummaryFlagForm';
+import { SessionFieldCard } from './therapySessionSummary/SessionFieldCard';
+import { formatSessionFieldValue } from './therapySessionSummary/sessionFieldUtils';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
+  previousNote?: PreviousNote;
+  aiIssues?: NoteDetail['issues'];
   onVersionChange?: (versionId: number) => void;
   noteId?: string;
   versionId?: number | null;
@@ -22,11 +22,20 @@ interface TherapySessionSummaryCardProps {
   priorityId?: number;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
   onReviewerIssuesChanged?: (reviewerId: number) => void;
+  onSMEIssueDeleted?: (versionId: number, smeIssueId: number) => void;
+  onSMEIssueUpdated?: (
+    versionId: number,
+    smeIssueId: number,
+    payload: { issueDescriptionId?: number; issueDescriptionText?: string; comment?: string },
+  ) => void;
   handleNoteIdClick: () => void;
+  handlePreviousNoteIdClick?: () => void;
 }
 
 const TherapySessionSummaryCard = ({
   webhookVersions,
+  previousNote,
+  aiIssues = [],
   onVersionChange,
   noteId,
   versionId,
@@ -36,10 +45,15 @@ const TherapySessionSummaryCard = ({
   priorityId = 1,
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
+  onSMEIssueDeleted,
+  onSMEIssueUpdated,
   handleNoteIdClick,
+  handlePreviousNoteIdClick,
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
+    previousNoteFromDetail: previousNote,
+    aiIssues,
     onVersionChange,
     noteId,
     versionId,
@@ -55,11 +69,10 @@ const TherapySessionSummaryCard = ({
     user,
     sortedVersions,
     currentVersion,
-    currentSessionData,
+    displayableSessionFields,
     changedFields,
+    hasPreviousNoteSessionData,
     selectedVersionIndex,
-    isVersionHistoryOpen,
-    setIsVersionHistoryOpen,
     isHistoricalVersion,
     isFirstVersion,
     isLastVersion,
@@ -69,27 +82,19 @@ const TherapySessionSummaryCard = ({
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,
+    getSmeIssuesForField,
+    getAiIssuesForSessionField,
+    getPreviousValueForField,
+    isFieldChangedFromPreviousNote,
     getTemplatesForField,
     getAlreadyUsedDescriptionIdsForField,
     getTemplateDropdownOptions,
-    handleVersionSelect,
     handlePrevious,
     handleNext,
     toggleFieldForm,
     handleSaveFromTemplate,
     closeTemplateForm,
     formatDate,
-    // overallIssueRelatedToId,
-    // getIssueCountForOverall,
-    // isOverallFormOpen,
-    // closeOverallForm,
-    // overallErrorTypeId,
-    // setOverallErrorTypeId,
-    // overallComment,
-    // setOverallComment,
-    // isSavingOverall,
-    // handleSaveOverallIssue,
-    // errorTypes,
   } = summary;
 
   useEffect(() => {
@@ -105,7 +110,7 @@ const TherapySessionSummaryCard = ({
         <CardHeader className="pb-3">
           <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
             <Stethoscope />
-            Current Session
+            Session Summary
           </CardTitle>
         </CardHeader>
 
@@ -119,79 +124,86 @@ const TherapySessionSummaryCard = ({
   }
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
-  const overallFieldKey = 'overall';
-  const overallIssueCount = getIssueCountForField(overallFieldKey);
-  const overallTemplates = getTemplatesForField(overallFieldKey);
-  const overallDisplayName = getFieldDisplayName(overallFieldKey);
+  const previousNoteId = previousNote?.noteId;
+  const changedFieldsFromPreviousNote = displayableSessionFields.map(([key]) => key).filter(key => isFieldChangedFromPreviousNote(key));
+
+  const renderFieldCard = (key: string, value: unknown) => {
+    const displayName = getFieldDisplayName(key);
+    const displayValue = formatSessionFieldValue(value);
+    const previousValue = hasPreviousNoteSessionData ? getPreviousValueForField(key) : null;
+    const isChanged = isFieldChangedFromPreviousNote(key);
+    const issueCount = getIssueCountForField(key);
+    const templates = getTemplatesForField(key);
+
+    return (
+      <SessionFieldCard
+        key={key}
+        fieldKey={key}
+        displayName={displayName}
+        currentValue={displayValue}
+        previousValue={previousValue}
+        isChanged={isChanged}
+        aiIssues={getAiIssuesForSessionField(key)}
+        smeIssues={getSmeIssuesForField(key)}
+        issueCount={issueCount}
+        isExpanded={expandedFieldKey === key}
+        selectedTemplateIds={selectedTemplateIds}
+        templateOptions={getTemplateDropdownOptions(key)}
+        alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(key)}
+        isSaving={isSaving}
+        hasTemplates={templates.length > 0}
+        userType={user?.type}
+        showSMEActions={showSMEActions}
+        disableAddButton={isHistoricalVersion}
+        noteId={noteId}
+        versionId={versionId}
+        practitionerId={practitionerId}
+        aiStatusId={aiStatusId}
+        priorityId={priorityId}
+        webhookVersions={webhookVersions}
+        loggedInUserId={user?.id ?? null}
+        onSMEIssueDeleted={onSMEIssueDeleted}
+        onSMEIssueUpdated={onSMEIssueUpdated}
+        onToggleForm={toggleFieldForm}
+        onTemplateChange={setSelectedTemplateIds}
+        onSave={handleSaveFromTemplate}
+        onCloseForm={closeTemplateForm}
+      />
+    );
+  };
 
   return (
     <Card className="gap-1">
       <CardHeader className="pb-3">
-        <div className="flex flex-col items-center justify-between xl:flex-row">
-          <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
-            <Stethoscope />
-            Current Session
-          </CardTitle>
-
+        <CardTitle className="text-primary flex items-center gap-2 text-base font-semibold">
+          <Stethoscope />
+          Session Summary
+        </CardTitle>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-2">
-            {/* {Number(user?.type) === UserRoleEnum.sme_reviewer && overallIssueRelatedToId != null && (
-              <>
-                {getIssueCountForOverall() > 0 && Number(user?.type) !== UserRoleEnum.superAdmin && (
-                  <Badge className="bg-gradient-light text-primary rounded-sm px-2 py-0.5 text-xs font-semibold">
-                    {getIssueCountForOverall()}
-                  </Badge>
-                )}
-                {getIssueCountForOverall() === 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-primary flex items-center gap-2 border"
-                    onClick={openOverallForm}
-                    title="Overall Summary Flag"
-                  >
-                    <Flag className="h-4 w-4" />
-                    Overall Summary Flag
-                  </Button>
-                )}
-              </>
-            )} */}
-            <VersionHistoryPopover
-              versions={sortedVersions}
-              selectedVersionIndex={selectedVersionIndex}
-              isOpen={isVersionHistoryOpen}
-              onOpenChange={setIsVersionHistoryOpen}
-              onVersionSelect={handleVersionSelect}
-              formatDate={formatDate}
-            />
+            <p className="text-primary text-sm">Current Note ID:</p>
+            {noteId ? (
+              <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
+                <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
+                <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">N/A</p>
+            )}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <p className="text-primary text-sm">Note ID:</p>
-          {noteId ? (
-            <div className="group inline cursor-pointer" onClick={handleNoteIdClick}>
-              <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{noteId}</span>
-              <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+          {previousNoteId && (
+            <div className="flex items-center gap-2">
+              <p className="text-primary text-sm">Previous Note ID:</p>
+              <div className="group inline cursor-pointer" onClick={handlePreviousNoteIdClick}>
+                <span className="align-middle text-sm text-blue-600 transition-colors group-hover:text-blue-700">{previousNoteId}</span>
+                <ExternalLink className="ml-1 inline align-middle text-blue-600 transition-colors group-hover:text-blue-700" size={14} />
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-gray-500">N/A</p>
           )}
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Previous overall method – overall now uses same flow as other fields (SessionFieldRow) */}
-        {/* {isOverallFormOpen && (
-          <OverallSummaryFlagForm
-            errorTypes={errorTypes ?? []}
-            selectedErrorTypeId={overallErrorTypeId}
-            onErrorTypeChange={setOverallErrorTypeId}
-            comment={overallComment}
-            onCommentChange={setOverallComment}
-            isSaving={isSavingOverall}
-            onSave={handleSaveOverallIssue}
-            onClose={closeOverallForm}
-          />
-        )} */}
         <div className="space-y-2">
           {isHistoricalVersion && (
             <div className="bg-orange-light border-orange-dark flex w-fit items-center gap-2 rounded-md border px-5 py-2.5">
@@ -210,66 +222,28 @@ const TherapySessionSummaryCard = ({
               </span>
             </div>
           )}
+          {changedFieldsFromPreviousNote.length > 0 && (
+            <div
+              className="text-primary flex w-fit items-center gap-2 rounded-md border px-5 py-2.5"
+              style={{ backgroundColor: 'rgba(161, 230, 129, 0.1)', borderColor: 'rgba(161, 230, 129, 0.4)' }}
+            >
+              <PencilLine className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {changedFieldsFromPreviousNote.length} field{changedFieldsFromPreviousNote.length !== 1 ? 's' : ''} changed from previous
+                session
+              </span>
+            </div>
+          )}
         </div>
 
-        <div className="rounded-lg bg-[#F0F0F0] p-4">
-          <div className="space-y-3 text-sm leading-relaxed text-gray-700">
-            <SessionFieldRow
-              key={overallFieldKey}
-              fieldKey={overallFieldKey}
-              displayName={overallDisplayName}
-              displayValue=""
-              isChanged={false}
-              previousValue={null}
-              issueCount={overallIssueCount}
-              isExpanded={expandedFieldKey === overallFieldKey}
-              selectedTemplateIds={selectedTemplateIds}
-              templateOptions={getTemplateDropdownOptions(overallFieldKey)}
-              alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(overallFieldKey)}
-              isSaving={isSaving}
-              hasTemplates={overallTemplates.length > 0}
-              userType={user?.type}
-              showSMEActions={showSMEActions}
-              disableAddButton={isHistoricalVersion}
-              onToggleForm={toggleFieldForm}
-              onTemplateChange={setSelectedTemplateIds}
-              onSave={handleSaveFromTemplate}
-              onCloseForm={closeTemplateForm}
-            />
-            {Object.entries(currentSessionData).map(([key, value]) => {
-              const displayName = getFieldDisplayName(key);
-              const displayValue = value === '' || value === null || value === undefined ? '-' : String(value);
-              const isChanged = changedFields.some(field => field.key === key);
-              const previousValue = isChanged ? changedFields.find(field => field.key === key)?.previous : null;
-              const issueCount = getIssueCountForField(key);
-              const templates = getTemplatesForField(key);
-
-              return (
-                <SessionFieldRow
-                  key={key}
-                  fieldKey={key}
-                  displayName={displayName}
-                  displayValue={displayValue}
-                  isChanged={isChanged}
-                  previousValue={previousValue ?? null}
-                  issueCount={issueCount}
-                  isExpanded={expandedFieldKey === key}
-                  selectedTemplateIds={selectedTemplateIds}
-                  templateOptions={getTemplateDropdownOptions(key)}
-                  alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(key)}
-                  isSaving={isSaving}
-                  hasTemplates={templates.length > 0}
-                  userType={user?.type}
-                  showSMEActions={showSMEActions}
-                  disableAddButton={isHistoricalVersion}
-                  onToggleForm={toggleFieldForm}
-                  onTemplateChange={setSelectedTemplateIds}
-                  onSave={handleSaveFromTemplate}
-                  onCloseForm={closeTemplateForm}
-                />
-              );
-            })}
-          </div>
+        <div className="space-y-4">
+          {displayableSessionFields.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-[#F0F0F0] p-4">
+              <p className="text-center text-sm text-gray-500">N/A</p>
+            </div>
+          ) : (
+            displayableSessionFields.map(([key, value]) => renderFieldCard(key, value))
+          )}
         </div>
 
         <div className="flex items-center justify-between border-t pt-3">

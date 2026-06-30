@@ -10,6 +10,13 @@ import { createSMEIssueFromTemplate } from '../singleNoteApiCalls';
 // import { createSMEIssueOverall } from '../singleNoteApiCalls';
 import type { IssueForm } from '../components/types';
 import type { SMETemplate } from '@/pages/settings/settingsApiCalls';
+import type { NoteDetail } from '@/types/notes';
+import {
+  formatSessionFieldValue,
+  getAiIssuesForField,
+  getDisplayableSessionFieldEntries,
+  getSessionFieldDisplayName,
+} from './sessionFieldUtils';
 
 const formatDate = (dateString: string) => moment(dateString).format(DATE_FORMAT);
 
@@ -35,6 +42,8 @@ export interface UseTherapySessionSummaryProps {
   initialVersionIndex?: number;
   /** When true, session data comes from latest version's previous_note (for Previous Session card) */
   sourcePreviousSessionFromNote?: boolean;
+  /** AI-identified issues from note detail, mapped to session fields in the UI */
+  aiIssues?: NoteDetail['issues'];
 }
 
 const normalizeFieldKey = (key: string): string => {
@@ -56,6 +65,7 @@ export function useTherapySessionSummary({
   onReviewerIssuesChanged,
   initialVersionIndex = 0,
   sourcePreviousSessionFromNote = false,
+  aiIssues = [],
 }: UseTherapySessionSummaryProps) {
   const dispatch = useDispatch();
   const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes } = useAppSelector(state => state.smeConfig);
@@ -117,6 +127,8 @@ export function useTherapySessionSummary({
     }
   }, [previousNoteFromDetail, latestVersion, sourcePreviousSessionFromNote, currentVersion.sessionJson]);
 
+  const displayableSessionFields = useMemo(() => getDisplayableSessionFieldEntries(currentSessionData), [currentSessionData]);
+
   const hasPreviousSessionData = useMemo(() => {
     if (sourcePreviousSessionFromNote) {
       if (previousNoteFromDetail) return true;
@@ -138,10 +150,25 @@ export function useTherapySessionSummary({
     }
   }, [previousVersion]);
 
+  const previousNoteSessionData = useMemo(() => {
+    const previousNote =
+      previousNoteFromDetail ?? latestVersion?.previous_note ?? (latestVersion as { previousNote?: PreviousNote })?.previousNote;
+    if (!previousNote) return {};
+    const sessionStr = previousNote.session ?? previousNote.sessionJson;
+    if (!sessionStr) return {};
+    try {
+      return JSON.parse(sessionStr);
+    } catch {
+      return {};
+    }
+  }, [previousNoteFromDetail, latestVersion]);
+
+  const hasPreviousNoteSessionData = useMemo(() => Object.keys(previousNoteSessionData).length > 0, [previousNoteSessionData]);
+
   const changedFields = useMemo(() => {
     if (!previousVersion) return [];
     const changes: Array<{ key: string; previous: string; current: string }> = [];
-    Object.keys(currentSessionData).forEach(key => {
+    displayableSessionFields.forEach(([key]) => {
       const currentValue = String(currentSessionData[key] || '').trim();
       const previousValue = String(previousSessionData[key] || '').trim();
       if (currentValue !== previousValue) {
@@ -149,7 +176,7 @@ export function useTherapySessionSummary({
       }
     });
     return changes;
-  }, [currentSessionData, previousSessionData, previousVersion]);
+  }, [currentSessionData, previousSessionData, previousVersion, displayableSessionFields]);
 
   const fieldKeyToIssueRelatedToIdMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -203,6 +230,8 @@ export function useTherapySessionSummary({
 
   const getFieldDisplayName = useCallback(
     (key: string) => {
+      const displayName = getSessionFieldDisplayName(key);
+      if (displayName) return displayName;
       const match = findIssueRelatedTo(key);
       return match?.displayName ?? normalizeFieldKey(key);
     },
@@ -224,6 +253,36 @@ export function useTherapySessionSummary({
         .length;
     },
     [currentVersion?.smeIssues, getIssueRelatedToId, user?.id],
+  );
+
+  const getSmeIssuesForField = useCallback(
+    (fieldKey: string) => {
+      if (!currentVersion?.smeIssues || !Array.isArray(currentVersion.smeIssues)) return [];
+      const issueRelatedToId = getIssueRelatedToId(fieldKey);
+      if (!issueRelatedToId) return [];
+      return currentVersion.smeIssues.filter(issue => issue.issuesRelatedTo?.id === issueRelatedToId);
+    },
+    [currentVersion?.smeIssues, getIssueRelatedToId],
+  );
+
+  const getAiIssuesForSessionField = useCallback(
+    (fieldKey: string) => getAiIssuesForField(fieldKey, getFieldDisplayName(fieldKey), aiIssues),
+    [aiIssues, getFieldDisplayName],
+  );
+
+  const getPreviousValueForField = useCallback(
+    (fieldKey: string) => formatSessionFieldValue(previousNoteSessionData[fieldKey]),
+    [previousNoteSessionData],
+  );
+
+  const isFieldChangedFromPreviousNote = useCallback(
+    (fieldKey: string) => {
+      const currentValue = formatSessionFieldValue(currentSessionData[fieldKey]);
+      const previousValue = getPreviousValueForField(fieldKey);
+      if (currentValue === '-' && previousValue === '-') return false;
+      return currentValue !== previousValue;
+    },
+    [currentSessionData, getPreviousValueForField],
   );
 
   const getTemplatesForField = useCallback(
@@ -284,7 +343,7 @@ export function useTherapySessionSummary({
         };
       });
     },
-    [getTemplatesForField, issueDescriptions, errorTypes],
+    [getTemplatesForField, issueDescriptions],
   );
 
   useEffect(() => {
@@ -457,7 +516,10 @@ export function useTherapySessionSummary({
     sortedVersions,
     currentVersion,
     currentSessionData,
+    displayableSessionFields,
     hasPreviousSessionData,
+    previousNoteSessionData,
+    hasPreviousNoteSessionData,
     changedFields,
     selectedVersionIndex,
     isVersionHistoryOpen,
@@ -471,6 +533,10 @@ export function useTherapySessionSummary({
     isSaving,
     getFieldDisplayName,
     getIssueCountForField,
+    getSmeIssuesForField,
+    getAiIssuesForSessionField,
+    getPreviousValueForField,
+    isFieldChangedFromPreviousNote,
     getTemplatesForField,
     getAlreadyUsedDescriptionIdsForField,
     getTemplateDropdownOptions,
