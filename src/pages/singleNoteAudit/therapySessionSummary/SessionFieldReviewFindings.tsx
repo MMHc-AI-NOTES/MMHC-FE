@@ -8,6 +8,9 @@ import { Save, ShieldCheck, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import type { NoteDetail, SMEIssue, WebhookVersion } from '@/types/notes';
 import { SmeIssueFindingItem } from './SmeIssueFindingItem';
 import { getSmeIssueDescription, getSmeIssueTitle } from './sessionFieldUtils';
+import axios from 'axios';
+import { showToast } from '@/lib/toast';
+import { handleCatchMessages } from '@/utils/helper';
 
 interface SessionFieldReviewFindingsProps {
   fieldKey: string;
@@ -28,6 +31,7 @@ interface SessionFieldReviewFindingsProps {
     smeIssueId: number,
     payload: { issueDescriptionId?: number; issueDescriptionText?: string; comment?: string },
   ) => void;
+  scorerVersion?: string;
 }
 
 const getAiSeverityClass = (severity: NoteDetail['issues'][number]['severity']) => {
@@ -67,6 +71,7 @@ export function SessionFieldReviewFindings({
   alreadyUsedDescriptionIds = [],
   onSMEIssueDeleted,
   onSMEIssueUpdated,
+  scorerVersion = '',
 }: SessionFieldReviewFindingsProps) {
   const user = useAppSelector(state => state.auth.user);
   const [aiIssueVotes, setAiIssueVotes] = useState<Record<string, 'up' | 'down'>>({});
@@ -74,6 +79,7 @@ export function SessionFieldReviewFindings({
   const [savedAiIssueFeedback, setSavedAiIssueFeedback] = useState<Record<string, string>>({});
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState<Record<string, boolean>>({});
   const [deleteFeedbackIssueKey, setDeleteFeedbackIssueKey] = useState<string | null>(null);
+  const [isSavingFeedback, setIsSavingFeedback] = useState<Record<string, boolean>>({});
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
@@ -135,12 +141,42 @@ export function SessionFieldReviewFindings({
     clearIssueVoteState(issueKey);
   };
 
-  const handleSaveFeedback = (issueKey: string) => {
+  const handleSaveFeedback = async (issueKey: string, issue: NoteDetail['issues'][number]) => {
     const feedback = (aiIssueFeedback[issueKey] || '').trim();
     if (!feedback) return;
-    setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
-    setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
-    setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+
+    setIsSavingFeedback(prev => ({ ...prev, [issueKey]: true }));
+    try {
+      const payload = {
+        note_id: noteId || '',
+        scorer_version: scorerVersion || '',
+        reviewer: user?.fullName || '',
+        reviewed_at: new Date().toISOString(),
+        verdicts: [
+          {
+            section: issue.category,
+            description_id: '',
+            description: issue.description,
+            code: issue.sectionId,
+            side: 'AI',
+            verdict: 'down',
+            comment: feedback,
+            by: user?.fullName || '',
+          },
+        ],
+      };
+
+      await axios.post('/feedback', payload);
+      showToast.success('Feedback submitted successfully');
+
+      setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
+      setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
+      setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+    } catch (error) {
+      handleCatchMessages(error);
+    } finally {
+      setIsSavingFeedback(prev => ({ ...prev, [issueKey]: false }));
+    }
   };
 
   const handleConfirmDeleteFeedback = () => {
@@ -243,11 +279,15 @@ export function SessionFieldReviewFindings({
                           Cancel
                         </Button>
                         <Button
-                          className="bg-green-200 text-green-700 hover:bg-green-200/80"
-                          onClick={() => handleSaveFeedback(issueKey)}
-                          disabled={!feedbackText.trim()}
+                          className="flex items-center gap-1.5 bg-green-200 text-green-700 hover:bg-green-200/80"
+                          onClick={() => handleSaveFeedback(issueKey, issue)}
+                          disabled={!feedbackText.trim() || isSavingFeedback[issueKey]}
                         >
-                          <Save className="h-4 w-4" />
+                          {isSavingFeedback[issueKey] ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
                           Save
                         </Button>
                       </div>

@@ -27,6 +27,7 @@ interface SessionFieldCardProps {
   disableAddButton?: boolean;
   noteId?: string;
   versionId?: number | null;
+  scorerVersion?: string;
   practitionerId?: number;
   aiStatusId?: number;
   priorityId?: number;
@@ -64,6 +65,7 @@ export function SessionFieldCard({
   disableAddButton = false,
   noteId,
   versionId,
+  scorerVersion = '',
   practitionerId = 0,
   aiStatusId = 1,
   priorityId = 1,
@@ -156,6 +158,7 @@ export function SessionFieldCard({
         smeIssues={smeIssues}
         noteId={noteId}
         versionId={versionId}
+        scorerVersion={scorerVersion}
         practitionerId={practitionerId}
         aiStatusId={aiStatusId}
         priorityId={priorityId}

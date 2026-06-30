@@ -20,6 +20,7 @@ interface TherapySessionSummaryCardProps {
   practitionerId?: number;
   aiStatusId?: number;
   priorityId?: number;
+  scorerVersion?: string;
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
   onReviewerIssuesChanged?: (reviewerId: number) => void;
   onSMEIssueDeleted?: (versionId: number, smeIssueId: number) => void;
@@ -43,6 +44,7 @@ const TherapySessionSummaryCard = ({
   practitionerId = 0,
   aiStatusId = 1,
   priorityId = 1,
+  scorerVersion = '',
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
   onSMEIssueDeleted,
@@ -157,6 +159,7 @@ const TherapySessionSummaryCard = ({
         disableAddButton={isHistoricalVersion}
         noteId={noteId}
         versionId={versionId}
+        scorerVersion={scorerVersion}
         practitionerId={practitionerId}
         aiStatusId={aiStatusId}
         priorityId={priorityId}

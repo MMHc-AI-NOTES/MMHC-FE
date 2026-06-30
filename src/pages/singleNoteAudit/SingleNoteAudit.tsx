@@ -481,6 +481,7 @@ const SingleNoteAudit = () => {
           practitionerId={practitionerId ?? 0}
           aiStatusId={noteDetail.aiStatus?.id ?? 1}
           priorityId={noteDetail.priority?.id ?? 1}
+          scorerVersion={noteDetail.modelDetail.modelVersion}
           onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
           onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
           onSMEIssueDeleted={onSMEIssueDeleted}
