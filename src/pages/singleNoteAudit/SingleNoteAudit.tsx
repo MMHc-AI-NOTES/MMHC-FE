@@ -17,8 +17,8 @@ import DiagnosisCard from './DiagnosisCard';
 import { parseDiagnosisFromApi } from './diagnosisUtils';
 // import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
-import IssuesIdentifiedCard from './IssuesIdentifiedCard';
-import SMEReview from './SMEReview';
+// import IssuesIdentifiedCard from './IssuesIdentifiedCard';
+// import SMEReview from './SMEReview';
 import ActionButtons from './ActionButtons';
 // import HumanReviewSection from './HumanReviewSection';
 import LoadingSkeleton from './LoadingSkeleton';
@@ -40,7 +40,7 @@ import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice
 import { fetchErrorTypes, fetchIssueRelatedTo, fetchIssueDescriptions } from '../settings/settingsApiCalls';
 import { setErrorTypes, setIssueRelatedTo, setIssueDescriptions } from '@/store/slices/smeConfigSlice';
 import { featureFlags } from '@/config/featureFlags';
-import type { Review, IssueForm } from './components/types';
+import type { IssueForm } from './components/types';
 import { formatDate, formatDateTime } from '@/utils/helper';
 
 // Utility function to format API response to component expected format
@@ -124,6 +124,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
       return Array.isArray(arr) ? (arr as any) : undefined;
     })(),
     diagnosis: parseDiagnosisFromApi(apiData),
+    feedbackVerdicts: apiData.feedbackVerdicts ?? apiData.feedback_verdicts ?? [],
   };
 };
 
@@ -140,7 +141,7 @@ const SingleNoteAudit = () => {
   );
   const user = useAppSelector(state => state.auth.user);
   // const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  // const [reviews, setReviews] = useState<Review[]>([]);
 
   // Create a ref to store the latest selectedAgentId
   const selectedAgentIdRef = useRef(selectedAgentId);
@@ -150,9 +151,9 @@ const SingleNoteAudit = () => {
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
-  const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
+  const [markedForReviewAt] = useState<string | null>(null);
   const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
-  const [assignedToManagerAt, setAssignedToManagerAt] = useState<string | null>(null);
+  const [assignedToManagerAt] = useState<string | null>(null);
 
   const searchParams = new URLSearchParams(location.search);
 
@@ -170,7 +171,7 @@ const SingleNoteAudit = () => {
   const backPath =
     from === 'admin-review-queue' ? '/admin-review-queue' : from === 'manager-review-queue' ? '/manager-review' : '/notes-queue';
 
-  const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
+  // const onlyShowLoggedInUserReviews = from === 'admin-review-queue';
   const [agentsLoaded, setAgentsLoaded] = useState(false);
 
   // Update the ref whenever selectedAgentId changes
@@ -385,17 +386,17 @@ const SingleNoteAudit = () => {
     });
   }, []);
 
-  const onSMEReviewDeleted = useCallback((versionId: number | null, reviewerId: number) => {
-    setNoteDetail(prev => {
-      if (!prev?.webhookVersions?.length) return prev;
-      return {
-        ...prev,
-        webhookVersions: prev.webhookVersions.map(v =>
-          versionId === null || v.id === versionId ? { ...v, smeIssues: (v.smeIssues || []).filter(i => i.reviewerId !== reviewerId) } : v,
-        ),
-      };
-    });
-  }, []);
+  // const onSMEReviewDeleted = useCallback((versionId: number | null, reviewerId: number) => {
+  //   setNoteDetail(prev => {
+  //     if (!prev?.webhookVersions?.length) return prev;
+  //     return {
+  //       ...prev,
+  //       webhookVersions: prev.webhookVersions.map(v =>
+  //         versionId === null || v.id === versionId ? { ...v, smeIssues: (v.smeIssues || []).filter(i => i.reviewerId !== reviewerId) } : v,
+  //       ),
+  //     };
+  //   });
+  // }, []);
 
   // Sync noteDetail when an SME issue is updated (e.g. description changed) so Therapy Session Summary dropdown disables immediately
   const onSMEIssueUpdated = useCallback(
@@ -484,6 +485,7 @@ const SingleNoteAudit = () => {
           aiStatusId={noteDetail.aiStatus?.id ?? 1}
           priorityId={noteDetail.priority?.id ?? 1}
           scorerVersion={noteDetail.modelDetail.modelVersion}
+          feedbackVerdicts={noteDetail.feedbackVerdicts}
           onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
           onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
           onSMEIssueDeleted={onSMEIssueDeleted}
@@ -503,8 +505,8 @@ const SingleNoteAudit = () => {
             {featureFlags.showAuditScoreCard && <AuditScoreCard noteDetail={noteDetail} />}
             {featureFlags.showModelInformation && <ModelInformation modelDetail={noteDetail.modelDetail} />}
             {featureFlags.showAiSummary && <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />}
-            {featureFlags.showIssuesIdentifiedCard && <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />}
-            <SMEReview
+            {/* {featureFlags.showIssuesIdentifiedCard && <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />} */}
+            {/* <SMEReview
               reviews={reviews}
               setReviews={setReviews}
               auditScore={noteDetail?.auditScore || 0}
@@ -524,7 +526,7 @@ const SingleNoteAudit = () => {
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
               onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
               onAssignedToManager={timestamp => setAssignedToManagerAt(timestamp)}
-            />
+            /> */}
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
               <HumanReviewSection

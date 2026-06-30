@@ -28,6 +28,7 @@ interface SessionFieldCardProps {
   noteId?: string;
   versionId?: number | null;
   scorerVersion?: string;
+  feedbackVerdicts?: any[];
   practitionerId?: number;
   aiStatusId?: number;
   priorityId?: number;
@@ -66,6 +67,7 @@ export function SessionFieldCard({
   noteId,
   versionId,
   scorerVersion = '',
+  feedbackVerdicts = [],
   practitionerId = 0,
   aiStatusId = 1,
   priorityId = 1,
@@ -159,6 +161,7 @@ export function SessionFieldCard({
         noteId={noteId}
         versionId={versionId}
         scorerVersion={scorerVersion}
+        feedbackVerdicts={feedbackVerdicts}
         practitionerId={practitionerId}
         aiStatusId={aiStatusId}
         priorityId={priorityId}

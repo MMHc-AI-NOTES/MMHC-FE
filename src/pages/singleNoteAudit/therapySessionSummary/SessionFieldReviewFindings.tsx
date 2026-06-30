@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { useAppSelector } from '@/store/store';
-import { Save, ShieldCheck, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { BookOpenCheck, HatGlasses, Save, ShieldCheck, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import type { NoteDetail, SMEIssue, WebhookVersion } from '@/types/notes';
 import { SmeIssueFindingItem } from './SmeIssueFindingItem';
 import { getSmeIssueDescription, getSmeIssueTitle } from './sessionFieldUtils';
 import axios from 'axios';
 import { showToast } from '@/lib/toast';
 import { handleCatchMessages } from '@/utils/helper';
+import { AgentModelKeys } from '@/constants/common';
 
 interface SessionFieldReviewFindingsProps {
   fieldKey: string;
@@ -32,6 +33,7 @@ interface SessionFieldReviewFindingsProps {
     payload: { issueDescriptionId?: number; issueDescriptionText?: string; comment?: string },
   ) => void;
   scorerVersion?: string;
+  feedbackVerdicts?: any[];
 }
 
 const getAiSeverityClass = (severity: NoteDetail['issues'][number]['severity']) => {
@@ -71,8 +73,10 @@ export function SessionFieldReviewFindings({
   alreadyUsedDescriptionIds = [],
   onSMEIssueDeleted,
   onSMEIssueUpdated,
-  scorerVersion = '',
+  feedbackVerdicts = [],
 }: SessionFieldReviewFindingsProps) {
+  const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
+
   const user = useAppSelector(state => state.auth.user);
   const [aiIssueVotes, setAiIssueVotes] = useState<Record<string, 'up' | 'down'>>({});
   const [aiIssueFeedback, setAiIssueFeedback] = useState<Record<string, string>>({});
@@ -80,12 +84,46 @@ export function SessionFieldReviewFindings({
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState<Record<string, boolean>>({});
   const [deleteFeedbackIssueKey, setDeleteFeedbackIssueKey] = useState<string | null>(null);
   const [isSavingFeedback, setIsSavingFeedback] = useState<Record<string, boolean>>({});
+  const [aiIssueFeedbackIds, setAiIssueFeedbackIds] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!feedbackVerdicts || !Array.isArray(feedbackVerdicts)) return;
+
+    const initialVotes: Record<string, 'up' | 'down'> = {};
+    const initialFeedback: Record<string, string> = {};
+    const initialIds: Record<string, number> = {};
+
+    aiIssues.forEach((issue, index) => {
+      const issueKey = getAiIssueKey(issue, index);
+
+      // Find matching feedback verdict for this issue and current reviewer
+      const match = feedbackVerdicts.find(v => {
+        if (loggedInUserId != null && v.reviewerId !== loggedInUserId) return false;
+
+        const requestVerdict = v.adjudicationRequest?.verdicts?.[0];
+        if (!requestVerdict) return false;
+
+        return requestVerdict.code === issue.sectionId && requestVerdict.description === issue.description;
+      });
+
+      if (match) {
+        initialVotes[issueKey] = match.verdict;
+        initialIds[issueKey] = match.id;
+        if (match.verdict === 'down' && match.comment && match.comment !== 'null') {
+          initialFeedback[issueKey] = match.comment;
+        }
+      }
+    });
+
+    setAiIssueVotes(prev => ({ ...prev, ...initialVotes }));
+    setSavedAiIssueFeedback(prev => ({ ...prev, ...initialFeedback }));
+    setAiIssueFeedbackIds(prev => ({ ...prev, ...initialIds }));
+  }, [feedbackVerdicts, aiIssues, loggedInUserId]);
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
   const hasCriticalAiIssue = aiIssues.some(issue => issue.severity === 'CRITICAL');
   const canManageSmeIssues = Boolean(noteId && versionId);
-  const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
   const clearIssueVoteState = (issueKey: string) => {
     setAiIssueVotes(prev => {
@@ -105,17 +143,52 @@ export function SessionFieldReviewFindings({
     });
   };
 
-  const handleVote = (issueKey: string, vote: 'up' | 'down') => {
+  const handleVote = async (issueKey: string, vote: 'up' | 'down', issue: NoteDetail['issues'][number]) => {
     if (vote === 'up') {
-      setAiIssueVotes(prev => {
-        if (prev[issueKey] === 'up') {
+      const isCurrentlyUp = aiIssueVotes[issueKey] === 'up';
+      if (isCurrentlyUp) {
+        setAiIssueVotes(prev => {
           const next = { ...prev };
           delete next[issueKey];
           return next;
+        });
+        setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+        return;
+      }
+
+      try {
+        const payload = {
+          note_id: noteId || '',
+          scorer_version: AgentModelKeys.MCP_V13,
+          reviewer: user?.fullName || '',
+          reviewed_at: new Date().toISOString(),
+          verdicts: [
+            {
+              section: issue.category,
+              description_id: '',
+              description: issue.description,
+              code: issue.sectionId,
+              side: 'AI',
+              verdict: 'up',
+              comment: 'null',
+              by: user?.fullName || '',
+            },
+          ],
+        };
+
+        const res: any = await axios.post('/feedback', payload);
+        showToast.success('Feedback submitted successfully');
+
+        const feedbackId = res?.id || res?.verdicts?.[0]?.id || res?.feedbackVerdict?.id || res?.feedbackVerdicts?.[0]?.id || res?.data?.id;
+        if (feedbackId) {
+          setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
         }
-        return { ...prev, [issueKey]: 'up' };
-      });
-      setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+
+        setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'up' }));
+        setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+      } catch (error) {
+        handleCatchMessages(error);
+      }
       return;
     }
 
@@ -149,7 +222,7 @@ export function SessionFieldReviewFindings({
     try {
       const payload = {
         note_id: noteId || '',
-        scorer_version: scorerVersion || '',
+        scorer_version: AgentModelKeys.MCP_V13,
         reviewer: user?.fullName || '',
         reviewed_at: new Date().toISOString(),
         verdicts: [
@@ -166,8 +239,13 @@ export function SessionFieldReviewFindings({
         ],
       };
 
-      await axios.post('/feedback', payload);
+      const res: any = await axios.post('/feedback', payload);
       showToast.success('Feedback submitted successfully');
+
+      const feedbackId = res?.id || res?.verdicts?.[0]?.id || res?.feedbackVerdict?.id || res?.feedbackVerdicts?.[0]?.id || res?.data?.id;
+      if (feedbackId) {
+        setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
+      }
 
       setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
       setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
@@ -179,10 +257,27 @@ export function SessionFieldReviewFindings({
     }
   };
 
-  const handleConfirmDeleteFeedback = () => {
+  const handleConfirmDeleteFeedback = async () => {
     if (!deleteFeedbackIssueKey) return;
+    const feedbackId = aiIssueFeedbackIds[deleteFeedbackIssueKey];
+
+    if (feedbackId) {
+      try {
+        await axios.delete(`/feedback/${feedbackId}`);
+        showToast.success('Feedback deleted successfully');
+      } catch (error) {
+        handleCatchMessages(error);
+        return;
+      }
+    }
+
     clearIssueVoteState(deleteFeedbackIssueKey);
     setSavedAiIssueFeedback(prev => {
+      const next = { ...prev };
+      delete next[deleteFeedbackIssueKey];
+      return next;
+    });
+    setAiIssueFeedbackIds(prev => {
       const next = { ...prev };
       delete next[deleteFeedbackIssueKey];
       return next;
@@ -216,9 +311,20 @@ export function SessionFieldReviewFindings({
                   >
                     AI {issue.severity} (-{issue.points})
                   </Badge>
-                  <div className="min-w-0 space-y-1">
+                  <div className="min-w-0 space-y-1.5">
                     <p className="text-sm font-semibold text-gray-900">{issue.description}</p>
-                    {issue.justification && <p className="text-xs leading-relaxed text-gray-600">{issue.justification}</p>}
+                    {issue.justification && (
+                      <div className="mt-1 -ml-5 flex items-start gap-1.5">
+                        <BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                        <p className="text-xs leading-relaxed text-gray-600">{issue.justification}</p>
+                      </div>
+                    )}
+                    {issue.evidence && (
+                      <div className="mt-1 -ml-5 flex items-start gap-1.5">
+                        <HatGlasses className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                        <p className="text-xs leading-relaxed text-gray-600">{issue.evidence}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -227,25 +333,44 @@ export function SessionFieldReviewFindings({
                     <p className="text-sm font-semibold text-gray-500">Was this helpful?</p>
                     <button
                       type="button"
+                      disabled={vote === 'down' || Boolean(savedFeedbackText)}
                       className={`rounded-md p-1.5 transition-colors ${
                         vote === 'up' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-gray-100'
-                      }`}
-                      onClick={() => handleVote(issueKey, 'up')}
+                      } ${vote === 'down' || savedFeedbackText ? 'cursor-not-allowed opacity-50' : ''}`}
+                      onClick={() => handleVote(issueKey, 'up', issue)}
                       aria-label="Mark issue as helpful"
                     >
                       <ThumbsUp className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
+                      disabled={vote === 'up'}
                       className={`rounded-md p-1.5 transition-colors ${
                         vote === 'down' ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100'
-                      }`}
-                      onClick={() => handleVote(issueKey, 'down')}
+                      } ${vote === 'up' ? 'cursor-not-allowed opacity-50' : ''}`}
+                      onClick={() => handleVote(issueKey, 'down', issue)}
                       aria-label="Mark issue as unhelpful"
                     >
                       <ThumbsDown className="h-4 w-4" />
                     </button>
                   </div>
+
+                  {vote === 'up' && (
+                    <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm text-gray-900">Reviewer: {user?.fullName?.trim() || 'Current User'}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-gray-600"
+                          onClick={() => setDeleteFeedbackIssueKey(issueKey)}
+                          title="Delete thumbs up"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   {savedFeedbackText && !showFeedbackForm && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">

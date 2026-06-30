@@ -131,6 +131,7 @@ export interface NoteDetail {
   noteReviewMarksRaw?: NoteReviewMarkItem[];
   /** Client diagnoses from note detail API */
   diagnosis?: DiagnosisItem[];
+  feedbackVerdicts?: any[];
 }
 
 export interface NoteSection {
@@ -290,6 +291,8 @@ export interface ApiNoteDetail {
   noteReviewMarks?: NoteReviewMarkItem[];
   Diagnosis?: DiagnosisItem[];
   diagnosis?: DiagnosisItem[];
+  feedbackVerdicts?: any[];
+  feedback_verdicts?: any[];
 }
 
 // Queue Overview Data

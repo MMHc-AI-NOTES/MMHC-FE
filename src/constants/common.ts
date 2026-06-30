@@ -427,6 +427,7 @@ export const AgentModelKeys = {
   CUSTOM_DEPLOYMENT_V2_28032026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/sugrzn0ke8p6',
   CUSTOM_DEPLOYMENT_V3_02042026: 'arn:aws:bedrock:us-east-1:199990519622:custom-model-deployment/cxwsnnx1qsw8',
   CUSTOM_DEPLOYMENT_V4_SageMaker: 'arn:aws:sagemaker:us-east-1:199990519622:endpoint/mmh-SageMaker-v6',
+  MCP_V13: 'mcp-v13',
 } as const;
 
 export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string> = {
@@ -443,6 +444,7 @@ export const AgentModelDisplayNames: Record<keyof typeof AgentModelKeys, string>
   CUSTOM_DEPLOYMENT_V2_28032026: 'Custom Fine-tuned Model V2 28032026',
   CUSTOM_DEPLOYMENT_V3_02042026: 'Custom Fine-tuned Model V3 02042026',
   CUSTOM_DEPLOYMENT_V4_SageMaker: 'Custom SageMaker Model V4',
+  MCP_V13: 'MCP AI Scorer v13',
 };
 
 export const AgentTypes = {
