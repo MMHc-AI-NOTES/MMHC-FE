@@ -62,6 +62,8 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     description: issue.severity_details || 'No description provided',
     justification: issue.justification || 'No justification provided',
     sectionId: issue.section_id || '',
+    confidence: issue.confidence || 0,
+    evidence: issue.evidence || '',
   })) || [
     // Fallback to default issues if no chat data
     {
@@ -187,7 +189,7 @@ const SingleNoteAudit = () => {
       setLoading(true);
 
       try {
-        const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentIdRef.current, isRerun);
+        const apiNoteDetail = await getNoteDetailWithChat(noteId, isRerun);
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);

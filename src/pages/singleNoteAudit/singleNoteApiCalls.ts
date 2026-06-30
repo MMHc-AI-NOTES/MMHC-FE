@@ -3,6 +3,7 @@ import { handleCatchMessages, handleErrorMessages } from '@/utils/helper';
 import { ApiNoteDetail } from '@/types/notes';
 import { showToast } from '@/lib/toast';
 import { featureFlags } from '@/config/featureFlags';
+// import { data } from 'react-router-dom';
 
 export interface HumanReviewPayload {
   note_id: string;
@@ -57,6 +58,7 @@ export const fetchNoteDetail = async (noteId?: string): Promise<ApiNoteDetail> =
     const response = await axios.get(`/notes/${noteId}`);
     // Check HTTP status and if data exists
     if (response?.status) {
+      console.log('Note detail response:', response.data);
       return response.data;
     } else {
       handleErrorMessages(response);
@@ -71,9 +73,9 @@ export const fetchNoteDetail = async (noteId?: string): Promise<ApiNoteDetail> =
 /**
  * Create chat for a note
  */
-export const createChat = async (payload: { note_id?: string; prompt_id?: number }): Promise<any> => {
+export const createChat = async (payload: { note_id?: string }): Promise<any> => {
   try {
-    const response = await axios.post('/chats', payload);
+    const response = await axios.post('/mcp/chats', payload);
 
     // Check HTTP status
     if (response?.status) {
@@ -90,7 +92,7 @@ export const createChat = async (payload: { note_id?: string; prompt_id?: number
 /**
  * Enhanced function to get note detail with chat creation if needed
  */
-export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isRerun?: boolean): Promise<ApiNoteDetail> => {
+export const getNoteDetailWithChat = async (noteId?: string, isRerun?: boolean): Promise<ApiNoteDetail> => {
   let noteDetail: ApiNoteDetail;
 
   // Initial load: fetch detail first, then optionally create first chat if none exist
@@ -98,7 +100,7 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
     noteDetail = await fetchNoteDetail(noteId);
 
     if (featureFlags.createChatOnLoad && (!noteDetail.chats || noteDetail.chats.length === 0)) {
-      await createChat({ note_id: noteId, prompt_id: promptId });
+      await createChat({ note_id: noteId });
       noteDetail = await fetchNoteDetail(noteId);
     }
 
@@ -107,7 +109,7 @@ export const getNoteDetailWithChat = async (noteId?: string, promptId?: any, isR
 
   // Re-run audit: ALWAYS create a new chat with the selected agent
   if (featureFlags.createChatOnLoad && isRerun) {
-    await createChat({ note_id: noteId, prompt_id: promptId });
+    await createChat({ note_id: noteId });
   }
 
   noteDetail = await fetchNoteDetail(noteId);

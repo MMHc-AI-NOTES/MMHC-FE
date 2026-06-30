@@ -1,17 +1,17 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { useAppSelector } from '@/store/store';
+// import { useAppSelector } from '@/store/store';
 import { ModelDetail } from '@/types/notes';
 import { getModelDisplayName } from '@/utils/helper';
-import { Hash, Cpu, FileCode, Clock } from 'lucide-react';
+import { Hash, Cpu, Clock } from 'lucide-react';
 
 interface ModelInformationProps {
   modelDetail: ModelDetail;
 }
 
 const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
-  const { agents, selectedAgentId } = useAppSelector(state => state.agents);
+  // const { agents, selectedAgentId } = useAppSelector(state => state.agents);
 
-  const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
+  // const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
 
   return (
     <Card>
@@ -24,13 +24,20 @@ const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
               <p className="text-sm text-black">{getModelDisplayName(modelDetail.modelVersion)}</p>
             </div>
           </div>
-          <div className="text-primary flex gap-1 text-sm">
+          {/* <div className="text-primary flex gap-1 text-sm">
             <FileCode className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">Prompt Version</p>
               <p className="text-sm break-all text-black" title={selectedAgent?.name || '-'}>
                 {selectedAgent?.name || '-'}
               </p>
+            </div>
+          </div> */}
+          <div className="text-primary flex gap-1 text-sm">
+            <Clock className="text-primary mt-0.5" size={16} />
+            <div>
+              <p className="font-medium">Last Run</p>
+              <p className="text-sm text-black">{modelDetail.lastRun}</p>
             </div>
           </div>
         </div>
@@ -41,13 +48,6 @@ const ModelInformation = ({ modelDetail }: ModelInformationProps) => {
             <div>
               <p className="font-medium">Audit Run ID</p>
               <p className="text-sm text-black">{modelDetail.auditRunId}</p>
-            </div>
-          </div>
-          <div className="text-primary flex gap-1 text-sm">
-            <Clock className="text-primary mt-0.5" size={16} />
-            <div>
-              <p className="font-medium">Last Run</p>
-              <p className="text-sm text-black">{modelDetail.lastRun}</p>
             </div>
           </div>
         </div>
