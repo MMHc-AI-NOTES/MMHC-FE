@@ -62,6 +62,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     description: issue.severity_details || 'No description provided',
     justification: issue.justification || 'No justification provided',
     sectionId: issue.section_id || '',
+    descriptionId: issue.description_id || '',
     confidence: issue.confidence || 0,
     evidence: issue.evidence || '',
   })) || [
@@ -90,6 +91,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     practitioner: apiData.practitioner.fullName,
     cptCode: apiData.cptCodeId,
     clientId: apiData.patient?.clientId || '-',
+    sessionId: apiData.sessionId || '',
     noteType: SessionTypeLabels[apiData.type.id],
     aiReviews: apiData.chat_count || 0,
     auditScore,
@@ -180,14 +182,16 @@ const SingleNoteAudit = () => {
   }, [selectedAgentId]);
 
   const loadNoteDetail = useCallback(
-    async (isRerun: boolean = false) => {
+    async (isRerun: boolean = false, silent: boolean = false) => {
       if (!noteId || !selectedAgentIdRef.current) {
         console.log('Missing noteId or selectedAgentId');
         setLoading(false);
         return;
       }
 
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       try {
         const apiNoteDetail = await getNoteDetailWithChat(noteId, isRerun);
@@ -196,7 +200,9 @@ const SingleNoteAudit = () => {
         setNoteDetail(formattedNoteDetail);
         setPractitionerId(apiNoteDetail.practitionerId);
       } finally {
-        setLoading(false);
+        if (!silent) {
+          setLoading(false);
+        }
       }
     },
     [chatId, noteId],
@@ -485,6 +491,7 @@ const SingleNoteAudit = () => {
           aiStatusId={noteDetail.aiStatus?.id ?? 1}
           priorityId={noteDetail.priority?.id ?? 1}
           scorerVersion={noteDetail.modelDetail.modelVersion}
+          sessionId={noteDetail.sessionId}
           feedbackVerdicts={noteDetail.feedbackVerdicts}
           onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
           onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
@@ -492,6 +499,7 @@ const SingleNoteAudit = () => {
           onSMEIssueUpdated={onSMEIssueUpdated}
           handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
           handlePreviousNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
+          onFeedbackChanged={() => loadNoteDetail(false, true)}
         />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}

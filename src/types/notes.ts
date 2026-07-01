@@ -101,6 +101,7 @@ export interface NoteDetail {
   cptCode: number;
   reviewCycle: { id: number; name: string };
   clientId: string;
+  sessionId?: string;
   noteType: string;
   aiReviews: number;
   auditScore: number;
@@ -119,6 +120,7 @@ export interface NoteDetail {
     description: string;
     justification?: string;
     sectionId: string;
+    descriptionId?: string;
     confidence?: number;
     evidence?: string;
   }[];

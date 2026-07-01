@@ -21,6 +21,7 @@ interface TherapySessionSummaryCardProps {
   aiStatusId?: number;
   priorityId?: number;
   scorerVersion?: string;
+  sessionId?: string;
   feedbackVerdicts?: any[];
   onSMEIssueCreatedFromTemplate?: (response: { id: number }, issueForm: IssueForm, versionId: number, descriptionId?: number) => void;
   onReviewerIssuesChanged?: (reviewerId: number) => void;
@@ -32,6 +33,7 @@ interface TherapySessionSummaryCardProps {
   ) => void;
   handleNoteIdClick: () => void;
   handlePreviousNoteIdClick?: () => void;
+  onFeedbackChanged?: () => void;
 }
 
 const TherapySessionSummaryCard = ({
@@ -46,6 +48,7 @@ const TherapySessionSummaryCard = ({
   aiStatusId = 1,
   priorityId = 1,
   scorerVersion = '',
+  sessionId = '',
   feedbackVerdicts = [],
   onSMEIssueCreatedFromTemplate,
   onReviewerIssuesChanged,
@@ -53,6 +56,7 @@ const TherapySessionSummaryCard = ({
   onSMEIssueUpdated,
   handleNoteIdClick,
   handlePreviousNoteIdClick,
+  onFeedbackChanged,
 }: TherapySessionSummaryCardProps) => {
   const summary = useTherapySessionSummary({
     webhookVersions,
@@ -162,6 +166,7 @@ const TherapySessionSummaryCard = ({
         noteId={noteId}
         versionId={versionId}
         scorerVersion={scorerVersion}
+        sessionId={sessionId}
         feedbackVerdicts={feedbackVerdicts}
         practitionerId={practitionerId}
         aiStatusId={aiStatusId}
@@ -174,6 +179,7 @@ const TherapySessionSummaryCard = ({
         onTemplateChange={setSelectedTemplateIds}
         onSave={handleSaveFromTemplate}
         onCloseForm={closeTemplateForm}
+        onFeedbackChanged={onFeedbackChanged}
       />
     );
   };

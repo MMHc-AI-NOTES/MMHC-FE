@@ -11,7 +11,7 @@ import { getSmeIssueDescription, getSmeIssueTitle } from './sessionFieldUtils';
 import axios from 'axios';
 import { showToast } from '@/lib/toast';
 import { handleCatchMessages } from '@/utils/helper';
-import { AgentModelKeys } from '@/constants/common';
+import { FeedbackVerdictEnum } from '@/constants/common';
 
 interface SessionFieldReviewFindingsProps {
   fieldKey: string;
@@ -33,7 +33,9 @@ interface SessionFieldReviewFindingsProps {
     payload: { issueDescriptionId?: number; issueDescriptionText?: string; comment?: string },
   ) => void;
   scorerVersion?: string;
+  sessionId?: string;
   feedbackVerdicts?: any[];
+  onFeedbackChanged?: () => void;
 }
 
 const getAiSeverityClass = (severity: NoteDetail['issues'][number]['severity']) => {
@@ -74,6 +76,7 @@ export function SessionFieldReviewFindings({
   onSMEIssueDeleted,
   onSMEIssueUpdated,
   feedbackVerdicts = [],
+  onFeedbackChanged,
 }: SessionFieldReviewFindingsProps) {
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
@@ -85,6 +88,7 @@ export function SessionFieldReviewFindings({
   const [deleteFeedbackIssueKey, setDeleteFeedbackIssueKey] = useState<string | null>(null);
   const [isSavingFeedback, setIsSavingFeedback] = useState<Record<string, boolean>>({});
   const [aiIssueFeedbackIds, setAiIssueFeedbackIds] = useState<Record<string, number>>({});
+  const [aiIssueReviewers, setAiIssueReviewers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!feedbackVerdicts || !Array.isArray(feedbackVerdicts)) return;
@@ -92,24 +96,31 @@ export function SessionFieldReviewFindings({
     const initialVotes: Record<string, 'up' | 'down'> = {};
     const initialFeedback: Record<string, string> = {};
     const initialIds: Record<string, number> = {};
+    const initialReviewers: Record<string, string> = {};
 
     aiIssues.forEach((issue, index) => {
       const issueKey = getAiIssueKey(issue, index);
 
       // Find matching feedback verdict for this issue and current reviewer
       const match = feedbackVerdicts.find(v => {
-        if (loggedInUserId != null && v.reviewerId !== loggedInUserId) return false;
+        if (user?.fullName && v.by && v.by.trim().toLowerCase() !== user.fullName.trim().toLowerCase()) {
+          return false;
+        }
 
-        const requestVerdict = v.adjudicationRequest?.verdicts?.[0];
-        if (!requestVerdict) return false;
-
-        return requestVerdict.code === issue.sectionId && requestVerdict.description === issue.description;
+        return (
+          v.code === issue.descriptionId ||
+          v.description_id === issue.descriptionId ||
+          v.code === issue.sectionId ||
+          v.description_id === issue.sectionId
+        );
       });
 
       if (match) {
-        initialVotes[issueKey] = match.verdict;
+        const mappedVerdict = match.verdict === 1 || match.verdict === '1' || match.verdict === 'up' ? 'up' : 'down';
+        initialVotes[issueKey] = mappedVerdict;
         initialIds[issueKey] = match.id;
-        if (match.verdict === 'down' && match.comment && match.comment !== 'null') {
+        initialReviewers[issueKey] = match.by || '';
+        if (mappedVerdict === 'down' && match.comment && match.comment !== 'null') {
           initialFeedback[issueKey] = match.comment;
         }
       }
@@ -118,7 +129,8 @@ export function SessionFieldReviewFindings({
     setAiIssueVotes(prev => ({ ...prev, ...initialVotes }));
     setSavedAiIssueFeedback(prev => ({ ...prev, ...initialFeedback }));
     setAiIssueFeedbackIds(prev => ({ ...prev, ...initialIds }));
-  }, [feedbackVerdicts, aiIssues, loggedInUserId]);
+    setAiIssueReviewers(prev => ({ ...prev, ...initialReviewers }));
+  }, [feedbackVerdicts, aiIssues, loggedInUserId, user]);
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
@@ -159,21 +171,9 @@ export function SessionFieldReviewFindings({
       try {
         const payload = {
           note_id: noteId || '',
-          scorer_version: AgentModelKeys.MCP_V13,
-          reviewer: user?.fullName || '',
-          reviewed_at: new Date().toISOString(),
-          verdicts: [
-            {
-              section: issue.category,
-              description_id: '',
-              description: issue.description,
-              code: issue.sectionId,
-              side: 'AI',
-              verdict: 'up',
-              comment: 'null',
-              by: user?.fullName || '',
-            },
-          ],
+          description_id: issue.descriptionId || issue.sectionId || '',
+          verdict: FeedbackVerdictEnum.UP,
+          comment: 'null',
         };
 
         const res: any = await axios.post('/feedback', payload);
@@ -183,9 +183,11 @@ export function SessionFieldReviewFindings({
         if (feedbackId) {
           setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
         }
+        setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
         setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'up' }));
         setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+        onFeedbackChanged?.();
       } catch (error) {
         handleCatchMessages(error);
       }
@@ -222,21 +224,9 @@ export function SessionFieldReviewFindings({
     try {
       const payload = {
         note_id: noteId || '',
-        scorer_version: AgentModelKeys.MCP_V13,
-        reviewer: user?.fullName || '',
-        reviewed_at: new Date().toISOString(),
-        verdicts: [
-          {
-            section: issue.category,
-            description_id: '',
-            description: issue.description,
-            code: issue.sectionId,
-            side: 'AI',
-            verdict: 'down',
-            comment: feedback,
-            by: user?.fullName || '',
-          },
-        ],
+        description_id: issue.descriptionId || issue.sectionId || '',
+        verdict: FeedbackVerdictEnum.DOWN,
+        comment: feedback,
       };
 
       const res: any = await axios.post('/feedback', payload);
@@ -246,10 +236,12 @@ export function SessionFieldReviewFindings({
       if (feedbackId) {
         setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
       }
+      setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
       setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
       setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
       setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
+      onFeedbackChanged?.();
     } catch (error) {
       handleCatchMessages(error);
     } finally {
@@ -263,6 +255,7 @@ export function SessionFieldReviewFindings({
 
     if (feedbackId) {
       try {
+        console.log('/feedback/', feedbackId);
         await axios.delete(`/feedback/${feedbackId}`);
         showToast.success('Feedback deleted successfully');
       } catch (error) {
@@ -282,7 +275,13 @@ export function SessionFieldReviewFindings({
       delete next[deleteFeedbackIssueKey];
       return next;
     });
+    setAiIssueReviewers(prev => {
+      const next = { ...prev };
+      delete next[deleteFeedbackIssueKey];
+      return next;
+    });
     setDeleteFeedbackIssueKey(null);
+    onFeedbackChanged?.();
   };
 
   return (
@@ -358,7 +357,14 @@ export function SessionFieldReviewFindings({
                   {vote === 'up' && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-gray-900">Reviewer: {user?.fullName?.trim() || 'Current User'}</p>
+                        <div>
+                          <p className="text-sm text-gray-900">
+                            Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
+                          </p>
+                          {aiIssueFeedbackIds[issueKey] && (
+                            <p className="mt-0.5 text-xs text-gray-400">Feedback ID: {aiIssueFeedbackIds[issueKey]}</p>
+                          )}
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -375,7 +381,14 @@ export function SessionFieldReviewFindings({
                   {savedFeedbackText && !showFeedbackForm && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-gray-900">Reviewer: {user?.fullName?.trim() || 'Current User'}</p>
+                        <div>
+                          <p className="text-sm text-gray-900">
+                            Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
+                          </p>
+                          {aiIssueFeedbackIds[issueKey] && (
+                            <p className="mt-0.5 text-xs text-gray-400">Feedback ID: {aiIssueFeedbackIds[issueKey]}</p>
+                          )}
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"

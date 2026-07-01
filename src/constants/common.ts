@@ -483,3 +483,8 @@ export const AVAILABLE_VARIABLES: AvailableVariable[] = [
   { id: 'date', name: '{{date}}', displayName: 'Date' },
   { id: 'client_name', name: '{{client_name}}', displayName: 'Client Name' },
 ];
+
+export const FeedbackVerdictEnum = {
+  UP: 1,
+  DOWN: 2,
+} as const;
