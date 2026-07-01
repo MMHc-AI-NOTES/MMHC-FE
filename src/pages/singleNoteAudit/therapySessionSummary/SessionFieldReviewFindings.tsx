@@ -357,14 +357,9 @@ export function SessionFieldReviewFindings({
                   {vote === 'up' && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm text-gray-900">
-                            Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
-                          </p>
-                          {aiIssueFeedbackIds[issueKey] && (
-                            <p className="mt-0.5 text-xs text-gray-400">Feedback ID: {aiIssueFeedbackIds[issueKey]}</p>
-                          )}
-                        </div>
+                        <p className="text-sm text-gray-900">
+                          Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
+                        </p>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -381,14 +376,9 @@ export function SessionFieldReviewFindings({
                   {savedFeedbackText && !showFeedbackForm && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm text-gray-900">
-                            Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
-                          </p>
-                          {aiIssueFeedbackIds[issueKey] && (
-                            <p className="mt-0.5 text-xs text-gray-400">Feedback ID: {aiIssueFeedbackIds[issueKey]}</p>
-                          )}
-                        </div>
+                        <p className="text-sm text-gray-900">
+                          Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
+                        </p>
                         <Button
                           variant="ghost"
                           size="icon"
