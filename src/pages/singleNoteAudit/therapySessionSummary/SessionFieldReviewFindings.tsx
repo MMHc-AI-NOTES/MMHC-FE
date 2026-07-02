@@ -12,6 +12,7 @@ import axios from 'axios';
 import { showToast } from '@/lib/toast';
 import { handleCatchMessages } from '@/utils/helper';
 import { FeedbackVerdictEnum } from '@/constants/common';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SessionFieldReviewFindingsProps {
   fieldKey: string;
@@ -357,13 +358,31 @@ export function SessionFieldReviewFindings({
                     <p className="text-sm font-semibold text-gray-900">{issue.description}</p>
                     {issue.justification && (
                       <div className="mt-1 -ml-5 flex items-start gap-1.5">
-                        <BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 cursor-help text-gray-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Justification</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <p className="text-xs leading-relaxed text-gray-600">{issue.justification}</p>
                       </div>
                     )}
                     {issue.evidence && (
                       <div className="mt-1 -ml-5 flex items-start gap-1.5">
-                        <HatGlasses className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HatGlasses className="mt-0.5 h-4 w-4 shrink-0 cursor-help text-gray-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Evidence</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <p className="text-xs leading-relaxed text-gray-600">{issue.evidence}</p>
                       </div>
                     )}
