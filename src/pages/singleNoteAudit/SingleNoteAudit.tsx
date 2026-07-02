@@ -156,6 +156,7 @@ const SingleNoteAudit = () => {
   const [markedForReviewAt] = useState<string | null>(null);
   const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
   const [assignedToManagerAt] = useState<string | null>(null);
+  const [activityRefreshTrigger, setActivityRefreshTrigger] = useState(0);
 
   const searchParams = new URLSearchParams(location.search);
 
@@ -207,6 +208,11 @@ const SingleNoteAudit = () => {
     },
     [chatId, noteId],
   );
+
+  const handleFeedbackChanged = useCallback(() => {
+    setActivityRefreshTrigger(prev => prev + 1);
+    loadNoteDetail(false, true);
+  }, [loadNoteDetail]);
 
   // Load agents and set default agent - runs on every mount
   useEffect(() => {
@@ -499,7 +505,7 @@ const SingleNoteAudit = () => {
           onSMEIssueUpdated={onSMEIssueUpdated}
           handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
           handlePreviousNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
-          onFeedbackChanged={() => loadNoteDetail(false, true)}
+          onFeedbackChanged={handleFeedbackChanged}
         />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
@@ -568,6 +574,7 @@ const SingleNoteAudit = () => {
                 markedForReviewAt={markedForReviewAt ?? undefined}
                 emailSentAt={emailSentAt ?? undefined}
                 assignedToManagerAt={assignedToManagerAt ?? undefined}
+                refreshTrigger={activityRefreshTrigger}
               />
             )}
             {featureFlags.showPrompt && (

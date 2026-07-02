@@ -126,10 +126,10 @@ export function SessionFieldReviewFindings({
       }
     });
 
-    setAiIssueVotes(prev => ({ ...prev, ...initialVotes }));
-    setSavedAiIssueFeedback(prev => ({ ...prev, ...initialFeedback }));
-    setAiIssueFeedbackIds(prev => ({ ...prev, ...initialIds }));
-    setAiIssueReviewers(prev => ({ ...prev, ...initialReviewers }));
+    setAiIssueVotes(initialVotes);
+    setSavedAiIssueFeedback(initialFeedback);
+    setAiIssueFeedbackIds(initialIds);
+    setAiIssueReviewers(initialReviewers);
   }, [feedbackVerdicts, aiIssues, loggedInUserId, user]);
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
@@ -255,7 +255,6 @@ export function SessionFieldReviewFindings({
 
     if (feedbackId) {
       try {
-        console.log('/feedback/', feedbackId);
         await axios.delete(`/feedback/${feedbackId}`);
         showToast.success('Feedback deleted successfully');
       } catch (error) {
