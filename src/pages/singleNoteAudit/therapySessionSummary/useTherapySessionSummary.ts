@@ -413,7 +413,8 @@ export function useTherapySessionSummary({
             priority: priorityId,
             comment: (commentsByTemplateId?.[templateId] ?? '').trim(),
           });
-          if (!res?.id) continue;
+          const createdId = res?.id || res?.data?.id || res?.data?.smeIssue?.id;
+          if (!createdId) continue;
 
           const template = smeTemplates.find(t => t.id === templateId);
           if (!template || !onSMEIssueCreatedFromTemplate) {
@@ -423,15 +424,15 @@ export function useTherapySessionSummary({
           const irt = issueRelatedTo.find(i => i.id === template.issues_related_to_id);
           const desc = issueDescriptions.find(d => d.id === template.issue_description_id);
           const issueForm: IssueForm = {
-            id: `version-issue-${res.id}`,
+            id: `version-issue-${createdId}`,
             errorType: et?.name ?? '',
             issueRelatedTo: irt?.fieldId ?? '',
             issueDescription: desc?.description ?? '',
             comment: (commentsByTemplateId?.[templateId] ?? '').trim(),
-            _smeIssueId: res.id,
+            _smeIssueId: createdId,
             _isVersionIssue: true,
           };
-          onSMEIssueCreatedFromTemplate(res, issueForm, versionId, template.issue_description_id ?? undefined, revId);
+          onSMEIssueCreatedFromTemplate({ id: createdId }, issueForm, versionId, template.issue_description_id ?? undefined, revId);
           onReviewerIssuesChanged?.(revId);
         }
         setExpandedFieldKey(null);

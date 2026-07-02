@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 import { useAppSelector } from '@/store/store';
-import { BookOpenCheck, HatGlasses, Save, ShieldCheck, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { BookOpenCheck, HatGlasses, Save, ShieldCheck, ThumbsDown, ThumbsUp, Trash2, Pencil } from 'lucide-react';
 import type { NoteDetail, SMEIssue, WebhookVersion } from '@/types/notes';
 import { SmeIssueFindingItem } from './SmeIssueFindingItem';
 import { getSmeIssueDescription, getSmeIssueTitle } from './sessionFieldUtils';
@@ -85,52 +85,63 @@ export function SessionFieldReviewFindings({
   const [aiIssueFeedback, setAiIssueFeedback] = useState<Record<string, string>>({});
   const [savedAiIssueFeedback, setSavedAiIssueFeedback] = useState<Record<string, string>>({});
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState<Record<string, boolean>>({});
-  const [deleteFeedbackIssueKey, setDeleteFeedbackIssueKey] = useState<string | null>(null);
+  const [deleteFeedbackInfo, setDeleteFeedbackInfo] = useState<{ issueKey: string; id: number } | null>(null);
   const [isSavingFeedback, setIsSavingFeedback] = useState<Record<string, boolean>>({});
   const [aiIssueFeedbackIds, setAiIssueFeedbackIds] = useState<Record<string, number>>({});
-  const [aiIssueReviewers, setAiIssueReviewers] = useState<Record<string, string>>({});
+  // const [aiIssueReviewers, setAiIssueReviewers] = useState<Record<string, string>>({});
+
+  const [lastLoadedNoteId, setLastLoadedNoteId] = useState<string | null>(null);
+  const [lastLoadedVersionId, setLastLoadedVersionId] = useState<number | null | undefined>(undefined);
 
   useEffect(() => {
     if (!feedbackVerdicts || !Array.isArray(feedbackVerdicts)) return;
 
-    const initialVotes: Record<string, 'up' | 'down'> = {};
-    const initialFeedback: Record<string, string> = {};
-    const initialIds: Record<string, number> = {};
-    const initialReviewers: Record<string, string> = {};
+    if (lastLoadedNoteId !== noteId || lastLoadedVersionId !== versionId) {
+      const initialVotes: Record<string, 'up' | 'down'> = {};
+      const initialFeedback: Record<string, string> = {};
+      const initialIds: Record<string, number> = {};
+      const initialReviewers: Record<string, string> = {};
 
-    aiIssues.forEach((issue, index) => {
-      const issueKey = getAiIssueKey(issue, index);
+      aiIssues.forEach((issue, index) => {
+        const issueKey = getAiIssueKey(issue, index);
 
-      // Find matching feedback verdict for this issue and current reviewer
-      const match = feedbackVerdicts.find(v => {
-        if (user?.fullName && v.by && v.by.trim().toLowerCase() !== user.fullName.trim().toLowerCase()) {
-          return false;
+        // Find matching feedback verdict for this issue and current reviewer
+        const match = feedbackVerdicts.find(v => {
+          const currentUserIdentifier = user?.fullName?.trim() || user?.email?.trim() || '';
+          if (!currentUserIdentifier) return false;
+
+          const reviewerIdentifier = v.by?.trim() || '';
+          if (reviewerIdentifier.toLowerCase() !== currentUserIdentifier.toLowerCase()) {
+            return false;
+          }
+
+          return (
+            v.code === issue.descriptionId ||
+            v.description_id === issue.descriptionId ||
+            v.code === issue.sectionId ||
+            v.description_id === issue.sectionId
+          );
+        });
+
+        if (match) {
+          const mappedVerdict = match.verdict === 1 || match.verdict === '1' || match.verdict === 'up' ? 'up' : 'down';
+          initialVotes[issueKey] = mappedVerdict;
+          initialIds[issueKey] = match.id;
+          initialReviewers[issueKey] = match.by || '';
+          if (mappedVerdict === 'down' && match.comment && match.comment !== 'null') {
+            initialFeedback[issueKey] = match.comment;
+          }
         }
-
-        return (
-          v.code === issue.descriptionId ||
-          v.description_id === issue.descriptionId ||
-          v.code === issue.sectionId ||
-          v.description_id === issue.sectionId
-        );
       });
 
-      if (match) {
-        const mappedVerdict = match.verdict === 1 || match.verdict === '1' || match.verdict === 'up' ? 'up' : 'down';
-        initialVotes[issueKey] = mappedVerdict;
-        initialIds[issueKey] = match.id;
-        initialReviewers[issueKey] = match.by || '';
-        if (mappedVerdict === 'down' && match.comment && match.comment !== 'null') {
-          initialFeedback[issueKey] = match.comment;
-        }
-      }
-    });
-
-    setAiIssueVotes(initialVotes);
-    setSavedAiIssueFeedback(initialFeedback);
-    setAiIssueFeedbackIds(initialIds);
-    setAiIssueReviewers(initialReviewers);
-  }, [feedbackVerdicts, aiIssues, loggedInUserId, user]);
+      setAiIssueVotes(initialVotes);
+      setSavedAiIssueFeedback(initialFeedback);
+      setAiIssueFeedbackIds(initialIds);
+      // setAiIssueReviewers(initialReviewers);
+      setLastLoadedNoteId(noteId || null);
+      setLastLoadedVersionId(versionId);
+    }
+  }, [feedbackVerdicts, aiIssues, loggedInUserId, user, noteId, versionId, lastLoadedNoteId, lastLoadedVersionId]);
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
@@ -183,7 +194,7 @@ export function SessionFieldReviewFindings({
         if (feedbackId) {
           setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
         }
-        setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
+        // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
         setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'up' }));
         setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
@@ -229,14 +240,38 @@ export function SessionFieldReviewFindings({
         comment: feedback,
       };
 
-      const res: any = await axios.post('/feedback', payload);
-      showToast.success('Feedback submitted successfully');
+      const existingFeedbackId = aiIssueFeedbackIds[issueKey];
+      let res: any;
 
-      const feedbackId = res?.id || res?.verdicts?.[0]?.id || res?.feedbackVerdict?.id || res?.feedbackVerdicts?.[0]?.id || res?.data?.id;
+      if (existingFeedbackId) {
+        try {
+          res = await axios.patch(`/feedback/${existingFeedbackId}`, payload);
+          showToast.success('Feedback updated successfully');
+        } catch {
+          try {
+            await axios.delete(`/feedback/${existingFeedbackId}`);
+          } catch (deleteErr) {
+            console.error('Fallback delete failed:', deleteErr);
+          }
+          res = await axios.post('/feedback', payload);
+          showToast.success('Feedback updated successfully');
+        }
+      } else {
+        res = await axios.post('/feedback', payload);
+        showToast.success('Feedback submitted successfully');
+      }
+
+      const feedbackId =
+        res?.id ||
+        res?.verdicts?.[0]?.id ||
+        res?.feedbackVerdict?.id ||
+        res?.feedbackVerdicts?.[0]?.id ||
+        res?.data?.id ||
+        existingFeedbackId;
       if (feedbackId) {
         setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
       }
-      setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
+      // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
       setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
       setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
@@ -250,8 +285,8 @@ export function SessionFieldReviewFindings({
   };
 
   const handleConfirmDeleteFeedback = async () => {
-    if (!deleteFeedbackIssueKey) return;
-    const feedbackId = aiIssueFeedbackIds[deleteFeedbackIssueKey];
+    if (!deleteFeedbackInfo) return;
+    const { issueKey, id: feedbackId } = deleteFeedbackInfo;
 
     if (feedbackId) {
       try {
@@ -263,23 +298,23 @@ export function SessionFieldReviewFindings({
       }
     }
 
-    clearIssueVoteState(deleteFeedbackIssueKey);
+    clearIssueVoteState(issueKey);
     setSavedAiIssueFeedback(prev => {
       const next = { ...prev };
-      delete next[deleteFeedbackIssueKey];
+      delete next[issueKey];
       return next;
     });
     setAiIssueFeedbackIds(prev => {
       const next = { ...prev };
-      delete next[deleteFeedbackIssueKey];
+      delete next[issueKey];
       return next;
     });
-    setAiIssueReviewers(prev => {
-      const next = { ...prev };
-      delete next[deleteFeedbackIssueKey];
-      return next;
-    });
-    setDeleteFeedbackIssueKey(null);
+    // setAiIssueReviewers(prev => {
+    //   const next = { ...prev };
+    //   delete next[issueKey];
+    //   return next;
+    // });
+    setDeleteFeedbackInfo(null);
     onFeedbackChanged?.();
   };
 
@@ -300,6 +335,15 @@ export function SessionFieldReviewFindings({
             const feedbackText = aiIssueFeedback[issueKey] || '';
             const savedFeedbackText = savedAiIssueFeedback[issueKey];
             const showFeedbackForm = vote === 'down' && isFeedbackFormOpen[issueKey];
+
+            const matches = (feedbackVerdicts || []).filter(v => {
+              return (
+                v.code === issue.descriptionId ||
+                v.description_id === issue.descriptionId ||
+                v.code === issue.sectionId ||
+                v.description_id === issue.sectionId
+              );
+            });
 
             return (
               <div key={`ai-${index}`} className={`rounded-lg border p-3 ${getAiBorderClass(issue.severity)}`}>
@@ -327,70 +371,106 @@ export function SessionFieldReviewFindings({
                 </div>
 
                 <div className="mt-3 border-t border-gray-200 pt-3">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-500">Was this helpful?</p>
-                    <button
-                      type="button"
-                      disabled={vote === 'down' || Boolean(savedFeedbackText)}
-                      className={`rounded-md p-1.5 transition-colors ${
-                        vote === 'up' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-gray-100'
-                      } ${vote === 'down' || savedFeedbackText ? 'cursor-not-allowed opacity-50' : ''}`}
-                      onClick={() => handleVote(issueKey, 'up', issue)}
-                      aria-label="Mark issue as helpful"
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={vote === 'up'}
-                      className={`rounded-md p-1.5 transition-colors ${
-                        vote === 'down' ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100'
-                      } ${vote === 'up' ? 'cursor-not-allowed opacity-50' : ''}`}
-                      onClick={() => handleVote(issueKey, 'down', issue)}
-                      aria-label="Mark issue as unhelpful"
-                    >
-                      <ThumbsDown className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {vote === 'up' && (
-                    <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-gray-900">
-                          Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0 text-gray-600"
-                          onClick={() => setDeleteFeedbackIssueKey(issueKey)}
-                          title="Delete thumbs up"
+                  {(() => {
+                    const isLocked = vote === 'up' || Boolean(savedFeedbackText);
+                    return (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-gray-500">Was this helpful?</p>
+                        <button
+                          type="button"
+                          disabled={isLocked || vote === 'down'}
+                          className={`rounded-md p-1.5 transition-colors ${
+                            vote === 'up' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-gray-100'
+                          } ${isLocked || vote === 'down' ? 'cursor-not-allowed opacity-50' : ''}`}
+                          onClick={() => handleVote(issueKey, 'up', issue)}
+                          aria-label="Mark issue as helpful"
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {savedFeedbackText && !showFeedbackForm && (
-                    <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-gray-900">
-                          Reviewer: {aiIssueReviewers[issueKey] || user?.fullName?.trim() || 'Current User'}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0 text-gray-600"
-                          onClick={() => setDeleteFeedbackIssueKey(issueKey)}
-                          title="Delete feedback"
+                          <ThumbsUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isLocked}
+                          className={`rounded-md p-1.5 transition-colors ${
+                            vote === 'down' ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100'
+                          } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                          onClick={() => handleVote(issueKey, 'down', issue)}
+                          aria-label="Mark issue as unhelpful"
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <ThumbsDown className="h-4 w-4" />
+                        </button>
                       </div>
-                      <div className="mt-2 rounded-sm bg-red-50 p-3 text-sm text-gray-700">{savedFeedbackText}</div>
-                    </div>
-                  )}
+                    );
+                  })()}
+
+                  {(() => {
+                    const currentUserIdentifier = user?.fullName?.trim() || user?.email?.trim() || '';
+                    const hasMyMatch = matches.some(m => {
+                      const reviewerIdentifier = m.by?.trim() || '';
+                      return currentUserIdentifier && reviewerIdentifier.toLowerCase() === currentUserIdentifier.toLowerCase();
+                    });
+
+                    const displayMatches = [...matches];
+
+                    const isWritingFeedback = vote === 'down' && isFeedbackFormOpen[issueKey];
+                    if (!hasMyMatch && vote && !isWritingFeedback) {
+                      displayMatches.push({
+                        id: aiIssueFeedbackIds[issueKey] || Date.now(),
+                        by: user?.fullName || 'Current User',
+                        verdict: vote,
+                        comment: savedFeedbackText || 'null',
+                      });
+                    }
+
+                    return displayMatches.map(match => {
+                      const isMyFeedback =
+                        currentUserIdentifier && match.by && match.by.trim().toLowerCase() === currentUserIdentifier.toLowerCase();
+                      const matchVote = match.verdict === 1 || match.verdict === '1' || match.verdict === 'up' ? 'up' : 'down';
+                      const hasComment = matchVote === 'down' && match.comment && match.comment !== 'null';
+
+                      return (
+                        <div key={`match-${match.id}`} className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="flex items-center gap-1.5 text-sm text-gray-900">
+                              Reviewer: {match.by || 'Unknown Reviewer'}
+                              {matchVote === 'up' ? (
+                                <ThumbsUp className="h-4 w-4 shrink-0 text-green-600" />
+                              ) : (
+                                <ThumbsDown className="h-4 w-4 shrink-0 text-red-600" />
+                              )}
+                            </span>
+                            {isMyFeedback && (
+                              <div className="flex shrink-0 items-center gap-1">
+                                {matchVote === 'down' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="hover:text-primary h-7 w-7 text-gray-600"
+                                    onClick={() => {
+                                      setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: true }));
+                                      setAiIssueFeedback(prev => ({ ...prev, [issueKey]: match.comment || '' }));
+                                    }}
+                                    title="Edit feedback"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                  onClick={() => setDeleteFeedbackInfo({ issueKey, id: match.id })}
+                                  title="Delete feedback"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          {hasComment && <div className="mt-2 rounded-sm bg-red-50 p-3 text-sm text-gray-700">{match.comment}</div>}
+                        </div>
+                      );
+                    });
+                  })()}
 
                   {showFeedbackForm && (
                     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
@@ -463,9 +543,9 @@ export function SessionFieldReviewFindings({
       </div>
 
       <ConfirmationDialog
-        isOpen={deleteFeedbackIssueKey != null}
+        isOpen={deleteFeedbackInfo != null}
         onOpenChange={open => {
-          if (!open) setDeleteFeedbackIssueKey(null);
+          if (!open) setDeleteFeedbackInfo(null);
         }}
         onConfirm={handleConfirmDeleteFeedback}
         title="Delete Feedback"
