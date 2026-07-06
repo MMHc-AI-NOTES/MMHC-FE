@@ -485,6 +485,14 @@ export const AVAILABLE_VARIABLES: AvailableVariable[] = [
 ];
 
 export const FeedbackVerdictEnum = {
-  UP: 1,
-  DOWN: 2,
-} as const;
+  UP: {
+    id: 1,
+    label: 'ACCEPT',
+    mcp_label: 'accept',
+  },
+  DOWN: {
+    id: 2,
+    label: 'REJECT',
+    mcp_label: 'reject',
+  },
+};

@@ -78,6 +78,7 @@ export function SessionFieldReviewFindings({
   onSMEIssueUpdated,
   feedbackVerdicts = [],
   onFeedbackChanged,
+  sessionId,
 }: SessionFieldReviewFindingsProps) {
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
@@ -144,6 +145,38 @@ export function SessionFieldReviewFindings({
     }
   }, [feedbackVerdicts, aiIssues, loggedInUserId, user, noteId, versionId, lastLoadedNoteId, lastLoadedVersionId]);
 
+  useEffect(() => {
+    if (!feedbackVerdicts || !Array.isArray(feedbackVerdicts)) return;
+
+    const idsMap: Record<string, number> = {};
+
+    aiIssues.forEach((issue, index) => {
+      const issueKey = getAiIssueKey(issue, index);
+      const match = feedbackVerdicts.find(v => {
+        const currentUserIdentifier = user?.fullName?.trim() || user?.email?.trim() || '';
+        if (!currentUserIdentifier) return false;
+
+        const reviewerIdentifier = v.by?.trim() || '';
+        if (reviewerIdentifier.toLowerCase() !== currentUserIdentifier.toLowerCase()) {
+          return false;
+        }
+
+        return (
+          v.code === issue.descriptionId ||
+          v.description_id === issue.descriptionId ||
+          v.code === issue.sectionId ||
+          v.description_id === issue.sectionId
+        );
+      });
+
+      if (match) {
+        idsMap[issueKey] = match.id;
+      }
+    });
+
+    setAiIssueFeedbackIds(prev => ({ ...prev, ...idsMap }));
+  }, [feedbackVerdicts, aiIssues, user]);
+
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
   const hasCriticalAiIssue = aiIssues.some(issue => issue.severity === 'CRITICAL');
@@ -182,18 +215,28 @@ export function SessionFieldReviewFindings({
 
       try {
         const payload = {
-          note_id: noteId || '',
+          session_id: sessionId || '',
           description_id: issue.descriptionId || issue.sectionId || '',
-          verdict: FeedbackVerdictEnum.UP,
+          verdict: FeedbackVerdictEnum.UP.id,
           comment: 'null',
         };
 
         const res: any = await axios.post('/feedback', payload);
         showToast.success('Feedback submitted successfully');
 
-        const feedbackId = res?.id || res?.verdicts?.[0]?.id || res?.feedbackVerdict?.id || res?.feedbackVerdicts?.[0]?.id || res?.data?.id;
+        const feedbackId =
+          res?.id ||
+          res?.verdicts?.[0]?.id ||
+          res?.feedbackVerdict?.id ||
+          res?.feedbackVerdicts?.[0]?.id ||
+          res?.data?.id ||
+          res?.data?.feedbackVerdict?.id ||
+          res?.data?.feedbackVerdicts?.[0]?.id ||
+          res?.data?.verdicts?.[0]?.id ||
+          res?.data?.verdict?.id ||
+          (typeof res?.data === 'number' || typeof res?.data === 'string' ? res.data : undefined);
         if (feedbackId) {
-          setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
+          setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: Number(feedbackId) }));
         }
         // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
@@ -235,9 +278,9 @@ export function SessionFieldReviewFindings({
     setIsSavingFeedback(prev => ({ ...prev, [issueKey]: true }));
     try {
       const payload = {
-        note_id: noteId || '',
+        session_id: sessionId || '',
         description_id: issue.descriptionId || issue.sectionId || '',
-        verdict: FeedbackVerdictEnum.DOWN,
+        verdict: FeedbackVerdictEnum.DOWN.id,
         comment: feedback,
       };
 
@@ -268,9 +311,14 @@ export function SessionFieldReviewFindings({
         res?.feedbackVerdict?.id ||
         res?.feedbackVerdicts?.[0]?.id ||
         res?.data?.id ||
+        res?.data?.feedbackVerdict?.id ||
+        res?.data?.feedbackVerdicts?.[0]?.id ||
+        res?.data?.verdicts?.[0]?.id ||
+        res?.data?.verdict?.id ||
+        (typeof res?.data === 'number' || typeof res?.data === 'string' ? res.data : undefined) ||
         existingFeedbackId;
       if (feedbackId) {
-        setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: feedbackId }));
+        setAiIssueFeedbackIds(prev => ({ ...prev, [issueKey]: Number(feedbackId) }));
       }
       // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
