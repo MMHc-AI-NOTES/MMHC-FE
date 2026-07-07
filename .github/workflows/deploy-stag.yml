@@ -50,7 +50,7 @@ jobs:
       - name: Upload index.html with no-cache
         run: |
           aws s3 cp ./build/index.html s3://${{ secrets.STAG_S3_BUCKET }}/index.html \
-            --cache-control "no-cache,no-store,must-revalidate" \
+            --cache-control "public,max-age=60,immutable" \
             --acl public-read
 
       - name: Invalidate CloudFront
