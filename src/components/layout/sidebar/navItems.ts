@@ -1,16 +1,4 @@
-import {
-  LayoutDashboard,
-  FileText,
-  Ban,
-  ShieldCheck,
-  ScrollText,
-  Settings,
-  HelpCircle,
-  LogOut,
-  FilePlus,
-  UserCheck,
-  Users,
-} from 'lucide-react';
+import { LayoutDashboard, FileText, ShieldCheck, ScrollText, Settings, HelpCircle, LogOut, FilePlus, UserCheck, Users } from 'lucide-react';
 import { UserRoleEnum } from '@/constants/common';
 import type { UserRole } from '@/types/settings';
 
@@ -20,7 +8,7 @@ export const allNavItems: NavItem[] = [
   { path: '/notes-queue', name: 'Notes Queue', icon: FileText },
   // { path: '/single-note-audit', name: 'Single Note Audit', icon: FileSearch },
   { path: '/admin-review-queue', name: 'Admin Review Queue', icon: UserCheck },
-  { path: '/blacklisted-notes', name: 'Blacklisted Notes', icon: Ban },
+  // { path: '/blacklisted-notes', name: 'Blacklisted Notes', icon: Ban },
   { path: '/manager-review', name: 'Manager Review', icon: ShieldCheck },
   { path: '/ai-logs', name: 'AI Logs', icon: ScrollText },
   { path: '/settings', name: 'Settings', icon: Settings },
