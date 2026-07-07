@@ -27,6 +27,9 @@ interface SessionFieldCardProps {
   disableAddButton?: boolean;
   noteId?: string;
   versionId?: number | null;
+  scorerVersion?: string;
+  sessionId?: string;
+  feedbackVerdicts?: any[];
   practitionerId?: number;
   aiStatusId?: number;
   priorityId?: number;
@@ -42,6 +45,7 @@ interface SessionFieldCardProps {
   onTemplateChange: (value: number[]) => void;
   onSave: (fieldKey: string, commentsByTemplateId?: Record<number, string>) => void;
   onCloseForm: () => void;
+  onFeedbackChanged?: () => void;
 }
 
 export function SessionFieldCard({
@@ -64,6 +68,9 @@ export function SessionFieldCard({
   disableAddButton = false,
   noteId,
   versionId,
+  scorerVersion = '',
+  sessionId = '',
+  feedbackVerdicts = [],
   practitionerId = 0,
   aiStatusId = 1,
   priorityId = 1,
@@ -75,6 +82,7 @@ export function SessionFieldCard({
   onTemplateChange,
   onSave,
   onCloseForm,
+  onFeedbackChanged,
 }: SessionFieldCardProps) {
   const previousDisplayValue = previousValue ?? '-';
 
@@ -156,6 +164,9 @@ export function SessionFieldCard({
         smeIssues={smeIssues}
         noteId={noteId}
         versionId={versionId}
+        scorerVersion={scorerVersion}
+        sessionId={sessionId}
+        feedbackVerdicts={feedbackVerdicts}
         practitionerId={practitionerId}
         aiStatusId={aiStatusId}
         priorityId={priorityId}
@@ -165,6 +176,7 @@ export function SessionFieldCard({
         alreadyUsedDescriptionIds={alreadyUsedDescriptionIds}
         onSMEIssueDeleted={onSMEIssueDeleted}
         onSMEIssueUpdated={onSMEIssueUpdated}
+        onFeedbackChanged={onFeedbackChanged}
       />
     </div>
   );
