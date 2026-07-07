@@ -8,7 +8,7 @@ import { Trash2, Zap } from 'lucide-react';
 import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys } from '@/constants/common';
 import { SessionMetadata, PractitionerDetails, AuditControls } from '@/types/noteSubmission';
 import { submitNoteForAudit, invokeSessionReview } from './noteSubmissionApiCalls';
-import SubmissionFormSelects from './SubmissionFormSelects';
+// import SubmissionFormSelects from './SubmissionFormSelects';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
@@ -68,7 +68,7 @@ const NoteSubmission: React.FC = () => {
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   // Form state
-  const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
+  const [modelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
   const [rawResponseText, setRawResponseText] = useState<string>('');
@@ -378,13 +378,13 @@ const NoteSubmission: React.FC = () => {
           </div>
 
           {/* Form Selects */}
-          <SubmissionFormSelects
+          {/* <SubmissionFormSelects
             modelVersion={modelVersion}
             onModelVersionChange={setModelVersion}
             selectedAgentId={selectedAgentId}
             onAgentChange={value => dispatch(setSelectedAgentId(value))}
             agents={agents}
-          />
+          /> */}
 
           {/* Current Session */}
           <div className="space-y-1">
