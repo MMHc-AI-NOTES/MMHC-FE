@@ -488,11 +488,13 @@ export const FeedbackVerdictEnum = {
   UP: {
     id: 1,
     label: 'ACCEPT',
+    icon_text: 'up',
     mcp_label: 'accept',
   },
   DOWN: {
     id: 2,
     label: 'REJECT',
+    icon_text: 'down',
     mcp_label: 'reject',
   },
 };

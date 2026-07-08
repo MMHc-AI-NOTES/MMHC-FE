@@ -83,7 +83,7 @@ export function SessionFieldReviewFindings({
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
   const user = useAppSelector(state => state.auth.user);
-  const [aiIssueVotes, setAiIssueVotes] = useState<Record<string, 'up' | 'down'>>({});
+  const [aiIssueVotes, setAiIssueVotes] = useState<Record<string, string>>({});
   const [aiIssueFeedback, setAiIssueFeedback] = useState<Record<string, string>>({});
   const [savedAiIssueFeedback, setSavedAiIssueFeedback] = useState<Record<string, string>>({});
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState<Record<string, boolean>>({});
@@ -99,7 +99,7 @@ export function SessionFieldReviewFindings({
     if (!feedbackVerdicts || !Array.isArray(feedbackVerdicts)) return;
 
     if (lastLoadedNoteId !== noteId || lastLoadedVersionId !== versionId) {
-      const initialVotes: Record<string, 'up' | 'down'> = {};
+      const initialVotes: Record<string, string> = {};
       const initialFeedback: Record<string, string> = {};
       const initialIds: Record<string, number> = {};
       const initialReviewers: Record<string, string> = {};
@@ -126,11 +126,14 @@ export function SessionFieldReviewFindings({
         });
 
         if (match) {
-          const mappedVerdict = match.verdict === 1 || match.verdict === '1' || match.verdict === 'up' ? 'up' : 'down';
+          const mappedVerdict =
+            match.verdict === 1 || match.verdict === '1' || match.verdict === 'up'
+              ? FeedbackVerdictEnum.UP.icon_text
+              : FeedbackVerdictEnum.DOWN.icon_text;
           initialVotes[issueKey] = mappedVerdict;
           initialIds[issueKey] = match.id;
           initialReviewers[issueKey] = match.by || '';
-          if (mappedVerdict === 'down' && match.comment && match.comment !== 'null') {
+          if (mappedVerdict === FeedbackVerdictEnum.DOWN.icon_text && match.comment && match.comment !== 'null') {
             initialFeedback[issueKey] = match.comment;
           }
         }
@@ -198,11 +201,16 @@ export function SessionFieldReviewFindings({
       delete next[issueKey];
       return next;
     });
+    setAiIssueFeedbackIds(prev => {
+      const next = { ...prev };
+      delete next[issueKey];
+      return next;
+    });
   };
 
-  const handleVote = async (issueKey: string, vote: 'up' | 'down', issue: NoteDetail['issues'][number]) => {
-    if (vote === 'up') {
-      const isCurrentlyUp = aiIssueVotes[issueKey] === 'up';
+  const handleVote = async (issueKey: string, vote: string, issue: NoteDetail['issues'][number]) => {
+    if (vote === FeedbackVerdictEnum.UP.icon_text) {
+      const isCurrentlyUp = aiIssueVotes[issueKey] === FeedbackVerdictEnum.UP.icon_text;
       if (isCurrentlyUp) {
         setAiIssueVotes(prev => {
           const next = { ...prev };
@@ -240,7 +248,7 @@ export function SessionFieldReviewFindings({
         }
         // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
-        setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'up' }));
+        setAiIssueVotes(prev => ({ ...prev, [issueKey]: FeedbackVerdictEnum.UP.icon_text }));
         setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
         onFeedbackChanged?.();
       } catch (error) {
@@ -249,7 +257,7 @@ export function SessionFieldReviewFindings({
       return;
     }
 
-    setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
+    setAiIssueVotes(prev => ({ ...prev, [issueKey]: FeedbackVerdictEnum.DOWN.icon_text }));
     setAiIssueFeedback(prev => ({ ...prev, [issueKey]: prev[issueKey] ?? savedAiIssueFeedback[issueKey] ?? '' }));
     setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: true }));
   };
@@ -264,7 +272,7 @@ export function SessionFieldReviewFindings({
 
     if (savedFeedback) {
       setAiIssueFeedback(prev => ({ ...prev, [issueKey]: savedFeedback }));
-      setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
+      setAiIssueVotes(prev => ({ ...prev, [issueKey]: FeedbackVerdictEnum.DOWN.icon_text }));
       return;
     }
 
@@ -289,17 +297,12 @@ export function SessionFieldReviewFindings({
 
       if (existingFeedbackId) {
         try {
-          res = await axios.patch(`/feedback/${existingFeedbackId}`, payload);
-          showToast.success('Feedback updated successfully');
-        } catch {
-          try {
-            await axios.delete(`/feedback/${existingFeedbackId}`);
-          } catch (deleteErr) {
-            console.error('Fallback delete failed:', deleteErr);
-          }
-          res = await axios.post('/feedback', payload);
-          showToast.success('Feedback updated successfully');
+          await axios.delete(`/feedback/${existingFeedbackId}`);
+        } catch (deleteErr) {
+          console.error('Feedback delete failed:', deleteErr);
         }
+        res = await axios.post('/feedback', payload);
+        showToast.success('Feedback updated successfully');
       } else {
         res = await axios.post('/feedback', payload);
         showToast.success('Feedback submitted successfully');
@@ -323,7 +326,7 @@ export function SessionFieldReviewFindings({
       // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
       setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
-      setAiIssueVotes(prev => ({ ...prev, [issueKey]: 'down' }));
+      setAiIssueVotes(prev => ({ ...prev, [issueKey]: FeedbackVerdictEnum.DOWN.icon_text }));
       setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
       onFeedbackChanged?.();
     } catch (error) {
@@ -383,7 +386,7 @@ export function SessionFieldReviewFindings({
             const vote = aiIssueVotes[issueKey];
             const feedbackText = aiIssueFeedback[issueKey] || '';
             const savedFeedbackText = savedAiIssueFeedback[issueKey];
-            const showFeedbackForm = vote === 'down' && isFeedbackFormOpen[issueKey];
+            const showFeedbackForm = vote === FeedbackVerdictEnum.DOWN.icon_text && isFeedbackFormOpen[issueKey];
 
             const matches = (feedbackVerdicts || []).filter(v => {
               return (
@@ -439,17 +442,17 @@ export function SessionFieldReviewFindings({
 
                 <div className="mt-3 border-t border-gray-200 pt-3">
                   {(() => {
-                    const isLocked = vote === 'up' || Boolean(savedFeedbackText);
+                    const isLocked = vote === FeedbackVerdictEnum.UP.icon_text || Boolean(savedFeedbackText);
                     return (
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-gray-500">Was this helpful?</p>
                         <button
                           type="button"
-                          disabled={isLocked || vote === 'down'}
+                          disabled={isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text}
                           className={`rounded-md p-1.5 transition-colors ${
-                            vote === 'up' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-gray-100'
-                          } ${isLocked || vote === 'down' ? 'cursor-not-allowed opacity-50' : ''}`}
-                          onClick={() => handleVote(issueKey, 'up', issue)}
+                            vote === FeedbackVerdictEnum.UP.icon_text ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-gray-100'
+                          } ${isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text ? 'cursor-not-allowed opacity-50' : ''}`}
+                          onClick={() => handleVote(issueKey, FeedbackVerdictEnum.UP.icon_text, issue)}
                           aria-label="Mark issue as helpful"
                         >
                           <ThumbsUp className="h-4 w-4" />
@@ -458,9 +461,9 @@ export function SessionFieldReviewFindings({
                           type="button"
                           disabled={isLocked}
                           className={`rounded-md p-1.5 transition-colors ${
-                            vote === 'down' ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100'
+                            vote === FeedbackVerdictEnum.DOWN.icon_text ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100'
                           } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
-                          onClick={() => handleVote(issueKey, 'down', issue)}
+                          onClick={() => handleVote(issueKey, FeedbackVerdictEnum.DOWN.icon_text, issue)}
                           aria-label="Mark issue as unhelpful"
                         >
                           <ThumbsDown className="h-4 w-4" />
@@ -478,7 +481,7 @@ export function SessionFieldReviewFindings({
 
                     const displayMatches = [...matches];
 
-                    const isWritingFeedback = vote === 'down' && isFeedbackFormOpen[issueKey];
+                    const isWritingFeedback = vote === FeedbackVerdictEnum.DOWN.icon_text && isFeedbackFormOpen[issueKey];
                     if (!hasMyMatch && vote && !isWritingFeedback) {
                       displayMatches.push({
                         id: aiIssueFeedbackIds[issueKey] || Date.now(),
@@ -491,15 +494,18 @@ export function SessionFieldReviewFindings({
                     return displayMatches.map(match => {
                       const isMyFeedback =
                         currentUserIdentifier && match.by && match.by.trim().toLowerCase() === currentUserIdentifier.toLowerCase();
-                      const matchVote = match.verdict === 1 || match.verdict === '1' || match.verdict === 'up' ? 'up' : 'down';
-                      const hasComment = matchVote === 'down' && match.comment && match.comment !== 'null';
+                      const matchVote =
+                        match.verdict === 1 || match.verdict === '1' || match.verdict === 'up'
+                          ? FeedbackVerdictEnum.UP.icon_text
+                          : FeedbackVerdictEnum.DOWN.icon_text;
+                      const hasComment = matchVote === FeedbackVerdictEnum.DOWN.icon_text && match.comment && match.comment !== 'null';
 
                       return (
                         <div key={`match-${match.id}`} className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
                           <div className="flex items-start justify-between gap-2">
                             <span className="flex items-center gap-1.5 text-sm text-gray-900">
                               Reviewer: {match.by || 'Unknown Reviewer'}
-                              {matchVote === 'up' ? (
+                              {matchVote === FeedbackVerdictEnum.UP.icon_text ? (
                                 <ThumbsUp className="h-4 w-4 shrink-0 text-green-600" />
                               ) : (
                                 <ThumbsDown className="h-4 w-4 shrink-0 text-red-600" />
@@ -507,7 +513,7 @@ export function SessionFieldReviewFindings({
                             </span>
                             {isMyFeedback && (
                               <div className="flex shrink-0 items-center gap-1">
-                                {matchVote === 'down' && (
+                                {matchVote === FeedbackVerdictEnum.DOWN.icon_text && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
