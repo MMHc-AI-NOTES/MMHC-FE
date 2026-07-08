@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { AILog } from '@/types/aiLogs';
 import { FileText, Hash, Database, Code, Clock, Activity, Calendar, Zap, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDateTime, getModelDisplayName, getScorerVersion } from '@/utils/helper';
+import { formatDateTime, getScorerVersion } from '@/utils/helper';
 import { ChatTriggerSourceEnum } from '@/constants/common';
 
 interface LogDetailsCardProps {
@@ -13,7 +13,7 @@ interface LogDetailsCardProps {
 }
 
 const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
-  const modelDisplayName = getModelDisplayName(log.modelId);
+  // const modelDisplayName = getModelDisplayName(log.modelId);
 
   const getConfidenceLevel = (score: number) => {
     if (score >= 95) {
@@ -64,7 +64,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
               </div>
               <Badge className="bg-blue-light text-blue gap-1.5 rounded-md [&>svg]:!size-3">
                 <Database className="h-3 w-3" />
-                {modelDisplayName}
+                {getScorerVersion(log) || log.agent?.name || log.prompt || '-'}
               </Badge>
             </div>
 
