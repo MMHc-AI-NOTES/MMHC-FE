@@ -493,8 +493,8 @@ export const FeedbackVerdictEnum = {
   },
   DOWN: {
     id: 2,
-    label: 'REJECT',
+    label: 'REFUTE',
     icon_text: 'down',
-    mcp_label: 'reject',
+    mcp_label: 'refute',
   },
 };
