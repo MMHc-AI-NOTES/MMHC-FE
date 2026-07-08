@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { AILog } from '@/types/aiLogs';
 import { FileText, Hash, Database, Code, Clock, Activity, Calendar, Zap, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDateTime, getModelDisplayName } from '@/utils/helper';
+import { formatDateTime, getModelDisplayName, getScorerVersion } from '@/utils/helper';
 import { ChatTriggerSourceEnum } from '@/constants/common';
 
 interface LogDetailsCardProps {
@@ -74,7 +74,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
                 <Code className="h-4 w-4" />
                 <span className="text-sm">Prompt Agent:</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">{log.agent?.name || '-'}</span>
+              <span className="text-sm font-medium text-gray-900">{getScorerVersion(log) || log.agent?.name || log.prompt || '-'}</span>
             </div>
           </div>
           <div>
