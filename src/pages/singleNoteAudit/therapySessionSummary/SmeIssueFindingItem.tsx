@@ -202,12 +202,6 @@ export function SmeIssueFindingItem({
               <>
                 <p className="text-sm font-semibold text-gray-900">{getSmeIssueTitle(issue)}</p>
                 <p className="text-xs leading-relaxed text-gray-600">{getSmeIssueDescription(issue)}</p>
-                {issue.comment?.trim() && (
-                  <div className="mt-2 rounded-md border-l-2 border-green-600 bg-white/80 px-3 py-2">
-                    <p className="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Practitioner Reply</p>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-700 italic">&ldquo;{issue.comment.trim()}&rdquo;</p>
-                  </div>
-                )}
               </>
             ) : (
               <div className="space-y-3 rounded-lg border bg-white p-3">
@@ -255,6 +249,12 @@ export function SmeIssueFindingItem({
             )}
           </div>
         </div>
+
+        {!isEditing && issue.comment?.trim() && (
+          <div className="mt-2 rounded-md border-l-2 border-green-600 bg-white/80 px-3 py-2">
+            <p className="mt-0 text-xs leading-relaxed text-gray-700 italic">&ldquo;{issue.comment.trim()}&rdquo;</p>
+          </div>
+        )}
       </div>
 
       <ConfirmationDialog

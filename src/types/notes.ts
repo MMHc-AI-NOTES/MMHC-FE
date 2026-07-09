@@ -93,6 +93,7 @@ export interface DiagnosisItem {
 
 export interface NoteDetail {
   id: string;
+  dbId?: number;
   aiStatus: { id: number; name: string };
   priority: { id: number; name: string };
   humanReview: HumanReview[] | null;
@@ -101,6 +102,7 @@ export interface NoteDetail {
   cptCode: number;
   reviewCycle: { id: number; name: string };
   clientId: string;
+  sessionId?: string;
   noteType: string;
   aiReviews: number;
   auditScore: number;
@@ -119,6 +121,7 @@ export interface NoteDetail {
     description: string;
     justification?: string;
     sectionId: string;
+    descriptionId?: string;
     confidence?: number;
     evidence?: string;
   }[];
@@ -131,6 +134,7 @@ export interface NoteDetail {
   noteReviewMarksRaw?: NoteReviewMarkItem[];
   /** Client diagnoses from note detail API */
   diagnosis?: DiagnosisItem[];
+  feedbackVerdicts?: any[];
 }
 
 export interface NoteSection {
@@ -290,6 +294,8 @@ export interface ApiNoteDetail {
   noteReviewMarks?: NoteReviewMarkItem[];
   Diagnosis?: DiagnosisItem[];
   diagnosis?: DiagnosisItem[];
+  feedbackVerdicts?: any[];
+  feedback_verdicts?: any[];
 }
 
 // Queue Overview Data
