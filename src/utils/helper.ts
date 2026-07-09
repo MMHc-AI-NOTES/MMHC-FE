@@ -231,3 +231,34 @@ export const formatJsonToText = (jsonString: string | undefined): string => {
     return String(jsonString);
   }
 };
+
+export const getScorerVersion = (log: any): string => {
+  if (log?.mcp_response) {
+    if (typeof log.mcp_response === 'object') {
+      return log.mcp_response.meta?.scorer_version || log.mcp_response.model_version || '';
+    }
+    try {
+      const parsed = JSON.parse(log.mcp_response);
+      return parsed.meta?.scorer_version || parsed.model_version || '';
+    } catch (e) {
+      void e;
+    }
+  }
+
+  if (log?.bedrockResponse) {
+    const br = log.bedrockResponse as any;
+    if (br.mcp_response) {
+      return br.mcp_response.meta?.scorer_version || br.mcp_response.model_version || '';
+    }
+    if (br.raw_response) {
+      try {
+        const parsed = JSON.parse(br.raw_response);
+        return parsed.meta?.scorer_version || parsed.model_version || '';
+      } catch (e) {
+        void e;
+      }
+    }
+  }
+
+  return '';
+};
