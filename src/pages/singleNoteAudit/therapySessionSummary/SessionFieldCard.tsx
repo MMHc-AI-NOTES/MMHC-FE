@@ -26,6 +26,7 @@ interface SessionFieldCardProps {
   showSMEActions: boolean;
   disableAddButton?: boolean;
   noteId?: string;
+  id?: number;
   versionId?: number | null;
   scorerVersion?: string;
   sessionId?: string;
@@ -67,6 +68,7 @@ export function SessionFieldCard({
   showSMEActions,
   disableAddButton = false,
   noteId,
+  id,
   versionId,
   scorerVersion = '',
   sessionId = '',
@@ -163,6 +165,7 @@ export function SessionFieldCard({
         aiIssues={aiIssues}
         smeIssues={smeIssues}
         noteId={noteId}
+        id={id}
         versionId={versionId}
         scorerVersion={scorerVersion}
         sessionId={sessionId}

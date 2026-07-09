@@ -87,6 +87,7 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
 
   return {
     id: apiData.noteId,
+    dbId: apiData.id,
     date: formattedDate,
     practitioner: apiData.practitioner.fullName,
     cptCode: apiData.cptCodeId,
@@ -153,9 +154,9 @@ const SingleNoteAudit = () => {
   const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
-  const [markedForReviewAt] = useState<string | null>(null);
+  const markedForReviewAt: string | null = null;
   const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
-  const [assignedToManagerAt] = useState<string | null>(null);
+  const assignedToManagerAt: string | null = null;
   const [activityRefreshTrigger, setActivityRefreshTrigger] = useState(0);
 
   const searchParams = new URLSearchParams(location.search);
@@ -491,6 +492,7 @@ const SingleNoteAudit = () => {
           aiIssues={noteDetail.issues}
           onVersionChange={setSelectedVersionId}
           noteId={noteId}
+          id={noteDetail.dbId}
           versionId={selectedVersionId}
           reviewerId={reviewerId ?? loggedInUserId}
           practitionerId={practitionerId ?? 0}

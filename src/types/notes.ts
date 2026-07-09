@@ -93,6 +93,7 @@ export interface DiagnosisItem {
 
 export interface NoteDetail {
   id: string;
+  dbId?: number;
   aiStatus: { id: number; name: string };
   priority: { id: number; name: string };
   humanReview: HumanReview[] | null;

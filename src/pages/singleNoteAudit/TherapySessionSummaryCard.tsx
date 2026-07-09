@@ -15,6 +15,7 @@ interface TherapySessionSummaryCardProps {
   aiIssues?: NoteDetail['issues'];
   onVersionChange?: (versionId: number) => void;
   noteId?: string;
+  id?: number;
   versionId?: number | null;
   reviewerId?: number | null;
   practitionerId?: number;
@@ -42,6 +43,7 @@ const TherapySessionSummaryCard = ({
   aiIssues = [],
   onVersionChange,
   noteId,
+  id,
   versionId,
   reviewerId,
   practitionerId = 0,
@@ -164,6 +166,7 @@ const TherapySessionSummaryCard = ({
         showSMEActions={showSMEActions}
         disableAddButton={isHistoricalVersion}
         noteId={noteId}
+        id={id}
         versionId={versionId}
         scorerVersion={scorerVersion}
         sessionId={sessionId}

@@ -37,6 +37,7 @@ interface SessionFieldReviewFindingsProps {
   sessionId?: string;
   feedbackVerdicts?: any[];
   onFeedbackChanged?: () => void;
+  id?: number;
 }
 
 const getAiSeverityClass = (severity: NoteDetail['issues'][number]['severity']) => {
@@ -78,7 +79,7 @@ export function SessionFieldReviewFindings({
   onSMEIssueUpdated,
   feedbackVerdicts = [],
   onFeedbackChanged,
-  sessionId,
+  id,
 }: SessionFieldReviewFindingsProps) {
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
@@ -223,7 +224,7 @@ export function SessionFieldReviewFindings({
 
       try {
         const payload = {
-          session_id: sessionId || '',
+          session_id: id,
           description_id: issue.descriptionId || issue.sectionId || '',
           verdict: FeedbackVerdictEnum.UP.id,
           comment: 'null',
@@ -286,7 +287,7 @@ export function SessionFieldReviewFindings({
     setIsSavingFeedback(prev => ({ ...prev, [issueKey]: true }));
     try {
       const payload = {
-        session_id: sessionId || '',
+        session_id: id,
         description_id: issue.descriptionId || issue.sectionId || '',
         verdict: FeedbackVerdictEnum.DOWN.id,
         comment: feedback,
