@@ -556,9 +556,9 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
+            {/* {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
               <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />
-            )}
+            )} */}
             {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
