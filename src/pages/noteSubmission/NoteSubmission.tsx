@@ -493,7 +493,7 @@ const NoteSubmission: React.FC = () => {
                               <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                              <span className="font-medium">Description:</span> {issue.severity_details || '-'}
+                              <span className="font-medium">Description:</span> {issue.description || '-'}
                             </p>
                           </div>
                         </div>
