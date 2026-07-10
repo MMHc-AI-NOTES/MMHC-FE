@@ -446,7 +446,7 @@ export function SessionFieldReviewFindings({
                     const isLocked = vote === FeedbackVerdictEnum.UP.icon_text || Boolean(savedFeedbackText);
                     return (
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-gray-500">Was this helpful?</p>
+                        <p className="text-sm font-semibold text-gray-500">Is this Correct?</p>
                         <button
                           type="button"
                           disabled={isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text}
