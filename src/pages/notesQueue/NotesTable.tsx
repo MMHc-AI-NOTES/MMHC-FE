@@ -467,7 +467,7 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, 
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{note.type}</TableCell>
+                <TableCell className="capitalize">{note.type}</TableCell>
                 <TableCell className="font-medium">{cptCodes.find(cptCode => cptCode.id === note.cptCode)?.code || '-'}</TableCell>
                 <TableCell className="font-medium">{note.noteId}</TableCell>
                 <TableCell className="font-semibold">{note.aiScore}</TableCell>

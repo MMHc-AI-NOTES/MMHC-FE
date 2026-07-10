@@ -9,8 +9,7 @@ export interface RawApiNote {
   practitionerId: number;
   client?: string;
   clientId?: string;
-  type?: number;
-  noteType?: { id: number; name: string };
+  type?: { id: number; name: string };
   aiScore?: { id: number; name: string };
   aiStatus?: { id: number; name: string };
   humanReview?: { id: number; name: string };
