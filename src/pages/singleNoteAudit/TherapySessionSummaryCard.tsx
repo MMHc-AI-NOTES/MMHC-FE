@@ -16,6 +16,8 @@ interface TherapySessionSummaryCardProps {
   onVersionChange?: (versionId: number) => void;
   noteId?: string;
   id?: number;
+  chatId?: number;
+  auditScore?: number;
   versionId?: number | null;
   reviewerId?: number | null;
   practitionerId?: number;
@@ -44,6 +46,8 @@ const TherapySessionSummaryCard = ({
   onVersionChange,
   noteId,
   id,
+  chatId,
+  auditScore,
   versionId,
   reviewerId,
   practitionerId = 0,
@@ -167,6 +171,8 @@ const TherapySessionSummaryCard = ({
         disableAddButton={isHistoricalVersion}
         noteId={noteId}
         id={id}
+        chatId={chatId}
+        auditScore={auditScore}
         versionId={versionId}
         scorerVersion={scorerVersion}
         sessionId={sessionId}
