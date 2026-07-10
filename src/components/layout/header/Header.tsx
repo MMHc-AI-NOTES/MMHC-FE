@@ -1,6 +1,6 @@
 import HeaderLeft from './HeaderLeft';
 // import ThemeToggle from './ThemeToggle';
-import NotificationButton from './NotificationButton';
+// import NotificationButton from './NotificationButton';
 import UserDropdown from './UserDropdown';
 import GlobalSearch from './GlobalSearch';
 
@@ -13,7 +13,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
           {/* <ThemeToggle /> */}
           <GlobalSearch />
-          <NotificationButton />
+          {/* <NotificationButton /> */}
           <UserDropdown />
         </div>
       </div>

@@ -4,7 +4,8 @@ import { AILogsTable } from './AILogsTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { AILog } from '@/types/aiLogs';
-import { fetchAILogs } from './aiLogsApiCalls';
+import { fetchAILogs, triggerRerunAudit } from './aiLogsApiCalls';
+import { showToast } from '@/lib/toast';
 import { fetchAgents } from '../settings/settingsApiCalls';
 import { Agent } from '@/types/agent';
 import { Card } from '@/components/ui/card';
@@ -189,9 +190,25 @@ const AILogs = () => {
   };
 
   // Handle re-run audit
-  const handleReRunAudit = (samePrompt: boolean, agentId?: number) => {
-    console.log('Re-running audit with', samePrompt ? 'same' : 'latest', 'prompt', agentId ? `using agent ${agentId}` : '');
-    // Implement re-run logic here
+  const handleReRunAudit = async (_samePrompt: boolean, _agentId?: number) => {
+    void _samePrompt;
+    void _agentId;
+    if (!selectedLog || !selectedLog.noteId) {
+      showToast.error('No note ID associated with this log.');
+      return;
+    }
+
+    try {
+      showToast.info('Re-running AI Audit...');
+      const response = await triggerRerunAudit(selectedLog.noteId);
+      if (response) {
+        showToast.success('AI Audit re-run triggered successfully!');
+        // Reload current page logs
+        handlePageChange(currentPage);
+      }
+    } catch (error) {
+      console.error('Error re-running audit:', error);
+    }
   };
 
   return (
@@ -247,7 +264,7 @@ const AILogs = () => {
 
       {/* Log Details Section */}
       {selectedLog ? (
-        <LogDetailsSection log={selectedLog} agents={agents} onReRunAudit={handleReRunAudit} />
+        <LogDetailsSection log={selectedLog} onReRunAudit={handleReRunAudit} />
       ) : (
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center">

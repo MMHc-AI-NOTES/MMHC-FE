@@ -38,8 +38,8 @@ export const invokeSessionReview = async (payload: SessionReviewPayload): Promis
     if (mcpResponse && typeof mcpResponse === 'object') {
       const issues = Array.isArray(mcpResponse.ai_issues)
         ? mcpResponse.ai_issues.map((issue: any) => ({
-            severity: issue.error_type || 'minor',
-            section: issue.section || 'Overall',
+            severity: issue.error_type || '',
+            section: issue.section || '',
             description: issue.description || '',
             justification: issue.justification || '',
             severity_details: issue.justification || issue.description || '',

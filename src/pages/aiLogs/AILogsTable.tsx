@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GradientBadge } from '@/shared/GradientBadge';
 import { AILog } from '@/types/aiLogs';
 import { getResultStatus } from './aiLogsApiCalls';
-import { getModelDisplayName, formatDateTime } from '@/utils/helper';
+import { formatDateTime, getScorerVersion } from '@/utils/helper';
 
 interface AILogsTableProps {
   logs: AILog[];
@@ -79,7 +79,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                 <TableHead className="text-primary min-w-[100px] font-semibold">LOG ID</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
                 <TableHead className="text-primary min-w-[130px] font-semibold">MODEL VERSION</TableHead>
-                <TableHead className="text-primary min-w-[120px] font-semibold">PROMPT VERSION</TableHead>
+                {/* <TableHead className="text-primary min-w-[120px] font-semibold">SCORER VERSION</TableHead> */}
                 <TableHead className="text-primary min-w-[160px] font-semibold">TIMESTAMP</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">RESULT</TableHead>
                 <TableHead className="text-primary min-w-[100px] font-semibold">SEVERITY</TableHead>
@@ -108,7 +108,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
               <TableHead className="text-primary min-w-[100px] font-semibold">LOG ID</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">NOTE ID</TableHead>
               <TableHead className="text-primary min-w-[130px] font-semibold">MODEL VERSION</TableHead>
-              <TableHead className="text-primary min-w-[120px] font-semibold">PROMPT VERSION</TableHead>
+              {/* <TableHead className="text-primary min-w-[120px] font-semibold">SCORER VERSION</TableHead> */}
               <TableHead className="text-primary min-w-[160px] font-semibold">TIMESTAMP</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">RESULT</TableHead>
               <TableHead className="text-primary min-w-[100px] font-semibold">SEVERITY</TableHead>
@@ -131,13 +131,13 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                   <TableCell className="text-sm text-gray-600">{log.noteId || '-'}</TableCell>
                   <TableCell>
                     <GradientBadge
-                      label={getModelDisplayName(log.modelId)}
+                      label={getScorerVersion(log) || log.agent?.name || log.prompt || '-'}
                       gradient="bg-gradient-blue"
                       icon={<Database className="h-4 w-4" />}
                       className="rounded-[6px] text-[#0369a1]!"
                     />
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">{log.agent?.name || '-'}</TableCell>
+                  {/* <TableCell className="text-sm text-gray-600">{getScorerVersion(log) || log.agent?.name || log.prompt || '-'}</TableCell> */}
                   <TableCell className="text-sm text-gray-600">{formatDateTime(log.createdAt)}</TableCell>
                   <TableCell>
                     <GradientBadge

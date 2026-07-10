@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AILog } from '@/types/aiLogs';
-import { Copy, Check, Code, Zap, History } from 'lucide-react';
+import { Copy, Check, Code, Zap } from 'lucide-react';
 import { EvaluationPromptKeys } from '@/constants/common';
 import { cleanSummary } from '@/utils/helper';
 
@@ -56,13 +56,13 @@ const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
           <Code className="h-4 w-4" />
           Prompt (Raw Input)
         </Button>
-        <Button
+        {/* <Button
           onClick={() => setActiveTab('prompt-history')}
           className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'prompt-history' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600'}`}
         >
           <History className="h-4 w-4" />
           Prompt History (All Prompts)
-        </Button>
+        </Button> */}
         <Button
           onClick={() => setActiveTab('output')}
           className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'output' ? 'bg-primary-light text-primary' : 'bg-gray-50 text-gray-600'}`}
