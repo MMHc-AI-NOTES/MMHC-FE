@@ -397,6 +397,7 @@ export interface SMETemplate {
   error_type_id: number;
   issues_related_to_id: number;
   issue_description_id: number;
+  description_id?: string | null;
 }
 
 export interface SMETemplateListingResponse {
@@ -412,6 +413,7 @@ const normalizeSMETemplate = (api: any): SMETemplate => ({
   error_type_id: api?.error_type_id ?? api?.errorTypeId,
   issues_related_to_id: api?.issues_related_to_id ?? api?.issuesRelatedToId,
   issue_description_id: api?.issue_description_id ?? api?.issueDescriptionId,
+  description_id: api?.description_id ?? api?.descriptionId ?? null,
 });
 
 export const fetchSMETemplates = async (): Promise<SMETemplate[]> => {
@@ -440,6 +442,7 @@ export interface CreateSMETemplatePayload {
   error_type_id: number;
   issues_related_to_id: number;
   issue_description_id: number;
+  description_id?: string | null;
 }
 
 export const createSMETemplate = async (payload: CreateSMETemplatePayload): Promise<SMETemplate | null> => {
