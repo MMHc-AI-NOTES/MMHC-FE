@@ -73,4 +73,7 @@ export interface AILog {
   endTime: string;
   user: AILogUser;
   humanReviews: AILogHumanReview[];
+  mcp_response?: any;
+  mcp_error?: any;
+  userInput?: string;
 }

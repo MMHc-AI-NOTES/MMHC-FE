@@ -25,9 +25,10 @@ interface AuditHistoryCardProps {
   emailSentAt?: string;
   /** Optional local timestamp used to optimistically show an "Assigned to Manager" SME→Manager action */
   assignedToManagerAt?: string;
+  refreshTrigger?: number;
 }
 
-const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToManagerAt }: AuditHistoryCardProps) => {
+const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToManagerAt, refreshTrigger }: AuditHistoryCardProps) => {
   const [activities, setActivities] = useState<NoteActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [localActivities, setLocalActivities] = useState<NoteActivityItem[]>([]);
@@ -84,7 +85,7 @@ const AuditHistoryCard = ({ noteId, markedForReviewAt, emailSentAt, assignedToMa
     return () => {
       cancelled = true;
     };
-  }, [noteId]);
+  }, [noteId, refreshTrigger]);
 
   useEffect(() => {
     if (!noteId) return;

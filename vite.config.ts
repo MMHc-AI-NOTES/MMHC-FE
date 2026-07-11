@@ -5,6 +5,18 @@ import { defineConfig } from 'vite';
 import eslint from 'vite-plugin-eslint2';
 import { Schema, ValidateEnv } from '@julr/vite-plugin-validate-env';
 
+const vendorChunkMap: Array<{ test: RegExp; name: string }> = [
+  { test: /[\\/]node_modules[\\/](react|react-dom|scheduler|use-sync-external-store)[\\/]/, name: 'react-vendor' },
+  { test: /[\\/]node_modules[\\/](react-router|react-router-dom)[\\/]/, name: 'router' },
+  { test: /[\\/]node_modules[\\/]@reduxjs[\\/]/, name: 'state' },
+  { test: /[\\/]node_modules[\\/](formik|yup)[\\/]/, name: 'forms' },
+  { test: /[\\/]node_modules[\\/](axios)[\\/]/, name: 'http' },
+  { test: /[\\/]node_modules[\\/](moment)[\\/]/, name: 'date' },
+  { test: /[\\/]node_modules[\\/](recharts|d3-|victory|chart\.js)[\\/]/, name: 'charts' },
+  { test: /[\\/]node_modules[\\/]lucide-react[\\/]/, name: 'icons' },
+  { test: /[\\/]node_modules[\\/](@radix-ui|@tanstack|class-variance-authority|clsx|tailwind-merge|sonner)[\\/]/, name: 'ui-kit' },
+];
+
 export default defineConfig({
   plugins: [
     ValidateEnv({
@@ -16,15 +28,7 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    eslint({
-      cache: false,
-      // include: ['src/**/*.{js,jsx,ts,tsx}'],
-      // exclude: ['node_modules', 'dist'],
-      // fix: false, // Set to true if you want auto-fixing
-      // lintOnStart: true, // Lint on development server start
-      // emitWarning: true, // Show warnings in console
-      // emitError: false, // Set to true if you want errors to break the build
-    }),
+    eslint(),
   ],
   resolve: {
     alias: {
@@ -35,5 +39,15 @@ export default defineConfig({
   build: {
     outDir: 'build',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          const match = vendorChunkMap.find(entry => entry.test.test(id));
+          if (match) return match.name;
+
+          return undefined;
+        },
+      },
+    },
   },
 });

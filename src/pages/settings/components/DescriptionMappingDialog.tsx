@@ -4,21 +4,28 @@ import * as yup from 'yup';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppSelector } from '@/store/store';
-import type { SMETemplate } from '../settingsApiCalls';
+import type { SMETemplate, SMETemplateSaveResult } from '../settingsApiCalls';
 
 export interface DescriptionMappingFormValues {
   error_type_id: number | '';
   issues_related_to_id: number | '';
   issue_description_id: number | '';
+  description_id: string;
 }
 
 interface DescriptionMappingDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (payload: { error_type_id: number; issues_related_to_id: number; issue_description_id: number }) => void | Promise<void>;
+  onSave: (payload: {
+    error_type_id: number;
+    issues_related_to_id: number;
+    issue_description_id: number;
+    description_id?: string | null;
+  }) => Promise<SMETemplateSaveResult> | SMETemplateSaveResult;
   editingMapping: SMETemplate | null;
 }
 
@@ -35,6 +42,7 @@ const validationSchema = yup.object({
     .mixed<number | ''>()
     .required('Issue description is required')
     .test('valid-id', 'Please select an issue description', v => typeof v === 'number' && v >= 1),
+  description_id: yup.string().max(50, 'Description ID must be 50 characters or less'),
 });
 
 const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isOpen, onClose, onSave, editingMapping }) => {
@@ -49,8 +57,9 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
           error_type_id: editingMapping.error_type_id ?? '',
           issues_related_to_id: editingMapping.issues_related_to_id ?? '',
           issue_description_id: editingMapping.issue_description_id ?? '',
+          description_id: editingMapping.description_id ?? '',
         }
-      : { error_type_id: '', issues_related_to_id: '', issue_description_id: '' },
+      : { error_type_id: '', issues_related_to_id: '', issue_description_id: '', description_id: '' },
     validationSchema,
     enableReinitialize: true,
     onSubmit: async values => {
@@ -59,13 +68,17 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
         typeof values.issues_related_to_id === 'number' &&
         typeof values.issue_description_id === 'number'
       ) {
-        await onSave({
+        const descriptionId = values.description_id.trim();
+        const result = await onSave({
           error_type_id: values.error_type_id,
           issues_related_to_id: values.issues_related_to_id,
           issue_description_id: values.issue_description_id,
+          ...(descriptionId ? { description_id: descriptionId } : {}),
         });
+        if (result?.template) {
+          formik.resetForm();
+        }
       }
-      formik.resetForm();
     },
   });
 
@@ -148,13 +161,28 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
                     value={String(d.id)}
                     className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
                   >
-                    {d.description}
+                    {d.description} (ID {d.id})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {formik.submitCount > 0 && formik.errors.issue_description_id && (
               <p className="mt-1 text-xs text-red-600">{formik.errors.issue_description_id}</p>
+            )}
+          </div>
+          <div className="min-w-0">
+            <Label htmlFor="description-id">description_id</Label>
+            <Input
+              id="description-id"
+              value={formik.values.description_id}
+              onChange={e => formik.setFieldValue('description_id', e.target.value)}
+              onBlur={formik.handleBlur}
+              placeholder="e.g. sub_1"
+              maxLength={50}
+            />
+
+            {formik.submitCount > 0 && formik.errors.description_id && (
+              <p className="mt-1 text-xs text-red-600">{formik.errors.description_id}</p>
             )}
           </div>
           <DialogFooter>

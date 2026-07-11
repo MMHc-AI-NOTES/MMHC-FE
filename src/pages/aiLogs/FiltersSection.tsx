@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cpu, Code, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Agent } from '@/types/agent';
 import { ChatResultEnum, ChatResultLabels, ChatSeverityEnum, ChatSeverityLabels } from '@/constants/common';
-import { getAgentModelOptions, getEnumValues } from '@/utils/helper';
+import { getEnumValues } from '@/utils/helper';
 
 interface AILogsFilters {
   model: string;
@@ -21,12 +21,12 @@ interface FiltersSectionProps {
   onClearFilters: () => void;
 }
 
-export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
+export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilters, onClearFilters }: FiltersSectionProps) => {
   return (
     <div className="flex flex-wrap justify-between gap-3 border-b px-4 pb-4">
       <div className="flex flex-wrap items-center gap-4">
         {/* Model Filter */}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
             <Cpu className="h-4 w-4" />
             Model:
@@ -44,10 +44,10 @@ export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApp
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         {/* Prompt Filter */}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
             <Code className="h-4 w-4" />
             Prompt:
@@ -65,7 +65,7 @@ export const FiltersSection = ({ filters, agents, loading, onFilterChange, onApp
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         {/* Result Filter */}
         <div className="flex items-center gap-2">

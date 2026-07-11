@@ -1,25 +1,18 @@
-import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AILog } from '@/types/aiLogs';
-import { Agent } from '@/types/agent';
-import { RefreshCw, Sparkles, Clock } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RefreshCw, Clock } from 'lucide-react';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDateTime, getModelDisplayName } from '@/utils/helper';
-import { Separator } from '@/components/ui/separator';
+// import { Separator } from '@/components/ui/separator';
 
 interface ReRunAuditCardProps {
   log: AILog;
-  agents: Agent[];
   onReRunAudit?: (samePrompt: boolean, agentId?: number) => void;
 }
 
-const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
-  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
-
+const ReRunAuditCard = ({ log, onReRunAudit }: ReRunAuditCardProps) => {
   const modelDisplayName = getModelDisplayName(log.modelId);
-  const defaultAgent = agents.find(a => a.is_default === 1) || agents[0];
-  const selectedAgent = selectedAgentId ? agents.find(a => a.id.toString() === selectedAgentId) : defaultAgent;
 
   return (
     <Card className="shadow-sm">
@@ -32,14 +25,14 @@ const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
         <div className="space-y-4">
           <Button size="lg" onClick={() => onReRunAudit?.(true)} className="bg-gradient-light text-primary h-12 w-full">
             <RefreshCw />
-            Re-run with Same Prompt
+            Re-run Audit
           </Button>
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Separator className="flex-1" />
             <span className="text-sm text-gray-400">or</span>
             <Separator className="flex-1" />
-          </div>
-
+          </div> */}
+          {/* 
           <Button
             size="lg"
             onClick={() => onReRunAudit?.(false)}
@@ -48,11 +41,11 @@ const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
           >
             <Sparkles />
             Re-run with Default Prompt
-          </Button>
-          <Separator className="my-4" />
-          <div className="pt-2">
-            <p className="mb-2 text-xs font-medium">Select Agent:</p>
-            <div className="flex gap-2">
+          </Button> */}
+          {/* <Separator className="my-4" /> */}
+          {/* <div className="pt-2"> */}
+          {/* <p className="mb-2 text-xs font-medium">Select Agent:</p> */}
+          {/* <div className="flex gap-2">
               <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
                 <SelectTrigger className="flex-1">
                   <SelectValue placeholder={defaultAgent?.name || 'Select Agent'}>
@@ -74,14 +67,14 @@ const ReRunAuditCard = ({ log, agents, onReRunAudit }: ReRunAuditCardProps) => {
               >
                 Run
               </Button>
-            </div>
-            <Separator className="my-4" />
-            <p className="mt-3 text-xs text-gray-400">
-              <Clock className="mr-1 inline h-3 w-3" />
-              Last re-run: {formatDateTime(log.endTime || log.createdAt)} • {modelDisplayName}
-            </p>
-          </div>
+            </div> */}
+          {/* <Separator className="my-4" /> */}
+          <p className="mt-3 text-xs text-gray-400">
+            <Clock className="mr-1 inline h-3 w-3" />
+            Last re-run: {formatDateTime(log.endTime || log.createdAt)} • {modelDisplayName}
+          </p>
         </div>
+        {/* </div> */}
       </CardContent>
     </Card>
   );

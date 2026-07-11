@@ -9,18 +9,10 @@ import RecentActivity from './RecentActivity';
 import QuickActions from './QuickActions';
 import DashboardSkeleton from './DashboardSkeleton';
 import DashboardCardHeader from './DashboardCardHeader';
-import { Activity, Clock, Settings, Users, Zap } from 'lucide-react';
+import { Activity, Clock, Users, Zap } from 'lucide-react';
 import DashboardHeader from './DashboardHeader';
-import { fetchAgents } from '@/pages/settings/settingsApiCalls';
-import { useAppSelector } from '@/store/store';
-import { setAgents } from '@/store/slices/agentsSlice';
-import { useAppDispatch } from '@/store/store';
-import type { Agent } from '@/types/agent';
-import { formatDate } from '@/utils/helper';
 
 const Dashboard = () => {
-  const dispatch = useAppDispatch();
-  const { agents } = useAppSelector(state => state.agents);
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,19 +31,6 @@ const Dashboard = () => {
 
     loadDashboardData();
   }, []);
-
-  useEffect(() => {
-    const loadAgents = async () => {
-      const agentsData = await fetchAgents();
-      if (agentsData) {
-        dispatch(setAgents(agentsData));
-      }
-    };
-
-    if (agents.length === 0) {
-      loadAgents();
-    }
-  }, [dispatch, agents.length]);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -85,37 +64,6 @@ const Dashboard = () => {
           <CardContent>
             <p className="text-primary text-3xl font-semibold">Week 3 &mdash; Supervised Automation</p>
             <p className="mt-2 text-gray-400">AI primary decisions, 50% HITL audit sampling</p>
-          </CardContent>
-        </Card>
-
-        <Card className="gap-2">
-          <CardHeader>
-            <DashboardCardHeader title="Default Agent" icon={Settings} isIconBg />
-          </CardHeader>
-          <CardContent>
-            {(() => {
-              const defaultAgent = agents.find((agent: Agent) => agent.is_default === 1) || agents[0];
-              if (defaultAgent) {
-                return (
-                  <>
-                    <p className="text-primary text-3xl font-semibold [overflow-wrap:anywhere] whitespace-normal">{defaultAgent.name}</p>
-                    <p className="mt-2 text-gray-400">
-                      {defaultAgent.updated_at
-                        ? `Last updated ${formatDate(defaultAgent.updated_at)}`
-                        : defaultAgent.created_at
-                          ? `Created ${formatDate(defaultAgent.created_at)}`
-                          : 'Default agent'}
-                    </p>
-                  </>
-                );
-              }
-              return (
-                <>
-                  <p className="text-primary text-3xl font-semibold">No default agent found</p>
-                  <p className="mt-2 text-gray-400">Please create a default agent</p>
-                </>
-              );
-            })()}
           </CardContent>
         </Card>
 
