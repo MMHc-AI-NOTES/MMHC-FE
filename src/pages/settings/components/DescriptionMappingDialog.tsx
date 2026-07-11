@@ -180,7 +180,7 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
               placeholder="e.g. sub_1"
               maxLength={50}
             />
-            <p className="text-muted-foreground mt-1 text-xs">Leave blank to keep or auto-generate the backend value.</p>
+
             {formik.submitCount > 0 && formik.errors.description_id && (
               <p className="mt-1 text-xs text-red-600">{formik.errors.description_id}</p>
             )}
