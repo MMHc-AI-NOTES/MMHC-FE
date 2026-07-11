@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
-import { addSMETemplate, updateSMETemplate, deleteSMETemplateSlice, type SMETemplate } from '@/store/slices/smeConfigSlice';
-import { createSMETemplate, updateSMETemplate as updateSMETemplateAPI, deleteSMETemplate } from '../settingsApiCalls';
+import {
+  addSMETemplate,
+  updateSMETemplate,
+  deleteSMETemplateSlice,
+  type ErrorType,
+  type IssueRelatedTo,
+  type SMETemplate,
+} from '@/store/slices/smeConfigSlice';
+import {
+  createSMETemplate,
+  updateSMETemplate as updateSMETemplateAPI,
+  deleteSMETemplate,
+  type SMETemplateSaveResult,
+} from '../settingsApiCalls';
 import DescriptionMappingDialog from './DescriptionMappingDialog';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 
@@ -19,6 +31,15 @@ const DescriptionMappingSection: React.FC = () => {
   const [editingMapping, setEditingMapping] = useState<SMETemplate | null>(null);
   const [selectedIdToDelete, setSelectedIdToDelete] = useState<number | null>(null);
 
+  const errorTypeById = useMemo(
+    () => new Map<number, ErrorType>(errorTypes.map(errorType => [errorType.id ?? 0, errorType])),
+    [errorTypes],
+  );
+  const issueRelatedToById = useMemo(
+    () => new Map<number, IssueRelatedTo>(issueRelatedTo.map(issue => [issue.id ?? 0, issue])),
+    [issueRelatedTo],
+  );
+
   const handleAdd = () => {
     setEditingMapping(null);
     setIsDialogOpen(true);
@@ -29,20 +50,31 @@ const DescriptionMappingSection: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSave = async (payload: { error_type_id: number; issues_related_to_id: number; issue_description_id: number }) => {
+  const handleSave = async (payload: {
+    error_type_id: number;
+    issues_related_to_id: number;
+    issue_description_id: number;
+    description_id?: string | null;
+  }): Promise<SMETemplateSaveResult> => {
     try {
       if (editingMapping?.id) {
         const result = await updateSMETemplateAPI(editingMapping.id, payload);
-        if (!result) return;
-        dispatch(updateSMETemplate(result));
+        if (result.template) {
+          dispatch(updateSMETemplate(result.template));
+          setIsDialogOpen(false);
+        }
+        return result;
       } else {
         const result = await createSMETemplate(payload);
-        if (!result) return;
-        dispatch(addSMETemplate(result));
+        if (result.template) {
+          dispatch(addSMETemplate(result.template));
+          setIsDialogOpen(false);
+        }
+        return result;
       }
-      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving description mapping:', error);
+      return { template: null, errorMessage: 'Failed to save description mapping.' };
     }
   };
 
@@ -70,25 +102,53 @@ const DescriptionMappingSection: React.FC = () => {
     }
   };
 
-  const display = (m: SMETemplate) => {
-    const et = errorTypes.find(e => e.id === m.error_type_id);
-    const irt = issueRelatedTo.find(i => i.id === m.issues_related_to_id);
-    const id_ = issueDescriptions.find(d => d.id === m.issue_description_id);
-    return {
-      errorType: et?.displayName ?? `ID ${m.error_type_id}`,
-      issueRelatedTo: irt?.displayName ?? `ID ${m.issues_related_to_id}`,
-      issueDescription: id_?.description ?? `ID ${m.issue_description_id}`,
-    };
-  };
+  const display = useCallback(
+    (m: SMETemplate) => {
+      const et = errorTypeById.get(m.error_type_id);
+      const irt = issueRelatedToById.get(m.issues_related_to_id);
+      const id_ = issueDescriptions.find(d => d.id === m.issue_description_id);
+      return {
+        errorType: et?.displayName ?? `ID ${m.error_type_id}`,
+        issueRelatedTo: irt?.displayName ?? `ID ${m.issues_related_to_id}`,
+        errorTypePoints: et?.points ?? Number.POSITIVE_INFINITY,
+        descriptionId: m.description_id ?? '—',
+        issueDescription: id_?.description ?? `ID ${m.issue_description_id}`,
+      };
+    },
+    [errorTypeById, issueDescriptions, issueRelatedToById],
+  );
 
   const toDelete = selectedIdToDelete ? smeTemplates.find(t => t.id === selectedIdToDelete) : null;
   const deleteLabel = toDelete ? display(toDelete).issueDescription : '';
-  const sortedMappings = [...smeTemplates].sort((a, b) => {
-    const aDisplay = display(a);
-    const bDisplay = display(b);
+  const sortedMappings = useMemo(
+    () =>
+      [...smeTemplates].sort((a, b) => {
+        const aDisplay = display(a);
+        const bDisplay = display(b);
 
-    return aDisplay.issueRelatedTo.localeCompare(bDisplay.issueRelatedTo);
-  });
+        const issueRelatedToCompare = aDisplay.issueRelatedTo.localeCompare(bDisplay.issueRelatedTo, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
+        if (issueRelatedToCompare !== 0) return issueRelatedToCompare;
+
+        if (aDisplay.errorTypePoints !== bDisplay.errorTypePoints) {
+          return aDisplay.errorTypePoints - bDisplay.errorTypePoints;
+        }
+
+        const descriptionIdCompare = aDisplay.descriptionId.localeCompare(bDisplay.descriptionId, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
+        if (descriptionIdCompare !== 0) return descriptionIdCompare;
+
+        return aDisplay.errorType.localeCompare(bDisplay.errorType, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
+      }),
+    [display, smeTemplates],
+  );
 
   return (
     <>
@@ -110,6 +170,7 @@ const DescriptionMappingSection: React.FC = () => {
                   <TableRow>
                     <TableHead className="pl-3 text-left">Error Type</TableHead>
                     <TableHead className="pl-3 text-left">Issue Related To</TableHead>
+                    <TableHead className="pl-3 text-left">description_id</TableHead>
                     <TableHead className="pl-3 text-left">Issue Description</TableHead>
                     <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
@@ -117,7 +178,7 @@ const DescriptionMappingSection: React.FC = () => {
                 <TableBody>
                   {smeTemplates.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
+                      <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
                         No data
                       </TableCell>
                     </TableRow>
@@ -128,6 +189,7 @@ const DescriptionMappingSection: React.FC = () => {
                         <TableRow key={m.id}>
                           <TableCell className="text-left">{d.errorType}</TableCell>
                           <TableCell className="text-left">{d.issueRelatedTo}</TableCell>
+                          <TableCell className="text-left">{d.descriptionId}</TableCell>
                           <TableCell className="max-w-[320px] truncate text-left">{d.issueDescription}</TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-2">

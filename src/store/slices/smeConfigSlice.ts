@@ -30,6 +30,7 @@ export interface SMETemplate {
   error_type_id: number;
   issues_related_to_id: number;
   issue_description_id: number;
+  description_id?: string | null;
 }
 
 interface SMEConfigState {
