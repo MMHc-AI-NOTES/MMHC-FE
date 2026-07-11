@@ -13,7 +13,12 @@ import {
   type IssueRelatedTo,
   type SMETemplate,
 } from '@/store/slices/smeConfigSlice';
-import { createSMETemplate, updateSMETemplate as updateSMETemplateAPI, deleteSMETemplate } from '../settingsApiCalls';
+import {
+  createSMETemplate,
+  updateSMETemplate as updateSMETemplateAPI,
+  deleteSMETemplate,
+  type SMETemplateSaveResult,
+} from '../settingsApiCalls';
 import DescriptionMappingDialog from './DescriptionMappingDialog';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
 
@@ -50,20 +55,26 @@ const DescriptionMappingSection: React.FC = () => {
     issues_related_to_id: number;
     issue_description_id: number;
     description_id?: string | null;
-  }) => {
+  }): Promise<SMETemplateSaveResult> => {
     try {
       if (editingMapping?.id) {
         const result = await updateSMETemplateAPI(editingMapping.id, payload);
-        if (!result) return;
-        dispatch(updateSMETemplate(result));
+        if (result.template) {
+          dispatch(updateSMETemplate(result.template));
+          setIsDialogOpen(false);
+        }
+        return result;
       } else {
         const result = await createSMETemplate(payload);
-        if (!result) return;
-        dispatch(addSMETemplate(result));
+        if (result.template) {
+          dispatch(addSMETemplate(result.template));
+          setIsDialogOpen(false);
+        }
+        return result;
       }
-      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving description mapping:', error);
+      return { template: null, errorMessage: 'Failed to save description mapping.' };
     }
   };
 

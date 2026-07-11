@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppSelector } from '@/store/store';
-import type { SMETemplate } from '../settingsApiCalls';
+import type { SMETemplate, SMETemplateSaveResult } from '../settingsApiCalls';
 
 export interface DescriptionMappingFormValues {
   error_type_id: number | '';
@@ -25,7 +25,7 @@ interface DescriptionMappingDialogProps {
     issues_related_to_id: number;
     issue_description_id: number;
     description_id?: string | null;
-  }) => void | Promise<void>;
+  }) => Promise<SMETemplateSaveResult> | SMETemplateSaveResult;
   editingMapping: SMETemplate | null;
 }
 
@@ -69,14 +69,16 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
         typeof values.issue_description_id === 'number'
       ) {
         const descriptionId = values.description_id.trim();
-        await onSave({
+        const result = await onSave({
           error_type_id: values.error_type_id,
           issues_related_to_id: values.issues_related_to_id,
           issue_description_id: values.issue_description_id,
           ...(descriptionId ? { description_id: descriptionId } : {}),
         });
+        if (result?.template) {
+          formik.resetForm();
+        }
       }
-      formik.resetForm();
     },
   });
 

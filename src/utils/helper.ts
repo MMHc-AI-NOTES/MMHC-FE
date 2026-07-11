@@ -67,22 +67,24 @@ export const getLoggedInUserId = (): number | null => {
   }
 };
 
-export const handleCatchMessages = (error: unknown): void => {
-  if (axios.isCancel(error)) return;
+export const handleCatchMessages = (error: unknown): string => {
+  if (axios.isCancel(error)) return '';
   const axiosError = error as AxiosError<{ message?: string }>;
 
   const message = axiosError.response?.data?.message || axiosError.message || 'Oops! Something went wrong.';
   showToast.error(message);
 
   console.error('API Error:', message);
+  return message;
 };
 
-export const handleErrorMessages = (errors?: ErrorMessage[] | any): void => {
+export const handleErrorMessages = (errors?: ErrorMessage[] | any): string => {
   let errorMessages: ErrorMessage[] = [];
 
   if (!errors) {
-    showToast.error('Oops! Something went wrong.');
-    return;
+    const fallbackMessage = 'Oops! Something went wrong.';
+    showToast.error(fallbackMessage);
+    return fallbackMessage;
   }
 
   // Case 1: Already an array of ErrorMessage
@@ -109,7 +111,12 @@ export const handleErrorMessages = (errors?: ErrorMessage[] | any): void => {
   if (errorMessages.length > 0) {
     const message = errorMessages.map(e => e.message).join('\n');
     showToast.error(message);
+    return message;
   }
+
+  const fallbackMessage = 'Oops! Something went wrong.';
+  showToast.error(fallbackMessage);
+  return fallbackMessage;
 };
 
 // Helper function to extract errors

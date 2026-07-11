@@ -408,6 +408,11 @@ export interface SMETemplateResponse {
   data?: SMETemplate;
 }
 
+export interface SMETemplateSaveResult {
+  template: SMETemplate | null;
+  errorMessage?: string;
+}
+
 const normalizeSMETemplate = (api: any): SMETemplate => ({
   id: api?.id,
   error_type_id: api?.error_type_id ?? api?.errorTypeId,
@@ -445,37 +450,33 @@ export interface CreateSMETemplatePayload {
   description_id?: string | null;
 }
 
-export const createSMETemplate = async (payload: CreateSMETemplatePayload): Promise<SMETemplate | null> => {
+export const createSMETemplate = async (payload: CreateSMETemplatePayload): Promise<SMETemplateSaveResult> => {
   try {
     const response = await axios.post<SMETemplateResponse>('/sme-issues-templates', payload);
 
     if (response.status) {
       showToast.success('Description mapping created successfully!');
       const raw = (response.data as any)?.data ?? response.data;
-      return raw ? normalizeSMETemplate(raw) : null;
+      return { template: raw ? normalizeSMETemplate(raw) : null };
     }
-    handleErrorMessages(response);
-    return null;
+    return { template: null, errorMessage: handleErrorMessages(response) };
   } catch (error: any) {
-    handleCatchMessages(error);
-    return null;
+    return { template: null, errorMessage: handleCatchMessages(error) };
   }
 };
 
-export const updateSMETemplate = async (id: number, payload: CreateSMETemplatePayload): Promise<SMETemplate | null> => {
+export const updateSMETemplate = async (id: number, payload: CreateSMETemplatePayload): Promise<SMETemplateSaveResult> => {
   try {
     const response = await axios.patch<SMETemplateResponse>(`/sme-issues-templates/${id}`, payload);
 
     if (response.status) {
       showToast.success('Description mapping updated successfully!');
       const raw = (response.data as any)?.data ?? response.data;
-      return raw ? normalizeSMETemplate(raw) : null;
+      return { template: raw ? normalizeSMETemplate(raw) : null };
     }
-    handleErrorMessages(response);
-    return null;
+    return { template: null, errorMessage: handleErrorMessages(response) };
   } catch (error: any) {
-    handleCatchMessages(error);
-    return null;
+    return { template: null, errorMessage: handleCatchMessages(error) };
   }
 };
 
