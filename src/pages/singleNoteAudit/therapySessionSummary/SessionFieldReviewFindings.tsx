@@ -13,6 +13,7 @@ import { showToast } from '@/lib/toast';
 import { handleCatchMessages } from '@/utils/helper';
 import { FeedbackVerdictEnum } from '@/constants/common';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { createSMEIssue, createSMEIssueFromTemplate } from '../singleNoteApiCalls';
 
 interface SessionFieldReviewFindingsProps {
   fieldKey: string;
@@ -84,6 +85,7 @@ export function SessionFieldReviewFindings({
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
   const user = useAppSelector(state => state.auth.user);
+  const { errorTypes, issueRelatedTo, issueDescriptions, smeTemplates } = useAppSelector(state => state.smeConfig);
   const [aiIssueVotes, setAiIssueVotes] = useState<Record<string, string>>({});
   const [aiIssueFeedback, setAiIssueFeedback] = useState<Record<string, string>>({});
   const [savedAiIssueFeedback, setSavedAiIssueFeedback] = useState<Record<string, string>>({});
@@ -232,6 +234,62 @@ export function SessionFieldReviewFindings({
 
         const res: any = await axios.post('/feedback', payload);
         showToast.success('Feedback submitted successfully');
+
+        // Automatically create SME issue with same description on thumbs up
+        const errorType = errorTypes?.find(
+          e => e.name?.toLowerCase() === issue.severity?.toLowerCase() || e.displayName?.toLowerCase() === issue.severity?.toLowerCase(),
+        );
+        const error_type_id = errorType?.id ?? 1;
+
+        const irt = issueRelatedTo?.find(
+          opt =>
+            (opt.fieldId || '').toLowerCase() === fieldKey?.toLowerCase() ||
+            (opt.displayName || '').toLowerCase() === fieldKey?.toLowerCase(),
+        );
+        const issues_related_to_id = irt?.id ?? 1;
+
+        const matchedDesc = issueDescriptions?.find(d => d.description?.toLowerCase().trim() === issue.description?.toLowerCase().trim());
+        const issue_description_id = matchedDesc?.id ?? (issue.descriptionId ? Number(issue.descriptionId) : null);
+
+        const matchedTemplate = smeTemplates?.find(
+          t => t.issue_description_id === issue_description_id && t.issues_related_to_id === issues_related_to_id,
+        );
+        const template_id = matchedTemplate?.id;
+
+        const isAlreadyAdded = issue_description_id != null && alreadyUsedDescriptionIds?.includes(issue_description_id);
+        const revId = loggedInUserId || user?.id || null;
+
+        if (!isAlreadyAdded && versionId && revId) {
+          const isCurrentVersion = webhookVersions && webhookVersions.length > 0 && webhookVersions[0].id === versionId;
+
+          if (template_id) {
+            await createSMEIssueFromTemplate({
+              note_id: noteId || '',
+              reviewer_id: revId,
+              practitioner_id: practitionerId ?? 0,
+              is_current_version: isCurrentVersion ? 1 : 0,
+              version_id: versionId,
+              template_id: template_id,
+              ai_status: aiStatusId ?? 1,
+              priority: priorityId ?? 1,
+              comment: '',
+            });
+          } else if (issue_description_id != null) {
+            await createSMEIssue({
+              note_id: noteId || '',
+              reviewer_id: revId,
+              error_type_id: error_type_id,
+              issues_related_to_id: issues_related_to_id,
+              version_id: versionId,
+              issue_description_id: issue_description_id,
+              ai_status: aiStatusId ?? 1,
+              priority: priorityId ?? 1,
+              practitioner_id: practitionerId ?? 0,
+              is_current_version: Boolean(isCurrentVersion),
+              comment: '',
+            });
+          }
+        }
 
         const feedbackId =
           res?.id ||
