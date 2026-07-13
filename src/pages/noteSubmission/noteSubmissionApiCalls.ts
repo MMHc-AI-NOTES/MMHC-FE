@@ -47,15 +47,19 @@ export const invokeSessionReview = async (payload: SessionReviewPayload): Promis
           }))
         : [];
 
+      const scorerVersion = mcpResponse.meta?.scorer_version || mcpResponse.model_version || '';
+
       return {
         score: mcpResponse.score,
         pass: mcpResponse.verdict === 'PASS',
         issues,
+        scorer_version: scorerVersion,
         raw_response: JSON.stringify(responsePayload, null, 2),
         output_text: JSON.stringify({
           pass: mcpResponse.verdict === 'PASS',
           score: mcpResponse.score,
           issues,
+          scorer_version: scorerVersion,
         }),
       };
     }
