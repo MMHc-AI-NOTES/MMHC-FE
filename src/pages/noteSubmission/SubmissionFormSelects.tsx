@@ -23,7 +23,7 @@ const SubmissionFormSelects: React.FC<SubmissionFormSelectsProps> = ({
     <>
       {/* Model Version Select */}
       <div className="space-y-1">
-        <Label className="text-sm text-gray-700">Model Versionfdhvbvh</Label>
+        <Label className="text-sm text-gray-700">Model Version</Label>
         <Select value={modelVersion} onValueChange={value => onModelVersionChange(value)}>
           <SelectTrigger className="w-full bg-white">
             <SelectValue placeholder="Select model version" />
