@@ -39,6 +39,8 @@ interface SessionFieldReviewFindingsProps {
   feedbackVerdicts?: any[];
   onFeedbackChanged?: () => void;
   id?: number;
+  chatId?: number;
+  auditScore?: number;
 }
 
 const getAiSeverityClass = (severity: NoteDetail['issues'][number]['severity']) => {
@@ -81,6 +83,8 @@ export function SessionFieldReviewFindings({
   feedbackVerdicts = [],
   onFeedbackChanged,
   id,
+  chatId,
+  auditScore,
 }: SessionFieldReviewFindingsProps) {
   const getAiIssueKey = (issue: NoteDetail['issues'][number], index: number) => `${issue.sectionId || issue.category || 'ai'}-${index}`;
 
@@ -384,6 +388,21 @@ export function SessionFieldReviewFindings({
       }
       // setAiIssueReviewers(prev => ({ ...prev, [issueKey]: user?.fullName || 'Current User' }));
 
+      // Calculate new score: current adjusted score + this issue's points (if it wasn't already downvoted)
+      const baseScore = auditScore ?? 0;
+      const isAlreadyDownvoted = existingFeedbackId != null;
+      const newScore = isAlreadyDownvoted ? baseScore : Math.min(100, baseScore + (issue.points || 0));
+
+      console.log('dfsbvhdbihcsbfivcbgsiu - sending updated score to backend:', { id, chatId, newScore });
+
+      if (chatId) {
+        try {
+          await axios.post(`/chats/update-score/${chatId}`, { score: newScore });
+        } catch (scoreErr) {
+          console.error('Failed to update score:', scoreErr);
+        }
+      }
+
       setSavedAiIssueFeedback(prev => ({ ...prev, [issueKey]: feedback }));
       setAiIssueVotes(prev => ({ ...prev, [issueKey]: FeedbackVerdictEnum.DOWN.icon_text }));
       setIsFeedbackFormOpen(prev => ({ ...prev, [issueKey]: false }));
@@ -425,6 +444,22 @@ export function SessionFieldReviewFindings({
     //   delete next[issueKey];
     //   return next;
     // });
+
+    // Also update score on backend when thumbs down is deleted (score goes back down)
+    const baseScore = auditScore ?? 0;
+    const issue = aiIssues.find(i => getAiIssueKey(i, Number(issueKey.split('-').pop())) === issueKey);
+    const newScore = Math.max(0, baseScore - (issue?.points || 0));
+
+    console.log('dfsbvhdbihcsbfivcbgsiu - sending updated score on delete to backend:', { id, chatId, newScore });
+
+    if (chatId) {
+      try {
+        await axios.post(`/chats/update-score/${chatId}`, { score: newScore });
+      } catch (scoreErr) {
+        console.error('Failed to update score on delete:', scoreErr);
+      }
+    }
+
     setDeleteFeedbackInfo(null);
     onFeedbackChanged?.();
   };
