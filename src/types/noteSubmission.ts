@@ -67,7 +67,8 @@ export interface SessionReviewData {
   output_text?: string;
   score?: number;
   pass?: boolean;
-  issues?: unknown[];
+  issues?: any[];
+  scorer_version?: string;
   raw_response?: string;
   validation_result?: {
     isValid: boolean;

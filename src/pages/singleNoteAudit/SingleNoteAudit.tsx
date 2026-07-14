@@ -151,7 +151,9 @@ const SingleNoteAudit = () => {
   const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
   const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
-  const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+  const [rawNoteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+
+  const noteDetail = rawNoteDetail;
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
   const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
@@ -254,10 +256,10 @@ const SingleNoteAudit = () => {
 
   // Load note detail only on initial load, not when agent changes
   useEffect(() => {
-    if (agentsLoaded && selectedAgentId && noteId && !noteDetail) {
+    if (agentsLoaded && selectedAgentId && noteId && !rawNoteDetail) {
       loadNoteDetail(false);
     }
-  }, [agentsLoaded, selectedAgentId, noteId, noteDetail, loadNoteDetail]);
+  }, [agentsLoaded, selectedAgentId, noteId, rawNoteDetail, loadNoteDetail]);
 
   useEffect(() => {
     const loadPractitioners = async () => {
@@ -493,6 +495,8 @@ const SingleNoteAudit = () => {
           onVersionChange={setSelectedVersionId}
           noteId={noteId}
           id={noteDetail.dbId}
+          chatId={Number(noteDetail.modelDetail.auditRunId)}
+          auditScore={noteDetail.auditScore}
           versionId={selectedVersionId}
           reviewerId={reviewerId ?? loggedInUserId}
           practitionerId={practitionerId ?? 0}
