@@ -40,6 +40,8 @@ interface ReviewCardProps {
   hasIssuesChangedSinceMark?: boolean;
   onMarkForReview?: () => void;
   isMarkingForReview?: boolean;
+  /** When false, Marked For Review stays disabled until SME has rated all AI findings. */
+  hasAllAiFindingsFeedback?: boolean;
   readOnly?: boolean;
   markedAtLabel?: string | null;
   /** True when this is the placeholder "no review yet" card (Admin Review flow). */
@@ -66,6 +68,7 @@ const ReviewCard = ({
   hasIssuesChangedSinceMark = false,
   onMarkForReview,
   isMarkingForReview = false,
+  hasAllAiFindingsFeedback = true,
   readOnly = false,
   markedAtLabel = null,
   isNoReviewMode = false,
@@ -348,8 +351,14 @@ const ReviewCard = ({
               disabled={
                 readOnly ||
                 isMarkingForReview ||
+                !hasAllAiFindingsFeedback ||
                 // If there are no changes since last mark and it's already marked, keep disabled.
                 (!hasIssuesChangedSinceMark && isMarkedForReview)
+              }
+              title={
+                !hasAllAiFindingsFeedback
+                  ? 'Provide thumbs up or thumbs down feedback on all AI findings before marking for review'
+                  : undefined
               }
               onClick={onMarkForReview}
             >
