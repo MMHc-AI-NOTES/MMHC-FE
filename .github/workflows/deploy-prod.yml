@@ -16,7 +16,7 @@ jobs:
 
     env:
       VITE_FRONTEND_URL: https://mmh.lilyinsight.ai
-      VITE_BACKEND_URL: https://mmh-prod-backend.lilyinsight.ai/api
+      VITE_BACKEND_URL: https://d2h1na53lgywmn.cloudfront.net/api
 
     steps:
       - name: Checkout repository
