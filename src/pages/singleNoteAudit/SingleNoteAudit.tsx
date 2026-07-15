@@ -546,6 +546,8 @@ const SingleNoteAudit = () => {
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
               onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
               onAssignedToManager={timestamp => setAssignedToManagerAt(timestamp)}
+              aiIssues={noteDetail.issues}
+              feedbackVerdicts={noteDetail.feedbackVerdicts}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (

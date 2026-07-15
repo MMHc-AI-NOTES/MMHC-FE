@@ -85,9 +85,7 @@ const Dashboard = () => {
             <PractitionerTrendsChart data={dashboardData.practitionerTrends} />
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Activity */}
 
         <Card className="gap-2">
@@ -98,7 +96,9 @@ const Dashboard = () => {
             <RecentActivity activities={[]} />
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Quick Actions */}
         <QuickActions />
       </div>
