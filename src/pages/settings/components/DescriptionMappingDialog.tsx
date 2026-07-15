@@ -161,7 +161,7 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
                     value={String(d.id)}
                     className="py-2.5 pr-8 break-words whitespace-normal [&>span]:block [&>span]:whitespace-normal"
                   >
-                    {d.description} (ID {d.id})
+                    {d.description}
                   </SelectItem>
                 ))}
               </SelectContent>
