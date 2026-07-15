@@ -12,16 +12,39 @@ interface PromptOutputTabsProps {
 
 type TabType = 'prompt' | 'output' | 'prompt-history';
 
+const getFormattedText = (tab: TabType, log: AILog): string => {
+  const rawText =
+    tab === 'prompt'
+      ? log.prompt
+      : tab === 'prompt-history'
+        ? log.bedrockResponse?.user_input || ''
+        : log.bedrockResponse?.raw_response || '';
+
+  if (!rawText) return '';
+
+  try {
+    const parsedJson = typeof rawText === 'string' ? JSON.parse(rawText) : rawText;
+    return JSON.stringify(parsedJson, null, 2);
+  } catch {
+    return rawText;
+  }
+};
+
 const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('prompt');
   const [promptCopied, setPromptCopied] = useState(false);
-  const displayText =
+
+  const rawText =
     activeTab === 'prompt'
       ? log.prompt
       : activeTab === 'prompt-history'
-        ? log.bedrockResponse.user_input
+        ? log.bedrockResponse?.user_input || ''
         : log.bedrockResponse?.raw_response || '';
-  const lines = cleanSummary(displayText)
+
+  const formattedText = getFormattedText(activeTab, log);
+  const isJson = formattedText.trim().startsWith('{') || formattedText.trim().startsWith('[');
+
+  const lines = cleanSummary(rawText)
     .split('\n')
     .filter(line => line.trim());
 
@@ -56,13 +79,6 @@ const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
           <Code className="h-4 w-4" />
           Prompt (Raw Input)
         </Button>
-        {/* <Button
-          onClick={() => setActiveTab('prompt-history')}
-          className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'prompt-history' ? 'bg-gradient-light text-primary' : 'bg-gray-50 text-gray-600'}`}
-        >
-          <History className="h-4 w-4" />
-          Prompt History (All Prompts)
-        </Button> */}
         <Button
           onClick={() => setActiveTab('output')}
           className={`hover:bg-primary-light hover:text-primary h-12 min-w-[220px] flex-1 ${activeTab === 'output' ? 'bg-primary-light text-primary' : 'bg-gray-50 text-gray-600'}`}
@@ -84,15 +100,7 @@ const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
                     : 'AI Output (Raw Response)'}
               </h4>
               <button
-                onClick={() =>
-                  copyToClipboard(
-                    activeTab === 'prompt'
-                      ? log.prompt
-                      : activeTab === 'prompt-history'
-                        ? log.bedrockResponse.user_input
-                        : log.bedrockResponse?.raw_response || '',
-                  )
-                }
+                onClick={() => copyToClipboard(formattedText)}
                 className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
               >
                 {promptCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -101,39 +109,41 @@ const PromptOutputTabs = ({ log }: PromptOutputTabsProps) => {
             </div>
             <div className="rounded-lg bg-black p-6">
               <pre className="text-xs leading-relaxed whitespace-pre-wrap text-[#58A6FF] opacity-80">
-                {lines.map((line, index) => {
-                  if (!line.trim()) return null;
+                {isJson
+                  ? formattedText
+                  : lines.map((line, index) => {
+                      if (!line.trim()) return null;
 
-                  // Check if line is a section header (ends with colon or contains specific headers)
-                  const isSectionHeader =
-                    line.includes(':') &&
-                    (line.includes('Session Duration') ||
-                      line.includes('Suicidality') ||
-                      line.includes('Homicidality') ||
-                      line.includes('Subjective') ||
-                      line.includes('Objective') ||
-                      line.includes('Assessment') ||
-                      line.includes('Reaction') ||
-                      line.includes('Plan') ||
-                      line.includes('Progress') ||
-                      line.includes('Therapist'));
+                      // Check if line is a section header (ends with colon or contains specific headers)
+                      const isSectionHeader =
+                        line.includes(':') &&
+                        (line.includes('Session Duration') ||
+                          line.includes('Suicidality') ||
+                          line.includes('Homicidality') ||
+                          line.includes('Subjective') ||
+                          line.includes('Objective') ||
+                          line.includes('Assessment') ||
+                          line.includes('Reaction') ||
+                          line.includes('Plan') ||
+                          line.includes('Progress') ||
+                          line.includes('Therapist'));
 
-                  if (isSectionHeader) {
-                    const [header, ...content] = line.split(':');
-                    const highlightedHeader = highlightPromptKeys(header);
-                    const highlightedContent = content.length > 0 ? highlightPromptKeys(content.join(':').trim()) : '';
-                    return (
-                      <div key={index} className="mb-2">
-                        <h4 className="font-semibold" dangerouslySetInnerHTML={{ __html: `${highlightedHeader}:` }} />
-                        {content.length > 0 && <p className="ml-4" dangerouslySetInnerHTML={{ __html: highlightedContent }} />}
-                      </div>
-                    );
-                  }
+                      if (isSectionHeader) {
+                        const [header, ...content] = line.split(':');
+                        const highlightedHeader = highlightPromptKeys(header);
+                        const highlightedContent = content.length > 0 ? highlightPromptKeys(content.join(':').trim()) : '';
+                        return (
+                          <div key={index} className="mb-2">
+                            <h4 className="font-semibold" dangerouslySetInnerHTML={{ __html: `${highlightedHeader}:` }} />
+                            {content.length > 0 && <p className="ml-4" dangerouslySetInnerHTML={{ __html: highlightedContent }} />}
+                          </div>
+                        );
+                      }
 
-                  const highlightedLine = highlightPromptKeys(line);
+                      const highlightedLine = highlightPromptKeys(line);
 
-                  return <p key={index} dangerouslySetInnerHTML={{ __html: highlightedLine }} />;
-                })}
+                      return <p key={index} dangerouslySetInnerHTML={{ __html: highlightedLine }} />;
+                    })}
               </pre>
             </div>
           </div>
