@@ -3,9 +3,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AILog } from '@/types/aiLogs';
-import { FileText, Hash, Database, Code, Clock, Activity, Calendar, HelpCircle } from 'lucide-react';
+import { FileText, Hash, Database, Code, Clock, Activity, Calendar, Zap, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDateTime, getScorerVersion } from '@/utils/helper';
+import { ChatTriggerSourceEnum } from '@/constants/common';
 
 interface LogDetailsCardProps {
   log: AILog;
@@ -150,7 +151,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
             </div>
 
             {/* Trigger Source */}
-            {/* <div className="flex items-center justify-between py-3">
+            <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2 text-gray-400">
                 <Zap className="h-4 w-4" />
                 <span className="text-sm">Trigger Source:</span>
@@ -158,7 +159,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
               <span className="text-sm font-medium text-gray-900">
                 {log.triggerSource?.id === ChatTriggerSourceEnum.rerun ? 'Re-run' : '-'}
               </span>
-            </div> */}
+            </div>
           </div>
         </div>
       </CardContent>
