@@ -91,6 +91,15 @@ export function useTherapySessionSummary({
     }
   }, [sortedVersions.length, selectedVersionIndex]);
 
+  useEffect(() => {
+    if (versionId != null && sortedVersions.length > 0) {
+      const index = sortedVersions.findIndex(v => v.id === versionId);
+      if (index !== -1 && index !== selectedVersionIndex) {
+        setSelectedVersionIndex(index);
+      }
+    }
+  }, [versionId, sortedVersions, selectedVersionIndex]);
+
   const overallIssueRelatedToId = useMemo(() => {
     const irt = issueRelatedTo?.find(opt => (opt.fieldId || '').toLowerCase() === 'overall');
     return irt?.id ?? null;
