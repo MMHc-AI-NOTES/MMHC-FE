@@ -532,10 +532,10 @@ export function SessionFieldReviewFindings({
                         <p className="text-sm font-semibold text-gray-500">Is this Correct?</p>
                         <button
                           type="button"
-                          disabled={isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text}
+                          disabled={readOnly || isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text}
                           className={`rounded-md p-1.5 transition-colors ${
                             vote === FeedbackVerdictEnum.UP.icon_text ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:bg-gray-100'
-                          } ${isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text ? 'cursor-not-allowed opacity-50' : ''}`}
+                          } ${readOnly || isLocked || vote === FeedbackVerdictEnum.DOWN.icon_text ? 'cursor-not-allowed opacity-50' : ''}`}
                           onClick={() => handleVote(issueKey, FeedbackVerdictEnum.UP.icon_text, issue)}
                           aria-label="Mark issue as helpful"
                         >
@@ -543,10 +543,10 @@ export function SessionFieldReviewFindings({
                         </button>
                         <button
                           type="button"
-                          disabled={isLocked}
+                          disabled={readOnly || isLocked}
                           className={`rounded-md p-1.5 transition-colors ${
                             vote === FeedbackVerdictEnum.DOWN.icon_text ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100'
-                          } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                          } ${readOnly || isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                           onClick={() => handleVote(issueKey, FeedbackVerdictEnum.DOWN.icon_text, issue)}
                           aria-label="Mark issue as unhelpful"
                         >
@@ -604,6 +604,7 @@ export function SessionFieldReviewFindings({
                                       setAiIssueFeedback(prev => ({ ...prev, [issueKey]: match.comment || '' }));
                                     }}
                                     title="Edit feedback"
+                                    disabled={readOnly}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </Button>
@@ -614,6 +615,7 @@ export function SessionFieldReviewFindings({
                                   className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700"
                                   onClick={() => setDeleteFeedbackInfo({ issueKey, id: match.id })}
                                   title="Delete feedback"
+                                  disabled={readOnly}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

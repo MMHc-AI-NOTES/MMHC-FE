@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AILog } from '@/types/aiLogs';
-import { FileText, Hash, Database, Code, Clock, Activity, Calendar, HelpCircle } from 'lucide-react';
+import { FileText, Hash, Database, Code, Activity, Calendar, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDateTime, getScorerVersion } from '@/utils/helper';
 
@@ -78,7 +78,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
           </div>
           <div>
             {/* Runtime */}
-            <div className="flex items-center justify-between py-3">
+            {/* <div className="flex items-center justify-between py-3">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -94,7 +94,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
                 </Tooltip>
               </TooltipProvider>
               <span className="text-sm font-medium text-gray-900">{log.responseTime?.toFixed(1) || '-'}s</span>
-            </div>
+            </div> */}
 
             {/* AI Confidence */}
             <div className="py-3">

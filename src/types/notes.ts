@@ -335,6 +335,7 @@ export interface PractitionerOption {
 export interface CptCodeOption {
   id: number;
   code: string;
+  name: string;
 }
 
 // Admin Review Queue Types
