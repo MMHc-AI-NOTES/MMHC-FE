@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { User, CreateUserRequest } from '@/types/settings';
-import UserTable from './components/UserTable';
-import UserDialog from './components/UserDialog';
+import UserTableSkeleton from './components/UserTableSkeleton';
+const UserTable = lazy(() => import('./components/UserTable'));
+const UserDialog = lazy(() => import('./components/UserDialog'));
 import { DataTablePagination } from '@/shared/DataTablePagination';
 import { UserRoleEnum, UserRoleLabels } from '@/constants/common';
 import { useAppDispatch, useAppSelector } from '@/store/store';
@@ -37,9 +38,9 @@ const UserManagementTab: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
 
   // Pagination with persistence
-  const [pagination, setPagination] = usePaginationPersistence('userManagementPagination', { currentPage: 1, itemsPerPage: 100 });
+  const [pagination, setPagination] = usePaginationPersistence('userManagementPagination', { currentPage: 1, itemsPerPage: 20 });
   const currentPage = pagination.currentPage;
-  const itemsPerPage = pagination.itemsPerPage;
+  const itemsPerPage = Math.min(pagination.itemsPerPage, 20);
 
   const query: UsersQuery = useMemo(
     () => ({
@@ -62,16 +63,29 @@ const UserManagementTab: React.FC = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isTableReady, setIsTableReady] = useState(false);
+
+  useEffect(() => {
+    const schedule = () => setIsTableReady(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(schedule);
+      return () => window.cancelIdleCallback(id);
+    }
+
+    const id = setTimeout(schedule, 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const handleAddUser = () => {
     setEditingUser(null);
     setIsDialogOpen(true);
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = useCallback((user: User) => {
     setEditingUser(user);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleSaveUser = async (userForm: CreateUserRequest) => {
     if (editingUser) {
@@ -140,22 +154,30 @@ const UserManagementTab: React.FC = () => {
     setPagination({ ...pagination, currentPage: 1, itemsPerPage: value });
   };
 
-  const handleRequestUpdate = async (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => {
-    const payload = {
-      full_name: user.fullName,
-      email: user.email,
-      type: (updates.type ?? user.type) as any,
-      is_active: (updates.isActive ?? user.isActive) as any,
-    };
-    const updated = await dispatch(updateUserThunk({ id: user.id, payload })).unwrap();
-    dispatch(touchListingAfterMutation({ userId: updated.id }));
-  };
+  const handleRequestUpdate = useCallback(
+    async (user: User, updates: Partial<Pick<User, 'type' | 'isActive'>>) => {
+      const payload = {
+        full_name: user.fullName,
+        email: user.email,
+        type: (updates.type ?? user.type) as any,
+        is_active: (updates.isActive ?? user.isActive) as any,
+      };
+      const updated = await dispatch(updateUserThunk({ id: user.id, payload })).unwrap();
+      dispatch(touchListingAfterMutation({ userId: updated.id }));
+    },
+    [dispatch],
+  );
 
-  // Initial listing fetch (subsequent fetches happen on Apply / pagination)
+  const handleResendInvite = useCallback(async (userId: string) => {
+    await resendOnboardingInvite(Number(userId));
+  }, []);
+
+  // Defer data fetch until shell is painted to reduce main-thread contention
   useEffect(() => {
+    if (!isTableReady) return;
     dispatch(fetchUsersListingThunk(query));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // only run on mount
+  }, [isTableReady]);
 
   return (
     <div>
@@ -204,16 +226,20 @@ const UserManagementTab: React.FC = () => {
             </div>
           </div>
 
-          <UserTable
-            users={users}
-            loading={listingLoading}
-            loggedInUserId={loggedInUserId}
-            onRequestUpdate={handleRequestUpdate}
-            onEditUser={handleEditUser}
-            onResendInvite={async userId => {
-              await resendOnboardingInvite(Number(userId));
-            }}
-          />
+          {isTableReady ? (
+            <Suspense fallback={<UserTableSkeleton />}>
+              <UserTable
+                users={users}
+                loading={listingLoading || !listingEntry}
+                loggedInUserId={loggedInUserId}
+                onRequestUpdate={handleRequestUpdate}
+                onEditUser={handleEditUser}
+                onResendInvite={handleResendInvite}
+              />
+            </Suspense>
+          ) : (
+            <UserTableSkeleton />
+          )}
 
           {listingEntry?.meta && (
             <div className="mt-6">
@@ -234,7 +260,11 @@ const UserManagementTab: React.FC = () => {
         </CardContent>
       </Card>
 
-      <UserDialog isOpen={isDialogOpen} onClose={handleCloseDialog} editingUser={editingUser} onSave={handleSaveUser} />
+      {isDialogOpen && (
+        <Suspense fallback={null}>
+          <UserDialog isOpen={isDialogOpen} onClose={handleCloseDialog} editingUser={editingUser} onSave={handleSaveUser} />
+        </Suspense>
+      )}
     </div>
   );
 };

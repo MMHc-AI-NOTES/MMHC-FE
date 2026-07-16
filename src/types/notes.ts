@@ -9,8 +9,7 @@ export interface RawApiNote {
   practitionerId: number;
   client?: string;
   clientId?: string;
-  type?: number;
-  noteType?: { id: number; name: string };
+  type?: { id: number; name: string };
   aiScore?: { id: number; name: string };
   aiStatus?: { id: number; name: string };
   humanReview?: { id: number; name: string };
@@ -78,8 +77,22 @@ export interface HumanReview {
   humanResult?: { id: number; name: string };
   reviewer?: { id: number; fullName: string };
 }
+
+export interface DiagnosisTimestamp {
+  seconds?: number;
+}
+
+export interface DiagnosisItem {
+  code: string;
+  date?: DiagnosisTimestamp;
+  description: string;
+  endDate?: DiagnosisTimestamp | Record<string, never>;
+  noteId?: string;
+}
+
 export interface NoteDetail {
   id: string;
+  dbId?: number;
   aiStatus: { id: number; name: string };
   priority: { id: number; name: string };
   humanReview: HumanReview[] | null;
@@ -88,6 +101,7 @@ export interface NoteDetail {
   cptCode: number;
   reviewCycle: { id: number; name: string };
   clientId: string;
+  sessionId?: string;
   noteType: string;
   aiReviews: number;
   auditScore: number;
@@ -106,6 +120,9 @@ export interface NoteDetail {
     description: string;
     justification?: string;
     sectionId: string;
+    descriptionId?: string;
+    confidence?: number;
+    evidence?: string;
   }[];
   webhookVersions: WebhookVersion[];
   /** Reviewer id -> marked for review (from note detail API) */
@@ -114,6 +131,9 @@ export interface NoteDetail {
   previousNote?: PreviousNote;
   /** Raw note review marks array from API, including timestamps */
   noteReviewMarksRaw?: NoteReviewMarkItem[];
+  /** Client diagnoses from note detail API */
+  diagnosis?: DiagnosisItem[];
+  feedbackVerdicts?: any[];
 }
 
 export interface NoteSection {
@@ -146,6 +166,9 @@ export interface Chat {
       section_id: string;
       section: string;
       justification: string;
+      description: string;
+      confidence: number;
+      evidence: string;
     }>;
     summary: string;
     sentiment: string;
@@ -179,6 +202,7 @@ export interface Practitioner {
 export interface SMEIssue {
   id: number;
   reviewerId: number;
+  reviewer?: { id: number; fullName: string; email?: string };
   versionId: number;
   errorType: {
     id: number;
@@ -267,6 +291,10 @@ export interface ApiNoteDetail {
   /** Note review marks from API (fetchNoteDetail) – array with reviewerId & markedAsReviewed */
   note_review_marks?: NoteReviewMarkItem[];
   noteReviewMarks?: NoteReviewMarkItem[];
+  Diagnosis?: DiagnosisItem[];
+  diagnosis?: DiagnosisItem[];
+  feedbackVerdicts?: any[];
+  feedback_verdicts?: any[];
 }
 
 // Queue Overview Data

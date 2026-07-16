@@ -19,12 +19,49 @@ interface ApiResponse<T> {
 
 export const invokeSessionReview = async (payload: SessionReviewPayload): Promise<SessionReviewData | null> => {
   try {
-    const response = await axios.post<ApiResponse<SessionReviewData>>('/session-reviews/invoke', payload);
+    const response = await axios.post<ApiResponse<SessionReviewData>>('/mcp/session-reviews/invoke', payload);
     const responsePayload = response?.data?.status ? response.data.data : response.data;
 
     if (!responsePayload || typeof responsePayload !== 'object') {
       handleErrorMessages(response.data);
       return null;
+    }
+
+    // Check for new MCP response format
+    const targetObj = responsePayload as any;
+    const mcpResponse =
+      targetObj.mcp_response ||
+      (targetObj.data && typeof targetObj.data === 'object' && targetObj.data.mcp_response) ||
+      (response as any).mcp_response ||
+      ((response as any).data && typeof (response as any).data === 'object' && (response as any).data.mcp_response);
+
+    if (mcpResponse && typeof mcpResponse === 'object') {
+      const issues = Array.isArray(mcpResponse.ai_issues)
+        ? mcpResponse.ai_issues.map((issue: any) => ({
+            severity: issue.error_type || '',
+            section: issue.section || '',
+            description: issue.description || '',
+            justification: issue.justification || '',
+            severity_details: issue.justification || issue.description || '',
+            points_deducted: issue.points_deducted ?? null,
+          }))
+        : [];
+
+      const scorerVersion = mcpResponse.meta?.scorer_version || mcpResponse.model_version || '';
+
+      return {
+        score: mcpResponse.score,
+        pass: mcpResponse.verdict === 'PASS',
+        issues,
+        scorer_version: scorerVersion,
+        raw_response: JSON.stringify(responsePayload, null, 2),
+        output_text: JSON.stringify({
+          pass: mcpResponse.verdict === 'PASS',
+          score: mcpResponse.score,
+          issues,
+          scorer_version: scorerVersion,
+        }),
+      };
     }
 
     // New backend shape: { ..., bedrockResponse: { ... , validation_result? } }

@@ -3,17 +3,16 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AILog } from '@/types/aiLogs';
-import { FileText, Hash, Database, Code, Clock, Activity, Calendar, Zap, HelpCircle } from 'lucide-react';
+import { FileText, Hash, Database, Code, Clock, Activity, Calendar, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDateTime, getModelDisplayName } from '@/utils/helper';
-import { ChatTriggerSourceEnum } from '@/constants/common';
+import { formatDateTime, getScorerVersion } from '@/utils/helper';
 
 interface LogDetailsCardProps {
   log: AILog;
 }
 
 const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
-  const modelDisplayName = getModelDisplayName(log.modelId);
+  // const modelDisplayName = getModelDisplayName(log.modelId);
 
   const getConfidenceLevel = (score: number) => {
     if (score >= 95) {
@@ -64,7 +63,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
               </div>
               <Badge className="bg-blue-light text-blue gap-1.5 rounded-md [&>svg]:!size-3">
                 <Database className="h-3 w-3" />
-                {modelDisplayName}
+                {getScorerVersion(log) || log.agent?.name || log.prompt || '-'}
               </Badge>
             </div>
 
@@ -74,7 +73,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
                 <Code className="h-4 w-4" />
                 <span className="text-sm">Prompt Agent:</span>
               </div>
-              <span className="text-sm font-medium text-gray-900">{log.agent?.name || '-'}</span>
+              <span className="text-sm font-medium text-gray-900">{getScorerVersion(log) || log.agent?.name || log.prompt || '-'}</span>
             </div>
           </div>
           <div>
@@ -151,7 +150,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
             </div>
 
             {/* Trigger Source */}
-            <div className="flex items-center justify-between py-3">
+            {/* <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2 text-gray-400">
                 <Zap className="h-4 w-4" />
                 <span className="text-sm">Trigger Source:</span>
@@ -159,7 +158,7 @@ const LogDetailsCard = ({ log }: LogDetailsCardProps) => {
               <span className="text-sm font-medium text-gray-900">
                 {log.triggerSource?.id === ChatTriggerSourceEnum.rerun ? 'Re-run' : '-'}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </CardContent>

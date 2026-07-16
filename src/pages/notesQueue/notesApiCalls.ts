@@ -12,6 +12,7 @@ import {
   SmeReviewerCountItem,
 } from '@/types/notes';
 import moment from 'moment';
+import { SessionTypeLabels } from '@/constants/common';
 
 interface ApiResponse<T> {
   status: boolean;
@@ -101,7 +102,7 @@ const formatApiData = ({ data }: DataFormatterProps): FormattedNote[] => {
       practitioner: item.practitioner.fullName,
       client: item.patient.clientId || '-',
       date: formatDate(item.sessionTime),
-      type: item.noteType?.name || 'Progress Note',
+      type: item.type?.id ? SessionTypeLabels[item.type?.id] : 'Progress Note',
       aiScore: item.aiScore || 0,
       aiStatus: item.aiStatus?.id || 4, // Default to not_reviewed
       humanReview: item.humanReview?.id || 1, // Default to not_needed

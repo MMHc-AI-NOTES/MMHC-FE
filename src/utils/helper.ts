@@ -67,22 +67,24 @@ export const getLoggedInUserId = (): number | null => {
   }
 };
 
-export const handleCatchMessages = (error: unknown): void => {
-  if (axios.isCancel(error)) return;
+export const handleCatchMessages = (error: unknown): string => {
+  if (axios.isCancel(error)) return '';
   const axiosError = error as AxiosError<{ message?: string }>;
 
   const message = axiosError.response?.data?.message || axiosError.message || 'Oops! Something went wrong.';
   showToast.error(message);
 
   console.error('API Error:', message);
+  return message;
 };
 
-export const handleErrorMessages = (errors?: ErrorMessage[] | any): void => {
+export const handleErrorMessages = (errors?: ErrorMessage[] | any): string => {
   let errorMessages: ErrorMessage[] = [];
 
   if (!errors) {
-    showToast.error('Oops! Something went wrong.');
-    return;
+    const fallbackMessage = 'Oops! Something went wrong.';
+    showToast.error(fallbackMessage);
+    return fallbackMessage;
   }
 
   // Case 1: Already an array of ErrorMessage
@@ -109,7 +111,12 @@ export const handleErrorMessages = (errors?: ErrorMessage[] | any): void => {
   if (errorMessages.length > 0) {
     const message = errorMessages.map(e => e.message).join('\n');
     showToast.error(message);
+    return message;
   }
+
+  const fallbackMessage = 'Oops! Something went wrong.';
+  showToast.error(fallbackMessage);
+  return fallbackMessage;
 };
 
 // Helper function to extract errors
@@ -230,4 +237,35 @@ export const formatJsonToText = (jsonString: string | undefined): string => {
   } catch {
     return String(jsonString);
   }
+};
+
+export const getScorerVersion = (log: any): string => {
+  if (log?.mcp_response) {
+    if (typeof log.mcp_response === 'object') {
+      return log.mcp_response.meta?.scorer_version || log.mcp_response.model_version || '';
+    }
+    try {
+      const parsed = JSON.parse(log.mcp_response);
+      return parsed.meta?.scorer_version || parsed.model_version || '';
+    } catch (e) {
+      void e;
+    }
+  }
+
+  if (log?.bedrockResponse) {
+    const br = log.bedrockResponse as any;
+    if (br.mcp_response) {
+      return br.mcp_response.meta?.scorer_version || br.mcp_response.model_version || '';
+    }
+    if (br.raw_response) {
+      try {
+        const parsed = JSON.parse(br.raw_response);
+        return parsed.meta?.scorer_version || parsed.model_version || '';
+      } catch (e) {
+        void e;
+      }
+    }
+  }
+
+  return '';
 };

@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { AILog } from '@/types/aiLogs';
 import { Cpu, FileCode, Hash, Clock } from 'lucide-react';
-import { formatDateTime, getModelDisplayName } from '@/utils/helper';
+import { formatDateTime, getModelDisplayName, getScorerVersion } from '@/utils/helper';
 
 interface ModelInfoCardProps {
   log: AILog;
@@ -24,9 +24,9 @@ const ModelInfoCard = ({ log }: ModelInfoCardProps) => {
           <div className="text-primary flex gap-1 text-sm">
             <FileCode className="text-primary mt-0.5" size={16} />
             <div>
-              <p className="font-medium">Prompt Version</p>
-              <p className="text-sm break-all text-black" title={log.agent?.name || '-'}>
-                {log.agent?.name || '-'}
+              <p className="font-medium">Scorer Version</p>
+              <p className="text-sm break-all text-black" title={getScorerVersion(log) || log.agent?.name || log.prompt || '-'}>
+                {getScorerVersion(log) || log.agent?.name || log.prompt || '-'}
               </p>
             </div>
           </div>

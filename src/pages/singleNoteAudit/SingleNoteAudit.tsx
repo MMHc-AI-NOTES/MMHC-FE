@@ -13,9 +13,11 @@ import {
 
 // Components
 import NoteInformation from './NoteInformation';
+import DiagnosisCard from './DiagnosisCard';
+import { parseDiagnosisFromApi } from './diagnosisUtils';
 // import NoteSections from './NoteSections';
 import AuditScoreCard from './AuditScoreCard';
-import IssuesIdentifiedCard from './IssuesIdentifiedCard';
+// import IssuesIdentifiedCard from './IssuesIdentifiedCard';
 import SMEReview from './SMEReview';
 import ActionButtons from './ActionButtons';
 // import HumanReviewSection from './HumanReviewSection';
@@ -30,7 +32,6 @@ import { fetchAgents } from '../settings/settingsApiCalls';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
 import SummaryCard from './SummaryCard';
 import TherapySessionSummaryCard from './TherapySessionSummaryCard';
-import PreviousSessionCard from './PreviousSessionCard';
 import ModelInformation from './ModelInformation';
 // import { mapCategoryToSectionId } from '@/utils/helper';
 import { SessionTypeLabels } from '@/constants/common';
@@ -61,6 +62,9 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
     description: issue.severity_details || 'No description provided',
     justification: issue.justification || 'No justification provided',
     sectionId: issue.section_id || '',
+    descriptionId: issue.description_id || '',
+    confidence: issue.confidence || 0,
+    evidence: issue.evidence || '',
   })) || [
     // Fallback to default issues if no chat data
     {
@@ -83,10 +87,12 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
 
   return {
     id: apiData.noteId,
+    dbId: apiData.id,
     date: formattedDate,
     practitioner: apiData.practitioner.fullName,
     cptCode: apiData.cptCodeId,
     clientId: apiData.patient?.clientId || '-',
+    sessionId: apiData.sessionId || '',
     noteType: SessionTypeLabels[apiData.type.id],
     aiReviews: apiData.chat_count || 0,
     auditScore,
@@ -120,6 +126,8 @@ const formatNoteDetail = (apiData: ApiNoteDetail, chatId: number): NoteDetail =>
       const arr = (apiData as any).noteReviewMarks ?? (apiData as any).note_review_marks;
       return Array.isArray(arr) ? (arr as any) : undefined;
     })(),
+    diagnosis: parseDiagnosisFromApi(apiData),
+    feedbackVerdicts: apiData.feedbackVerdicts ?? apiData.feedback_verdicts ?? [],
   };
 };
 
@@ -135,7 +143,7 @@ const SingleNoteAudit = () => {
     state => state.smeConfig,
   );
   const user = useAppSelector(state => state.auth.user);
-  // const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);
+  // const [openSectionId, setOpenSectionId] = useState<string | undefined>(undefined);/
   const [reviews, setReviews] = useState<Review[]>([]);
 
   // Create a ref to store the latest selectedAgentId
@@ -143,12 +151,15 @@ const SingleNoteAudit = () => {
   const initialAgentIdRef = useRef(selectedAgentId); // Track initial agent ID
   const onReviewerIssuesChangedRef = useRef<((reviewerId: number) => void) | null>(null);
 
-  const [noteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+  const [rawNoteDetail, setNoteDetail] = useState<NoteDetail | null>(null);
+
+  const noteDetail = rawNoteDetail;
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [practitionerId, setPractitionerId] = useState<number | null>(null);
   const [markedForReviewAt, setMarkedForReviewAt] = useState<string | null>(null);
   const [emailSentAt, setEmailSentAt] = useState<string | null>(null);
   const [assignedToManagerAt, setAssignedToManagerAt] = useState<string | null>(null);
+  const [activityRefreshTrigger, setActivityRefreshTrigger] = useState(0);
 
   const searchParams = new URLSearchParams(location.search);
 
@@ -175,27 +186,36 @@ const SingleNoteAudit = () => {
   }, [selectedAgentId]);
 
   const loadNoteDetail = useCallback(
-    async (isRerun: boolean = false) => {
+    async (isRerun: boolean = false, silent: boolean = false) => {
       if (!noteId || !selectedAgentIdRef.current) {
         console.log('Missing noteId or selectedAgentId');
         setLoading(false);
         return;
       }
 
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       try {
-        const apiNoteDetail = await getNoteDetailWithChat(noteId, selectedAgentIdRef.current, isRerun);
+        const apiNoteDetail = await getNoteDetailWithChat(noteId, isRerun);
         const formattedNoteDetail = formatNoteDetail(apiNoteDetail, chatId);
 
         setNoteDetail(formattedNoteDetail);
         setPractitionerId(apiNoteDetail.practitionerId);
       } finally {
-        setLoading(false);
+        if (!silent) {
+          setLoading(false);
+        }
       }
     },
     [chatId, noteId],
   );
+
+  const handleFeedbackChanged = useCallback(() => {
+    setActivityRefreshTrigger(prev => prev + 1);
+    loadNoteDetail(false, true);
+  }, [loadNoteDetail]);
 
   // Load agents and set default agent - runs on every mount
   useEffect(() => {
@@ -236,10 +256,10 @@ const SingleNoteAudit = () => {
 
   // Load note detail only on initial load, not when agent changes
   useEffect(() => {
-    if (agentsLoaded && selectedAgentId && noteId && !noteDetail) {
+    if (agentsLoaded && selectedAgentId && noteId && !rawNoteDetail) {
       loadNoteDetail(false);
     }
-  }, [agentsLoaded, selectedAgentId, noteId, noteDetail, loadNoteDetail]);
+  }, [agentsLoaded, selectedAgentId, noteId, rawNoteDetail, loadNoteDetail]);
 
   useEffect(() => {
     const loadPractitioners = async () => {
@@ -395,8 +415,8 @@ const SingleNoteAudit = () => {
 
   // Sync noteDetail when an SME issue is updated (e.g. description changed) so Therapy Session Summary dropdown disables immediately
   const onSMEIssueUpdated = useCallback(
-    (versionId: number, smeIssueId: number, payload: { issueDescriptionId?: number; issueDescriptionText?: string }) => {
-      const { issueDescriptionId, issueDescriptionText } = payload;
+    (versionId: number, smeIssueId: number, payload: { issueDescriptionId?: number; issueDescriptionText?: string; comment?: string }) => {
+      const { issueDescriptionId, issueDescriptionText, comment } = payload;
       setNoteDetail(prev => {
         if (!prev?.webhookVersions?.length) return prev;
         return {
@@ -410,6 +430,7 @@ const SingleNoteAudit = () => {
                   ? {
                       ...issue,
                       description: issueDescriptionText ?? issue.description,
+                      ...(comment !== undefined ? { comment } : {}),
                       issueDescription:
                         issueDescriptionId != null
                           ? { id: issueDescriptionId, description: issueDescriptionText ?? issue.issueDescription?.description ?? '' }
@@ -426,14 +447,7 @@ const SingleNoteAudit = () => {
   );
 
   if (loading) {
-    return (
-      <div>
-        <LoadingSkeleton backPath={backPath} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-          <div></div>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton backPath={backPath} />;
   }
 
   if (agentsLoaded && (!selectedAgentId || agents.length === 0)) {
@@ -461,41 +475,48 @@ const SingleNoteAudit = () => {
 
   return (
     noteDetail && (
-      <div>
-        <Button onClick={() => navigate(backPath)} className="mb-2">
+      <div className="space-y-4">
+        <Button onClick={() => navigate(backPath)} className="mb-2 w-fit">
           <ArrowLeft />
         </Button>
+
+        <NoteInformation
+          noteDetail={noteDetail}
+          handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
+          webhookVersions={noteDetail.webhookVersions}
+          selectedVersionId={selectedVersionId}
+          onVersionChange={setSelectedVersionId}
+        />
+
+        <TherapySessionSummaryCard
+          webhookVersions={noteDetail.webhookVersions}
+          previousNote={noteDetail.previousNote}
+          aiIssues={noteDetail.issues}
+          onVersionChange={setSelectedVersionId}
+          noteId={noteId}
+          id={noteDetail.dbId}
+          chatId={Number(noteDetail.modelDetail.auditRunId)}
+          auditScore={noteDetail.auditScore}
+          versionId={selectedVersionId}
+          reviewerId={reviewerId ?? loggedInUserId}
+          practitionerId={practitionerId ?? 0}
+          aiStatusId={noteDetail.aiStatus?.id ?? 1}
+          priorityId={noteDetail.priority?.id ?? 1}
+          scorerVersion={noteDetail.modelDetail.modelVersion}
+          sessionId={noteDetail.sessionId}
+          feedbackVerdicts={noteDetail.feedbackVerdicts}
+          onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
+          onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
+          onSMEIssueDeleted={onSMEIssueDeleted}
+          onSMEIssueUpdated={onSMEIssueUpdated}
+          handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
+          handlePreviousNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
+          onFeedbackChanged={handleFeedbackChanged}
+        />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {/* Left Sidebar */}
           <div className="space-y-4">
-            <NoteInformation noteDetail={noteDetail} handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)} />
-            <TherapySessionSummaryCard
-              webhookVersions={noteDetail.webhookVersions}
-              onVersionChange={setSelectedVersionId}
-              noteId={noteId}
-              versionId={selectedVersionId}
-              reviewerId={reviewerId ?? loggedInUserId}
-              practitionerId={practitionerId ?? 0}
-              aiStatusId={noteDetail.aiStatus?.id ?? 1}
-              priorityId={noteDetail.priority?.id ?? 1}
-              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
-              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={() => handleNoteIdClick(noteDetail.id)}
-            />
-            <PreviousSessionCard
-              webhookVersions={noteDetail.webhookVersions}
-              previousNote={noteDetail.previousNote}
-              onVersionChange={setSelectedVersionId}
-              noteId={noteDetail.previousNote?.noteId}
-              versionId={selectedVersionId}
-              reviewerId={reviewerId ?? loggedInUserId}
-              practitionerId={practitionerId ?? 0}
-              aiStatusId={noteDetail.aiStatus?.id ?? 1}
-              priorityId={noteDetail.priority?.id ?? 1}
-              onSMEIssueCreatedFromTemplate={handleSMEIssueCreatedFromTemplate}
-              onReviewerIssuesChanged={reviewerId => onReviewerIssuesChangedRef.current?.(reviewerId)}
-              handleNoteIdClick={() => handleNoteIdClick(noteDetail.previousNote?.noteId)}
-            />
+            <DiagnosisCard diagnoses={noteDetail.diagnosis ?? []} />
             {/* <NoteSections bedrockResponse={noteDetail.bedrockResponse} openSectionId={openSectionId} /> */}
           </div>
 
@@ -504,7 +525,7 @@ const SingleNoteAudit = () => {
             {featureFlags.showAuditScoreCard && <AuditScoreCard noteDetail={noteDetail} />}
             {featureFlags.showModelInformation && <ModelInformation modelDetail={noteDetail.modelDetail} />}
             {featureFlags.showAiSummary && <SummaryCard title="AI Summary" summary={noteDetail.aiSummary} icon={Sparkles} />}
-            {featureFlags.showIssuesIdentifiedCard && <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />}
+            {/* {featureFlags.showIssuesIdentifiedCard && <IssuesIdentifiedCard issues={noteDetail.issues} onCategoryClick={() => {}} />} */}
             <SMEReview
               reviews={reviews}
               setReviews={setReviews}
@@ -525,6 +546,8 @@ const SingleNoteAudit = () => {
               onReviewerIssuesChangedRef={onReviewerIssuesChangedRef}
               onMarkedForReview={timestamp => setMarkedForReviewAt(timestamp)}
               onAssignedToManager={timestamp => setAssignedToManagerAt(timestamp)}
+              aiIssues={noteDetail.issues}
+              feedbackVerdicts={noteDetail.feedbackVerdicts}
             />
             {/* Conditionally render Admin Review or Action Buttons */}
             {/* {showHumanReview && noteId ? (
@@ -539,9 +562,9 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
+            {/* {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
               <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />
-            )}
+            )} */}
             {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
@@ -559,6 +582,7 @@ const SingleNoteAudit = () => {
                 markedForReviewAt={markedForReviewAt ?? undefined}
                 emailSentAt={emailSentAt ?? undefined}
                 assignedToManagerAt={assignedToManagerAt ?? undefined}
+                refreshTrigger={activityRefreshTrigger}
               />
             )}
             {featureFlags.showPrompt && (

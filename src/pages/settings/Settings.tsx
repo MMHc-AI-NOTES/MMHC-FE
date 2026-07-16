@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Users, Zap, Columns3Cog } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 // import NotificationsTab from './NotificationsTab';
-import UserManagementTab from './UserManagementTab';
 import AIModelPromptTab from './AIModelPromptTab';
 import SMEConfigTab from './SMEConfigTab';
+
+const UserManagementTab = lazy(() => import('./UserManagementTab'));
 
 type TabType = 'notifications' | 'user-management' | 'ai-model-prompt' | 'sme-config';
 
@@ -62,7 +64,11 @@ const Settings: React.FC = () => {
       {/* Tab Content */}
       <div>
         {/* {activeTab === 'notifications' && <NotificationsTab />} */}
-        {activeTab === 'user-management' && <UserManagementTab />}
+        {activeTab === 'user-management' && (
+          <Suspense fallback={<Skeleton className="h-96 w-full rounded-lg" />}>
+            <UserManagementTab />
+          </Suspense>
+        )}
         {activeTab === 'ai-model-prompt' && <AIModelPromptTab />}
         {activeTab === 'sme-config' && <SMEConfigTab />}
       </div>

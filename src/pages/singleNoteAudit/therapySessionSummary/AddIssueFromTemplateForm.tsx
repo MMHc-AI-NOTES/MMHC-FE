@@ -23,6 +23,7 @@ interface AddIssueFromTemplateFormProps {
   hasTemplates: boolean;
   onSave: (fieldKey: string, commentsByTemplateId?: Record<number, string>) => void;
   onClose: () => void;
+  className?: string;
 }
 
 export function AddIssueFromTemplateForm({
@@ -35,6 +36,7 @@ export function AddIssueFromTemplateForm({
   hasTemplates,
   onSave,
   onClose,
+  className,
 }: AddIssueFromTemplateFormProps) {
   const [commentsByTemplateId, setCommentsByTemplateId] = useState<Record<number, string>>({});
   const [open, setOpen] = useState(false);
@@ -49,7 +51,7 @@ export function AddIssueFromTemplateForm({
 
   if (!hasTemplates) {
     return (
-      <div className="mt-3 rounded-lg border bg-white p-4">
+      <div className={cn('mt-3 rounded-lg border bg-white p-4', className)}>
         <div className="text-muted-foreground py-4 text-center">
           <p>No templates available for this field.</p>
           <p className="mt-2 text-sm">Please configure templates in Settings first.</p>
@@ -59,7 +61,7 @@ export function AddIssueFromTemplateForm({
   }
 
   return (
-    <div className="mt-3 rounded-lg border bg-white px-4 py-2">
+    <div className={cn('mt-3 rounded-lg border bg-white px-4 py-2', className)}>
       <div className="space-y-4">
         <div>
           <div className="mb-1 flex items-center justify-between">
@@ -80,15 +82,20 @@ export function AddIssueFromTemplateForm({
                 aria-expanded={open}
                 className="mt-1 w-full justify-between font-normal"
               >
-                <span className="truncate">{selectedTemplates.length > 0
+                <span className="truncate">
+                  {selectedTemplates.length > 0
                     ? selectedTemplates.length > 2
-                      ? `${selectedTemplates.slice(0, 2).map(t => t.label).join(', ')} +${selectedTemplates.length - 2}`
+                      ? `${selectedTemplates
+                          .slice(0, 2)
+                          .map(t => t.label)
+                          .join(', ')} +${selectedTemplates.length - 2}`
                       : selectedTemplates.map(t => t.label).join(', ')
-                    : 'Select a description'}</span>
+                    : 'Select a description'}
+                </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+            <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
               <Command className="w-full">
                 <CommandInput placeholder="Search description..." />
                 <CommandList>

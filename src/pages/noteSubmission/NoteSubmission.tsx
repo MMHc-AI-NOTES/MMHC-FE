@@ -8,7 +8,7 @@ import { Trash2, Zap } from 'lucide-react';
 import { NoteTypeEnum, PractitionerRoleEnum, AuditModeEnum, AgentModelKeys } from '@/constants/common';
 import { SessionMetadata, PractitionerDetails, AuditControls } from '@/types/noteSubmission';
 import { submitNoteForAudit, invokeSessionReview } from './noteSubmissionApiCalls';
-import SubmissionFormSelects from './SubmissionFormSelects';
+// import SubmissionFormSelects from './SubmissionFormSelects';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { setAgents, setSelectedAgentId } from '@/store/slices/agentsSlice';
@@ -32,6 +32,7 @@ type SessionReviewResult = {
   score?: number;
   pass?: boolean;
   issues?: SessionIssue[];
+  scorer_version?: string;
   validation_result?: {
     isValid: boolean;
     status?: string;
@@ -51,6 +52,7 @@ type SessionIssue = {
 type SessionReport = {
   pass?: boolean;
   issues?: SessionIssue[];
+  scorer_version?: string;
 };
 
 const NoteSubmission: React.FC = () => {
@@ -68,7 +70,7 @@ const NoteSubmission: React.FC = () => {
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   // Form state
-  const [modelVersion, setModelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
+  const [modelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
   const [rawResponseText, setRawResponseText] = useState<string>('');
@@ -202,15 +204,15 @@ const NoteSubmission: React.FC = () => {
 
         if (parsedObj && typeof parsedObj === 'object') {
           const parsedIssues = data.issues;
-          const hasNoIssues = Array.isArray(parsedIssues) && parsedIssues.length === 0;
           parsedObj.issues = parsedIssues || parsedObj.issues || [];
-          if (hasNoIssues && data.raw_response) {
-            setSessionReport(data.raw_response);
-          } else {
-            setSessionReport(parsedObj);
-          }
+          parsedObj.scorer_version = data.scorer_version || parsedObj.scorer_version;
+          setSessionReport(parsedObj);
         } else {
-          setSessionReport(data.raw_response || data.output_text || data);
+          setSessionReport({
+            pass: data.pass,
+            issues: data.issues || [],
+            scorer_version: data.scorer_version,
+          });
         }
       }
 
@@ -378,13 +380,13 @@ const NoteSubmission: React.FC = () => {
           </div>
 
           {/* Form Selects */}
-          <SubmissionFormSelects
+          {/* <SubmissionFormSelects
             modelVersion={modelVersion}
             onModelVersionChange={setModelVersion}
             selectedAgentId={selectedAgentId}
             onAgentChange={value => dispatch(setSelectedAgentId(value))}
             agents={agents}
-          />
+          /> */}
 
           {/* Current Session */}
           <div className="space-y-1">
@@ -450,9 +452,17 @@ const NoteSubmission: React.FC = () => {
                   <span className="font-medium">Reviewer:</span>
                   <span className="text-primary ml-1 font-semibold">AI Audit</span>
                 </div>
-                <div className="rounded-lg bg-gray-50 px-4 py-3">
-                  <span className="font-medium text-gray-700">Calculated Score:</span>{' '}
-                  <span className="font-bold text-gray-900">{calculatedScoreByUs}</span>
+                <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+                  <div>
+                    <span className="font-medium text-gray-700">Calculated Score:</span>{' '}
+                    <span className="font-bold text-gray-900">{calculatedScoreByUs}</span>
+                  </div>
+                  {sessionReportObject?.scorer_version && (
+                    <div className="text-gray-700">
+                      <span className="font-medium">Scorer Version:</span>{' '}
+                      <span className="font-semibold text-gray-700">{sessionReportObject.scorer_version}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -483,7 +493,7 @@ const NoteSubmission: React.FC = () => {
                               <span className="font-medium">Related to:</span> {issue.section || 'Overall'}
                             </p>
                             <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                              <span className="font-medium">Description:</span> {issue.severity_details || '-'}
+                              <span className="font-medium">Description:</span> {issue.description || '-'}
                             </p>
                           </div>
                         </div>

@@ -65,7 +65,7 @@ export const getDateRange = (range: string): { startDate: string; endDate: strin
 
 export const fetchAILogs = async (payload: AILogsPayload): Promise<AILogsApiResponse> => {
   try {
-    const response = await axios.post<ApiResponse>('/chats/listing', payload);
+    const response = await axios.post<ApiResponse>('/mcp/chats/listing', payload);
 
     if (response?.status) {
       const responseData = response.data;
@@ -100,4 +100,19 @@ export const getResultStatus = (score: number): 'pass' | 'fail' | 'error' => {
   if (score >= 95) return 'pass';
   if (score < 95) return 'fail';
   return 'error';
+};
+
+export const triggerRerunAudit = async (noteId: string): Promise<any> => {
+  try {
+    const response = await axios.post('/mcp/chats', { note_id: noteId });
+    if (response?.status) {
+      return response.data;
+    } else {
+      handleErrorMessages(response);
+      return null;
+    }
+  } catch (error) {
+    handleCatchMessages(error);
+    return null;
+  }
 };
