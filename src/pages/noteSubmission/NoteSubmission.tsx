@@ -72,7 +72,9 @@ const NoteSubmission: React.FC = () => {
   // Form state
   const [modelVersion] = useState<string>(AgentModelKeys.CLAUDE_3_5_HAIKU_V1);
   const [progressNoteContent, setProgressNoteContent] = useState<string>('');
+  const [progressNoteId, setProgressNoteId] = useState<string>('');
   const [previousSessionContent, setPreviousSessionContent] = useState<string>('');
+  const [previousSessionId, setPreviousSessionId] = useState<string>('');
   const [rawResponseText, setRawResponseText] = useState<string>('');
   const [sessionReport, setSessionReport] = useState<SessionReport | string | null>(null);
   const [noteId, setNoteId] = useState<string>('');
@@ -128,7 +130,9 @@ const NoteSubmission: React.FC = () => {
 
   const handleClear = () => {
     setProgressNoteContent('');
+    setProgressNoteId('');
     setPreviousSessionContent('');
+    setPreviousSessionId('');
     setRawResponseText('');
     setSessionReport(null);
     setNoteId('');
@@ -164,9 +168,10 @@ const NoteSubmission: React.FC = () => {
       if (noteDetail) {
         setNoteId(latestSession.noteId);
         setProgressNoteContent(formatJsonToText(noteDetail.session));
-
+        setProgressNoteId(noteDetail.noteId);
         if (noteDetail.previous_note && noteDetail.previous_note.session) {
           setPreviousSessionContent(formatJsonToText(noteDetail.previous_note.session));
+          setPreviousSessionId(noteDetail.previous_note.noteId);
         } else if (client.sessions.length > 1) {
           const prevNoteDetail = await fetchNoteDetail(client.sessions[1].noteId);
           setPreviousSessionContent(formatJsonToText(prevNoteDetail.session));
@@ -390,7 +395,7 @@ const NoteSubmission: React.FC = () => {
 
           {/* Current Session */}
           <div className="space-y-1">
-            <Label className="text-sm text-gray-700">Current Session</Label>
+            <Label className="text-sm text-gray-700">Current Session {progressNoteId ? `(${progressNoteId})` : ''}</Label>
             <div className="relative">
               <Textarea
                 placeholder="Paste the current session content here..."
@@ -406,7 +411,7 @@ const NoteSubmission: React.FC = () => {
 
           {/* Previous Session */}
           <div className="space-y-1">
-            <Label className="text-sm text-gray-700">Previous Session</Label>
+            <Label className="text-sm text-gray-700">Previous Session {previousSessionId ? `(${previousSessionId})` : ''}</Label>
             <div className="relative">
               <Textarea
                 placeholder="Paste the previous session content here..."

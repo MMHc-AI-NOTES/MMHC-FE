@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, PencilLine, ExternalLink } from 'lucide-react';
+import { Stethoscope, ChevronLeft, ChevronRight, ScrollText, ExternalLink } from 'lucide-react';
 import { WebhookVersion, PreviousNote } from '@/types/notes';
 import type { IssueForm } from './components/types';
 import type { NoteDetail } from '@/types/notes';
@@ -84,7 +84,6 @@ const TherapySessionSummaryCard = ({
     sortedVersions,
     currentVersion,
     displayableSessionFields,
-    changedFields,
     hasPreviousNoteSessionData,
     selectedVersionIndex,
     isHistoricalVersion,
@@ -139,7 +138,6 @@ const TherapySessionSummaryCard = ({
 
   const showSMEActions = Boolean(onSMEIssueCreatedFromTemplate && versionId && noteId);
   const previousNoteId = previousNote?.noteId;
-  const changedFieldsFromPreviousNote = displayableSessionFields.map(([key]) => key).filter(key => isFieldChangedFromPreviousNote(key));
 
   const renderFieldCard = (key: string, value: unknown) => {
     const displayName = getFieldDisplayName(key);
@@ -225,37 +223,12 @@ const TherapySessionSummaryCard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          {isHistoricalVersion && (
-            <div className="bg-orange-light border-orange-dark flex w-fit items-center gap-2 rounded-md border px-5 py-2.5">
-              <ScrollText className="text-orange-dark h-4 w-4" />
-              <span className="text-orange-dark text-sm font-medium">Viewing Historical Version - Read Only</span>
-            </div>
-          )}
-          {changedFields.length > 0 && (
-            <div
-              className="text-primary flex w-fit items-center gap-2 rounded-md border px-5 py-2.5"
-              style={{ backgroundColor: 'rgba(161, 230, 129, 0.1)', borderColor: 'rgba(161, 230, 129, 0.4)' }}
-            >
-              <PencilLine className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {changedFields.length} field{changedFields.length !== 1 ? 's' : ''} changed from previous version
-              </span>
-            </div>
-          )}
-          {changedFieldsFromPreviousNote.length > 0 && (
-            <div
-              className="text-primary flex w-fit items-center gap-2 rounded-md border px-5 py-2.5"
-              style={{ backgroundColor: 'rgba(161, 230, 129, 0.1)', borderColor: 'rgba(161, 230, 129, 0.4)' }}
-            >
-              <PencilLine className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {changedFieldsFromPreviousNote.length} field{changedFieldsFromPreviousNote.length !== 1 ? 's' : ''} changed from previous
-                session
-              </span>
-            </div>
-          )}
-        </div>
+        {isHistoricalVersion && (
+          <div className="bg-orange-light border-orange-dark flex w-fit items-center gap-2 rounded-md border px-5 py-2.5">
+            <ScrollText className="text-orange-dark h-4 w-4" />
+            <span className="text-orange-dark text-sm font-medium">Viewing Historical Version - Read Only</span>
+          </div>
+        )}
 
         <div className="space-y-4">
           {displayableSessionFields.length === 0 ? (

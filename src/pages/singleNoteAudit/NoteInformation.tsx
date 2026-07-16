@@ -8,6 +8,7 @@ import { Hash, User, Calendar, ClipboardList, Code, Bot, UserSearch, ExternalLin
 import { VersionHistoryPopover } from './therapySessionSummary/VersionHistoryPopover';
 import moment from 'moment';
 import { DATE_FORMAT } from '@/constants/common';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface NoteInformationProps {
   noteDetail: NoteDetail;
@@ -28,6 +29,8 @@ const NoteInformation = ({
 }: NoteInformationProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const cptCode = cptCodes.find(cptCode => cptCode.id === noteDetail.cptCode)?.code || '-';
+  const cptCodeName = cptCodes.find(cptCode => cptCode.id === noteDetail.cptCode)?.name || '-';
+
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
 
   const sortedVersions = useMemo(() => [...webhookVersions].sort((a, b) => b.id - a.id), [webhookVersions]);
@@ -113,7 +116,14 @@ const NoteInformation = ({
             <Code className="text-primary mt-0.5" size={16} />
             <div>
               <p className="font-medium">CPT Code</p>
-              <p className="text-sm text-black">{cptCode}</p>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-sm text-black">{cptCode}</p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{cptCodeName}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
