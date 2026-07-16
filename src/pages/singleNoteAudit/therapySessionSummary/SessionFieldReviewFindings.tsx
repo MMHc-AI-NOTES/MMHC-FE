@@ -116,13 +116,8 @@ export function SessionFieldReviewFindings({
 
         // Find matching feedback verdict for this issue and current reviewer
         const match = feedbackVerdicts.find(v => {
-          const currentUserIdentifier = user?.fullName?.trim() || user?.email?.trim() || '';
-          if (!currentUserIdentifier) return false;
-
-          const reviewerIdentifier = v.by?.trim() || '';
-          if (reviewerIdentifier.toLowerCase() !== currentUserIdentifier.toLowerCase()) {
-            return false;
-          }
+          const currentUserId = loggedInUserId ?? user?.id ?? null;
+          if (currentUserId == null || Number(v.reviewer_id) !== Number(currentUserId)) return false;
 
           return (
             v.code === issue.descriptionId ||
@@ -163,13 +158,8 @@ export function SessionFieldReviewFindings({
     aiIssues.forEach((issue, index) => {
       const issueKey = getAiIssueKey(issue, index);
       const match = feedbackVerdicts.find(v => {
-        const currentUserIdentifier = user?.fullName?.trim() || user?.email?.trim() || '';
-        if (!currentUserIdentifier) return false;
-
-        const reviewerIdentifier = v.by?.trim() || '';
-        if (reviewerIdentifier.toLowerCase() !== currentUserIdentifier.toLowerCase()) {
-          return false;
-        }
+        const currentUserId = loggedInUserId ?? user?.id ?? null;
+        if (currentUserId == null || Number(v.reviewer_id) !== Number(currentUserId)) return false;
 
         return (
           v.code === issue.descriptionId ||
@@ -185,7 +175,7 @@ export function SessionFieldReviewFindings({
     });
 
     setAiIssueFeedbackIds(prev => ({ ...prev, ...idsMap }));
-  }, [feedbackVerdicts, aiIssues, user]);
+  }, [feedbackVerdicts, aiIssues, loggedInUserId, user?.id]);
 
   if (aiIssues.length === 0 && smeIssues.length === 0) return null;
 
@@ -567,11 +557,8 @@ export function SessionFieldReviewFindings({
                   })()}
 
                   {(() => {
-                    const currentUserIdentifier = user?.fullName?.trim() || user?.email?.trim() || '';
-                    const hasMyMatch = matches.some(m => {
-                      const reviewerIdentifier = m.by?.trim() || '';
-                      return currentUserIdentifier && reviewerIdentifier.toLowerCase() === currentUserIdentifier.toLowerCase();
-                    });
+                    const currentUserId = loggedInUserId ?? user?.id ?? null;
+                    const hasMyMatch = matches.some(m => currentUserId != null && Number(m.reviewer_id) === Number(currentUserId));
 
                     const displayMatches = [...matches];
 
@@ -580,14 +567,14 @@ export function SessionFieldReviewFindings({
                       displayMatches.push({
                         id: aiIssueFeedbackIds[issueKey] || Date.now(),
                         by: user?.fullName || 'Current User',
+                        reviewer_id: currentUserId,
                         verdict: vote,
                         comment: savedFeedbackText || 'null',
                       });
                     }
 
                     return displayMatches.map(match => {
-                      const isMyFeedback =
-                        currentUserIdentifier && match.by && match.by.trim().toLowerCase() === currentUserIdentifier.toLowerCase();
+                      const isMyFeedback = currentUserId != null && Number(match.reviewer_id) === Number(currentUserId);
                       const matchVote =
                         match.verdict === 1 || match.verdict === '1' || match.verdict === 'up'
                           ? FeedbackVerdictEnum.UP.icon_text

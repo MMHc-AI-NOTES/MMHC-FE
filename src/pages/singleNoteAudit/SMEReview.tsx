@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/store';
 import ConfirmationDialog from '@/shared/ConfirmationDialog';
-import { WebhookVersion, NoteReviewMarkItem } from '@/types/notes';
+import { WebhookVersion, NoteReviewMarkItem, type NoteDetail } from '@/types/notes';
 import ReviewCard from './components/ReviewCard';
 import { useVersionIssues } from './components/useVersionIssues';
 import { useReviews } from './components/useReviews';
@@ -103,6 +103,10 @@ interface SMEReviewProps {
   onMarkedForReview?: (timestamp: string) => void;
   /** Optional callback so parent can optimistically add an audit history item when a note is assigned to manager */
   onAssignedToManager?: (timestamp: string) => void;
+  /** AI findings the SME must rate (thumbs up/down) before marking for review */
+  aiIssues?: NoteDetail['issues'];
+  /** Existing feedback verdicts used to check whether all AI findings have been rated */
+  feedbackVerdicts?: any[];
 }
 
 const SMEReview = ({
@@ -125,10 +129,31 @@ const SMEReview = ({
   onReviewerIssuesChangedRef,
   onMarkedForReview,
   onAssignedToManager,
+  aiIssues = [],
+  feedbackVerdicts = [],
 }: SMEReviewProps) => {
   const { id: noteId } = useParams<{ id: string }>();
   const user = useAppSelector(state => state.auth.user);
   const loggedInUserId = user?.id ?? null;
+
+  // Mark For Review stays disabled until the logged-in SME has rated every AI finding.
+  const hasAllAiFindingsFeedback = useMemo(() => {
+    if (!aiIssues.length) return true;
+    if (loggedInUserId == null) return false;
+
+    return aiIssues.every(issue =>
+      feedbackVerdicts.some(v => {
+        if (Number(v.reviewer_id) !== Number(loggedInUserId)) return false;
+
+        return (
+          v.code === issue.descriptionId ||
+          v.description_id === issue.descriptionId ||
+          v.code === issue.sectionId ||
+          v.description_id === issue.sectionId
+        );
+      }),
+    );
+  }, [aiIssues, feedbackVerdicts, loggedInUserId]);
   // const isSMEReviewer = user?.type === UserRoleEnum.sme_reviewer;
 
   // Get current version
@@ -600,6 +625,7 @@ const SMEReview = ({
                 hasIssuesChangedSinceMark={hasIssuesChanged}
                 onMarkForReview={() => handleMarkForReview(review.id, shouldAlsoAssignManager)}
                 isMarkingForReview={markingReviewId === review.id}
+                hasAllAiFindingsFeedback={hasAllAiFindingsFeedback}
                 readOnly={!isCurrentVersion}
                 isNoReviewMode={isNoReviewMode}
                 markedAtLabel={(() => {
