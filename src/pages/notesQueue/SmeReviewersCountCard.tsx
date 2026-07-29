@@ -24,34 +24,41 @@ export const SmeReviewersCountCard = ({
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between gap-2 border-b pb-3">
-        <div className="flex items-center gap-2">
-          <h3 className="text-primary text-base font-semibold whitespace-nowrap">SME Reviewers Count</h3>
+      <div className="flex flex-col gap-2.5 border-b pb-3">
+        {/* Line 1: Title */}
+        <h3 className="text-primary text-lg font-semibold">SME Reviewers Count</h3>
+
+        {/* Line 2: Live Status */}
+        <div className="flex items-center">
           <button
             type="button"
             onClick={() => onAutoRefreshToggle?.(!autoRefresh)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
               autoRefresh
                 ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
             title={autoRefresh ? 'Auto-refresh every 10s is ON' : 'Auto-refresh is OFF'}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? 'animate-pulse bg-emerald-500' : 'bg-gray-400'}`} />
-            {autoRefresh ? 'Live' : 'Paused'}
+            <span className={`h-2 w-2 rounded-full ${autoRefresh ? 'animate-pulse bg-emerald-500' : 'bg-gray-400'}`} />
+            {autoRefresh ? 'Live (10s)' : 'Paused'}
           </button>
         </div>
 
-        <Select value={timeframe} onValueChange={(val) => onTimeframeChange?.(val)}>
-          <SelectTrigger className="h-7 w-28 text-xs font-medium">
-            <SelectValue placeholder="Select" />
-          </SelectTrigger>
-          <SelectContent align="end">
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="this_week">This Week</SelectItem>
-            <SelectItem value="all_time">All Time</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Line 3: Timeframe Dropdown */}
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground text-xs font-medium">Timeframe</span>
+          <Select value={timeframe} onValueChange={(val) => onTimeframeChange?.(val)}>
+            <SelectTrigger className="h-8 w-32 text-xs">
+              <SelectValue placeholder="Select timeframe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this_week">This Week</SelectItem>
+              <SelectItem value="all_time">All Time</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {loading ? (
