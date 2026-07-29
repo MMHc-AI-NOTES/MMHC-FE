@@ -223,9 +223,10 @@ export const fetchCptCodes = async (): Promise<CptCodeOption[]> => {
   }
 };
 
-export const fetchSmeReviewersCount = async (): Promise<SmeReviewerCountItem[] | null> => {
+export const fetchSmeReviewersCount = async (timeframe?: string): Promise<SmeReviewerCountItem[] | null> => {
   try {
-    const response = await axios.get('note-review-marks/sme-reviewers');
+    const params = timeframe ? { timeframe } : {};
+    const response = await axios.get('note-review-marks/sme-reviewers', { params });
 
     if (response?.status && response.data) {
       const mapped: SmeReviewerCountItem[] = response.data.map((item: any) => {
