@@ -15,7 +15,7 @@ interface SmeReviewersCountCardProps {
 export const SmeReviewersCountCard = ({
   data,
   loading,
-  timeframe = 'today',
+  timeframe = 'all_time',
   onTimeframeChange,
   autoRefresh = true,
   onAutoRefreshToggle,

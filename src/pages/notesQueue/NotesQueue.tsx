@@ -45,7 +45,7 @@ const NotesQueue = () => {
   // const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
   const [smeReviewersCount, setSmeReviewersCount] = useState<SmeReviewerCountItem[] | null>(null);
-  const [counterTimeframe, setCounterTimeframe] = useState<string>('today');
+  const [counterTimeframe, setCounterTimeframe] = useState<string>('all_time');
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   // const [workload, setWorkload] = useState<Workload | null>(null);
   const user = useAppSelector(state => state.auth.user);
