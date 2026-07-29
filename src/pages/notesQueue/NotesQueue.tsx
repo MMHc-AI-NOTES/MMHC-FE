@@ -45,6 +45,8 @@ const NotesQueue = () => {
   // const [workloadLoading, setWorkloadLoading] = useState(true);
   const [queueOverview, setQueueOverview] = useState<QueueOverview | null>(null);
   const [smeReviewersCount, setSmeReviewersCount] = useState<SmeReviewerCountItem[] | null>(null);
+  const [counterTimeframe, setCounterTimeframe] = useState<string>('today');
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   // const [workload, setWorkload] = useState<Workload | null>(null);
   const user = useAppSelector(state => state.auth.user);
   const selectedClientId = useAppSelector(state => state.selectedClient.selectedClientId);
@@ -162,31 +164,6 @@ const NotesQueue = () => {
       }
     };
 
-    const loadSmeReviewersCount = async () => {
-      try {
-        setSmeReviewersCountLoading(true);
-        const result = await fetchSmeReviewersCount();
-        setSmeReviewersCount(result);
-      } catch (error) {
-        console.error('Error loading SME reviewers count:', error);
-      } finally {
-        setSmeReviewersCountLoading(false);
-      }
-    };
-
-    // Fetch workload
-    // const loadWorkload = async () => {
-    //   try {
-    //     setWorkloadLoading(true);
-    //     const workloadData = await fetchWorkload();
-    //     setWorkload(workloadData);
-    //   } catch (error) {
-    //     console.error('Error loading workload:', error);
-    //   } finally {
-    //     setWorkloadLoading(false);
-    //   }
-    // };
-
     // Fetch practitioners only if not already loaded in Redux
     const loadPractitioners = async () => {
       if (practitionersLoaded) return; // Skip if already loaded
@@ -211,11 +188,48 @@ const NotesQueue = () => {
 
     // Run non-note fetches in parallel
     loadQueueOverview();
-    loadSmeReviewersCount();
-    // loadWorkload();
     loadPractitioners();
     loadCptCodes();
   }, [practitionersLoaded, cptCodesLoaded, dispatch]);
+
+  // SME Reviewers Count loader & 10s auto-refresh polling
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSmeReviewersCount = async (isInitial = false) => {
+      try {
+        if (isInitial) {
+          setSmeReviewersCountLoading(true);
+        }
+        const result = await fetchSmeReviewersCount(counterTimeframe);
+        if (isMounted) {
+          setSmeReviewersCount(result);
+        }
+      } catch (error) {
+        console.error('Error loading SME reviewers count:', error);
+      } finally {
+        if (isMounted && isInitial) {
+          setSmeReviewersCountLoading(false);
+        }
+      }
+    };
+
+    void loadSmeReviewersCount(true);
+
+    let intervalId: NodeJS.Timeout | null = null;
+    if (autoRefresh) {
+      intervalId = setInterval(() => {
+        void loadSmeReviewersCount(false);
+      }, 10000);
+    }
+
+    return () => {
+      isMounted = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [counterTimeframe, autoRefresh]);
 
   // Load notes - apply saved filters if they exist
   useEffect(() => {
@@ -578,7 +592,14 @@ const NotesQueue = () => {
       {/* Right Column: Overview Cards */}
       <div className="space-y-6 lg:col-span-3">
         <QueueOverviewCard data={queueOverview} loading={overviewLoading} />
-        <SmeReviewersCountCard data={smeReviewersCount} loading={smeReviewersCountLoading} />
+        <SmeReviewersCountCard
+          data={smeReviewersCount}
+          loading={smeReviewersCountLoading}
+          timeframe={counterTimeframe}
+          onTimeframeChange={setCounterTimeframe}
+          autoRefresh={autoRefresh}
+          onAutoRefreshToggle={setAutoRefresh}
+        />
         {/* <WorkloadCard data={workload} loading={workloadLoading} /> */}
       </div>
     </div>
