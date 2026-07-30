@@ -19,15 +19,52 @@ export const getSessionFieldDisplayName = (key: string): string | undefined => {
   return match?.[1];
 };
 
+/**
+ * Below this many matches against the progress note field list we treat the
+ * note as another type. Intake, treatment plan and termination notes share at
+ * most one or two field names with a progress note, so anything under this is
+ * not a progress note and must not be filtered through that list.
+ */
+const MIN_PROGRESS_NOTE_FIELD_MATCHES = 3;
+
+/**
+ * Some PracticeQ questions carry no label text. Those fall back to the raw
+ * question id, for example "425q-1", which is meaningless as a heading and
+ * should not be shown to a reviewer.
+ */
+const RAW_QUESTION_ID = /^[a-z0-9]{4}-\d+(\s\(\d+\))?$/i;
+
+export const isRawQuestionId = (key: string): boolean => RAW_QUESTION_ID.test(key.trim());
+
+/**
+ * Progress notes use the curated field list so administrative fields stay
+ * hidden and the order is predictable. Other note types have no curated list,
+ * so their fields are shown as stored, which is the order PracticeQ sent them.
+ * Empty values and unlabelled questions are dropped so the summary stays
+ * readable.
+ */
 export const getDisplayableSessionFieldEntries = (sessionData: Record<string, unknown>): [string, unknown][] => {
   const sessionKeys = Object.keys(sessionData);
-  return Object.keys(SessionJsonFieldDisplayNames)
+
+  const curatedEntries = Object.keys(SessionJsonFieldDisplayNames)
     .map(allowedKey => {
       const matchedKey = sessionKeys.find(sk => sessionFieldKeysMatch(sk, allowedKey));
       if (!matchedKey) return null;
       return [matchedKey, sessionData[matchedKey]] as [string, unknown];
     })
     .filter((entry): entry is [string, unknown] => entry != null);
+
+  if (curatedEntries.length >= MIN_PROGRESS_NOTE_FIELD_MATCHES) {
+    return curatedEntries;
+  }
+
+  return sessionKeys
+    .filter(key => {
+      if (isRawQuestionId(key)) return false;
+      const value = sessionData[key];
+      return value !== null && value !== undefined && String(value).trim() !== '';
+    })
+    .map(key => [key, sessionData[key]] as [string, unknown]);
 };
 
 export const formatSessionFieldValue = (value: unknown): string => {

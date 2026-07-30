@@ -320,6 +320,22 @@ const SingleNoteAudit = () => {
     loadSMEData();
   }, [dispatch, errorTypesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded]);
 
+  // Default the selected version to the latest one as soon as the note loads.
+  // Previously this stayed null until the reviewer clicked the version arrows,
+  // so actions that send the version id (Marked For Review) were rejected by
+  // the API when the reviewer had not navigated versions first.
+  useEffect(() => {
+    const versions = noteDetail?.webhookVersions ?? [];
+    if (!versions.length) return;
+
+    const latestVersionId = versions.reduce((latest, v) => (v.id > latest ? v.id : latest), versions[0].id);
+    const selectionStillValid = selectedVersionId != null && versions.some(v => v.id === selectedVersionId);
+
+    if (!selectionStillValid) {
+      setSelectedVersionId(latestVersionId);
+    }
+  }, [noteDetail?.webhookVersions, selectedVersionId]);
+
   // Cleanup ref on unmount
   useEffect(() => {
     return () => {
