@@ -34,9 +34,7 @@ export const SmeReviewersCountCard = ({
             type="button"
             onClick={() => onAutoRefreshToggle?.(!autoRefresh)}
             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-              autoRefresh
-                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              autoRefresh ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
             title={autoRefresh ? 'Auto-refresh every 10s is ON' : 'Auto-refresh is OFF'}
           >
@@ -48,7 +46,7 @@ export const SmeReviewersCountCard = ({
         {/* Line 3: Timeframe Dropdown */}
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-xs font-medium">Timeframe</span>
-          <Select value={timeframe} onValueChange={(val) => onTimeframeChange?.(val)}>
+          <Select value={timeframe} onValueChange={val => onTimeframeChange?.(val)}>
             <SelectTrigger className="h-8 w-32 text-xs">
               <SelectValue placeholder="Select timeframe" />
             </SelectTrigger>
