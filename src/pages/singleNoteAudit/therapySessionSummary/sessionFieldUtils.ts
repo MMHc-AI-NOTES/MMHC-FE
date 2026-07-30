@@ -28,10 +28,20 @@ export const getSessionFieldDisplayName = (key: string): string | undefined => {
 const MIN_PROGRESS_NOTE_FIELD_MATCHES = 3;
 
 /**
+ * Some PracticeQ questions carry no label text. Those fall back to the raw
+ * question id, for example "425q-1", which is meaningless as a heading and
+ * should not be shown to a reviewer.
+ */
+const RAW_QUESTION_ID = /^[a-z0-9]{4}-\d+(\s\(\d+\))?$/i;
+
+export const isRawQuestionId = (key: string): boolean => RAW_QUESTION_ID.test(key.trim());
+
+/**
  * Progress notes use the curated field list so administrative fields stay
  * hidden and the order is predictable. Other note types have no curated list,
  * so their fields are shown as stored, which is the order PracticeQ sent them.
- * Empty fields are dropped so the summary does not fill with blank rows.
+ * Empty values and unlabelled questions are dropped so the summary stays
+ * readable.
  */
 export const getDisplayableSessionFieldEntries = (sessionData: Record<string, unknown>): [string, unknown][] => {
   const sessionKeys = Object.keys(sessionData);
@@ -50,6 +60,7 @@ export const getDisplayableSessionFieldEntries = (sessionData: Record<string, un
 
   return sessionKeys
     .filter(key => {
+      if (isRawQuestionId(key)) return false;
       const value = sessionData[key];
       return value !== null && value !== undefined && String(value).trim() !== '';
     })
