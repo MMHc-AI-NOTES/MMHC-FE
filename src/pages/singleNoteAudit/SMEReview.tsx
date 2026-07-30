@@ -13,6 +13,7 @@ import { useReviews } from './components/useReviews';
 import { Review, ActiveIssueForm, type IssueForm } from './components/types';
 import { deleteSMEReview, markNoteForReview, assignToManager, type NoteReviewMarkPayload } from './singleNoteApiCalls';
 import { formatDate } from '@/utils/helper';
+import { showToast } from '@/lib/toast';
 
 const MARKED_FOR_REVIEW_STORAGE_PREFIX = 'mmhc_note_review_marked';
 
@@ -368,11 +369,19 @@ const SMEReview = ({
 
       setMarkingReviewId(reviewId);
       try {
+        // The API requires the version id. Stop here rather than sending a
+        // request we know will be rejected, so the reviewer gets a clear
+        // message instead of a failed save.
+        if (versionId == null) {
+          showToast.error('Could not determine which note version to mark. Please reload the page and try again.');
+          return;
+        }
+
         const payload: NoteReviewMarkPayload & { note_version_id?: number } = {
           note_id: noteId || '',
           reviewer_id: review?.reviewerId || String(loggedInUserId),
           marked: true,
-          note_version_id: versionId ?? undefined,
+          note_version_id: versionId,
         };
         const result = await markNoteForReview(payload);
         if (result) {
