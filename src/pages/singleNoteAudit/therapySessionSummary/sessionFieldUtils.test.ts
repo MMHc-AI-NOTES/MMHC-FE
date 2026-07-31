@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { getDisplayableSessionFieldEntries, isRawQuestionId } from './sessionFieldUtils';
+import {
+  fieldsMatch,
+  getAiIssuesForField,
+  getDisplayableSessionFieldEntries,
+  getUnmatchedAiIssues,
+  isRawQuestionId,
+} from './sessionFieldUtils';
+import type { NoteDetail } from '@/types/notes';
 
 const keysOf = (data: Record<string, unknown>) => getDisplayableSessionFieldEntries(data).map(([key]) => key);
 
@@ -136,5 +143,127 @@ describe('getDisplayableSessionFieldEntries, edge cases', () => {
     const keys = keysOf({ Subjective: 'x', Objective: 'y', 'Plan and Collaboration': 'z', 'Risk Assessment': 'ignored' });
 
     expect(keys).not.toContain('Risk Assessment');
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Unmatched AI findings                                                       */
+/* -------------------------------------------------------------------------- */
+
+const issue = (category: string, overrides: Partial<NoteDetail['issues'][number]> = {}): NoteDetail['issues'][number] =>
+  ({
+    severity: 'MODERATE',
+    category,
+    points: 15,
+    description: `finding for ${category || '(blank)'}`,
+    justification: '',
+    sectionId: '',
+    descriptionId: '',
+    confidence: 0.9,
+    evidence: '',
+    ...overrides,
+  }) as NoteDetail['issues'][number];
+
+/** Display name resolver standing in for the hook's getFieldDisplayName. */
+const displayName = (key: string) => key;
+
+const progressFields: [string, unknown][] = [
+  ['Subjective', 'x'],
+  ['Objective', 'y'],
+  ['Plan and Collaboration', 'z'],
+];
+
+const intakeFields: [string, unknown][] = [
+  ['Presenting Problem & Symptoms', 'x'],
+  ['Family History', 'y'],
+  ['Risk Assessment', 'z'],
+];
+
+describe('getUnmatchedAiIssues', () => {
+  it('returns nothing when there are no findings', () => {
+    expect(getUnmatchedAiIssues([], progressFields, displayName)).toEqual([]);
+  });
+
+  it('returns nothing when every finding matches a field', () => {
+    const issues = [issue('Subjective'), issue('Objective')];
+
+    expect(getUnmatchedAiIssues(issues, progressFields, displayName)).toEqual([]);
+  });
+
+  it('surfaces an Overall finding, which matches no field on any note type', () => {
+    // The exact case that hid annotations on intake, treatment plan and
+    // termination notes.
+    const issues = [issue('Overall')];
+
+    expect(getUnmatchedAiIssues(issues, intakeFields, displayName)).toHaveLength(1);
+  });
+
+  it('surfaces a finding whose section is blank rather than dropping it', () => {
+    expect(getUnmatchedAiIssues([issue('')], progressFields, displayName)).toHaveLength(1);
+  });
+
+  it('surfaces every finding when the note has no displayable fields', () => {
+    const issues = [issue('Subjective'), issue('Overall')];
+
+    expect(getUnmatchedAiIssues(issues, [], displayName)).toHaveLength(2);
+  });
+
+  it('separates matched from unmatched in a mixed set', () => {
+    const issues = [issue('Subjective'), issue('Overall'), issue('Objective'), issue('Unknown Section')];
+    const unmatched = getUnmatchedAiIssues(issues, progressFields, displayName);
+
+    expect(unmatched.map(i => i.category)).toEqual(['Overall', 'Unknown Section']);
+  });
+
+  it('treats an optional suffix as the same field', () => {
+    const fields: [string, unknown][] = [['Mental Status (optional)', 'x']];
+
+    expect(getUnmatchedAiIssues([issue('Mental Status')], fields, displayName)).toEqual([]);
+  });
+
+  it('matches case insensitively', () => {
+    expect(getUnmatchedAiIssues([issue('subjective')], progressFields, displayName)).toEqual([]);
+  });
+
+  it('keeps duplicates rather than collapsing them', () => {
+    // Two genuine findings can share a section. Deduping here would hide one.
+    const issues = [issue('Overall'), issue('Overall')];
+
+    expect(getUnmatchedAiIssues(issues, progressFields, displayName)).toHaveLength(2);
+  });
+
+  it('uses the resolved display name, not just the raw key', () => {
+    // Fields arrive keyed by raw id on note types with no mapping.
+    const fields: [string, unknown][] = [['425q-1', 'No']];
+    const resolve = (key: string) => (key === '425q-1' ? 'Risk or Safety Concerns' : key);
+
+    expect(getUnmatchedAiIssues([issue('Risk or Safety Concerns')], fields, resolve)).toEqual([]);
+  });
+
+  it('every finding lands in exactly one place, under a field or in the unmatched set', () => {
+    // The invariant that makes a silent drop impossible.
+    const issues = [issue('Subjective'), issue('Overall'), issue(''), issue('Objective')];
+
+    const matched = progressFields.flatMap(([key]) => getAiIssuesForField(key, displayName(key), issues));
+    const unmatched = getUnmatchedAiIssues(issues, progressFields, displayName);
+
+    expect(matched.length + unmatched.length).toBe(issues.length);
+  });
+});
+
+describe('fieldsMatch blank handling', () => {
+  it('a blank section matches no field, so it cannot duplicate across the note', () => {
+    // Substring matching runs both ways and every string contains "", so
+    // without a guard a section-less finding renders under every field.
+    expect(fieldsMatch('Subjective', 'Subjective', '')).toBe(false);
+    expect(fieldsMatch('Objective', 'Objective', '   ')).toBe(false);
+  });
+
+  it('a blank field never swallows a real section', () => {
+    expect(fieldsMatch('', '', 'Overall')).toBe(false);
+  });
+
+  it('still matches a real section against a real field', () => {
+    expect(fieldsMatch('Subjective', 'Subjective', 'Subjective')).toBe(true);
   });
 });

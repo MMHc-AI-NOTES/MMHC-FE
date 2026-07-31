@@ -97,6 +97,7 @@ const TherapySessionSummaryCard = ({
     getIssueCountForField,
     getSmeIssuesForField,
     getAiIssuesForSessionField,
+    unmatchedAiIssues,
     getPreviousValueForField,
     isFieldChangedFromPreviousNote,
     getTemplatesForField,
@@ -237,6 +238,36 @@ const TherapySessionSummaryCard = ({
             </div>
           ) : (
             displayableSessionFields.map(([key, value]) => renderFieldCard(key, value))
+          )}
+
+          {/*
+            Findings that apply to the note as a whole, or whose section does
+            not correspond to a field on this note type. Before this they were
+            stored and never drawn, which is why notes other than progress
+            notes appeared to carry no AI review at all.
+          */}
+          {unmatchedAiIssues.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-[#FAFAFA] p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <p className="text-primary text-sm font-semibold">Findings for the whole note</p>
+                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">{unmatchedAiIssues.length}</span>
+              </div>
+              <p className="mb-3 text-xs text-gray-500">These are not tied to a single section of the note.</p>
+              <div className="space-y-2">
+                {unmatchedAiIssues.map((aiIssue, index) => (
+                  <div
+                    key={`${aiIssue.sectionId || aiIssue.category || 'unmatched'}-${index}`}
+                    className="rounded-md border border-gray-200 bg-white p-3"
+                  >
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-900">{aiIssue.description || 'Review finding'}</span>
+                      {aiIssue.category && <span className="text-xs text-gray-500">{aiIssue.category}</span>}
+                    </div>
+                    {aiIssue.justification && <p className="text-xs text-gray-600">{aiIssue.justification}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
