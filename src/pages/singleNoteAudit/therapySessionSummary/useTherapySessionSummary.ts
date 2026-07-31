@@ -14,6 +14,7 @@ import type { NoteDetail } from '@/types/notes';
 import {
   formatSessionFieldValue,
   getAiIssuesForField,
+  getUnmatchedAiIssues,
   getDisplayableSessionFieldEntries,
   getSessionFieldDisplayName,
 } from './sessionFieldUtils';
@@ -277,6 +278,16 @@ export function useTherapySessionSummary({
   const getAiIssuesForSessionField = useCallback(
     (fieldKey: string) => getAiIssuesForField(fieldKey, getFieldDisplayName(fieldKey), aiIssues),
     [aiIssues, getFieldDisplayName],
+  );
+
+  /**
+   * Findings no field will draw. Previously these were dropped without trace,
+   * which is why notes other than progress notes appeared to have no AI review
+   * at all: their findings come back against the section "Overall".
+   */
+  const unmatchedAiIssues = useMemo(
+    () => getUnmatchedAiIssues(aiIssues, displayableSessionFields, getFieldDisplayName),
+    [aiIssues, displayableSessionFields, getFieldDisplayName],
   );
 
   const getPreviousValueForField = useCallback(
@@ -545,6 +556,7 @@ export function useTherapySessionSummary({
     getIssueCountForField,
     getSmeIssuesForField,
     getAiIssuesForSessionField,
+    unmatchedAiIssues,
     getPreviousValueForField,
     isFieldChangedFromPreviousNote,
     getTemplatesForField,

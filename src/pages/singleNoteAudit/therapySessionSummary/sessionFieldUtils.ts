@@ -76,6 +76,14 @@ export const fieldsMatch = (fieldDisplayName: string, fieldKey: string, target: 
   const normalizedTarget = normalizeFieldKey(target).toLowerCase();
   const normalizedDisplay = normalizeFieldKey(fieldDisplayName).toLowerCase();
   const normalizedKey = normalizeFieldKey(fieldKey).toLowerCase();
+
+  // Matching below is substring based in both directions, and every string
+  // contains the empty string. Without this guard a finding that arrives with
+  // no section matches every field on the note and is drawn under all of them,
+  // which reads as the same finding duplicated across the whole note. It
+  // belongs in the unmatched set instead, where it appears once.
+  if (!normalizedTarget || (!normalizedDisplay && !normalizedKey)) return false;
+
   return (
     normalizedTarget === normalizedDisplay ||
     normalizedTarget === normalizedKey ||
@@ -91,6 +99,28 @@ export const getAiIssuesForField = (
 ): NoteDetail['issues'] => {
   if (!aiIssues.length) return [];
   return aiIssues.filter(issue => fieldsMatch(fieldDisplayName, fieldKey, issue.category));
+};
+
+/**
+ * AI findings that no displayed field will claim.
+ *
+ * Findings are only ever rendered against a field, so a finding whose section
+ * matches nothing was silently dropped. That is how it went unnoticed that
+ * intake, treatment plan and termination notes show no annotations: the scorer
+ * returns those against the section "Overall", which is a real category but
+ * not a field on any note.
+ *
+ * Deliberately the exact inverse of getAiIssuesForField over every displayed
+ * field, so each finding lands in exactly one place: under a field, or here.
+ */
+export const getUnmatchedAiIssues = (
+  aiIssues: NoteDetail['issues'] = [],
+  displayedFields: [string, unknown][] = [],
+  getDisplayName: (fieldKey: string) => string,
+): NoteDetail['issues'] => {
+  if (!aiIssues.length) return [];
+
+  return aiIssues.filter(issue => !displayedFields.some(([fieldKey]) => fieldsMatch(getDisplayName(fieldKey), fieldKey, issue.category)));
 };
 
 export const getSmeIssueDescription = (issue: SMEIssue): string => {
