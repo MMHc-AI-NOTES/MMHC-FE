@@ -7,6 +7,7 @@ import type { IssueForm } from './components/types';
 import type { NoteDetail } from '@/types/notes';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { SessionFieldCard } from './therapySessionSummary/SessionFieldCard';
+import { SessionFieldReviewFindings } from './therapySessionSummary/SessionFieldReviewFindings';
 import { formatSessionFieldValue } from './therapySessionSummary/sessionFieldUtils';
 
 interface TherapySessionSummaryCardProps {
@@ -247,26 +248,44 @@ const TherapySessionSummaryCard = ({
             notes appeared to carry no AI review at all.
           */}
           {unmatchedAiIssues.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-[#FAFAFA] p-4">
-              <div className="mb-3 flex items-center gap-2">
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2 bg-[#F0F0F0] px-4 py-3">
                 <p className="text-primary text-sm font-semibold">Findings for the whole note</p>
                 <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">{unmatchedAiIssues.length}</span>
               </div>
-              <p className="mb-3 text-xs text-gray-500">These are not tied to a single section of the note.</p>
-              <div className="space-y-2">
-                {unmatchedAiIssues.map((aiIssue, index) => (
-                  <div
-                    key={`${aiIssue.sectionId || aiIssue.category || 'unmatched'}-${index}`}
-                    className="rounded-md border border-gray-200 bg-white p-3"
-                  >
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="text-xs font-semibold text-gray-900">{aiIssue.description || 'Review finding'}</span>
-                      {aiIssue.category && <span className="text-xs text-gray-500">{aiIssue.category}</span>}
-                    </div>
-                    {aiIssue.justification && <p className="text-xs text-gray-600">{aiIssue.justification}</p>}
-                  </div>
-                ))}
-              </div>
+              {/*
+                The same component the fields use, so these findings keep their
+                thumbs up and down controls. Without that an SME could never
+                rate them, and Marked For Review requires every AI finding to
+                be rated, so the button would stay disabled forever.
+
+                fieldKey "overall" resolves to the registered Overall category
+                in issues_related_to, which is what a whole note finding should
+                be attributed to when a thumbs up creates an SME issue.
+              */}
+              <SessionFieldReviewFindings
+                fieldKey="overall"
+                aiIssues={unmatchedAiIssues}
+                smeIssues={[]}
+                noteId={noteId}
+                id={id}
+                chatId={chatId}
+                auditScore={auditScore}
+                versionId={versionId}
+                scorerVersion={scorerVersion}
+                sessionId={sessionId}
+                feedbackVerdicts={feedbackVerdicts}
+                practitionerId={practitionerId}
+                aiStatusId={aiStatusId}
+                priorityId={priorityId}
+                webhookVersions={webhookVersions}
+                readOnly={isHistoricalVersion}
+                loggedInUserId={user?.id ?? null}
+                alreadyUsedDescriptionIds={[]}
+                onSMEIssueDeleted={onSMEIssueDeleted}
+                onSMEIssueUpdated={onSMEIssueUpdated}
+                onFeedbackChanged={onFeedbackChanged}
+              />
             </div>
           )}
         </div>
