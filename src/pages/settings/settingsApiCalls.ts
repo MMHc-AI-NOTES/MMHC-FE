@@ -237,7 +237,13 @@ export const fetchIssueRelatedTo = async (): Promise<IssueRelatedTo[]> => {
   const previousIssueRelatedTo = getState().smeConfig.issueRelatedTo;
   if (previousIssueRelatedTo.length) return previousIssueRelatedTo;
   try {
-    const response = await axios.post<IssueRelatedToListingResponse>('/issues-related-to/listing');
+    // Every section has to arrive. The API reads pageSize and defaults to 100,
+    // and a section past that is one the plus button cannot offer templates
+    // for, because nothing here knows the section exists.
+    const response = await axios.post<IssueRelatedToListingResponse>('/issues-related-to/listing', {
+      page: 1,
+      pageSize: 10000,
+    });
 
     if (response.status) {
       const data = response.data.data || [];
@@ -425,9 +431,11 @@ export const fetchSMETemplates = async (): Promise<SMETemplate[]> => {
   const previousSMETemplates = getState().smeConfig.smeTemplates;
   if (previousSMETemplates.length) return previousSMETemplates;
   try {
+    // The API reads pageSize. page_size was ignored, so this had been capped at
+    // the default of 100 templates.
     const response = await axios.post<SMETemplateListingResponse>('/sme-issues-templates/listing', {
       page: 1,
-      page_size: 10000,
+      pageSize: 10000,
     });
 
     if (response.status) {
