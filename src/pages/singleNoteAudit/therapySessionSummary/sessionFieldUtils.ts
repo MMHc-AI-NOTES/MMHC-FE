@@ -37,6 +37,22 @@ const RAW_QUESTION_ID = /^[a-z0-9]{4}-\d+(\s\(\d+\))?$/i;
 export const isRawQuestionId = (key: string): boolean => RAW_QUESTION_ID.test(key.trim());
 
 /**
+ * Patient identifiers, hidden on every note type.
+ *
+ * Progress notes never showed these because they render from a curated list
+ * that happens to exclude them. Intake, treatment plan and termination notes
+ * have no curated list, so they were putting the patient's name and date of
+ * birth on screen. A reviewer scores the writing, not the patient, and does not
+ * need either.
+ */
+const PATIENT_IDENTIFIER_FIELDS = ['first name', 'last name', 'date of birth'];
+
+export const isPatientIdentifierField = (key: string): boolean => {
+  const normalized = normalizeFieldKey(key).toLowerCase().replace(/:$/, '').trim();
+  return PATIENT_IDENTIFIER_FIELDS.includes(normalized);
+};
+
+/**
  * Progress notes use the curated field list so administrative fields stay
  * hidden and the order is predictable. Other note types have no curated list,
  * so their fields are shown as stored, which is the order PracticeQ sent them.
@@ -55,12 +71,13 @@ export const getDisplayableSessionFieldEntries = (sessionData: Record<string, un
     .filter((entry): entry is [string, unknown] => entry != null);
 
   if (curatedEntries.length >= MIN_PROGRESS_NOTE_FIELD_MATCHES) {
-    return curatedEntries;
+    return curatedEntries.filter(([key]) => !isPatientIdentifierField(key));
   }
 
   return sessionKeys
     .filter(key => {
       if (isRawQuestionId(key)) return false;
+      if (isPatientIdentifierField(key)) return false;
       const value = sessionData[key];
       return value !== null && value !== undefined && String(value).trim() !== '';
     })

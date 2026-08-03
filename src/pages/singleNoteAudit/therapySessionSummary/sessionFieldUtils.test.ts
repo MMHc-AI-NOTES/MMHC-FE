@@ -4,6 +4,7 @@ import {
   getAiIssuesForField,
   getDisplayableSessionFieldEntries,
   getUnmatchedAiIssues,
+  isPatientIdentifierField,
   isRawQuestionId,
 } from './sessionFieldUtils';
 import type { NoteDetail } from '@/types/notes';
@@ -265,5 +266,79 @@ describe('fieldsMatch blank handling', () => {
 
   it('still matches a real section against a real field', () => {
     expect(fieldsMatch('Subjective', 'Subjective', 'Subjective')).toBe(true);
+  });
+});
+
+describe('patient identifiers are never displayed', () => {
+  it('recognises the identifier fields whatever the punctuation or case', () => {
+    for (const key of ['First Name:', 'first name', 'LAST NAME', 'Last Name:', 'Date of Birth:', 'date of birth']) {
+      expect(isPatientIdentifierField(key)).toBe(true);
+    }
+  });
+
+  it('does not treat clinical or clinician fields as patient identifiers', () => {
+    for (const key of [
+      'Presenting Problem & Symptoms',
+      'Family History',
+      'Full Name & Credentials (Signature)',
+      'Therapist Initials',
+      'Date Completed',
+      'Initiation Date:',
+      'Documented by Supervised Clinician (if applicable)',
+    ]) {
+      expect(isPatientIdentifierField(key)).toBe(false);
+    }
+  });
+
+  it('hides name and date of birth on an intake note', () => {
+    const keys = keysOf({
+      'First Name:': 'Donnette',
+      'Last Name:': 'Gooden',
+      'Date of Birth:': '4/25/1995',
+      'Presenting Problem & Symptoms': 'Reports low mood.',
+      'Risk Assessment': 'No risk identified.',
+      'Family History': 'Two siblings.',
+    });
+
+    expect(keys).not.toContain('First Name:');
+    expect(keys).not.toContain('Last Name:');
+    expect(keys).not.toContain('Date of Birth:');
+    expect(keys).toContain('Presenting Problem & Symptoms');
+  });
+
+  it('hides them on a treatment plan too', () => {
+    const keys = keysOf({
+      'First Name:': 'Madison',
+      'Last Name:': 'Traverso',
+      'Date of Birth:': '7/8/1998',
+      'Goal 1 Long-Term Goal': 'Reduce anxiety.',
+      'Treatment Modality': 'Individual',
+    });
+
+    expect(keys).toEqual(['Goal 1 Long-Term Goal', 'Treatment Modality']);
+  });
+
+  it('leaves progress notes exactly as they were', () => {
+    // These were already hidden, by the curated list rather than by this rule.
+    const keys = keysOf({
+      'First Name:': 'Alex',
+      Subjective: 'Client presented calm.',
+      Objective: 'Alert and oriented.',
+      'Plan and Collaboration': 'Continue weekly.',
+      'Therapist Initials': 'JD, LMHC',
+    });
+
+    expect(keys).toEqual(['Subjective', 'Objective', 'Plan and Collaboration', 'Therapist Initials']);
+  });
+
+  it('keeps the clinician signature, which is not patient information', () => {
+    const keys = keysOf({
+      'First Name:': 'Madison',
+      'Full Name & Credentials (Signature)': 'Stacey A. Mohamed, LMHC-D',
+      'Treatment Modality': 'Individual',
+    });
+
+    expect(keys).toContain('Full Name & Credentials (Signature)');
+    expect(keys).not.toContain('First Name:');
   });
 });
