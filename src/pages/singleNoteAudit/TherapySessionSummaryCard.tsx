@@ -10,6 +10,9 @@ import { SessionFieldCard } from './therapySessionSummary/SessionFieldCard';
 import { SessionFieldReviewFindings } from './therapySessionSummary/SessionFieldReviewFindings';
 import { formatSessionFieldValue } from './therapySessionSummary/sessionFieldUtils';
 
+// Registered issues_related_to entry for findings that apply to the whole note.
+const OVERALL_FIELD_KEY = 'overall';
+
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
   previousNote?: PreviousNote;
@@ -264,9 +267,9 @@ const TherapySessionSummaryCard = ({
                 be attributed to when a thumbs up creates an SME issue.
               */}
               <SessionFieldReviewFindings
-                fieldKey="overall"
+                fieldKey={OVERALL_FIELD_KEY}
                 aiIssues={unmatchedAiIssues}
-                smeIssues={[]}
+                smeIssues={getSmeIssuesForField(OVERALL_FIELD_KEY)}
                 noteId={noteId}
                 id={id}
                 chatId={chatId}
@@ -281,7 +284,7 @@ const TherapySessionSummaryCard = ({
                 webhookVersions={webhookVersions}
                 readOnly={isHistoricalVersion}
                 loggedInUserId={user?.id ?? null}
-                alreadyUsedDescriptionIds={[]}
+                alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(OVERALL_FIELD_KEY)}
                 onSMEIssueDeleted={onSMEIssueDeleted}
                 onSMEIssueUpdated={onSMEIssueUpdated}
                 onFeedbackChanged={onFeedbackChanged}
