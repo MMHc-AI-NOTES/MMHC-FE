@@ -1,5 +1,5 @@
 // @/pages/notesQueue/NotesQueue.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
@@ -28,7 +28,7 @@ import { SmeReviewersCountCard } from './SmeReviewersCountCard';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { clearSelectedClientId } from '@/store/slices/selectedClientSlice';
-import { Info } from 'lucide-react';
+import { Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorKey } from './ColorKey';
@@ -90,7 +90,7 @@ const NotesQueue = () => {
   const navigate = useNavigate();
 
   // Build filter payload in the new format
-  const buildFilterPayload = (): NotesPayload => {
+  const buildFilterPayload = useCallback((): NotesPayload => {
     const filterArray: any[] = [];
 
     // Note Type filter
@@ -147,7 +147,7 @@ const NotesQueue = () => {
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
-  };
+  }, [filters, currentPage, sorts, user?.id]);
 
   // Load initial data - each API call has its own loading state
   useEffect(() => {
@@ -455,56 +455,73 @@ const NotesQueue = () => {
     }
   };
 
-  const handleViewNote = (noteId: string) => {
-    navigate(`/notes-queue/single-note-audit/${noteId}`);
-  };
+  const handleViewNote = useCallback(
+    (noteId: string) => {
+      navigate(`/notes-queue/single-note-audit/${noteId}`);
+    },
+    [navigate],
+  );
 
   // Handle sorting changes from table header
-  const handleSortChange = async (columnName: string) => {
-    // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
-    const existing = sorts.find(sort => sort.columnName === columnName);
+  const handleSortChange = useCallback(
+    async (columnName: string) => {
+      // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
+      const existing = sorts.find(sort => sort.columnName === columnName);
 
-    let nextSorts:
-      | {
-          columnName: string;
-          orderBy: 'asc' | 'desc';
-        }[]
-      | [] = [];
+      let nextSorts:
+        | {
+            columnName: string;
+            orderBy: 'asc' | 'desc';
+          }[]
+        | [] = [];
 
-    if (!existing) {
-      // Currently unsorted → apply desc
-      nextSorts = [{ columnName, orderBy: 'desc' }];
-    } else if (existing.orderBy === 'desc') {
-      // Desc → asc
-      nextSorts = [{ columnName, orderBy: 'asc' }];
-    } else {
-      // Asc → unsorted (empty array so backend uses default sort)
-      nextSorts = [];
-    }
+      if (!existing) {
+        // Currently unsorted → apply desc
+        nextSorts = [{ columnName, orderBy: 'desc' }];
+      } else if (existing.orderBy === 'desc') {
+        // Desc → asc
+        nextSorts = [{ columnName, orderBy: 'asc' }];
+      } else {
+        // Asc → back to default (unsorted, server handles default session_time desc)
+        nextSorts = [];
+      }
 
-    // Update state so icons reflect the new sort
-    setSorts(nextSorts);
+      setSorts(nextSorts);
+      setNotesLoading(true);
 
+      try {
+        const payload: NotesPayload = {
+          ...buildFilterPayload(),
+          sorts: nextSorts,
+        };
+        const response = await fetchNotes(payload);
+        setNotes(response.data);
+        setTotalItems(response.totalCount || 0);
+      } catch (error) {
+        console.error('Error applying sort:', error);
+      } finally {
+        setNotesLoading(false);
+      }
+    },
+    [sorts, buildFilterPayload],
+  );
+
+  const handleRefreshNotes = useCallback(async () => {
     try {
       setNotesLoading(true);
-      setPagination({ ...pagination, currentPage: 1 });
-
-      const basePayload = buildFilterPayload();
-      const payload: NotesPayload = {
-        ...basePayload,
-        page: 1,
-        sorts: nextSorts,
-      };
-
+      const payload = buildFilterPayload();
       const response = await fetchNotes(payload);
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
+
+      const overviewData = await fetchQueueOverview();
+      setQueueOverview(overviewData);
     } catch (error) {
-      console.error('Error applying sort:', error);
+      console.error('Error refreshing notes:', error);
     } finally {
       setNotesLoading(false);
     }
-  };
+  }, [buildFilterPayload]);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -532,17 +549,30 @@ const NotesQueue = () => {
                   <p className="text-muted-foreground text-sm">{totalItems} notes in queue</p>
                 )}
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="lg" className="hover:border-green-300 hover:bg-green-50">
-                    <Info />
-                    Color Key
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
-                  <ColorKey />
-                </PopoverContent>
-              </Popover>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleRefreshNotes}
+                  disabled={notesLoading}
+                  className="hover:border-blue-300 hover:bg-blue-50"
+                  title="Refresh All Notes Table"
+                >
+                  <RefreshCw className={`h-4 w-4 ${notesLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="lg" className="hover:border-green-300 hover:bg-green-50">
+                      <Info />
+                      Color Key
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
+                    <ColorKey />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             {notesLoading ? (
