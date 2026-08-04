@@ -28,7 +28,7 @@ import { SmeReviewersCountCard } from './SmeReviewersCountCard';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setPractitioners, setCptCodes } from '@/store/slices/filterOptionsSlice';
 import { clearSelectedClientId } from '@/store/slices/selectedClientSlice';
-import { Info } from 'lucide-react';
+import { Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorKey } from './ColorKey';
@@ -500,6 +500,23 @@ const NotesQueue = () => {
     }
   }, [sorts, buildFilterPayload]);
 
+  const handleRefreshNotes = useCallback(async () => {
+    try {
+      setNotesLoading(true);
+      const payload = buildFilterPayload();
+      const response = await fetchNotes(payload);
+      setNotes(response.data);
+      setTotalItems(response.totalCount || 0);
+
+      const overviewData = await fetchQueueOverview();
+      setQueueOverview(overviewData);
+    } catch (error) {
+      console.error('Error refreshing notes:', error);
+    } finally {
+      setNotesLoading(false);
+    }
+  }, [buildFilterPayload]);
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Left Column: Table with Filters */}
@@ -526,17 +543,30 @@ const NotesQueue = () => {
                   <p className="text-muted-foreground text-sm">{totalItems} notes in queue</p>
                 )}
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="lg" className="hover:border-green-300 hover:bg-green-50">
-                    <Info />
-                    Color Key
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
-                  <ColorKey />
-                </PopoverContent>
-              </Popover>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleRefreshNotes}
+                  disabled={notesLoading}
+                  className="hover:border-blue-300 hover:bg-blue-50"
+                  title="Refresh All Notes Table"
+                >
+                  <RefreshCw className={`h-4 w-4 ${notesLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="lg" className="hover:border-green-300 hover:bg-green-50">
+                      <Info />
+                      Color Key
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 shadow-lg lg:w-xl" align="end" side="bottom" avoidCollisions={false}>
+                    <ColorKey />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             {notesLoading ? (
