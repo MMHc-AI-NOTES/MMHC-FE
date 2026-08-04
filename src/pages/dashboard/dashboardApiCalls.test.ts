@@ -39,9 +39,13 @@ describe('fetchDashboardData API Service', () => {
       ],
     };
 
+    // The global axios response interceptor (src/lib/axios.ts) already unwraps
+    // the AxiosResponse, so axios.get() resolves directly to the API body -
+    // { status, message, data }, not an AxiosResponse wrapping it again.
     mockedAxios.get.mockResolvedValueOnce({
-      status: 200,
-      data: { data: mockStats },
+      status: true,
+      message: 'Dashboard statistics retrieved successfully',
+      data: mockStats,
     });
 
     const result = await fetchDashboardData();

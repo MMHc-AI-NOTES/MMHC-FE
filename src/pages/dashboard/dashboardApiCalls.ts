@@ -4,9 +4,9 @@ import { handleCatchMessages } from '@/utils/helper';
 
 export const fetchDashboardData = async (): Promise<DashboardStats | null> => {
   try {
-    const response = await axios.get<{ data: DashboardStats }>('/notes/dashboard-statistics');
-    if (response?.data?.data) {
-      return response.data.data;
+    const response = await axios.get<DashboardStats>('/notes/dashboard-statistics');
+    if (response?.data) {
+      return response.data;
     }
     return null;
   } catch (error: any) {
