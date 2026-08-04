@@ -275,13 +275,7 @@ describe('fieldsMatch does not spread a finding across similarly named fields', 
     // two different fields at once, and "Status" on all twelve goal status
     // fields of a treatment plan.
     expect(fieldsMatch('Risk Assessment', 'Risk Assessment', 'Assessment')).toBe(false);
-    expect(
-      fieldsMatch(
-        'Assessment & Therapeutic Intervention',
-        'Assessment & Therapeutic Intervention',
-        'Assessment',
-      ),
-    ).toBe(false);
+    expect(fieldsMatch('Assessment & Therapeutic Intervention', 'Assessment & Therapeutic Intervention', 'Assessment')).toBe(false);
     expect(fieldsMatch('Goal 1 Status', 'Goal 1 Status', 'Status')).toBe(false);
     expect(fieldsMatch('Goal 1 Long-Term Goal', 'Goal 1 Long-Term Goal', 'Goal')).toBe(false);
   });
@@ -305,13 +299,7 @@ describe('fieldsMatch does not spread a finding across similarly named fields', 
 
   it('a scorer name we know differs from ours is resolved by the alias table', () => {
     expect(fieldsMatch('Mental Status (optional)', 'cupi-1', 'Mental Status')).toBe(true);
-    expect(
-      fieldsMatch(
-        'Assessment & Therapeutic Intervention',
-        'nbli-1',
-        'Assessment and Therapeutic Intervention',
-      ),
-    ).toBe(true);
+    expect(fieldsMatch('Assessment & Therapeutic Intervention', 'nbli-1', 'Assessment and Therapeutic Intervention')).toBe(true);
   });
 
   it('a finding matches at most one displayed field', () => {
