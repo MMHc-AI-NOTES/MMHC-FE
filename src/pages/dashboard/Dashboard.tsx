@@ -46,13 +46,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader count={0} />
+      <DashboardHeader count={dashboardData.notesAuditedToday} />
       {/* Stats Card */}
       <StatsCard
         notesAuditedToday={dashboardData.notesAuditedToday}
-        weeklyGrowth={0} // Example data - you can add this to your API response
-        activePractitioners={0} // Example data
-        criticalIssues={0} // Example data
+        weeklyGrowth={dashboardData.weeklyGrowth}
+        activePractitioners={dashboardData.activePractitioners}
+        criticalIssues={dashboardData.criticalIssues}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -93,7 +93,7 @@ const Dashboard = () => {
             <DashboardCardHeader title="Recent Activity" icon={Clock} />
           </CardHeader>
           <CardContent>
-            <RecentActivity activities={[]} />
+            <RecentActivity activities={dashboardData.recentActivities || []} />
           </CardContent>
         </Card>
       </div>
