@@ -269,6 +269,58 @@ describe('fieldsMatch blank handling', () => {
   });
 });
 
+describe('fieldsMatch does not spread a finding across similarly named fields', () => {
+  it('a short generic section does not attach to every field containing that word', () => {
+    // These all returned true under substring matching. "Assessment" landed on
+    // two different fields at once, and "Status" on all twelve goal status
+    // fields of a treatment plan.
+    expect(fieldsMatch('Risk Assessment', 'Risk Assessment', 'Assessment')).toBe(false);
+    expect(fieldsMatch('Assessment & Therapeutic Intervention', 'Assessment & Therapeutic Intervention', 'Assessment')).toBe(false);
+    expect(fieldsMatch('Goal 1 Status', 'Goal 1 Status', 'Status')).toBe(false);
+    expect(fieldsMatch('Goal 1 Long-Term Goal', 'Goal 1 Long-Term Goal', 'Goal')).toBe(false);
+  });
+
+  it('a longer section does not attach to a shorter field of the same family', () => {
+    expect(fieldsMatch('Progress', 'Progress', 'Progress Overview')).toBe(false);
+    expect(fieldsMatch('Progress Since Last Plan', 'Progress Since Last Plan', 'Progress')).toBe(false);
+    expect(fieldsMatch('Objective', 'Objective', 'Short-Term Objective 1')).toBe(false);
+  });
+
+  it('a goal field only takes its own goal', () => {
+    expect(fieldsMatch('Goal 1 Status', 'Goal 1 Status', 'Goal 1 Status')).toBe(true);
+    expect(fieldsMatch('Goal 2 Status', 'Goal 2 Status', 'Goal 1 Status')).toBe(false);
+  });
+
+  it('an exact section still matches, punctuation and case aside', () => {
+    expect(fieldsMatch('Progress Overview:', 'pqkf-1', 'Progress Overview')).toBe(true);
+    expect(fieldsMatch('Subjective', '6tx9-1', 'SUBJECTIVE')).toBe(true);
+    expect(fieldsMatch('Presenting Problem & Symptoms', 'h08z-1', 'Presenting Problem & Symptoms')).toBe(true);
+  });
+
+  it('a scorer name we know differs from ours is resolved by the alias table', () => {
+    expect(fieldsMatch('Mental Status (optional)', 'cupi-1', 'Mental Status')).toBe(true);
+    expect(fieldsMatch('Assessment & Therapeutic Intervention', 'nbli-1', 'Assessment and Therapeutic Intervention')).toBe(true);
+  });
+
+  it('a finding matches at most one displayed field', () => {
+    // The property that matters. Anything it does not claim goes to the whole
+    // note group, where it appears once.
+    const fields = [
+      'Assessment & Therapeutic Intervention',
+      'Risk Assessment',
+      'Progress',
+      'Progress Since Last Plan',
+      'Goal 1 Status',
+      'Goal 2 Status',
+    ];
+
+    for (const target of ['Assessment', 'Progress', 'Status', 'Risk Assessment', 'Goal 2 Status']) {
+      const hits = fields.filter(field => fieldsMatch(field, field, target));
+      expect(hits.length).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
 describe('patient identifiers are never displayed', () => {
   it('recognises the identifier fields whatever the punctuation or case', () => {
     for (const key of ['First Name:', 'first name', 'LAST NAME', 'Last Name:', 'Date of Birth:', 'date of birth']) {
