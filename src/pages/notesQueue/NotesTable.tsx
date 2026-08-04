@@ -1,4 +1,5 @@
 // @/components/notes/NotesTable.tsx
+import { memo } from 'react';
 import { ArrowRight, ArrowDownUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -150,7 +151,7 @@ const getSortIcon = (columnName: string, sorts?: SortItem[]) => {
   return <ArrowDown className="h-3.5 w-3.5" />;
 };
 
-export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, onSortChange }: NotesTableProps) => {
+export const NotesTable = memo(({ notes, onViewNote, page = 1, pageSize = 60, sorts, onSortChange }: NotesTableProps) => {
   const { cptCodes } = useAppSelector(state => state.filterOptions);
   const columnCount = 15;
 
@@ -525,4 +526,4 @@ export const NotesTable = ({ notes, onViewNote, page = 1, pageSize = 60, sorts, 
       </div>
     </div>
   );
-};
+});

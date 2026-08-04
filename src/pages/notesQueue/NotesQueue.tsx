@@ -90,7 +90,7 @@ const NotesQueue = () => {
   const navigate = useNavigate();
 
   // Build filter payload in the new format
-  const buildFilterPayload = (): NotesPayload => {
+  const buildFilterPayload = useCallback((): NotesPayload => {
     const filterArray: any[] = [];
 
     // Note Type filter
@@ -147,7 +147,7 @@ const NotesQueue = () => {
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
-  };
+  }, [filters, currentPage, itemsPerPage, sorts, user?.id]);
 
   // Load initial data - each API call has its own loading state
   useEffect(() => {
@@ -455,12 +455,12 @@ const NotesQueue = () => {
     }
   };
 
-  const handleViewNote = (noteId: string) => {
+  const handleViewNote = useCallback((noteId: string) => {
     navigate(`/notes-queue/single-note-audit/${noteId}`);
-  };
+  }, [navigate]);
 
   // Handle sorting changes from table header
-  const handleSortChange = async (columnName: string) => {
+  const handleSortChange = useCallback(async (columnName: string) => {
     // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
     const existing = sorts.find(sort => sort.columnName === columnName);
 
@@ -478,24 +478,18 @@ const NotesQueue = () => {
       // Desc → asc
       nextSorts = [{ columnName, orderBy: 'asc' }];
     } else {
-      // Asc → unsorted (empty array so backend uses default sort)
+      // Asc → back to default (unsorted, server handles default session_time desc)
       nextSorts = [];
     }
 
-    // Update state so icons reflect the new sort
     setSorts(nextSorts);
+    setNotesLoading(true);
 
     try {
-      setNotesLoading(true);
-      setPagination({ ...pagination, currentPage: 1 });
-
-      const basePayload = buildFilterPayload();
       const payload: NotesPayload = {
-        ...basePayload,
-        page: 1,
+        ...buildFilterPayload(),
         sorts: nextSorts,
       };
-
       const response = await fetchNotes(payload);
       setNotes(response.data);
       setTotalItems(response.totalCount || 0);
@@ -504,7 +498,7 @@ const NotesQueue = () => {
     } finally {
       setNotesLoading(false);
     }
-  };
+  }, [sorts, buildFilterPayload]);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
