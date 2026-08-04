@@ -1,5 +1,5 @@
 // @/pages/notesQueue/NotesQueue.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotesTable } from './NotesTable';
 import { FiltersSection } from './FiltersSection';
@@ -147,7 +147,7 @@ const NotesQueue = () => {
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray, sorts };
-  }, [filters, currentPage, itemsPerPage, sorts, user?.id]);
+  }, [filters, currentPage, sorts, user?.id]);
 
   // Load initial data - each API call has its own loading state
   useEffect(() => {
@@ -455,50 +455,56 @@ const NotesQueue = () => {
     }
   };
 
-  const handleViewNote = useCallback((noteId: string) => {
-    navigate(`/notes-queue/single-note-audit/${noteId}`);
-  }, [navigate]);
+  const handleViewNote = useCallback(
+    (noteId: string) => {
+      navigate(`/notes-queue/single-note-audit/${noteId}`);
+    },
+    [navigate],
+  );
 
   // Handle sorting changes from table header
-  const handleSortChange = useCallback(async (columnName: string) => {
-    // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
-    const existing = sorts.find(sort => sort.columnName === columnName);
+  const handleSortChange = useCallback(
+    async (columnName: string) => {
+      // 3-state cycle: unsorted (no entry) -> desc -> asc -> unsorted
+      const existing = sorts.find(sort => sort.columnName === columnName);
 
-    let nextSorts:
-      | {
-          columnName: string;
-          orderBy: 'asc' | 'desc';
-        }[]
-      | [] = [];
+      let nextSorts:
+        | {
+            columnName: string;
+            orderBy: 'asc' | 'desc';
+          }[]
+        | [] = [];
 
-    if (!existing) {
-      // Currently unsorted → apply desc
-      nextSorts = [{ columnName, orderBy: 'desc' }];
-    } else if (existing.orderBy === 'desc') {
-      // Desc → asc
-      nextSorts = [{ columnName, orderBy: 'asc' }];
-    } else {
-      // Asc → back to default (unsorted, server handles default session_time desc)
-      nextSorts = [];
-    }
+      if (!existing) {
+        // Currently unsorted → apply desc
+        nextSorts = [{ columnName, orderBy: 'desc' }];
+      } else if (existing.orderBy === 'desc') {
+        // Desc → asc
+        nextSorts = [{ columnName, orderBy: 'asc' }];
+      } else {
+        // Asc → back to default (unsorted, server handles default session_time desc)
+        nextSorts = [];
+      }
 
-    setSorts(nextSorts);
-    setNotesLoading(true);
+      setSorts(nextSorts);
+      setNotesLoading(true);
 
-    try {
-      const payload: NotesPayload = {
-        ...buildFilterPayload(),
-        sorts: nextSorts,
-      };
-      const response = await fetchNotes(payload);
-      setNotes(response.data);
-      setTotalItems(response.totalCount || 0);
-    } catch (error) {
-      console.error('Error applying sort:', error);
-    } finally {
-      setNotesLoading(false);
-    }
-  }, [sorts, buildFilterPayload]);
+      try {
+        const payload: NotesPayload = {
+          ...buildFilterPayload(),
+          sorts: nextSorts,
+        };
+        const response = await fetchNotes(payload);
+        setNotes(response.data);
+        setTotalItems(response.totalCount || 0);
+      } catch (error) {
+        console.error('Error applying sort:', error);
+      } finally {
+        setNotesLoading(false);
+      }
+    },
+    [sorts, buildFilterPayload],
+  );
 
   const handleRefreshNotes = useCallback(async () => {
     try {
