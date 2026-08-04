@@ -89,24 +89,51 @@ export const formatSessionFieldValue = (value: unknown): string => {
   return String(value);
 };
 
-export const fieldsMatch = (fieldDisplayName: string, fieldKey: string, target: string): boolean => {
-  const normalizedTarget = normalizeFieldKey(target).toLowerCase();
-  const normalizedDisplay = normalizeFieldKey(fieldDisplayName).toLowerCase();
-  const normalizedKey = normalizeFieldKey(fieldKey).toLowerCase();
+/**
+ * Section names the scorer uses that differ from ours, resolved to the field
+ * the finding belongs against.
+ *
+ * Add an entry only for a name the scorer actually returns. Anything not listed
+ * and not an exact match goes to the whole note group, where it is shown once
+ * rather than guessed at.
+ */
+const SCORER_SECTION_ALIASES: Record<string, string> = {
+  // "(optional)" is already stripped by normalizeFieldKey, so Mental Status and
+  // Therapist Reflection need no entry. Only genuine wording differences below.
+  'assessment and therapeutic intervention': 'assessment & therapeutic intervention',
+  'plan & collaboration': 'plan and collaboration',
+};
 
-  // Matching below is substring based in both directions, and every string
-  // contains the empty string. Without this guard a finding that arrives with
-  // no section matches every field on the note and is drawn under all of them,
-  // which reads as the same finding duplicated across the whole note. It
-  // belongs in the unmatched set instead, where it appears once.
+const canonicalise = (value: string): string => {
+  const normalized = normalizeFieldKey(value).toLowerCase().replace(/:$/, '').trim();
+  return SCORER_SECTION_ALIASES[normalized] ?? normalized;
+};
+
+/**
+ * Whether an AI finding belongs against a field.
+ *
+ * Deliberately exact. This used to match on substrings in both directions,
+ * which meant a short generic section from the scorer landed on every field
+ * whose name contained that word. "Assessment" attached to both Risk Assessment
+ * and Assessment & Therapeutic Intervention. "Status" attached to all twelve
+ * goal status fields on a treatment plan at once. "Progress" attached to
+ * Progress Since Last Plan.
+ *
+ * Loose matching existed because a finding that matched nothing used to be
+ * dropped silently, so a wrong field beat no field at all. That is no longer
+ * true: getUnmatchedAiIssues gives them a home, so an unrecognised section is
+ * now shown once against the whole note instead of scattered across it.
+ */
+export const fieldsMatch = (fieldDisplayName: string, fieldKey: string, target: string): boolean => {
+  const normalizedTarget = canonicalise(target);
+  const normalizedDisplay = canonicalise(fieldDisplayName);
+  const normalizedKey = canonicalise(fieldKey);
+
+  // Every string contains the empty string, so without this a finding carrying
+  // no section would match every field on the note.
   if (!normalizedTarget || (!normalizedDisplay && !normalizedKey)) return false;
 
-  return (
-    normalizedTarget === normalizedDisplay ||
-    normalizedTarget === normalizedKey ||
-    normalizedDisplay.includes(normalizedTarget) ||
-    normalizedTarget.includes(normalizedDisplay)
-  );
+  return normalizedTarget === normalizedDisplay || normalizedTarget === normalizedKey;
 };
 
 export const getAiIssuesForField = (
