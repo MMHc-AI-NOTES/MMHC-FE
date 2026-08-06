@@ -578,9 +578,11 @@ const SingleNoteAudit = () => {
                 isEditMode={isFromHumanReviewQueue}
               />
             ) : null} */}
-            {/* {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
+            {/* A reviewer looking at findings that seem out of date can
+                refresh the AI review from here rather than going through AI Logs. */}
+            {!isManagerReviewing && featureFlags.actionButtons.reRunAudit && (
               <ActionButtons onReRunAudit={loadNoteDetail} isReRun={loading} />
-            )} */}
+            )}
             {isManagerReviewing && (
               <ActionButtons
                 onReRunAudit={loadNoteDetail}
