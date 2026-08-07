@@ -10,6 +10,7 @@ interface AILogsTableProps {
   logs: AILog[];
   selectedLogId: number | null;
   onSelectLog: (log: AILog) => void;
+  onViewDetails?: (log: AILog) => void;
 }
 
 // Helper to get gradient class for Result column
@@ -68,7 +69,7 @@ const getSeverityIcon = (severity: string) => {
   }
 };
 
-export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTableProps) => {
+export const AILogsTable = ({ logs, selectedLogId, onSelectLog, onViewDetails }: AILogsTableProps) => {
   if (logs.length === 0) {
     return (
       <div>
@@ -159,7 +160,7 @@ export const AILogsTable = ({ logs, selectedLogId, onSelectLog }: AILogsTablePro
                     <button
                       onClick={e => {
                         e.stopPropagation();
-                        onSelectLog(log);
+                        (onViewDetails ?? onSelectLog)(log);
                       }}
                       className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
                     >
