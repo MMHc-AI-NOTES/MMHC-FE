@@ -220,6 +220,17 @@ const AILogs = () => {
     setSelectedLog(prev => (prev?.id === log.id ? null : log));
   };
 
+  // View Details always selects and brings the panel into view. The panel
+  // sits below the table, so without the scroll the click looks like it did
+  // nothing on any screen where the panel is off screen.
+  const detailsRef = useRef<HTMLDivElement | null>(null);
+  const handleViewDetails = (log: AILog) => {
+    setSelectedLog(log);
+    setTimeout(() => {
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   // Handle re-run audit
   const handleReRunAudit = async (_samePrompt: boolean, _agentId?: number) => {
     void _samePrompt;
@@ -280,7 +291,12 @@ const AILogs = () => {
             </div>
           ) : (
             <>
-              <AILogsTable logs={logs} selectedLogId={selectedLog?.id || null} onSelectLog={handleSelectLog} />
+              <AILogsTable
+                logs={logs}
+                selectedLogId={selectedLog?.id || null}
+                onSelectLog={handleSelectLog}
+                onViewDetails={handleViewDetails}
+              />
 
               {/* Pagination */}
               {logs.length > 0 && (
@@ -305,6 +321,7 @@ const AILogs = () => {
       </Card>
 
       {/* Log Details Section */}
+      <div ref={detailsRef} />
       {selectedLog ? (
         <LogDetailsSection log={selectedLog} onReRunAudit={handleReRunAudit} isReRunning={isReRunning} />
       ) : (
