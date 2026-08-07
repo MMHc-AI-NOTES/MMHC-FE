@@ -9,9 +9,10 @@ import { formatDateTime, getModelDisplayName } from '@/utils/helper';
 interface ReRunAuditCardProps {
   log: AILog;
   onReRunAudit?: (samePrompt: boolean, agentId?: number) => void;
+  isReRunning?: boolean;
 }
 
-const ReRunAuditCard = ({ log, onReRunAudit }: ReRunAuditCardProps) => {
+const ReRunAuditCard = ({ log, onReRunAudit, isReRunning = false }: ReRunAuditCardProps) => {
   const modelDisplayName = getModelDisplayName(log.modelId);
 
   return (
@@ -23,9 +24,14 @@ const ReRunAuditCard = ({ log, onReRunAudit }: ReRunAuditCardProps) => {
         </h3>
 
         <div className="space-y-4">
-          <Button size="lg" onClick={() => onReRunAudit?.(true)} className="bg-gradient-light text-primary h-12 w-full">
-            <RefreshCw />
-            Re-run Audit
+          <Button
+            size="lg"
+            onClick={() => onReRunAudit?.(true)}
+            disabled={isReRunning}
+            className="bg-gradient-light text-primary h-12 w-full"
+          >
+            <RefreshCw className={isReRunning ? 'animate-spin' : ''} />
+            {isReRunning ? 'Re-running...' : 'Re-run Audit'}
           </Button>
           {/* <div className="flex items-center gap-2">
             <Separator className="flex-1" />

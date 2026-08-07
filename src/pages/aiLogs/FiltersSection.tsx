@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RefreshCw, Search, Calendar } from 'lucide-react';
 import { Agent } from '@/types/agent';
 import { ChatResultEnum, ChatResultLabels, ChatSeverityEnum, ChatSeverityLabels } from '@/constants/common';
 import { getEnumValues } from '@/utils/helper';
@@ -10,6 +11,9 @@ interface AILogsFilters {
   prompt: string;
   result: string;
   severity: string;
+  search: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface FiltersSectionProps {
@@ -66,6 +70,41 @@ export const FiltersSection = ({ filters, loading, onFilterChange, onApplyFilter
             </SelectContent>
           </Select>
         </div> */}
+
+        {/* Note ID Search */}
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+            <Search className="h-4 w-4" />
+            Note:
+          </span>
+          <Input
+            value={filters.search}
+            onChange={e => onFilterChange('search', e.target.value)}
+            placeholder="Search by note ID"
+            className="h-9 w-[220px] border-gray-200 bg-white"
+          />
+        </div>
+
+        {/* Date Range */}
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+            <Calendar className="h-4 w-4" />
+            From:
+          </span>
+          <Input
+            type="date"
+            value={filters.startDate}
+            onChange={e => onFilterChange('startDate', e.target.value)}
+            className="h-9 w-[150px] border-gray-200 bg-white"
+          />
+          <span className="text-muted-foreground text-sm">To:</span>
+          <Input
+            type="date"
+            value={filters.endDate}
+            onChange={e => onFilterChange('endDate', e.target.value)}
+            className="h-9 w-[150px] border-gray-200 bg-white"
+          />
+        </div>
 
         {/* Result Filter */}
         <div className="flex items-center gap-2">
