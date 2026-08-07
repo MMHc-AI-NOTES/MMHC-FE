@@ -1,5 +1,5 @@
 // @/pages/aiLogs/AILogs.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AILogsTable } from './AILogsTable';
 import { FiltersSection } from './FiltersSection';
 import { DataTablePagination } from '@/shared/DataTablePagination';
@@ -21,6 +21,7 @@ const AILogs = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AILog | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [isReRunning, setIsReRunning] = useState(false);
 
   // Pagination states with persistence
   const [pagination, setPagination] = usePaginationPersistence('aiLogsPagination', { currentPage: 1 });
@@ -29,7 +30,7 @@ const AILogs = () => {
   const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
 
   // Filter states with persistence
-  const defaultFilters = { model: 'all', prompt: 'all', result: 'all', severity: 'all' };
+  const defaultFilters = { model: 'all', prompt: 'all', result: 'all', severity: 'all', search: '', startDate: '', endDate: '' };
   const [filters, setFilters, clearPersistedFilters] = useFilterPersistence('aiLogsFilters', defaultFilters);
 
   // Build filter payload for API
@@ -54,6 +55,21 @@ const AILogs = () => {
     // Severity filter
     if (filters.severity && filters.severity !== 'all') {
       filterArray.push({ columnName: 'severity', type: 'exact', value: parseInt(filters.severity) });
+    }
+
+    // Note ID search
+    if (filters.search && filters.search.trim()) {
+      filterArray.push({ columnName: 'note_id', type: 'like', value: filters.search.trim() });
+    }
+
+    // Date range on the run date
+    if (filters.startDate || filters.endDate) {
+      filterArray.push({
+        columnName: 'created_at',
+        type: 'date_range',
+        startDate: filters.startDate || '1970-01-01',
+        endDate: filters.endDate || '2100-01-01',
+      });
     }
 
     return { page: currentPage, pageSize: itemsPerPage, filters: filterArray };
@@ -124,6 +140,21 @@ const AILogs = () => {
   const handleFilterChange = (key: string, value: string) => {
     setFilters({ ...filters, [key]: value });
   };
+
+  // Filters take effect as they change, debounced so typing a note ID does
+  // not fire a request per keystroke. The Apply button still works as before.
+  const isFirstFilterRun = useRef(true);
+  useEffect(() => {
+    if (isFirstFilterRun.current) {
+      isFirstFilterRun.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleApplyFilters();
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   // Apply filters - makes API call with current filter values
   const handleApplyFilters = async () => {
@@ -199,15 +230,26 @@ const AILogs = () => {
     }
 
     try {
-      showToast.info('Re-running AI Audit...');
-      const response = await triggerRerunAudit(selectedLog.noteId);
+      setIsReRunning(true);
+      showToast.info('Re-running AI Audit, this takes a few seconds...');
+      const rerunNoteId = selectedLog.noteId;
+      const response = await triggerRerunAudit(rerunNoteId);
       if (response) {
-        showToast.success('AI Audit re-run triggered successfully!');
-        // Reload current page logs
-        handlePageChange(currentPage);
+        showToast.success('AI Audit re-run completed');
+        // Refresh the list and reselect the newest log for this note, so the
+        // panel shows the fresh result rather than the one just replaced.
+        const payload = buildFilterPayload();
+        const refreshed = await fetchAILogs(payload);
+        setLogs(refreshed.data);
+        setTotalItems(refreshed.totalCount || 0);
+        const newest = refreshed.data.find(l => l.noteId === rerunNoteId);
+        setSelectedLog(newest ?? null);
       }
     } catch (error) {
       console.error('Error re-running audit:', error);
+      showToast.error('Re-run failed, please try again');
+    } finally {
+      setIsReRunning(false);
     }
   };
 
@@ -264,7 +306,7 @@ const AILogs = () => {
 
       {/* Log Details Section */}
       {selectedLog ? (
-        <LogDetailsSection log={selectedLog} onReRunAudit={handleReRunAudit} />
+        <LogDetailsSection log={selectedLog} onReRunAudit={handleReRunAudit} isReRunning={isReRunning} />
       ) : (
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center">
