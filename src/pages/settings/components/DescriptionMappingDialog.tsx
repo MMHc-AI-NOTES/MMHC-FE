@@ -171,7 +171,7 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
             )}
           </div>
           <div className="min-w-0">
-            <Label htmlFor="description-id">description_id</Label>
+            <Label htmlFor="description-id">Issue Code</Label>
             <Input
               id="description-id"
               value={formik.values.description_id}
@@ -180,6 +180,10 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
               placeholder="e.g. sub_1"
               maxLength={50}
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Must match the code the AI scorer sends. Left empty, the next free code for the
+              section is assigned.
+            </p>
 
             {formik.submitCount > 0 && formik.errors.description_id && (
               <p className="mt-1 text-xs text-red-600">{formik.errors.description_id}</p>
