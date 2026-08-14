@@ -181,8 +181,7 @@ const DescriptionMappingDialog: React.FC<DescriptionMappingDialogProps> = ({ isO
               maxLength={50}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Must match the code the AI scorer sends. Left empty, the next free code for the
-              section is assigned.
+              Must match the code the AI scorer sends. Left empty, the next free code for the section is assigned.
             </p>
 
             {formik.submitCount > 0 && formik.errors.description_id && (
