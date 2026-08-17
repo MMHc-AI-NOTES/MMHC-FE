@@ -64,6 +64,7 @@ export const SessionTypeEnum = {
   intake: 2,
   treatment_plan: 3,
   termination: 4,
+  treatment_plan_progress_note: 5,
 } as const;
 
 // AI Status Enum
@@ -146,6 +147,7 @@ export const SessionTypeLabels: Record<number, string> = {
   [SessionTypeEnum.intake]: 'Intake',
   [SessionTypeEnum.treatment_plan]: 'Treatment Plan',
   [SessionTypeEnum.termination]: 'Termination',
+  [SessionTypeEnum.treatment_plan_progress_note]: 'Treatment Plan + Progress Note',
 };
 
 export const AiStatusLabels: Record<number, string> = {

@@ -14,6 +14,7 @@ import type { NoteDetail } from '@/types/notes';
 import {
   formatSessionFieldValue,
   getAiIssuesForField,
+  getUnmatchedAiIssues,
   getDisplayableSessionFieldEntries,
   getSessionFieldDisplayName,
 } from './sessionFieldUtils';
@@ -68,7 +69,8 @@ export function useTherapySessionSummary({
   aiIssues = [],
 }: UseTherapySessionSummaryProps) {
   const dispatch = useDispatch();
-  const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes } = useAppSelector(state => state.smeConfig);
+  const { issueRelatedTo, smeTemplates, issueDescriptions, errorTypes, smeTemplatesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded } =
+    useAppSelector(state => state.smeConfig);
   const user = useAppSelector(state => state.auth.user);
 
   const [expandedFieldKey, setExpandedFieldKey] = useState<string | null>(null);
@@ -279,6 +281,16 @@ export function useTherapySessionSummary({
     [aiIssues, getFieldDisplayName],
   );
 
+  /**
+   * Findings no field will draw. Previously these were dropped without trace,
+   * which is why notes other than progress notes appeared to have no AI review
+   * at all: their findings come back against the section "Overall".
+   */
+  const unmatchedAiIssues = useMemo(
+    () => getUnmatchedAiIssues(aiIssues, displayableSessionFields, getFieldDisplayName),
+    [aiIssues, displayableSessionFields, getFieldDisplayName],
+  );
+
   const getPreviousValueForField = useCallback(
     (fieldKey: string) => formatSessionFieldValue(previousNoteSessionData[fieldKey]),
     [previousNoteSessionData],
@@ -357,17 +369,22 @@ export function useTherapySessionSummary({
 
   useEffect(() => {
     const load = async () => {
-      const [templates, relatedTo, descriptions] = await Promise.all([
-        fetchSMETemplates(),
-        fetchIssueRelatedTo(),
-        fetchIssueDescriptions(),
-      ]);
-      dispatch(setSMETemplates(templates));
-      dispatch(setIssueRelatedTo(relatedTo));
-      dispatch(setIssueDescriptions(descriptions));
+      const promises: Promise<any>[] = [];
+      if (!smeTemplatesLoaded) {
+        promises.push(fetchSMETemplates().then(data => dispatch(setSMETemplates(data))));
+      }
+      if (!issueRelatedToLoaded) {
+        promises.push(fetchIssueRelatedTo().then(data => dispatch(setIssueRelatedTo(data))));
+      }
+      if (!issueDescriptionsLoaded) {
+        promises.push(fetchIssueDescriptions().then(data => dispatch(setIssueDescriptions(data))));
+      }
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
     };
     load();
-  }, [dispatch]);
+  }, [dispatch, smeTemplatesLoaded, issueRelatedToLoaded, issueDescriptionsLoaded]);
 
   const handleVersionSelect = useCallback(
     (vId: number) => {
@@ -545,6 +562,7 @@ export function useTherapySessionSummary({
     getIssueCountForField,
     getSmeIssuesForField,
     getAiIssuesForSessionField,
+    unmatchedAiIssues,
     getPreviousValueForField,
     isFieldChangedFromPreviousNote,
     getTemplatesForField,

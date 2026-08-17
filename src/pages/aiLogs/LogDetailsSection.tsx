@@ -1,5 +1,6 @@
 import { AILog } from '@/types/aiLogs';
 import LogDetailsCard from './LogDetailsCard';
+import ReRunAuditCard from './ReRunAuditCard';
 import ModelInfoCard from './ModelInfoCard';
 import AIHumanComparisonCard from './AIHumanComparisonCard';
 import PromptOutputTabs from './PromptOutputTabs';
@@ -7,9 +8,10 @@ import PromptOutputTabs from './PromptOutputTabs';
 interface LogDetailsSectionProps {
   log: AILog;
   onReRunAudit?: (samePrompt: boolean, agentId?: number) => void;
+  isReRunning?: boolean;
 }
 
-const LogDetailsSection = ({ log }: LogDetailsSectionProps) => {
+const LogDetailsSection = ({ log, onReRunAudit, isReRunning = false }: LogDetailsSectionProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -18,7 +20,7 @@ const LogDetailsSection = ({ log }: LogDetailsSectionProps) => {
           <LogDetailsCard log={log} />
           <ModelInfoCard log={log} />
           <AIHumanComparisonCard log={log} />
-          {/* <ReRunAuditCard log={log} onReRunAudit={onReRunAudit} /> */}
+          <ReRunAuditCard log={log} onReRunAudit={onReRunAudit} isReRunning={isReRunning} />
         </div>
 
         {/* Right Column */}

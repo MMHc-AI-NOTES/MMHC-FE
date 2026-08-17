@@ -7,7 +7,11 @@ import type { IssueForm } from './components/types';
 import type { NoteDetail } from '@/types/notes';
 import { useTherapySessionSummary } from './therapySessionSummary/useTherapySessionSummary';
 import { SessionFieldCard } from './therapySessionSummary/SessionFieldCard';
+import { SessionFieldReviewFindings } from './therapySessionSummary/SessionFieldReviewFindings';
 import { formatSessionFieldValue } from './therapySessionSummary/sessionFieldUtils';
+
+// Registered issues_related_to entry for findings that apply to the whole note.
+const OVERALL_FIELD_KEY = 'overall';
 
 interface TherapySessionSummaryCardProps {
   webhookVersions: WebhookVersion[];
@@ -97,6 +101,7 @@ const TherapySessionSummaryCard = ({
     getIssueCountForField,
     getSmeIssuesForField,
     getAiIssuesForSessionField,
+    unmatchedAiIssues,
     getPreviousValueForField,
     isFieldChangedFromPreviousNote,
     getTemplatesForField,
@@ -237,6 +242,54 @@ const TherapySessionSummaryCard = ({
             </div>
           ) : (
             displayableSessionFields.map(([key, value]) => renderFieldCard(key, value))
+          )}
+
+          {/*
+            Findings that apply to the note as a whole, or whose section does
+            not correspond to a field on this note type. Before this they were
+            stored and never drawn, which is why notes other than progress
+            notes appeared to carry no AI review at all.
+          */}
+          {unmatchedAiIssues.length > 0 && (
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2 bg-[#F0F0F0] px-4 py-3">
+                <p className="text-primary text-sm font-semibold">Findings for the whole note</p>
+                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">{unmatchedAiIssues.length}</span>
+              </div>
+              {/*
+                The same component the fields use, so these findings keep their
+                thumbs up and down controls. Without that an SME could never
+                rate them, and Marked For Review requires every AI finding to
+                be rated, so the button would stay disabled forever.
+
+                fieldKey "overall" resolves to the registered Overall category
+                in issues_related_to, which is what a whole note finding should
+                be attributed to when a thumbs up creates an SME issue.
+              */}
+              <SessionFieldReviewFindings
+                fieldKey={OVERALL_FIELD_KEY}
+                aiIssues={unmatchedAiIssues}
+                smeIssues={getSmeIssuesForField(OVERALL_FIELD_KEY)}
+                noteId={noteId}
+                id={id}
+                chatId={chatId}
+                auditScore={auditScore}
+                versionId={versionId}
+                scorerVersion={scorerVersion}
+                sessionId={sessionId}
+                feedbackVerdicts={feedbackVerdicts}
+                practitionerId={practitionerId}
+                aiStatusId={aiStatusId}
+                priorityId={priorityId}
+                webhookVersions={webhookVersions}
+                readOnly={isHistoricalVersion}
+                loggedInUserId={user?.id ?? null}
+                alreadyUsedDescriptionIds={getAlreadyUsedDescriptionIdsForField(OVERALL_FIELD_KEY)}
+                onSMEIssueDeleted={onSMEIssueDeleted}
+                onSMEIssueUpdated={onSMEIssueUpdated}
+                onFeedbackChanged={onFeedbackChanged}
+              />
+            </div>
           )}
         </div>
 
