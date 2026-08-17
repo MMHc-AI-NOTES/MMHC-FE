@@ -9,7 +9,7 @@ import RecentActivity from './RecentActivity';
 import QuickActions from './QuickActions';
 import DashboardSkeleton from './DashboardSkeleton';
 import DashboardCardHeader from './DashboardCardHeader';
-import { Activity, Clock, Users, Zap } from 'lucide-react';
+import { Activity, Clock, Users } from 'lucide-react';
 import DashboardHeader from './DashboardHeader';
 
 const Dashboard = () => {
@@ -46,27 +46,17 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader count={dashboardData.notesAuditedToday} />
+      <DashboardHeader />
       {/* Stats Card */}
       <StatsCard
         notesAuditedToday={dashboardData.notesAuditedToday}
         weeklyGrowth={dashboardData.weeklyGrowth}
-        activePractitioners={dashboardData.activePractitioners}
-        criticalIssues={dashboardData.criticalIssues}
+        passRate={dashboardData.passRate}
+        correctionsRequired={dashboardData.correctionsRequired}
+        pendingHitlReviews={dashboardData.pendingHitlReviews}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="gap-2">
-          <CardHeader>
-            <DashboardCardHeader title="Current Validation Phase" icon={Zap} isIconBg />
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-primary text-3xl font-semibold">Week 3 &mdash; Supervised Automation</p>
-            <p className="mt-2 text-gray-400">AI primary decisions, 50% HITL audit sampling</p>
-          </CardContent>
-        </Card>
-
         <Card className="gap-2">
           <CardHeader>
             <DashboardCardHeader title="Weekly Audit Volume" icon={Activity} />
