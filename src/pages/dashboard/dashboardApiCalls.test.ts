@@ -17,9 +17,6 @@ describe('fetchDashboardData API Service', () => {
       weeklyGrowth: 15,
       activePractitioners: 8,
       criticalIssues: 2,
-      passRate: 83,
-      pendingHitlReviews: 3,
-      correctionsRequired: 2,
       weeklyAuditVolume: [
         { day: 'Mon', criticalFailures: 1, hitl: 2, passed: 5, practitionerCorrections: 0 },
         { day: 'Tue', criticalFailures: 0, hitl: 1, passed: 8, practitionerCorrections: 1 },

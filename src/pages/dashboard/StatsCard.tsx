@@ -4,34 +4,33 @@ import { FileText, TrendingUp, CheckCircle, Info, ArrowRight, User } from 'lucid
 interface StatsCardProps {
   notesAuditedToday: number;
   weeklyGrowth: number;
-  passRate: number;
-  correctionsRequired: number;
-  pendingHitlReviews: number;
+  activePractitioners: number;
+  criticalIssues: number;
 }
 
-const StatsCard = ({ notesAuditedToday, weeklyGrowth, passRate, correctionsRequired, pendingHitlReviews }: StatsCardProps) => {
+const StatsCard = ({ notesAuditedToday, weeklyGrowth, activePractitioners, criticalIssues }: StatsCardProps) => {
   const stats = [
     {
-      title: 'Notes Received Today',
+      title: 'Notes Audited Today',
       value: notesAuditedToday,
       icon: FileText,
       iconBg: 'bg-green-50',
       iconColor: 'text-primary',
       isTrendingUp: true,
-      trendingValue: weeklyGrowth,
+      trendingValue: 0,
     },
     {
       title: 'Pass Rate',
-      description: 'AI reviews over the last 7 days',
-      value: `${passRate}%`,
+      value: `${weeklyGrowth}%`,
       icon: CheckCircle,
       iconBg: 'bg-green-50',
       iconColor: 'text-primary',
+      isTrendingUp: true,
+      trendingValue: 0,
     },
     {
       title: 'Practitioner Corrections Required',
-      description: 'Failed notes still open',
-      value: correctionsRequired,
+      value: activePractitioners,
       icon: Info,
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
@@ -40,7 +39,7 @@ const StatsCard = ({ notesAuditedToday, weeklyGrowth, passRate, correctionsRequi
     {
       title: 'Pending HITL Reviews',
       description: 'Awaiting human-in-the-loop validation',
-      value: pendingHitlReviews,
+      value: criticalIssues,
       icon: User,
       iconBg: 'bg-green-50',
       iconColor: 'text-primary',
