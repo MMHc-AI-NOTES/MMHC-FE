@@ -174,6 +174,7 @@ const DescriptionMappingSection: React.FC = () => {
                     <TableHead className="pl-3 text-left">Issue Related To</TableHead>
                     <TableHead className="pl-3 text-left">Template</TableHead>
                     <TableHead className="pl-3 text-left">description_id</TableHead>
+                    <TableHead className="pl-3 text-left">Issue Code</TableHead>
                     <TableHead className="pl-3 text-left">Issue Description</TableHead>
                     <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
