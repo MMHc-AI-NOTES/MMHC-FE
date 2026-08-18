@@ -3,6 +3,9 @@ export interface DashboardStats {
   weeklyGrowth: number;
   activePractitioners: number;
   criticalIssues: number;
+  passRate: number;
+  pendingHitlReviews: number;
+  correctionsRequired: number;
   weeklyAuditVolume: WeeklyData[];
   practitionerTrends: PractitionerTrend[];
   recentActivities: RecentActivity[];
