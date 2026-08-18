@@ -15,7 +15,16 @@ export interface IssueRelatedTo {
   id?: number;
   fieldId: string;
   displayName: string;
+  noteType?: string | null;
 }
+
+export const NoteTypeLabelsForFields: Record<string, string> = {
+  progress_note: 'Progress Note',
+  intake: 'Intake',
+  treatment_plan: 'Treatment Plans',
+  termination: 'Termination',
+  shared: 'Multiple templates',
+};
 
 // Issue Description interfaces
 export interface IssueDescription {
