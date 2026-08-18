@@ -46,14 +46,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader />
+      <DashboardHeader count={dashboardData.notesAuditedToday} />
       {/* Stats Card */}
       <StatsCard
         notesAuditedToday={dashboardData.notesAuditedToday}
         weeklyGrowth={dashboardData.weeklyGrowth}
-        passRate={dashboardData.passRate}
-        correctionsRequired={dashboardData.correctionsRequired}
-        pendingHitlReviews={dashboardData.pendingHitlReviews}
+        activePractitioners={dashboardData.activePractitioners}
+        criticalIssues={dashboardData.criticalIssues}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
