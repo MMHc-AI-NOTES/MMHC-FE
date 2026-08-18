@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-// import { Plus, Pencil, Trash2 } from 'lucide-react';
-// import { IssueRelatedTo } from '@/store/slices/smeConfigSlice';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { IssueRelatedTo, NoteTypeLabelsForFields } from '@/store/slices/smeConfigSlice';
 import { useAppSelector } from '@/store/store';
 import { useDispatch } from 'react-redux';
-import {
-  addIssueRelatedTo, // updateIssueRelatedTo,
-  deleteIssueRelatedTo,
-} from '@/store/slices/smeConfigSlice';
+import { addIssueRelatedTo, updateIssueRelatedTo, deleteIssueRelatedTo } from '@/store/slices/smeConfigSlice';
 import {
   createIssueRelatedTo,
-  // updateIssueRelatedTo as updateIssueRelatedToAPI,
+  updateIssueRelatedTo as updateIssueRelatedToAPI,
   deleteIssueRelatedTo as deleteIssueRelatedToAPI,
 } from '../settingsApiCalls';
 import IssueRelatedToDialog from './IssueRelatedToDialog';
@@ -24,40 +21,41 @@ const IssueRelatedToSection: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  // const [editingIssue, setEditingIssue] = useState<IssueRelatedTo | null>(null);
+  const [editingIssue, setEditingIssue] = useState<IssueRelatedTo | null>(null);
   const [selectedIdToDelete, setSelectedIdToDelete] = useState<number | null>(null);
 
-  // const handleAdd = () => {
-  //   setEditingIssue(null);
-  //   setIsDialogOpen(true);
-  // };
+  const handleAdd = () => {
+    setEditingIssue(null);
+    setIsDialogOpen(true);
+  };
 
-  // const handleEdit = (issue: IssueRelatedTo) => {
-  //   setEditingIssue(issue);
-  //   setIsDialogOpen(true);
-  // };
+  const handleEdit = (issue: IssueRelatedTo) => {
+    setEditingIssue(issue);
+    setIsDialogOpen(true);
+  };
 
-  const handleSave = async (formData: { field_id: string; display_name: string }) => {
+  const handleSave = async (formData: { field_id: string; display_name: string; note_type?: string }) => {
     try {
-      // if (editingIssue && editingIssue.id) {
-      //   const result = await updateIssueRelatedToAPI(editingIssue.id, formData);
-      //   if (!result) return;
-      //   dispatch(updateIssueRelatedTo(result));
-      // } else {
-      const result = await createIssueRelatedTo(formData);
-      if (!result) return;
-      dispatch(addIssueRelatedTo(result));
-      // }
+      if (editingIssue && editingIssue.id) {
+        const result = await updateIssueRelatedToAPI(editingIssue.id, formData);
+        if (!result) return;
+        dispatch(updateIssueRelatedTo(result));
+      } else {
+        const result = await createIssueRelatedTo(formData);
+        if (!result) return;
+        dispatch(addIssueRelatedTo(result));
+      }
       setIsDialogOpen(false);
+      setEditingIssue(null);
     } catch (error) {
       console.error('Error saving issue related to:', error);
     }
   };
 
-  // const handleDeleteClick = (id: number) => {
-  //   setSelectedIdToDelete(id);
-  //   setIsDeleteDialogOpen(true);
-  // };
+  const handleDeleteClick = (id: number) => {
+    setSelectedIdToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
 
   const handleConfirmDelete = async () => {
     if (!selectedIdToDelete) return;
@@ -85,10 +83,10 @@ const IssueRelatedToSection: React.FC = () => {
         <CardHeader>
           <div className="flex flex-col items-center justify-between sm:flex-row">
             <CardTitle className="text-primary text-lg font-semibold">Issues Related To</CardTitle>
-            {/* <Button onClick={handleAdd} className="bg-gradient-light text-primary border-0 shadow-sm">
+            <Button onClick={handleAdd} className="bg-gradient-light text-primary border-0 shadow-sm">
               <Plus className="h-4 w-4" />
               Add Issue Related To
-            </Button> */}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -99,13 +97,14 @@ const IssueRelatedToSection: React.FC = () => {
                   <TableRow>
                     <TableHead className="pl-3 text-left">Field ID</TableHead>
                     <TableHead className="pl-3 text-left">Display Name</TableHead>
-                    {/* <TableHead className="w-[15%]">Actions</TableHead> */}
+                    <TableHead className="pl-3 text-left">Template</TableHead>
+                    <TableHead className="w-[15%]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {issueRelatedTo.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-muted-foreground h-24 text-center">
+                      <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
                         No data
                       </TableCell>
                     </TableRow>
@@ -114,7 +113,10 @@ const IssueRelatedToSection: React.FC = () => {
                       <TableRow key={issue.id}>
                         <TableCell className="text-left">{issue.fieldId}</TableCell>
                         <TableCell className="text-left">{issue.displayName}</TableCell>
-                        {/* <TableCell>
+                        <TableCell className="text-left">
+                          {issue.noteType ? (NoteTypeLabelsForFields[issue.noteType] ?? issue.noteType) : '—'}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center justify-center gap-2">
                             <Button variant="ghost" size="sm" onClick={() => handleEdit(issue)} className="h-8 w-8 p-0">
                               <Pencil className="h-4 w-4" />
@@ -128,7 +130,7 @@ const IssueRelatedToSection: React.FC = () => {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell> */}
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -139,7 +141,15 @@ const IssueRelatedToSection: React.FC = () => {
         </CardContent>
       </Card>
 
-      <IssueRelatedToDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} onSave={handleSave} />
+      <IssueRelatedToDialog
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setEditingIssue(null);
+        }}
+        onSave={handleSave}
+        editingIssue={editingIssue}
+      />
 
       <ConfirmationDialog
         isOpen={isDeleteDialogOpen}

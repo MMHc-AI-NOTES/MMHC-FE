@@ -9,6 +9,7 @@ import {
   addSMETemplate,
   updateSMETemplate,
   deleteSMETemplateSlice,
+  NoteTypeLabelsForFields,
   type ErrorType,
   type IssueRelatedTo,
   type SMETemplate,
@@ -110,6 +111,7 @@ const DescriptionMappingSection: React.FC = () => {
       return {
         errorType: et?.displayName ?? `ID ${m.error_type_id}`,
         issueRelatedTo: irt?.displayName ?? `ID ${m.issues_related_to_id}`,
+        template: irt?.noteType ? (NoteTypeLabelsForFields[irt.noteType] ?? irt.noteType) : '—',
         errorTypePoints: et?.points ?? Number.POSITIVE_INFINITY,
         descriptionId: m.description_id ?? '—',
         issueDescription: id_?.description ?? `ID ${m.issue_description_id}`,
@@ -170,6 +172,8 @@ const DescriptionMappingSection: React.FC = () => {
                   <TableRow>
                     <TableHead className="pl-3 text-left">Error Type</TableHead>
                     <TableHead className="pl-3 text-left">Issue Related To</TableHead>
+                    <TableHead className="pl-3 text-left">Template</TableHead>
+                    <TableHead className="pl-3 text-left">description_id</TableHead>
                     <TableHead className="pl-3 text-left">Issue Code</TableHead>
                     <TableHead className="pl-3 text-left">Issue Description</TableHead>
                     <TableHead className="w-[15%]">Actions</TableHead>
@@ -178,7 +182,7 @@ const DescriptionMappingSection: React.FC = () => {
                 <TableBody>
                   {smeTemplates.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
+                      <TableCell colSpan={6} className="text-muted-foreground h-24 text-center">
                         No data
                       </TableCell>
                     </TableRow>
@@ -189,6 +193,7 @@ const DescriptionMappingSection: React.FC = () => {
                         <TableRow key={m.id}>
                           <TableCell className="text-left">{d.errorType}</TableCell>
                           <TableCell className="text-left">{d.issueRelatedTo}</TableCell>
+                          <TableCell className="text-left">{d.template}</TableCell>
                           <TableCell className="text-left">{d.descriptionId}</TableCell>
                           <TableCell className="max-w-[320px] truncate text-left">{d.issueDescription}</TableCell>
                           <TableCell>

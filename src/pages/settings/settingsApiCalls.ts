@@ -26,6 +26,7 @@ const normalizeIssueRelatedTo = (api: any): IssueRelatedTo => ({
   id: api?.id,
   fieldId: api?.field_id ?? api?.fieldId ?? '',
   displayName: api?.display_name ?? api?.displayName ?? '',
+  noteType: api?.note_type ?? api?.noteType ?? null,
 });
 
 const normalizeIssueDescription = (api: any): IssueDescription => ({
@@ -258,7 +259,11 @@ export const fetchIssueRelatedTo = async (): Promise<IssueRelatedTo[]> => {
   }
 };
 
-export const createIssueRelatedTo = async (payload: { field_id: string; display_name: string }): Promise<IssueRelatedTo | null> => {
+export const createIssueRelatedTo = async (payload: {
+  field_id: string;
+  display_name: string;
+  note_type?: string;
+}): Promise<IssueRelatedTo | null> => {
   try {
     const response = await axios.post<IssueRelatedToResponse>('/issues-related-to', payload);
 
@@ -277,7 +282,7 @@ export const createIssueRelatedTo = async (payload: { field_id: string; display_
 
 export const updateIssueRelatedTo = async (
   id: number,
-  payload: { field_id: string; display_name: string },
+  payload: { field_id: string; display_name: string; note_type?: string },
 ): Promise<IssueRelatedTo | null> => {
   try {
     const response = await axios.patch<IssueRelatedToResponse>(`/issues-related-to/${id}`, payload);
